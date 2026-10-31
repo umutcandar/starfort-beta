@@ -1,0 +1,72 @@
+/* Starfort v1.3 live team battlefield */
+.team-queue{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:13px 16px;background:linear-gradient(100deg,#132d45,#11243a);border:1px solid #b49660;margin:15px 0}.team-queue>div{flex:1;min-width:170px}.team-queue strong{font-family:Georgia,serif;color:#ffe0a9}.team-queue small{display:block;font-size:11px;color:#9fb7c7;margin-top:6px}.team-queue button{min-height:40px}.team-match-hud{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:8px 12px;background:#0b1c2c;border:1px solid #816d4a;font:700 13px system-ui;color:#ebd7b0}.team-match-hud>div{display:flex;align-items:center;gap:12px}.team-match-hud>div:last-child{justify-content:end}.team-match-hud strong{font:700 28px Georgia,serif;color:#ffdc9a}.team-match-hud>span{font:700 21px Georgia,serif;color:#fcdfad;letter-spacing:1px}.team-blue{color:#8dddf5}.team-red{color:#ff9d99}.team-field{position:relative;width:100%;aspect-ratio:5/3;background:linear-gradient(160deg,#07172566,#0f263a88),url('assets/battlefield.webp') center/cover;border:2px solid #bb9863;box-shadow:inset 0 0 85px #071526,0 14px 25px #030b15b0;overflow:hidden}.team-field canvas{width:100%;height:100%;display:block}.team-combat{display:grid;grid-template-columns:1fr 1.25fr;gap:9px;margin-top:12px}.team-controls{display:flex;gap:6px;min-width:0}.team-controls button{flex:1;min-width:0;min-height:52px;padding:6px 2px;cursor:pointer;border:1px solid #bf975f;border-radius:4px;background:linear-gradient(180deg,#2b4358,#11263e);color:#f5dda9;font-size:12px}.team-controls button.selected{background:linear-gradient(180deg,#846938,#293d50);box-shadow:0 0 10px #f6ce8060}.team-controls button:active{filter:brightness(1.35)}.team-controls small{display:block;color:#c1d4e0;font-size:11px;margin-top:3px}.team-touch{margin-top:12px}@media(max-width:850px){.team-queue{gap:6px}.team-queue button{flex:1}.team-combat{grid-template-columns:1fr}.team-controls button{min-height:46px}}@media(max-width:540px){.team-queue>div{flex-basis:100%}.team-queue button{font-size:11px}.team-match-hud{gap:4px;padding:7px 4px}.team-match-hud b{font-size:8px}.team-match-hud strong{font-size:21px}.team-match-hud>span{font-size:14px}.team-match-hud>div{gap:4px}.team-field{aspect-ratio:3/2}.team-controls button{font-size:10px;min-height:44px}.team-controls small{font-size:9px}}
+
+/* v1.4: distinguish opt-in guild party queue from public queue. */
+.team-queue button[data-team-party]{border-color:#7eacc1;background:linear-gradient(180deg,#23495c,#122b43);color:#bdecf2}
+.team-queue button[data-team-party]:hover{box-shadow:0 0 12px #68c7e04d}
+@media(max-width:650px){.team-queue{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.team-queue>div{grid-column:1/-1}.team-queue button{min-width:0}.team-queue [data-team-leave]{grid-column:1/-1}}
+
+/* v1.5 visual overhaul: cinematic, asset-backed battlefield HUD */
+.team-queue{position:relative;overflow:hidden;border:1px solid #b79868a6;border-radius:12px;background:linear-gradient(115deg,#092032f3,#172c40ed 54%,#132238f2);box-shadow:0 12px 38px #030d1c6b,inset 0 1px 0 #ffe2a62e}
+.team-queue:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent,#ffdb8420,transparent);transform:translateX(-110%);animation:sf-sheen 13s linear infinite}
+@keyframes sf-sheen{50%,100%{transform:translateX(115%)}}
+.team-queue button{position:relative;border-radius:8px;border:1px solid #c2a26c8c;box-shadow:inset 0 1px #fff2c325,0 4px 10px #02091366;background:linear-gradient(155deg,#284052,#101e31);font-weight:650;letter-spacing:.015em;transition:transform .2s,box-shadow .2s}
+.team-queue button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 17px #f8ca6b44,inset 0 1px #f8df8a40}
+.team-match-hud{min-height:61px;border-radius:10px 10px 0 0;border:1px solid #c0a46e9c;background:linear-gradient(90deg,#122e48,#061a2b 40%,#071725 60%,#37212b);box-shadow:inset 0 1px #f5d19a29;letter-spacing:.04em}
+.team-match-hud>span{padding:6px 16px;background:linear-gradient(#172e3a,#0a1929);border:1px solid #bb9566;border-radius:8px;box-shadow:0 0 18px #efce7140}
+.team-match-hud strong{text-shadow:0 0 18px #d9ab6c65}
+.team-field{border:2px solid #caa86e;border-top:0;border-radius:0 0 13px 13px;background:#0d1a29;box-shadow:0 22px 48px #01091488,inset 0 0 30px #030b12}
+.team-combat{padding:10px;border:1px solid #baa06d61;border-radius:13px;background:linear-gradient(135deg,#0d2135eb,#142a3bed);box-shadow:0 12px 28px #06101f5c}
+.team-controls{gap:8px}
+.team-controls button{position:relative;overflow:hidden;min-height:64px;border-radius:10px;background:linear-gradient(165deg,#29465c,#0e2134 75%);border-color:#bfa57395;box-shadow:inset 0 1px #f8e2af43,0 6px 13px #040b167d;font-size:13px;font-weight:650;text-shadow:0 1px #071522;transition:transform .15s,filter .15s,box-shadow .15s}
+.team-controls button:before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,#fff4cb0b,transparent);pointer-events:none}
+.team-controls button:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.14);box-shadow:0 0 20px #ecc77736,inset 0 1px #fff2c65c}
+.team-controls button.selected{border-color:#ffdf8a;background:linear-gradient(155deg,#8d6d39,#243e4d 75%);box-shadow:0 0 18px #ffcf776b,inset 0 0 12px #f1d59c31}
+.team-controls small{font-size:10px;opacity:.8}
+.team-field canvas{touch-action:manipulation}
+@media(max-width:540px){.team-controls button{min-height:48px;font-size:10px}.team-match-hud{min-height:42px}.team-match-hud>span{padding:5px 8px}}
+@media(prefers-reduced-motion:reduce){.team-queue:before{animation:none}.team-controls button,.team-queue button{transition:none}}
+
+.battle-graphics-control{display:flex;align-items:center;justify-content:flex-end;gap:9px;margin:8px 0 0;color:#c7b892;font-size:10px;letter-spacing:.09em;font-weight:750}
+.battle-graphics-control select{padding:7px 29px 7px 10px;color:#f5dca9;font-size:12px;background:#10263b;border:1px solid #b69a6f;border-radius:7px;cursor:pointer}
+
+.siege-status{padding:10px 14px;background:linear-gradient(90deg,#503326,#16314a,#0f2639);border:1px solid #b99665;color:#f8dfa7;font-size:12px;font-weight:700;letter-spacing:.01em;line-height:1.6}
+.siege-status[hidden]{display:none}
+
+/* v1.9 – cinematic siege art direction, shown only before entering a live match. */
+.team-siege-poster{position:relative;isolation:isolate;min-height:218px;overflow:hidden;margin-top:12px;border:1px solid #aa8c5c;border-radius:13px;background:#101d28 url('assets/siege-cinematic-poster.webp') center 47% / cover no-repeat;box-shadow:0 12px 35px #040d178c}
+.team-siege-poster:after{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#06101df0 0%,#0a1426d1 29%,#0a142677 51%,#0a142611 100%)}
+.team-poster-copy{max-width:440px;padding:21px 25px;position:relative;text-shadow:0 2px 12px #030b17}
+.team-poster-kicker{display:block;color:#f1c98f;letter-spacing:.15em;font-size:10px;font-weight:850}
+.team-poster-copy h3{font:700 clamp(26px,4vw,42px) Georgia,serif;color:#fff0d9;margin:5px 0 9px}
+.team-poster-copy p{font-size:14px;color:#e9e1d8;margin:0 0 12px;line-height:1.5}
+.team-poster-copy small{display:block;max-width:350px;color:#b7c7d2;font-size:10px;line-height:1.4}
+.sf-battle-live .team-siege-poster{display:none}
+@media(max-width:670px){.team-siege-poster{min-height:160px}.team-poster-copy{padding:14px 16px;max-width:78%}.team-poster-copy p{font-size:11px}.team-poster-copy small{font-size:9px}}
+@media(max-height:490px) and (orientation:landscape){.team-siege-poster{min-height:130px}.team-poster-copy h3{font-size:26px}}
+
+/* v2.6: read-only tactical minimap, decoupled from the hit-targeting canvas. */
+.team-field #sf-tactical-map{position:absolute;z-index:7;right:12px;top:53px;width:180px;height:112px;pointer-events:none;border:1px solid #c8aa7a88;border-radius:8px;box-shadow:0 10px 28px #010a1499;opacity:.93}
+@media(max-width:900px){.team-field #sf-tactical-map{width:128px;height:80px;right:7px;top:40px}}
+@media(max-height:450px) and (orientation:landscape){.sf-battle-live .team-field #sf-tactical-map{width:104px;height:64px;top:39px;right:calc(env(safe-area-inset-right,0px) + 8px)}}
+/* In landscape, mobile-landscape.css enlarges the *main* battle canvas with !important.
+   Explicitly exclude the overlay minimap from that fullscreen rule. */
+#workspace.sf-battle-live .team-field #sf-tactical-map{width:180px!important;height:112px!important;object-fit:fill!important;touch-action:none!important}
+@media(max-width:900px){#workspace.sf-battle-live .team-field #sf-tactical-map{width:128px!important;height:80px!important}}
+@media(max-height:450px) and (orientation:landscape){#workspace.sf-battle-live .team-field #sf-tactical-map{width:104px!important;height:64px!important}}
+/* v2.6.1 — readable, server-derived battle objectives; no overlap with the minimap. */
+.team-field .sf-objective-card{position:absolute;z-index:6;left:12px;top:54px;width:min(288px,37%);padding:9px 11px;color:#e7e5d7;pointer-events:none;background:linear-gradient(135deg,#0c1b2eea,#102c42e2);border:1px solid #9ebbc37a;border-left:3px solid #73c6db;border-radius:9px;box-shadow:0 7px 25px #020a15aa}
+.team-field .sf-objective-card[hidden]{display:none!important}
+.sf-objective-card span{display:block;font-weight:850;font-size:11px;letter-spacing:.1em;color:#f3d397;text-shadow:0 1px 4px #040b17}
+.sf-objective-card p{font:500 11px/1.35 system-ui,sans-serif;margin:4px 0 8px;max-width:36ch;color:#d3e2e7}
+.sf-objective-track{height:4px;border-radius:8px;background:#334958;overflow:hidden}
+.sf-objective-track i{display:block;height:100%;width:0;background:linear-gradient(90deg,#48b4ce,#f5d18c);border-radius:8px;transition:width .2s}
+.sf-objective-card.is-urgent{border-left-color:#f1a96d}
+.sf-objective-card.is-urgent .sf-objective-track i{background:linear-gradient(90deg,#e9a16d,#f9d78f)}
+.team-field #sf-tactical-map{transition:opacity .15s}
+.sf-minimap-hidden .team-field #sf-tactical-map{opacity:0!important;visibility:hidden!important}
+.sf-battle-bar [data-team-map]{font-weight:700}
+@media(max-width:900px){.team-field .sf-objective-card{width:min(235px,38%);left:8px;top:41px;padding:6px 9px}.sf-objective-card p{font-size:10px;margin:3px 0 5px}}
+@media(max-height:450px) and (orientation:landscape){#workspace.sf-battle-live .team-field .sf-objective-card{left:max(7px,env(safe-area-inset-left));top:max(49px,calc(env(safe-area-inset-top) + 43px));width:min(35%,198px);padding:5px 8px}.sf-objective-card span{font-size:9px}.sf-objective-card p{font-size:9px;line-height:1.2;margin:2px 0 4px}.sf-objective-track{height:3px}#workspace.sf-battle-live .sf-battle-bar [data-team-map]{min-width:46px;font-size:10px;padding:0 5px}}
+@media(max-width:700px) and (max-height:400px) and (orientation:landscape){#workspace.sf-battle-live .team-field .sf-objective-card{width:29%;max-height:61px;overflow:hidden}#workspace.sf-battle-live .team-field .sf-objective-card p{max-height:22px;overflow:hidden}}
+@media(prefers-reduced-motion:reduce){.sf-objective-track i,.team-field #sf-tactical-map{transition:none}}

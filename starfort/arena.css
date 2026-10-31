@@ -1,0 +1,62 @@
+.arena-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(105deg,#12283e,#20354a);padding:12px 16px;border:1px solid #907249;margin:15px 0}.arena-head>div{flex:1;min-width:190px}.arena-head b{color:#ffe0a3;margin-left:7px}.arena-head small{display:block;color:#b6cbd7;font-size:11px;margin-top:5px}.arena-head button{min-height:38px}.arena-field{position:relative;aspect-ratio:5/3;overflow:hidden;background:linear-gradient(90deg,#06253c70,#10182c96),url('assets/battlefield.webp') center/cover;border:2px solid #af8957;box-shadow:inset 0 0 70px #06101adc,0 16px 24px #06101a9c}.arena-field canvas{display:block;width:100%;height:100%}.arena-center-message{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#071324b0;text-align:center;pointer-events:none;padding:20px}.arena-center-message[hidden]{display:none}.arena-center-message b{font:clamp(23px,3vw,43px) Georgia,serif;color:#f4d49a;text-shadow:0 2px 12px #090e1e}.arena-center-message p{font-size:14px;color:#dceaf5;max-width:480px;line-height:1.65}.arena-actions{display:flex;gap:8px;margin:13px 0}.arena-actions button,.arena-touch button{min-height:46px;border:1px solid #bf9b64;border-radius:5px;background:linear-gradient(#294058,#14273d);color:#ffe2aa;flex:1;cursor:pointer}.arena-actions button:active,.arena-touch button:active{background:#4c6574}.arena-actions small{display:block;color:#b9d2dd;font-size:10px}.arena-hint{font-size:12px;color:#cbdbe7;line-height:1.7}.arena-touch{display:none;flex-direction:column;align-items:center;gap:4px;margin:10px auto}.arena-touch>div{display:flex;gap:5px}.arena-touch button{min-width:55px;min-height:50px;touch-action:none}@media(max-width:900px){.arena-touch{display:flex}.arena-field{aspect-ratio:5/3}}@media(max-width:540px){.arena-head{gap:7px;padding:9px}.arena-head button{flex:1}.arena-field{aspect-ratio:3/2}.arena-actions button{font-size:11px;padding:5px}.arena-center-message p{font-size:11px}}@media(prefers-reduced-motion:reduce){.arena-actions button{transition:none}}
+
+.arena-invitation{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:17px 22px;margin-bottom:15px;background:linear-gradient(100deg,#1e3b56,#0d2741);border:1px solid #b49359}.arena-invitation h3{font:27px Georgia,serif;color:#ffe2ab;margin:6px 0}.arena-invitation p{color:#d2dbe5;font-size:12px;line-height:1.6}.arena-invitation button{min-width:200px}.arena-invitation .eyebrow{color:#9ee6e8}@media(max-width:680px){.arena-invitation{display:block}.arena-invitation button{width:100%}}
+
+/* v1.5 graphics pass */
+.arena-head{border-radius:12px;border-color:#bc9d67b3;background:linear-gradient(115deg,#0e2237,#18334a);box-shadow:inset 0 1px #f6df9c3c,0 14px 26px #04101d66}
+.arena-head button{border-radius:8px}
+.arena-field{border-color:#caa86e;border-radius:12px;background:#0e1d2c;box-shadow:0 22px 48px #01091488}
+.arena-actions{border-radius:12px;padding:10px;background:linear-gradient(100deg,#0b2033,#13293e);border:1px solid #ad906b70}
+.arena-actions button{min-height:59px;border-radius:9px;box-shadow:inset 0 1px #f6d79d3b,0 5px 13px #040e1e85;transition:transform .17s,filter .17s}
+.arena-actions button:hover{transform:translateY(-2px);filter:brightness(1.12)}
+@media(max-width:540px){.arena-actions button{min-height:48px}}
+@media(prefers-reduced-motion:reduce){.arena-actions button{transition:none}}
+
+.battle-graphics-control{display:flex;align-items:center;justify-content:flex-end;gap:9px;margin:8px 0 0;color:#c7b892;font-size:10px;letter-spacing:.09em;font-weight:750}
+.battle-graphics-control select{padding:7px 29px 7px 10px;color:#f5dca9;font-size:12px;background:#10263b;border:1px solid #b69a6f;border-radius:7px;cursor:pointer}
+
+/* v2.5.2: make solo testing the primary action */
+.arena-head [data-arena-bot]{border:1px solid #f8c578;background:linear-gradient(135deg,#ba8140,#6f4519);color:#fff4d8;font-weight:800;box-shadow:0 0 16px #f4b96233}
+.arena-head [data-arena-bot]:not(:disabled):hover{filter:brightness(1.13)}
+@media(max-width:760px){.arena-head [data-arena-bot]{flex:1 1 100%}.arena-head [data-arena-queue],.arena-head [data-arena-leave]{flex:1 1 42%}}
+
+/* v2.5.2: remove the giant opaque waiting curtain, keep combat scene visible. */
+.arena-field .cinematic-intro,.team-field .cinematic-intro {
+ inset:auto 12% 9% 12%;min-height:115px;border:1px solid #d9b47899;border-radius:14px;
+ background:linear-gradient(90deg,#081827e8,#0d2639b8 70%,#05182dc7);padding:14px 24px;
+ box-shadow:0 16px 36px #0009, inset 0 1px #f8df9a30;
+ backdrop-filter:blur(5px);pointer-events:none;
+}
+.arena-field .cinematic-intro b,.team-field .cinematic-intro b{font-size:clamp(17px,2.2vw,30px)}
+.arena-field .cinematic-intro p,.team-field .cinematic-intro p{max-width:680px;margin:6px 0 0;font-size:clamp(11px,1.2vw,14px);line-height:1.4}
+@media(max-width:760px){.arena-field .cinematic-intro,.team-field .cinematic-intro{inset:auto 7% 11% 7%;padding:8px 12px;min-height:75px}}
+
+.team-queue [data-team-bot]{background:linear-gradient(140deg,#a67535,#704519);border-color:#f4cd80;color:#fff1cb;font-weight:800}
+.team-queue [data-team-bot]:hover{filter:brightness(1.12)}
+
+/* v2.5.4: readable match HUD and selectable training difficulty */
+.sf-difficulty-picker{display:inline-flex;align-items:center;gap:8px;color:#e9d6a8;font-size:12px;white-space:nowrap;font-weight:700}
+.sf-difficulty-picker select{background:#142b41;color:#f9deaa;border:1px solid #c6a46d;border-radius:7px;padding:9px 11px;min-height:42px;font-size:13px}
+.sf-arena-live-hud{position:absolute;z-index:5;top:54px;left:16px;right:16px;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:start;pointer-events:none}
+.sf-arena-live-hud[hidden]{display:none}
+.sf-life-card{background:linear-gradient(135deg,#081b2ce8,#17354bcf);border:1px solid #d2ad6c8a;border-radius:9px;padding:7px 10px;box-shadow:0 8px 18px #0009;display:grid;gap:5px;max-width:260px}
+.sf-life-card small{color:#ffe4a8;font-size:11px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sf-life-card b{color:#e6f3fa;font-size:10px;font-variant-numeric:tabular-nums}
+.sf-life-enemy{justify-self:end;width:100%}.sf-life-ally{width:100%}
+.sf-life-track{width:100%;height:8px;background:#090f18;border-radius:99px;overflow:hidden;border:1px solid #75808c80}
+.sf-life-track i{display:block;background:linear-gradient(90deg,#2aaf86,#8cebc3);height:100%;width:100%;transition:width .2s}
+.sf-life-enemy .sf-life-track i{background:linear-gradient(90deg,#cd6049,#ffb26f)}
+.sf-combat-timer{font-variant-numeric:tabular-nums;font-size:17px;font-weight:800;text-align:center;color:#ffe5ac;background:#081725cc;border:1px solid #d2ad6c9a;border-radius:8px;padding:8px 12px}
+@media(max-width:760px){.sf-arena-live-hud{top:37px;left:8px;right:8px;gap:5px}.sf-life-card{padding:4px 6px;gap:3px}.sf-life-track{height:5px}.sf-life-card b{font-size:9px}.sf-combat-timer{font-size:12px;padding:6px}.sf-life-card small{font-size:9px}.sf-difficulty-picker{font-size:11px}}
+@media(max-height:450px) and (orientation:landscape){.sf-arena-live-hud{top:40px}.sf-life-card b{display:none}}
+
+/* v2.5.5: squad-specific commands, touch-first landscape HUD. */
+.sf-squad-command{display:flex;align-items:center;gap:8px;padding:10px 12px;margin:9px 0 0;border:1px solid #b6975e8f;border-radius:12px;background:linear-gradient(95deg,#0c2135,#1b3348);flex-wrap:wrap;color:#e9d7ac}
+.sf-squad-command>span{font-size:10px;letter-spacing:.1em;font-weight:850;margin-right:8px;white-space:nowrap}
+.sf-squad-command button{border:1px solid #647b8c;border-radius:8px;background:#10283d;color:#e6eaf0;padding:9px 14px;min-height:43px;font-weight:740;cursor:pointer;touch-action:manipulation}
+.sf-squad-command button small{font-size:10px;opacity:.65;margin-left:4px}
+.sf-squad-command button.selected,.sf-squad-command button[aria-pressed="true"]{border-color:#f0c27a;color:#ffe4aa;background:linear-gradient(145deg,#5f472c,#223b4f);box-shadow:0 0 0 1px #f7c87c33,inset 0 1px #ffe2ab33}
+.sf-squad-command output{margin-left:auto;min-width:135px;text-align:right;color:#9fd8db;font-size:11px;font-weight:700}
+.team-orders button.selected{outline:2px solid #e9bd72;outline-offset:-3px;color:#fff2cc;box-shadow:inset 0 0 18px #d2a15244}
+@media(max-width:900px){.sf-squad-command{gap:5px;padding:6px 8px}.sf-squad-command>span{font-size:9px}.sf-squad-command button{padding:6px 10px;min-height:38px;font-size:11px}.sf-squad-command output{display:none}}
+@media(max-height:450px) and (orientation:landscape){.sf-battle-live .sf-squad-command{position:fixed;z-index:60;left:calc(env(safe-area-inset-left, 0px) + 30%);right:calc(env(safe-area-inset-right, 0px) + 30%);bottom:calc(env(safe-area-inset-bottom,0px) + 7px);justify-content:center;background:#071b2de5;box-shadow:0 8px 28px #0009;padding:3px 5px}.sf-battle-live .sf-squad-command>span,.sf-battle-live .sf-squad-command output,.sf-battle-live .sf-squad-command small{display:none}.sf-battle-live .sf-squad-command button{min-height:32px;font-size:11px;padding:4px 8px}}

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111918">
+  <meta name="description" content="Starfort: yıldızın etrafında kaleni yükselt, kahramanlarını topla ve karanlığa karşı savaş.">
+  <title>Starfort v2.8.0 Beta — Yıldız Köyü</title>
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="preload" as="image" href="assets/city/starfall-valley.webp">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="art.css">
+  <link rel="stylesheet" href="battle.css">
+  <link rel="stylesheet" href="city.css">
+  <link rel="stylesheet" href="premium.css">
+  <link rel="stylesheet" href="tactics.css">
+  <link rel="stylesheet" href="arena.css">
+  <link rel="stylesheet" href="graphics-v2.css">
+  <link rel="stylesheet" href="team.css">
+  <link rel="stylesheet" href="mobile-landscape.css">
+  <link rel="stylesheet" href="campaign-contracts.css">
+  <link rel="stylesheet" href="commander-path.css">
+<style>
+    .build-badge{font:700 10px/1.1 system-ui,sans-serif;letter-spacing:.05em;color:#d6b879;border:1px solid #c9a76d80;border-radius:6px;padding:5px 6px;background:#192739ad;white-space:nowrap;flex:0 0 auto}
+    @media(max-width:800px){.build-badge{font-size:9px;padding:4px}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Starfort ana ekran"><img src="icon.svg" alt=""><span>STARFORT<small>YILDIZ KÖYÜ</small></span></a>
+      <span class="build-badge" title="Kapalı beta için hazırlanmış geliştirme sürümü">v2.8.0 Beta</span><button class="commander" data-view="heroes" aria-label="Kahramanları ve dizilimi aç"><img src="assets/aldren.webp" alt=""><span>Köy Muhafızı<small>Güç <b id="commander-power">—</b></small></span><b id="village-level" title="Kale seviyesi">1</b></button>
+      <div class="resources" id="resources" aria-label="Kaynaklar"></div>
+      <div class="hud-tools"><button class="header-action" data-view="journal" title="Kronik" aria-label="Kronik">📜</button><button class="header-action" data-view="settings" title="Ayarlar ve kayıt yedeği" aria-label="Ayarlar ve kayıt yedeği">⚙</button><span class="save-indicator" id="save-status" title="İlerleme bu cihazda kaydedilir">Yerel kayıt hazır</span><button class="fullscreen-button" data-fullscreen aria-label="Tam ekranı aç" title="Tam ekran">⛶</button></div>
+    </header>
+    <nav class="rail" aria-label="Ana menü" id="navigation"></nav>
+    <main class="world" id="world">
+      <div class="world-heading"><div><span class="eyebrow">YILDIZ VADİSİ · BÖLGE 01</span><h1>Yıldız Köyü</h1><p>Kahramanların gölgesinde yükselen krallığın.</p></div><button class="icon-button" id="recenter" aria-label="Şehrin tamamını göster" title="Şehrin tamamını göster"></button></div>
+      <div class="city-viewport">
+      <canvas id="world-canvas" aria-label="Yıldız Köyü. Binalara dokunarak geliştir; sürükleyerek gez, iki parmakla yakınlaştır. Bina listesi ve haritadaki ad düğmeleriyle de seçim yapabilirsin."></canvas>
+      <div id="city-labels" class="city-labels" aria-label="Şehirdeki binalar"></div>
+      </div>
+      <div class="city-controls" aria-label="Harita kontrolleri"><button data-city-buildings aria-expanded="false" aria-controls="building-picker" title="Bina listesi">▦</button><button data-city-zoom="1.2" aria-label="Yakınlaştır" title="Yakınlaştır">+</button><button data-city-zoom="0.833333" aria-label="Uzaklaştır" title="Uzaklaştır">−</button><button data-city-labels aria-pressed="true" title="Bina adlarını göster veya gizle">Adlar</button></div>
+      <button class="city-collect" data-collect><span>✦ Üretimi topla</span><small id="city-production">Kaynaklar birikiyor</small></button>
+      <div id="world-fallback" hidden>Köy görselleri yüklenemedi. Bina listesinden geliştirmelerine devam edebilirsin; görseller için sayfayı yenile.</div>
+      <div class="orientation-hint">↻ Yatay ekranda daha geniş bir köy seni bekliyor</div>
+      <div class="world-help">Binaya dokunarak geliştir · Haritayı sürükleyerek gez</div>
+      <div class="world-caption"><span class="status-light"></span>Yıldız Çekirdeği etkin<span class="divider">/</span><span id="keep-caption">Kale seviyesi 1</span></div>
+      <div class="building-picker" id="building-picker" aria-label="Bina seçimi" hidden></div>
+      <section class="next-quest" id="next-quest" aria-label="Sıradaki sefer"></section>
+      <button class="daily-reward" id="daily-reward" data-daily-reward title="Günlük kaynak ödülü"><span><small>GÜNLÜK ÖDÜL</small><b id="daily-status">Sandık hazır</b></span><span class="daily-chest" aria-hidden="true">✧</span></button>
+      <section class="workspace" id="workspace" hidden aria-label="Oyun paneli"></section>
+    </main>
+    <aside class="inspector" id="inspector" aria-label="Köy yönetimi"></aside>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <input type="file" id="import-save" accept="application/json,.json" hidden aria-label="Kayıt yedeği içe aktar">
+  <dialog id="building-dialog" aria-labelledby="building-title"><div id="building-content"></div></dialog>
+  <dialog id="battle-dialog" aria-labelledby="battle-title"><div id="battle-content"></div></dialog>
+  <script>
+    if (location.protocol === 'file:') {
+      document.body.innerHTML = '<main style="max-width:560px;margin:15vh auto;padding:28px;font-family:system-ui"><h1>Starfort</h1><p>Oyunu yerel önizleme adresinden aç.</p><a style="display:inline-block;padding:14px 22px;background:#d3b986;color:#151d29" href="http://127.0.0.1:8877/starfort/">Yıldız Köyü’na gir →</a><p style="color:#a0aab2">Sunucu kapalıysa Starfort klasöründe çalıştır:<br><code>node guild-server.mjs</code></p></main>';
+    } else { const script = document.createElement('script'); script.type = 'module'; script.src = 'app.js'; document.body.append(script); }
+  </script>
+</body>
+</html>

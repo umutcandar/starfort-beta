@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "states": [
+    "idle",
+    "run",
+    "attack",
+    "cast",
+    "hit",
+    "down"
+  ],
+  "frames": 6,
+  "cell": [
+    192,
+    288
+  ],
+  "padding": 3,
+  "images": [
+    {
+      "name": "unit-dawn-1",
+      "path": "assets/rigs/unit-dawn-1-motion.webp",
+      "bytes": 698440
+    },
+    {
+      "name": "unit-dawn-2",
+      "path": "assets/rigs/unit-dawn-2-motion.webp",
+      "bytes": 896218
+    },
+    {
+      "name": "unit-dawn-3",
+      "path": "assets/rigs/unit-dawn-3-motion.webp",
+      "bytes": 649178
+    },
+    {
+      "name": "unit-dusk-1",
+      "path": "assets/rigs/unit-dusk-1-motion.webp",
+      "bytes": 657214
+    },
+    {
+      "name": "unit-dusk-2",
+      "path": "assets/rigs/unit-dusk-2-motion.webp",
+      "bytes": 702336
+    },
+    {
+      "name": "unit-dusk-3",
+      "path": "assets/rigs/unit-dusk-3-motion.webp",
+      "bytes": 624438
+    }
+  ]
+}

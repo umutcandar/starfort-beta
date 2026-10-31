@@ -1,0 +1,31 @@
+STARFORT v2.8 — GitHub ve Render'a gönderim
+
+1. ZIP'i Mac'te yeni bir klasöre aç.
+2. Terminal'de "cd " yaz, klasörü Terminal'e sürükle ve Enter'a bas.
+3. "bash GITHUBA_YUKLE.command" komutunu çalıştır.
+4. GitHub giriş onayı gerekebilir. Parolanı veya erişim token'ını sohbete gönderme.
+5. GitHub'da https://github.com/umutcandar/starfort-beta adresinde
+   'starfort' klasörü ile 'render.yaml' dosyasını gördüğünü doğrula.
+6. Render > New > Blueprint > GitHub starfort-beta depoyu seç.
+   'STARFORT_TEST_CODE' çevre değişkeni için uzun, tahmin edilmesi zor test davet kodu seç.
+   Davet kodunu GitHub'a ekleme veya herkese paylaşma.
+7. Servis kurulduğunda verilen onrender.com adresini ChatGPT'ye gönder.
+   Bağlantı ve API sağlık kontrollerini burada doğrulayabiliriz.
+
+NOT: Render ücretsiz serviste yerel dosya/veriler yeniden başlatmalarda kaybolabilir.
+Bu nedenle kalıcı oyuncu kayıtlarına geçmeden önce veritabanı gerekir.
+Şu anda gerçek para tahsilatı yok; tüm ekonomik ilerleme prototip seviyesindedir.
+
+MAC'ten komutla yükleyemiyorsan:
+GitHub Desktop'ta starfort-beta deposunu Clone et; bu ZIP içeriğini
+klon klasörüne (üstteki tüm dosya ve starfort/ klasörü) kopyala.
+GitHub Desktop'ta Commit to main ve ardından Push origin seçeneklerini kullan.
+
+
+STARFORT v2.8 - YAYINLAMADAN ÖNCE
+- GitHub deposu kullanıcının izniyle HERKESE AÇIK olabilir. Gizli anahtar, şifre, beta giriş kodu yükleme.
+- Depo URL: https://github.com/umutcandar/starfort-beta
+- GitHub testleri: .github/workflows/starfort-qa.yml (push, PR ve günlük)
+- Cloud sağlık kontrolü: /api/status
+- WebGL2 ve gerçek telefon FPS testleri henüz tamamlanmadı.
+- Render ücretsiz disk kalıcı değildir. Hesapları kalıcı kullanıma açmadan önce veritabanı gereklidir.

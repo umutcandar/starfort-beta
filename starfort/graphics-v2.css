@@ -1,0 +1,16 @@
+/* Graphics Core v2: mobile-first landscape presentation. HUD lives outside the render canvas. */
+.team-field,.arena-field{background:#081a2a;border-color:#a98a60;isolation:isolate;box-shadow:0 14px 38px #01091399;}
+.team-field canvas,.arena-field canvas{image-rendering:auto;object-fit:contain;touch-action:manipulation}
+.team-combat{position:relative;z-index:2}
+@media (orientation:landscape) and (max-height:540px){
+  .sf-battle-live .team-field,.sf-battle-live .arena-field{height:100dvh;max-height:100dvh;aspect-ratio:auto;border:0;border-radius:0}
+  .sf-battle-live .team-field canvas,.sf-battle-live .arena-field canvas{width:100%;height:100%;object-fit:cover}
+  .sf-battle-live .team-match-hud,.sf-battle-live .team-queue,.sf-battle-live .battle-graphics-control,.sf-battle-live .team-siege-poster,.sf-battle-live .siege-status{display:none}
+  .sf-battle-live .sf-joystick{left:max(12px,env(safe-area-inset-left));bottom:max(25px,env(safe-area-inset-bottom))}
+  .sf-battle-live .team-controls button,.sf-battle-live .arena-actions button{min-width:48px;min-height:48px}
+}
+@media (prefers-reduced-motion:reduce){.team-queue:before{animation:none}}
+
+/* v2.3 · render-mode selector and landscape GPU fallback status */
+.battle-graphics-control{flex-wrap:wrap}.battle-graphics-control small{font-size:10px;color:#8cc4dd;letter-spacing:0;font-weight:500}.sf-3d-lab-link{display:inline-flex;align-items:center;padding:7px 9px;color:#f2d19b;border:1px solid #756144;border-radius:7px;background:#102439;text-decoration:none;font-weight:650;letter-spacing:0}.sf-3d-lab-link:hover{background:#27435c}.sf-battle-bar [data-sf-render]{min-width:58px;border-color:#76b7d8;color:#cceaff}
+@media(max-width:750px){.battle-graphics-control{justify-content:center;gap:5px}.battle-graphics-control small{flex-basis:100%;text-align:center}}

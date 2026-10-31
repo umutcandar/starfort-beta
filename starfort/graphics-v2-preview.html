@@ -1,0 +1,27 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Starfort — Graphics Core v2 Savaş Laboratuvarı</title><style>
+*{box-sizing:border-box}body{margin:0;background:#050d17;color:#f0dfbd;font-family:system-ui,Arial}header{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#081a2ac9;border-bottom:1px solid #aa8c5c;padding:10px 16px}strong{font:700 22px Georgia}small{font-size:11px;color:#a6b9c9}button{border:1px solid #aa8c5c;background:#1b344a;color:#f3dcb1;border-radius:6px;padding:8px 13px;cursor:pointer}button.active{background:#86663a}main{width:min(100vw,1440px);margin:auto;position:relative;aspect-ratio:5/3;max-height:calc(100dvh - 58px)}canvas{width:100%;height:100%;display:block}aside{position:absolute;top:15px;right:15px;max-width:230px;background:#071522a8;border:1px solid #f3d19e50;border-radius:8px;padding:8px 12px;font-size:11px;line-height:1.55}footer{position:absolute;left:0;bottom:0;right:0;padding:10px;background:linear-gradient(transparent,#07121edb);display:flex;justify-content:center;gap:7px}footer button{background:#102538bb}@media(max-width:650px){header{padding:5px}strong{font-size:14px}small{display:none}button{padding:6px;font-size:10px}main{max-height:calc(100dvh - 32px)}aside{top:4px;right:5px;font-size:9px}footer{padding:4px}}</style></head><body>
+<header><div><strong>STARFORT <span style="color:#e6ba73">GRAPHICS CORE v2.6</span></strong><small> GPU savaş sahnesi · çalışma laboratuvarı · gerçek çok oyunculu maç değildir</small></div><nav><button id="mode" class="active">Kuşatma</button><button id="quality">Ultra</button></nav></header>
+<main><canvas id="canvas" width="1000" height="600" aria-label="Starfort GPU savaş laboratuvarı"></canvas><aside id="stats">Yükleniyor...</aside><footer><button id="move">Kahramanı hareket ettir</button><button id="attack">Saldırı efekti</button><button id="hit">Kapıyı yık</button><button id="reset">Sıfırla</button></footer></main>
+<script type="module">
+import {createBattleGraphicsV2} from './graphics-scene-v2.js';
+const canvas=document.getElementById('canvas'),stats=document.getElementById('stats');const qs=['ultra','balanced','performance'];let quality='ultra',variant='siege',gateHp=1000,anim=0,speed=0,fx=[],last=performance.now();
+const players=Array.from({length:10},(_,i)=>({id:'p'+i,name:'Komutan '+(i+1),team:i<5?0:1,x:i<5?13+i*5:68+(i-5)*4,y:12+(i%5)*9,hp:180,maxHp:200}));
+const squads=Array.from({length:10},(_,i)=>({id:'s'+i,team:i<5?0:1,x:i<5?27+i*3:73+(i-5)*2,y:14+(i%5)*9,hp:100,maxHp:100,type:i%2?'ranger':'guard'}));
+const room={variant,players,squads,score:[2,1],capture:[0,1],fx,siege:{gate:{hp:gateHp,maxHp:1000},core:{hp:850,maxHp:1000},ram:{x:29,y:31,hp:650,maxHp:650,phase:'advancing'}},elapsed:0};
+let engine,loadError='';try{engine=createBattleGraphicsV2(canvas,{quality});window.__sfEngine=engine.kind}catch(e){loadError=e.stack;window.__sfEngine='error';stats.textContent='WEBGL2 HATA: '+e.message;throw e;}
+function size(){engine.resize(1000,600,devicePixelRatio||1)}size();addEventListener('resize',size);
+document.getElementById('quality').onclick=()=>{quality=qs[(qs.indexOf(quality)+1)%qs.length];document.getElementById('quality').textContent=quality;size();};
+document.getElementById('mode').onclick=()=>{variant=variant==='siege'?'flags':'siege';room.variant=variant;document.getElementById('mode').textContent=variant==='siege'?'Kuşatma':'İki Sancak';};
+document.getElementById('move').onclick=()=>{speed=speed?0:1};
+document.getElementById('attack').onclick=()=>{fx.push({type:'burst',x:48,y:30,t:room.elapsed,team:0})};
+document.getElementById('hit').onclick=()=>{gateHp=Math.max(0,gateHp-350);room.siege.gate.hp=gateHp;room.siege.ram.phase='ramming';fx.push({type:gateHp<=0?'gate-down':'ram-strike',x:52,y:30,t:room.elapsed,team:0})};
+document.getElementById('reset').onclick=()=>{gateHp=1000;room.siege.gate.hp=1000;room.siege.ram.phase='advancing';fx.length=0;players[0].x=13};
+let frames=0,fps=0,start=performance.now();function draw(now){const dt=Math.min(.06,(now-last)/1000);last=now;room.elapsed+=dt;
+ if(speed)players[0].x=13+Math.sin(room.elapsed*.8)*14;
+ room.siege.ram.x=Math.min(45,29+room.elapsed*.3);
+ const motion={sample:(snapshot,stamp)=>({actors:new Map(snapshot.players.map((p,i)=>[p.id,{x:p.x*10,y:p.y*10,face:i%2?-1:1,walk:stamp/450+i,speed:speed?Math.max(.2,1-i*.1):0,hit:0}]))})};
+ engine.render(room,'p0',now/1000,{quality,motion});frames++;
+ if(now-start>1000){fps=Math.round(frames*1000/(now-start));frames=0;start=now;}
+ const stat=engine.stats();stats.innerHTML=`<b>${variant==='siege'?'KALE KUŞATMASI':'İKİ SANCAK'}</b><div>Grafik motoru: ${engine.kind}</div><div>Görüntü: ${quality}</div><div>FPS: ${fps}</div><div>GPU nesne: ${stat.sprites}</div><div>Yüklü doku: ${stat.loadedAssets}/7</div><div>Animasyon atlası: ${stat.loadedRigAtlases}/6</div><div>Kapı: ${gateHp}/1000</div><div>Bu sahne yalnızca grafik testidir; çevrim içi savaş değildir.</div>`;
+ requestAnimationFrame(draw)}requestAnimationFrame(draw);window.__sfDemo={room,engine};
+</script></body></html>

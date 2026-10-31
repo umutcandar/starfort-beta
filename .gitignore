@@ -1,0 +1,14 @@
+**/.local-data/
+**/node_modules/
+**/QA_BROWSER_SONUCLAR/
+**/.DS_Store
+**/._*
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+**/*.p12
+*.log
+*.zip
+.github/workflows/starfort-qa.yml

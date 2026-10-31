@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {qualityConfig,cameraFor,screenToWorld,worldToScreen,WORLD_WIDTH,WORLD_HEIGHT} from './graphics-core-v2.js';
+test('Graphics v2: fixed world size and quality profiles',()=>{assert.equal(WORLD_WIDTH,1000);assert.equal(WORLD_HEIGHT,600);assert.ok(qualityConfig('ultra').dpr>qualityConfig('balanced').dpr);assert.ok(qualityConfig('balanced').particles>qualityConfig('performance').particles)});
+test('Graphics v2: camera transforms invert accurately for target selection',()=>{for(const player of [{x:12,y:12},{x:60,y:48},{x:100,y:30},null]){const camera=cameraFor(player);for(const [x,y]of [[0,0],[500,300],[999,599]]){const sc=worldToScreen(x,y,camera),back=screenToWorld(sc.x,sc.y,camera);assert.ok(Math.abs(back.x-x)<.000001);assert.ok(Math.abs(back.y-y)<.000001);}}});
+test('Graphics v2: reduced-motion & performance disable camera tracking',()=>{assert.deepEqual(cameraFor({x:90,y:10},'performance'),{x:0,y:0,zoom:1});assert.deepEqual(cameraFor({x:90,y:10},'ultra',true),{x:0,y:0,zoom:1});});
+test('Graphics v2: camera offset stays bounded',()=>{const p=cameraFor({x:500,y:-300},'ultra');assert.ok(Math.abs(p.x)<=42);assert.ok(Math.abs(p.y)<=23);});
