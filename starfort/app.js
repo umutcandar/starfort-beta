@@ -12,7 +12,7 @@ import { battleMarkup } from './battle-view.js';
 import { createBattleRunner } from './battle-runner.js';
 import {exportSave,importSave} from './backup.js';
 import {createSaveGuard} from './save-guard.js';
-import {guildRequest,guildOnline,GUILD_TOKEN_KEY} from './guild-client.js';
+import {guildRequest,guildOnline,guildMatchHistory,GUILD_TOKEN_KEY} from './guild-client.js';
 import {mountTraining} from './tactics-view.js';
 import {mountArena} from './arena-view.js';
 import {practiceReward} from './battle-assist.js';
@@ -179,6 +179,23 @@ async function serverVillageAction(action,building=null,roomId=null){
  }catch(error){notify('Sunucu işlemi: '+error.message);await refreshVillage();}
  finally{villageBusy=false;}
 }
+async function claimServerMatchRewards(){
+ if(!villageSignedIn()||villageBusy)return notify('Önce hesabına giriş yap.');
+ villageBusy=true;
+ try{
+  const owner=accountSession().user.id;
+  const rows=await guildMatchHistory(20);
+  const wins=[...new Set(rows.filter(r=>r.outcome==='win'&&typeof r.room_id==='string').map(r=>r.room_id))].slice(0,20);
+  let claimed=0,latest=null;
+  for(const roomId of wins){
+   try{const result=await villageAuthorityRequest('match',{roomId});if(result.identity!==owner||accountSession()?.user?.id!==owner)break;claimed++;latest=result;}
+   catch(error){if(!/daha önce alındı/.test(error.message))console.warn('Signed match reward:',error.message);}
+  }
+  if(latest)acceptVillage(latest);
+  notify(claimed?claimed+' doğrulanmış zaferin ödülü sunucu köyüne eklendi.':'Yeni doğrulanmış zafer ödülü bulunamadı.');
+ }catch(error){notify('Maç ödülü: '+error.message);}
+ finally{villageBusy=false;}
+}
 function renderResources() {
  const view=villageView();
  $('#commander-power').textContent=number(R.teamPower(state)); $('#village-level').textContent=view.buildings.keep;
@@ -233,7 +250,7 @@ function costHtml(cost, reward = false) {
 }
 
 function buildingProduction() {
-  return `<div class="production-box"><div class="production-top"><strong>Köyün üretimi</strong><small>24 saate kadar</small></div><div class="cost-list" id="production-gain">${costHtml(R.production(villageView(),constructionUiNow()), true)}</div><button class="secondary wide" data-collect ${villageSignedIn()&&!villageSnapshot?'disabled':''}>Biriken kaynakları topla</button></div>`;
+  return `<div class="production-box"><div class="production-top"><strong>${villageSignedIn()?'Sunucu köyü':'Yerel köy'} üretimi</strong><small>24 saate kadar</small></div><div class="cost-list" id="production-gain">${costHtml(R.production(villageView(),constructionUiNow()), true)}</div><button class="secondary wide" data-collect ${villageSignedIn()&&!villageSnapshot?'disabled':''}>Biriken kaynakları topla</button></div>`;
 }
 
 function heroCard(hero) {
@@ -275,7 +292,7 @@ function renderInspector() {
   const v=villageView(),building = R.BUILDINGS.find(item => item.id === selectedBuilding) || R.BUILDINGS[0], level = v.buildings[building.id], cost = R.upgradeCost(v, building.id);
   const blocked = (v.serverVillage&&!v.serverVillageReady)||level>=building.maxLevel||(building.id!=='keep'&&level>=v.buildings.keep+1)||Object.entries(cost).some(([id,amount])=>v.res[id]<amount)||state.battle?.status==='active';
   const team = state.team.map(id => R.HEROES.find(hero => hero.id === id));
-  inspectorEl.innerHTML = `<div class="building-details"><div class="section-head"><small>KÖY YÖNETİMİ</small><span class="level-badge">SEVİYE ${level}</span></div><div class="building-portrait">${svg(building.id)}</div><h2>${building.name}</h2><p class="building-description">${building.description}</p><div class="stat-line"><span>Gelişim</span><b>${level} / ${building.maxLevel}</b></div>${building.production ? `<div class="stat-line"><span>Üretim hızı</span><b>${number(building.production.perMinute * level * (1 + (v.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk</b></div>` : `<div class="stat-line"><span>Köy etkisi</span><b>${building.id === 'keep' ? '+%5 üretim / seviye' : building.id === 'forge' ? '+%5 saldırı / seviye' : '+%4 can / seviye'}</b></div>`}<div class="cost-list">${costHtml(cost)}</div><button class="primary wide" data-upgrade-building="${building.id}" ${blocked ? 'disabled' : ''}>${level >= building.maxLevel ? 'En yüksek seviye' : `Yapıyı geliştir · ${number(cost.gold || 0)} altın`}</button>${buildingProduction(building)}</div><div class="squad-block"><div class="squad-heading"><h3>Kahramanlar</h3><button class="text-button" data-view="heroes">Dizilimi düzenle</button></div><div class="squad">${team.map(hero => `<div class="squad-member">${heroPortrait(hero)}<span>${hero.name}</span><small>Lv.${state.heroes[hero.id].level}</small></div>`).join('')}</div><div class="team-power"><span>Dizilim gücü</span><strong>${number(R.teamPower(state))} ✦</strong></div></div><p class="inspector-note">Yapılar yükseldikçe görünüşleri değişir. Üretim 24 saate kadar birikir; ilk 4 saat tam hızda, sonrası yavaş üretir.</p>`;
+  inspectorEl.innerHTML = `<div class="building-details"><div class="section-head"><small>${villageSignedIn()?'SUNUCU KÖYÜ':'YEREL KÖY YÖNETİMİ'}</small><span class="level-badge">SEVİYE ${level}</span></div><div class="building-portrait">${svg(building.id)}</div><h2>${building.name}</h2><p class="building-description">${building.description}</p><div class="stat-line"><span>Gelişim</span><b>${level} / ${building.maxLevel}</b></div>${building.production ? `<div class="stat-line"><span>Üretim hızı</span><b>${number(building.production.perMinute * level * (1 + (v.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk</b></div>` : `<div class="stat-line"><span>Köy etkisi</span><b>${building.id === 'keep' ? '+%5 üretim / seviye' : building.id === 'forge' ? '+%5 saldırı / seviye' : '+%4 can / seviye'}</b></div>`}<div class="cost-list">${costHtml(cost)}</div><button class="primary wide" data-upgrade-building="${building.id}" ${blocked ? 'disabled' : ''}>${level >= building.maxLevel ? 'En yüksek seviye' : `Yapıyı geliştir · ${number(cost.gold || 0)} altın`}</button>${buildingProduction(building)}</div><div class="squad-block"><div class="squad-heading"><h3>Kahramanlar</h3><button class="text-button" data-view="heroes">Dizilimi düzenle</button></div><div class="squad">${team.map(hero => `<div class="squad-member">${heroPortrait(hero)}<span>${hero.name}</span><small>Lv.${state.heroes[hero.id].level}</small></div>`).join('')}</div><div class="team-power"><span>Dizilim gücü</span><strong>${number(R.teamPower(state))} ✦</strong></div></div><p class="inspector-note">Yapılar yükseldikçe görünüşleri değişir. Üretim 24 saate kadar birikir; ilk 4 saat tam hızda, sonrası yavaş üretir.</p>`;
 }
 function renderQuest() {
   // A compact Sefer shortcut keeps the village panorama unobstructed.
@@ -494,6 +511,15 @@ function renderSettings(){
       <small>Otomatik eşitleme yalnızca hesaba giriş yapıldığında çalışır. Bulut çatışmalarını oyuncu çözer.</small>
     </article></div>`;
   workspaceEl.insertAdjacentHTML('beforeend',renderAccountExtras());
+  workspaceEl.insertAdjacentHTML('beforeend',`<article class="guild-panel village-account-panel"><span class="eyebrow">KRALLIK EKONOMİSİ · ${villageSignedIn()?'SUNUCU':'YEREL DENEME'}</span>
+   <h3>${villageSignedIn()?'Korunan sunucu köyü':'Sunucu ekonomisine geçiş'}</h3>
+   <p>${villageSignedIn()?'Bina seviyeleri, inşaat ve kaynaklar Supabase üzerinde tutulur. Yerel JSON kayıtları bu bakiyeye dönüştürülemez.':'Giriş yaptığında sunucuda yeni ve bağımsız bir krallık açılır. Eski yerel kayıtların silinmez, ancak doğrulanmamış kazanımlar sunucuya taşınmaz.'}</p>
+   ${villageSignedIn()?`<strong>${villageSnapshot?'Sunucu revizyonu '+villageSnapshot.revision+' · Ustalık '+villageSnapshot.mastery+'/24':'Sunucuya bağlanılıyor'}</strong>
+    <button class="secondary wide" data-village-refresh>Sunucu köyünü yenile</button>
+    <button class="primary wide" data-village-match-claim>Doğrulanmış zafer ödüllerini al</button>
+    <small>Günlük sunucu sandığı +1 ustalık, sunucuda doğrulanan her galibiyet +3 ustalık verir. Yerel bot ve sefer ödülleri online bakiyeyi artırmaz.</small>`:'<small>Sunucu ekonomisi için e-posta hesabı gerekir. Yerel oyuna devam edebilirsin.</small>'}
+   </article>`);
+
 }
 
 async function accountAction(action){
