@@ -27,7 +27,7 @@ export function specialEnemyAttack(battle,enemy,count) {
   if(battle.combatVersion===1)return null;
   if(battle.stageId===3 && enemy.role==='raider' && count%3===0)
     return {type:'thorn',label:'Dikenli pusu',detail:'Zehirli oklar yıldız enerjisini azaltır.',danger:true,multiplier:.85};
-  if(battle.stageId===4 && enemy.role==='boss' && count%2===0)
+  if(battle.stageId===4 && enemy.role==='boss' && count%4===0)
     return {type:'shatter',label:'Demir kırıcı',detail:'Ön saftaki kalkanları aşan ağır tekli darbe.',danger:true,multiplier:1.6};
   if(battle.stageId===5 && enemy.role==='caster' && count%2===0)
     return {type:'grave',label:'Mahzen ayini',detail:'Düşmanı iyileştirir ve takımı yaralar.',danger:true,multiplier:.5};
