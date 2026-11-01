@@ -227,6 +227,16 @@ export function upgradeCost(state,id){
  const factor=level<=8?1.65**(level-1):1.65**7*1.42**(level-8);
  return Object.fromEntries(Object.entries(building.baseCost).map(([resource,amount])=>[resource,Math.ceil(amount*factor)]));
 }
+export function buildingMasteryGate(state,id){
+ const building=buildingById(id);
+ if(!building)return {required:0,total:0,ok:false};
+ const level=state.buildings[id];
+ // The long-term tiers demand replayable 1–3 star expedition mastery,
+ // not only waiting for the construction clock.
+ const required=level>=19?24:level>=16?18:level>=12?12:0;
+ const total=campaignStarStatus(state).total;
+ return {required,total,ok:total>=required};
+}
 function upgradePrerequisite(state,id){
  const building=buildingById(id);
  if(!building)return fail('Bilinmeyen yapı.');
@@ -234,6 +244,8 @@ function upgradePrerequisite(state,id){
  if(state.construction)return fail('Önce devam eden inşaatı tamamla.');
  if(state.buildings[id]>=building.maxLevel)return fail('Yapı en yüksek seviyede.');
  if(id!=='keep'&&state.buildings[id]>=state.buildings.keep+1)return fail('Önce Yıldız Kalesi’ni yükselt.');
+ const mastery=buildingMasteryGate(state,id);
+ if(!mastery.ok)return fail('Yıldız ustalığı gerekli: seferlerde '+mastery.required+' / 24 yıldız topla. Şu an '+mastery.total+' yıldızın var.');
  return {ok:true};
 }
 function finishOrQueueUpgrade(state,id,now){
