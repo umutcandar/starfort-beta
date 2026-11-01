@@ -28,7 +28,7 @@ test('offline, bad JSON and HTTP failures cannot claim or start a timed building
  for(const fetcher of fetchers)await assert.rejects(
   trustedConstructionNow({fetcher,base:'https://clock.example'}),/İnşaat saati/);
 });
-test('app checks trusted time before timed upgrade or completion and never sends client-provided now',()=>{
+test('app checks trusted time before timed upgrade or completion and never sends client-provided now',async()=>{
  const app=await import('node:fs').then(fs=>fs.readFileSync(new URL('./app.js',import.meta.url),'utf8'));
  const server=await import('node:fs').then(fs=>fs.readFileSync(new URL('./guild-server.mjs',import.meta.url),'utf8'));
  assert.match(app,/mode==='finish'\|\|state\.buildings\[id\]>=R\.CONSTRUCTION_START_LEVEL/);
