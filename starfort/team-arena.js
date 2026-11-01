@@ -118,6 +118,7 @@ export function createTeamService({now=()=>Date.now()}={}){
     if(entry.type==='waiting'){seen.set(user.id,now());return {status:'waiting',mode:entry.key==='siege'?'Kuşatma 5v5':`${entry.size}v${entry.size}`,waiting:queues.get(entry.key??entry.size).length,required:entry.size*2};}
     if(entry.type==='party-waiting'){seen.set(user.id,now());return {status:'waiting',party:true,mode:entry.key==='siege'?'Kuşatma 5v5':`${entry.size}v${entry.size}`,waiting:partyQueues.get(entry.key??entry.size).length*entry.size,required:entry.size*2};}
     const room=rooms.get(entry.roomId);if(!room){entries.delete(user.id);return {status:'idle'};}
+    if(room.status==='active'){const me=room.players.find(p=>p.id===user.id);if(me&&me.lastSeen!==-Infinity)me.lastSeen=now();}
     return {status:room.status==='active'?'active':'ended',you:user.id,inputSeq:room.players.find(p=>p.id===user.id)?.lastSeq??-1,room:{id:room.id,mode:room.mode,variant:room.variant,isPractice:room.isPractice===true,botDifficulty:room.isPractice?room.botDifficulty||'normal':null,siege:room.siege,teamSize:room.teamSize,elapsed:room.elapsed,ticks:room.ticks,status:room.status,winner:room.winner,reason:room.reason,teams:factions,guilds:room.guilds||null,score:room.score.map(x=>Math.round(x)),capture:room.capture,players:room.players.map(p=>({id:p.id,name:p.name,heroId:p.heroId,isBot:p.isBot===true,team:p.team,x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,order:p.order,focus:p.focus,burstReady:Math.max(0,p.burstAt-room.elapsed),dashReady:Math.max(0,p.dashAt-room.elapsed),respawnReady:p.hp===0?Math.max(0,p.respawnAt-room.elapsed):0})),squads:room.squads.map(s=>({id:s.id,ownerId:s.ownerId,team:s.team,type:s.type,x:s.x,y:s.y,hp:s.hp,maxHp:s.maxHp,order:s.order??'follow',focus:s.focus??null})),fx:room.fx}};
   }
   function queue(user,body){if(entries.has(user.id))return [200,result(user)];cleanupWait();const size=body?.size;const variant=body?.variant??'flags';
@@ -192,7 +193,7 @@ export function createTeamService({now=()=>Date.now()}={}){
       p.lastSeen=now();const ai=teamBotInput(room,p,room.botDifficulty);
       p.input={x:ai.x,y:ai.y,attack:ai.attack};p.burst ||=ai.burst;p.dash ||=ai.dash;p.order=ai.order;for(const s of room.squads)if(s.ownerId===p.id){s.order=ai.order;s.focus=null;}
     }
-    for(const p of room.players)if(p.lastSeen!==-Infinity&&now()-p.lastSeen>20000){p.hp=0;p.respawnAt=Infinity;p.lastSeen=-Infinity;room.squads.filter(s=>s.ownerId===p.id).forEach(s=>s.hp=0);}
+    for(const p of room.players)if(p.lastSeen!==-Infinity&&now()-p.lastSeen>60000){p.hp=0;p.respawnAt=Infinity;p.lastSeen=-Infinity;room.squads.filter(s=>s.ownerId===p.id).forEach(s=>s.hp=0);}
     const aliveTeams=[0,1].map(team=>room.players.some(p=>p.team===team&&p.lastSeen!==-Infinity));if(!aliveTeams[0]||!aliveTeams[1]){room.status='ended';room.winner=aliveTeams[0]?0:aliveTeams[1]?1:null;room.reason='disconnect';}else stepTeamRoom(room,dt);
   }}
   function prune(){for(const [id,room] of rooms)if(room.status==='ended'&&now()-room.createdAt>300000){rooms.delete(id);for(const p of room.players){const entry=entries.get(p.id);if(entry?.roomId===id)entries.delete(p.id);}}}

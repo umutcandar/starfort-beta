@@ -54,5 +54,5 @@ test('cooldown, respawn, score win and leave conditions',()=>{
   const srv=createTeamService(),u=users(4);u.forEach(x=>srv.queue(x,{size:2}));srv.leave(u[0]);assert.equal(srv.result(u[0]).status,'idle');assert.equal(srv.result(u[1]).status,'active');srv.leave(u[2]);assert.equal(srv.result(u[1]).status,'ended');assert.equal(srv.result(u[1]).room.winner,1);
 });
 test('disconnect creates team victory rather than zombie combat',()=>{
-  let now=1_000_000;const svc=createTeamService({now:()=>now}),u=users(4);u.forEach(p=>svc.queue(p,{size:2}));now+=21000;svc.tick(.05);assert.equal(svc.result(u[0]).status,'ended');assert.equal(svc.result(u[0]).room.reason,'disconnect');
+  let now=1_000_000;const svc=createTeamService({now:()=>now}),u=users(4);u.forEach(p=>svc.queue(p,{size:2}));now+=61000;svc.tick(.05);assert.equal(svc.result(u[0]).status,'ended');assert.equal(svc.result(u[0]).room.reason,'disconnect');
 });

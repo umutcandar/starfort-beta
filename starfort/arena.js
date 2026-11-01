@@ -83,6 +83,8 @@ export function createArenaService({now=()=>Date.now()}={}){
     if(entry==='waiting'){waitingSeen.set(user.id,now());return {status:'waiting',queuePosition:waiting.indexOf(user.id)+1};}
     const room=rooms.get(entry);
     if(!room){members.delete(user.id);return {status:'idle'};}
+    // A reconnected client proves presence by reading its own authenticated state.
+    if(room.status==='active'){const me=room.players.find(p=>p.id===user.id);if(me)me.lastSeen=now();}
     return {status:room.status==='active'?'active':'ended',inputSeq:room.players.find(p=>p.id===user.id)?.lastSeq??-1,room:{id:room.id,status:room.status,isPractice:room.isPractice===true,botDifficulty:room.isPractice?room.botDifficulty||'normal':null,elapsed:room.elapsed,winner:room.winner,reason:room.reason,ticks:room.ticks,players:room.players.map(p=>({id:p.id,name:p.name,heroId:p.heroId,isBot:p.isBot===true,side:p.side,x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attackReady:Math.max(0,p.attackAt-room.elapsed),burstReady:Math.max(0,p.burstAt-room.elapsed),dashReady:Math.max(0,p.dashAt-room.elapsed)})),fx:room.fx},you:user.id};
   }
   function queue(user,options={}){
@@ -129,7 +131,7 @@ export function createArenaService({now=()=>Date.now()}={}){
   function tick(dt){for(let i=waiting.length-1;i>=0;i--)if(now()-(waitingSeen.get(waiting[i])||0)>15000){members.delete(waiting[i]);waitingSeen.delete(waiting[i]);waiting.splice(i,1);}
     for(const room of rooms.values()){
     if(room.status!=='active')continue;
-    for(const p of room.players){if(!p.isBot&&now()-p.lastSeen>18000){room.status='ended';room.reason='disconnect';room.winner=room.players.find(other=>other!==p)?.id??null;break;}}
+    for(const p of room.players){if(!p.isBot&&now()-p.lastSeen>60000){room.status='ended';room.reason='disconnect';room.winner=room.players.find(other=>other!==p)?.id??null;break;}}
     if(room.status==='active'){
       const bot=room.players.find(p=>p.isBot);
       if(bot&&bot.hp>0){

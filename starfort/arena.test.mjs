@@ -39,6 +39,6 @@ test('out of order client commands do not replace latest input',()=>{
   assert.equal([...service.rooms.values()][0].players[0].input.x,1);
 });
 test('stale user is disconnected by server, cannot keep ghost match alive',()=>{
-  let current=Date.now();const service=createArenaService({now:()=>current});service.queue(users[0]);service.queue(users[1]);current+=19000;service.tick(.05);
+  let current=Date.now();const service=createArenaService({now:()=>current});service.queue(users[0]);service.queue(users[1]);current+=61000;service.tick(.05);
   assert.equal(service.result(users[0]).status,'ended');
 });

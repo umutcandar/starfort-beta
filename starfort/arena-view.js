@@ -1,5 +1,6 @@
 /** 1v1 online duel UX. The server is authoritative; the canvas only renders snapshots. */
-import {guildRequest,GUILD_TOKEN_KEY} from './guild-client.js';
+import {guildRequest,GUILD_TOKEN_KEY,guildMatchHistory} from './guild-client.js';
+import {createMatchContinuity} from './match-continuity.js';
 import {accountSession} from './account-auth.js';
 import {ARENA_HERO_STYLES} from './arena-heroes.js';
 import * as R from './rules.js';
@@ -21,10 +22,11 @@ export function mountArena(root){
   let graphics=graphicsPreset(localStorage.getItem('starfort:graphics')||policy.defaultQuality);
   let renderMode=policy.renderMode;
   let botDifficulty=trainingDifficulty(localStorage.getItem('starfort:bot-difficulty'))||'normal';
+  const matchContinuity=createMatchContinuity(sessionStorage,'starfort:arena-last-active');
   let snapshot={status:'idle'},destroyed=false,raf=0,gameTimer=0,queueTimer=0,busy=false,seq=0;
   const keys=new Set(),touch=new Set();let pendingBurst=false,pendingDash=false,pendingAttack=false,uiTime=0,lastStateTime=0;
   const api=(route,data=null)=>guildRequest(`arena/${route}`,token,data);
-  root.innerHTML=`<header class="training-title"><div><span class="eyebrow">YILDIZ KALESİ · ŞAFAK DÜELLOSU</span><h2>Yıldız Düellosu</h2><p>Tek başına yapay rakibe karşı antrenman yap veya gerçek oyuncuyla 1v1 düelloya gir.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
+  root.innerHTML=`<header class="training-title"><div><span class="eyebrow">YILDIZ KALESİ · ŞAFAK DÜELLOSU</span><h2>Yıldız Düellosu</h2><p>Tek başına yapay rakibe karşı antrenman yap veya gerçek oyuncuyla 1v1 düelloya gir.</p></div><button class="secondary" data-close-view>Köye dön</button></header><section class="match-history-panel"><button class="secondary" data-match-history aria-expanded="false">⚔ Son 10 Maçım</button><div class="match-history-content" hidden aria-live="polite"></div></section>
     <div class="sf-portrait-hint" role="note">↻ <strong>Yatay oyun önerilir.</strong> Telefonu yana çevir; savaşta soldaki joystick ve sağdaki yetenek tuşlarını kullan.</div>
   <label class="sf-hero-choice">ARENADAKİ KAHRAMAN <select id="starfort-hero-choice" aria-label="Arena kahramanı">${heroes.map(([id,h])=>`<option value="${id}" ${heroId===id?'selected':''}>${h.name} · ${h.title}</option>`).join('')}</select></label><div class="battle-graphics-control"><span>SAVAŞ GÖRÜNÜMÜ</span><select id="arena-render-mode" aria-label="Savaş görünümü">${policy.graphicsLab?'<option value="3d">3B geliştirme laboratuvarı</option>':''}<option value="2d">Sinematik 2.5B · asıl oyun</option></select><small id="arena-render-status">STARFORT sinematik savaş görünümü etkin</small><span>GÖRÜNTÜ KALİTESİ</span><select id="arena-graphics" aria-label="Grafik kalitesi"><option value="ultra">Ultra</option><option value="balanced">Dengeli</option><option value="performance">Performans</option></select>${policy.graphicsLab?'<a class="sf-3d-lab-link" href="./graphics-3d-preview.html" target="_blank" rel="noopener noreferrer">3B geliştirme sahnesi</a>':''}</div>
     <div class="arena-head"><div><span class="online-dot"></span><b id="arena-connection">Bağlantı hazırlanıyor</b><small id="arena-match">${policy.liveMatchmaking?'Gerçek oyuncu veya bot antrenmanı · derecesiz':'Kendi kahramanınla bot antrenmanı · canlı eşleşme bu sunucuda kapalı'}</small></div><label class="sf-difficulty-picker" for="arena-bot-difficulty">Bot seviyesi <select id="arena-bot-difficulty" aria-label="Bot seviyesi"><option value="easy">Kolay</option><option value="normal">Normal</option><option value="hard">Zor</option></select></label><button class="primary" data-arena-bot>⚔ Botla Savaş (Tek Başına)</button><button class="secondary" data-arena-queue ${policy.liveMatchmaking?'':'disabled title="Gerçek oyuncu eşleşmesi özel oyun sunucusunda açılır"'}>Gerçek Rakip Ara</button><button class="secondary" data-arena-leave>Çık / Vazgeç</button></div>
@@ -72,6 +74,7 @@ export function mountArena(root){
     const status=snapshot.status,room=snapshot.room;
     const wasLive=root.classList.contains('sf-battle-live');root.classList.toggle('sf-battle-live',status==='active');document.body.classList.toggle('sf-combat-running',status==='active');if(wasLive!==(status==='active'))requestAnimationFrame(resizeCanvas);let title='',detail='';
     if(error){title='BAĞLANTI HATASI';detail=error;}
+    else if(status==='interrupted'){title='MAÇ OTURUMU İPTAL';detail=snapshot.message||'Sunucu yeniden başladı. Yenilgi veya ödül yazılmadı; yeni maça girebilirsin.';}
     else if(status==='idle'){title='ARENA HAZIR';detail='Hemen denemek için Botla Savaş (Tek Başına) düğmesine bas. Gerçek oyuncuyla oynamak için Rakip Ara.';}
     else if(status==='waiting'){title='RAKİP BEKLENİYOR';detail='Gerçek oyuncu bekleniyor. Tek başına denemek istersen Botla Savaş düğmesine bas; bekleme kuyruğundan çıkıp botla hemen eşleşirsin.';}
     else if(status==='ended'){
@@ -80,7 +83,7 @@ export function mountArena(root){
     }
     const el=$('#arena-message');el.hidden=status==='active'&&!error;
     el.innerHTML=title?`<b>${esc(title)}</b><p>${esc(detail)}</p>`:'';
-    $('#arena-connection').textContent=error?'Bağlantı kesildi':({idle:'Arena hazır',waiting:'Eşleşme bekleniyor',active:'Canlı düello sürüyor',ended:'Maç tamamlandı'})[status]||'Hazırlanıyor';
+    $('#arena-connection').textContent=error?'Bağlantı kesildi':({idle:'Arena hazır',interrupted:'Maç oturumu iptal',waiting:'Eşleşme bekleniyor',active:'Canlı düello sürüyor',ended:'Maç tamamlandı'})[status]||'Hazırlanıyor';
     $('#arena-match').textContent=room?`${room.isPractice?'BOT ('+trainingLabel(room.botDifficulty)+') · ':''}${room.players.map(p=>p.name).join(' ⚔ ')} · ${Math.max(0,Math.ceil(120-room.elapsed))} sn kaldı`:'Sunuculu 1v1 · bot antrenmanı veya gerçek oyuncu';
     const you=room?.players.find(p=>p.id===snapshot.you),enemy=room?.players.find(p=>p.id!==snapshot.you);
     const hud=$('#arena-live-hud');hud.hidden=!(room&&(status==='active'||status==='ended'));
@@ -101,9 +104,9 @@ export function mountArena(root){
   }
   function draw(time){paint(time);raf=requestAnimationFrame(draw);}
   let epoch=0;
-  async function poll(){if(destroyed||busy||!token)return;const my=epoch;try{const next=await api('state');if(my!==epoch)return;snapshot=next;if(Number.isSafeInteger(next.inputSeq))seq=Math.max(seq,next.inputSeq);error='';}catch(e){error=e.message;}if(!destroyed)message();if(!destroyed&&sessionStorage.getItem('starfort:autostart-duel')&&snapshot.status!=='active'&&snapshot.status!=='waiting'){sessionStorage.removeItem('starfort:autostart-duel');playBot();}}
-  async function queue(){if(busy||!token||!policy.liveMatchmaking)return;busy=true;epoch++;try{snapshot=await api('queue',{heroId});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
-  async function playBot(){if(busy||!token)return;busy=true;epoch++;try{snapshot=await api('bot',{difficulty:botDifficulty,heroId});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
+  async function poll(){if(destroyed||busy||!token)return;const my=epoch;try{const next=await api('state');if(my!==epoch)return;snapshot=matchContinuity.accept(next);if(Number.isSafeInteger(next.inputSeq))seq=Math.max(seq,next.inputSeq);error='';}catch(e){error=e.message;}if(!destroyed)message();if(!destroyed&&sessionStorage.getItem('starfort:autostart-duel')&&snapshot.status!=='active'&&snapshot.status!=='waiting'){sessionStorage.removeItem('starfort:autostart-duel');playBot();}}
+  async function queue(){if(busy||!token||!policy.liveMatchmaking)return;busy=true;epoch++;try{snapshot=matchContinuity.accept(await api('queue',{heroId}));error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
+  async function playBot(){if(busy||!token)return;busy=true;epoch++;try{snapshot=matchContinuity.accept(await api('bot',{difficulty:botDifficulty,heroId}));error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function leave(){if(busy||!token)return;busy=true;epoch++;try{snapshot=await api('leave',{});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function send(){if(destroyed||busy||snapshot.status!=='active')return;
     const x=(keys.has('d')||keys.has('arrowright')||touch.has('right')?1:0)-(keys.has('a')||keys.has('arrowleft')||touch.has('left')?1:0);
@@ -111,7 +114,7 @@ export function mountArena(root){
     const axis=combineMovement(x,y,joystick.read());
     const body={seq:++seq,x:axis.x,y:axis.y,attack:keys.has('j')||touch.has('attack')||pendingAttack,burst:pendingBurst,dash:pendingDash};
     pendingBurst=false;pendingDash=false;pendingAttack=false;busy=true;
-    try{snapshot=await api('input',body);error='';}catch(e){error=e.message;if(body.burst)pendingBurst=true;if(body.dash)pendingDash=true;if(body.attack)pendingAttack=true;}
+    try{snapshot=matchContinuity.accept(await api('input',body));error='';}catch(e){error=e.message;if(body.burst)pendingBurst=true;if(body.dash)pendingDash=true;if(body.attack)pendingAttack=true;}
     finally{busy=false;if(!destroyed)message();}
   }
   function keydown(e){if(!root.isConnected||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||e.ctrlKey||e.metaKey)return;
@@ -119,7 +122,21 @@ export function mountArena(root){
     keys.add(k);if(!e.repeat){if(k==='q')pendingBurst=true;if(k===' ')pendingDash=true;}
   }
   function keyup(e){keys.delete(e.key.toLowerCase());}
-  function buttonClick(e){const b=e.target.closest('button');if(!b||!root.contains(b))return;if(b.hasAttribute('data-arena-queue')){queue();return;}if(b.hasAttribute('data-arena-bot')){playBot();return;}if(b.hasAttribute('data-arena-leave')){leave();return;}if(b.hasAttribute('data-sf-render')){if(policy.graphicsLab)switchRenderMode(renderMode==='3d'?'2d':'3d');return;}if(b.hasAttribute('data-sf-graphics')){updateGraphics(nextQuality(graphics));return;}if(b.hasAttribute('data-sf-fullscreen')){if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});else root.requestFullscreen?.().catch(()=>{});return;}if(b.hasAttribute('data-arena-attack'))pendingAttack=true;if(b.hasAttribute('data-arena-burst'))pendingBurst=true;if(b.hasAttribute('data-arena-dash'))pendingDash=true;}
+  async function toggleMatchHistory(){
+    const panel=root.querySelector('.match-history-content'),button=root.querySelector('[data-match-history]');
+    if(!panel.hidden){panel.hidden=true;button.setAttribute('aria-expanded','false');return;}
+    panel.hidden=false;button.setAttribute('aria-expanded','true');panel.textContent='Maç geçmişin yükleniyor…';
+    try{
+      const rows=await guildMatchHistory(10);
+      if(destroyed)return;
+      panel.innerHTML=rows.length?'<ul>'+rows.map(r=>
+        '<li><b>'+esc(({win:'Zafer',loss:'Yenilgi',draw:'Berabere',cancel:'İptal'})[r.outcome]||'Maç')+
+        '</b> · '+esc(r.mode||'')+' · '+esc(r.hero_id||'')+
+        ' <small>'+esc(new Date(r.ended_at).toLocaleString('tr-TR'))+'</small></li>'
+      ).join('')+'</ul>':'<p>Henüz kayıtlı gerçek oyuncu maçın yok.</p>';
+    }catch(error){panel.textContent='Maç geçmişine ulaşılamadı: '+error.message;}
+  }
+  function buttonClick(e){const b=e.target.closest('button');if(!b||!root.contains(b))return;if(b.hasAttribute('data-match-history')){void toggleMatchHistory();return;}if(b.hasAttribute('data-arena-queue')){queue();return;}if(b.hasAttribute('data-arena-bot')){playBot();return;}if(b.hasAttribute('data-arena-leave')){leave();return;}if(b.hasAttribute('data-sf-render')){if(policy.graphicsLab)switchRenderMode(renderMode==='3d'?'2d':'3d');return;}if(b.hasAttribute('data-sf-graphics')){updateGraphics(nextQuality(graphics));return;}if(b.hasAttribute('data-sf-fullscreen')){if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});else root.requestFullscreen?.().catch(()=>{});return;}if(b.hasAttribute('data-arena-attack'))pendingAttack=true;if(b.hasAttribute('data-arena-burst'))pendingBurst=true;if(b.hasAttribute('data-arena-dash'))pendingDash=true;}
   function pointerdown(e){const b=e.target.closest('[data-arena-move], [data-arena-attack]');if(!b)return;e.preventDefault();touch.add(b.dataset.arenaMove||'attack');if(b.setPointerCapture)try{b.setPointerCapture(e.pointerId)}catch{}}
   function pointerup(e){const b=e.target.closest('[data-arena-move], [data-arena-attack]');if(b)touch.delete(b.dataset.arenaMove||'attack');}
   function blur(){keys.clear();touch.clear();joystick.reset();}
