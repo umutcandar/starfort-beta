@@ -394,16 +394,16 @@ export function startLiveBattle(state,stageId,{enforceGates=false}={}) {
   if(started.ok) prepareLiveBattle(state);
   return started;
 }
-function settleLiveResult(state,result) {
+function settleLiveResult(state,result,now=null) {
   if(!result.ok) return result;
   const messages=[];
-  finishBattle(state,messages);
+  finishBattle(state,messages,now);
   state.battle.log=[...state.battle.log,...messages].slice(-30);
   return result;
 }
-export function advanceCombat(state,deltaMs) {
+export function advanceCombat(state,deltaMs,now=null) {
   if(!activeBattle(state)) return fail('Devam eden savaş yok.');
-  return settleLiveResult(state,advanceLiveCombat(state.battle,deltaMs));
+  return settleLiveResult(state,advanceLiveCombat(state.battle,deltaMs),now);
 }
 export function setBattleStance(state,stance){
   if(!activeBattle(state))return fail('Devam eden savaş yok.');
@@ -411,10 +411,10 @@ export function setBattleStance(state,stance){
   if(action.ok&&action.events?.length)seasonEvent(state,'star');
   return action;
 }
-export function useHeroAbility(state,heroId) {
+export function useHeroAbility(state,heroId,now=null) {
   if(!activeBattle(state)) return fail('Devam eden savaş yok.');
-  const outcome=settleLiveResult(state,castLiveAbility(state.battle,heroId));
-  if(outcome.ok){recordContract(state,'ability');seasonEvent(state,'upgrade');}
+  const outcome=settleLiveResult(state,castLiveAbility(state.battle,heroId),now);
+  if(outcome.ok){recordContract(state,'ability',now);seasonEvent(state,'upgrade');}
   return outcome;
 }
 
@@ -424,7 +424,7 @@ function hit(target, amount) {
   return damage;
 }
 
-function finishBattle(state, events) {
+function finishBattle(state, events,now=null) {
   const battle = state.battle;
   if(battle.labyrinthFloor){
     if(battle.enemies.every(unit=>unit.hp<=0)){
@@ -444,7 +444,7 @@ function finishBattle(state, events) {
     battle.status = 'won';
     if (!battle.rewardApplied) {
       award(state, battle.reward);
-      recordContract(state,'win');
+      recordContract(state,'win',now);
       if(!battle.veteranTier && !battle.riftModifier){
         seasonEvent(state,'win');
         if(battle.replay)seasonEvent(state,'forge');
