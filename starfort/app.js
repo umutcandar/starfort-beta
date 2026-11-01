@@ -616,7 +616,7 @@ function render() {
 }
 function openBattle(stageId) {
   if (stageId !== undefined) {
-    const started = R.startLiveBattle(state, Number(stageId));
+    const started = R.startLiveBattle(state, Number(stageId),{enforceGates:true});
     if (!started.ok) return notify(started.error);
   }
   if(state.battle?.status==='active')R.prepareLiveBattle(state);
