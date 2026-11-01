@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {accountSignUp,accountAcceptAuthHash,accountSession,accountSignOut,accountResendConfirmation} from './account-auth.js';
 import {makeRecoveryPoint,recoveryPoints,loadRecoveryPoint} from './recovery-points.js';
 import {progressionSummary} from './save-summary.js';
+import {createAccountSync} from './account-sync.js';
 import * as R from './rules.js';
 const now=Date.UTC(2026,10,1);
 function storage(){
@@ -57,4 +58,37 @@ test('invalid checkpoint and storage write error never replace an existing save'
  assert.equal(recoveryPoints(store).length,0);
  const good=R.createState(now),blocked={setItem(){throw Error('quota exhausted');},getItem(){return null;},get length(){return 0}};
  assert.throws(()=>makeRecoveryPoint(blocked,good,now),/quota exhausted/);
+});
+
+test('two-device end-to-end: first device uploads, second conflicts, no hidden overwrite',async()=>{
+ let cloud=null,rev=0,uploads=0;
+ const remote=async()=>cloud?{state:structuredClone(cloud),revision:rev}:null;
+ const push=async(state,expected)=>{
+   assert.equal(expected,rev,'stale device must not overwrite newer revision');
+   cloud=structuredClone(state);rev++;uploads++;return {revision:rev};
+ };
+ const a=R.createState(now),b=R.createState(now);
+ const options={fetchRemote:remote,saveRemote:push,validateLocal:x=>x};
+ const first=createAccountSync({...options,readLocal:()=>a});
+ assert.equal(await first.start(),true);
+ assert.equal(rev,1);assert.equal(uploads,1);
+ a.buildings.keep=4;first.noteSaved();await first.flush();
+ assert.equal(rev,2);assert.equal(cloud.buildings.keep,4);
+ const second=createAccountSync({...options,readLocal:()=>b});
+ assert.equal(await second.start(),false);
+ assert.equal(second.status,'conflict');
+ assert.equal(b.buildings.keep,1);
+ assert.equal(cloud.buildings.keep,4);
+ assert.equal(uploads,2,'second device must not send a write until explicit choice');
+ const checkpoint=storage();makeRecoveryPoint(checkpoint,b,now);
+ // Device B explicitly chooses cloud. The recovered previous save stays available.
+ Object.assign(b,structuredClone(cloud));
+ assert.equal(b.buildings.keep,4);
+ assert.equal(loadRecoveryPoint(checkpoint,recoveryPoints(checkpoint)[0].key).buildings.keep,1);
+ // A different remote change prevents first device silently overwriting its previous revision.
+ cloud.buildings.keep=5;rev++;
+ a.res.gold+=100;
+ assert.equal(await first.flush(),false);
+ assert.equal(first.status,'conflict');
+ assert.equal(cloud.buildings.keep,5);
 });
