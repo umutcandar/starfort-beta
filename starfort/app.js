@@ -226,7 +226,7 @@ async function claimServerMatchRewards(){
 }
 function renderResources() {
  const view=villageView();
- $('#commander-power').textContent=number(R.teamPower(state)); $('#village-level').textContent=view.buildings.keep;
+ $('#commander-power').textContent=number(R.teamPower(villageView())); $('#village-level').textContent=view.buildings.keep;
  resourcesEl.innerHTML=Object.entries(R.RESOURCES).map(([id,item])=>`<div class="resource" data-res="${id}">${svg(resourceIcon[id])}<span><b>${villageSignedIn()&&!villageSnapshot?'…':number(view.res[id])}</b><small>${item.name}${villageSignedIn()?' · Sunucu':''}</small></span></div>`).join('');
 }
 function renderNav() {
@@ -283,14 +283,15 @@ function buildingProduction() {
 }
 
 function heroCard(hero) {
-  const unlocked = !!state.heroes[hero.id], inTeam = state.team.includes(hero.id), level = state.heroes[hero.id]?.level || 1;
-  const cost = R.heroCost(state, hero.id), canUpgrade = unlocked && level < 20 && state.battle?.status !== 'active' && Object.entries(cost).every(([id, amount]) => state.res[id] >= amount);
-  const attack = unlocked ? R.heroStats(state,hero.id).attack : hero.attack;
-  const hp = unlocked ? R.heroStats(state,hero.id).maxHp : hero.hp;
+  const v=villageView();
+  const unlocked = !!v.heroes[hero.id], inTeam = v.team.includes(hero.id), level = v.heroes[hero.id]?.level || 1;
+  const cost = R.heroCost(v, hero.id), canUpgrade = unlocked && level < 20 && (villageSignedIn()?!v.serverMission:v.battle?.status !== 'active') && Object.entries(cost).every(([id, amount]) => v.res[id] >= amount);
+  const attack = unlocked ? R.heroStats(v,hero.id).attack : hero.attack;
+  const hp = unlocked ? R.heroStats(v,hero.id).maxHp : hero.hp;
   return `<article class="hero-card ${inTeam ? 'selected' : ''} ${unlocked ? '' : 'locked'}" style="--hero:${hero.color}">
     <div class="hero-portrait">${heroPortrait(hero)}<span class="role-tag">${ROLES[hero.role]}</span><span class="hero-level">${unlocked ? 'SEV. '+level : 'KİLİTLİ'}</span><div class="portrait-title"><small>${hero.title}</small><h3>${hero.name}</h3></div></div>
     <div class="hero-card-content"><p>${HERO_LORE[hero.id]}</p><div class="hero-stats"><span>⚔ ${attack} saldırı</span><span>♡ ${hp} can</span></div><div class="skill">${R.HERO_ABILITIES[hero.id].name}: ${R.HERO_ABILITIES[hero.id].description}</div>
-    ${unlocked ? `<button class="${inTeam ? 'secondary' : 'primary'}" data-team="${hero.id}" ${state.battle?.status === 'active' ? 'disabled' : ''}>${state.team[selectedSlot] === hero.id ? 'Bu konumda' : `${selectedSlot + 1}. konuma ${inTeam ? 'taşı' : 'al'}`}</button><div class="cost-list">${costHtml(cost,false,'practice')}</div><button class="secondary" data-upgrade-hero="${hero.id}" ${canUpgrade ? '' : 'disabled'}>${level >= 20 ? 'En yüksek seviye' : 'Kahramanı geliştir'}</button><button class="text-button wide" data-armory-hero="${hero.id}">Ekipmanlarını düzenle</button>` : `<div class="unlock-note">${svg('expedition')} ${R.STAGES[hero.unlockStage - 1].name} zaferiyle katılır</div>`}</div></article>`;
+    ${unlocked ? `<button class="${inTeam ? 'secondary' : 'primary'}" data-team="${hero.id}" ${(villageSignedIn()?!!v.serverMission:v.battle?.status === 'active') ? 'disabled' : ''}>${v.team[selectedSlot] === hero.id ? 'Bu konumda' : `${selectedSlot + 1}. konuma ${inTeam ? 'taşı' : 'al'}`}</button><div class="cost-list">${costHtml(cost)}</div><button class="secondary" data-upgrade-hero="${hero.id}" ${canUpgrade ? '' : 'disabled'}>${level >= 20 ? 'En yüksek seviye' : 'Kahramanı geliştir'}</button><button class="text-button wide" data-armory-hero="${hero.id}">Ekipmanlarını düzenle</button>` : `<div class="unlock-note">${svg('expedition')} ${R.STAGES[hero.unlockStage - 1].name} zaferiyle katılır</div>`}</div></article>`;
 }
 
 function heroPortrait(hero) {
@@ -320,10 +321,18 @@ function openBuilding(id) {
 function renderInspector() {
   const v=villageView(),building = R.BUILDINGS.find(item => item.id === selectedBuilding) || R.BUILDINGS[0], level = v.buildings[building.id], cost = R.upgradeCost(v, building.id);
   const blocked = (v.serverVillage&&!v.serverVillageReady)||level>=building.maxLevel||(building.id!=='keep'&&level>=v.buildings.keep+1)||Object.entries(cost).some(([id,amount])=>v.res[id]<amount)||state.battle?.status==='active';
-  const team = state.team.map(id => R.HEROES.find(hero => hero.id === id));
-  inspectorEl.innerHTML = `<div class="building-details"><div class="section-head"><small>${villageSignedIn()?'SUNUCU KÖYÜ':'YEREL KÖY YÖNETİMİ'}</small><span class="level-badge">SEVİYE ${level}</span></div><div class="building-portrait">${svg(building.id)}</div><h2>${building.name}</h2><p class="building-description">${building.description}</p><div class="stat-line"><span>Gelişim</span><b>${level} / ${building.maxLevel}</b></div>${building.production ? `<div class="stat-line"><span>Üretim hızı</span><b>${number(building.production.perMinute * level * (1 + (v.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk</b></div>` : `<div class="stat-line"><span>Köy etkisi</span><b>${building.id === 'keep' ? '+%5 üretim / seviye' : building.id === 'forge' ? '+%5 saldırı / seviye' : '+%4 can / seviye'}</b></div>`}<div class="cost-list">${costHtml(cost)}</div><button class="primary wide" data-upgrade-building="${building.id}" ${blocked ? 'disabled' : ''}>${level >= building.maxLevel ? 'En yüksek seviye' : `Yapıyı geliştir · ${number(cost.gold || 0)} altın`}</button>${buildingProduction(building)}</div><div class="squad-block"><div class="squad-heading"><h3>Kahramanlar</h3><button class="text-button" data-view="heroes">Dizilimi düzenle</button></div><div class="squad">${team.map(hero => `<div class="squad-member">${heroPortrait(hero)}<span>${hero.name}</span><small>Lv.${state.heroes[hero.id].level}</small></div>`).join('')}</div><div class="team-power"><span>Dizilim gücü</span><strong>${number(R.teamPower(state))} ✦</strong></div></div><p class="inspector-note">Yapılar yükseldikçe görünüşleri değişir. Üretim 24 saate kadar birikir; ilk 4 saat tam hızda, sonrası yavaş üretir.</p>`;
+  const team = v.team.map(id => R.HEROES.find(hero => hero.id === id));
+  inspectorEl.innerHTML = `<div class="building-details"><div class="section-head"><small>${villageSignedIn()?'SUNUCU KÖYÜ':'YEREL KÖY YÖNETİMİ'}</small><span class="level-badge">SEVİYE ${level}</span></div><div class="building-portrait">${svg(building.id)}</div><h2>${building.name}</h2><p class="building-description">${building.description}</p><div class="stat-line"><span>Gelişim</span><b>${level} / ${building.maxLevel}</b></div>${building.production ? `<div class="stat-line"><span>Üretim hızı</span><b>${number(building.production.perMinute * level * (1 + (v.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk</b></div>` : `<div class="stat-line"><span>Köy etkisi</span><b>${building.id === 'keep' ? '+%5 üretim / seviye' : building.id === 'forge' ? '+%5 saldırı / seviye' : '+%4 can / seviye'}</b></div>`}<div class="cost-list">${costHtml(cost)}</div><button class="primary wide" data-upgrade-building="${building.id}" ${blocked ? 'disabled' : ''}>${level >= building.maxLevel ? 'En yüksek seviye' : `Yapıyı geliştir · ${number(cost.gold || 0)} altın`}</button>${buildingProduction(building)}</div><div class="squad-block"><div class="squad-heading"><h3>Kahramanlar</h3><button class="text-button" data-view="heroes">Dizilimi düzenle</button></div><div class="squad">${team.map(hero => `<div class="squad-member">${heroPortrait(hero)}<span>${hero.name}</span><small>Lv.${v.heroes[hero.id].level}</small></div>`).join('')}</div><div class="team-power"><span>Dizilim gücü</span><strong>${number(R.teamPower(v))} ✦</strong></div></div><p class="inspector-note">Yapılar yükseldikçe görünüşleri değişir. Üretim 24 saate kadar birikir; ilk 4 saat tam hızda, sonrası yavaş üretir.</p>`;
 }
 function renderQuest() {
+  if(villageSignedIn()){
+   const v=villageView(),idx=accountProgressSnapshot?Math.min(7,v.cleared.length):0,stage=R.STAGES[idx];
+   const text=accountProgressSnapshot?stage.name:'Hesap ilerlemesi yükleniyor';
+   questEl.hidden=activeView!=='expedition'||!questPanelExpanded;
+   $('#quest-mini').hidden=activeView==='expedition'&&questPanelExpanded;
+   questEl.innerHTML=`<button class="quest-dismiss" data-quest-close aria-label="Kapat">×</button><div class="quest-crown">✦ SUNUCU SEFERİ</div><div class="quest-layout"><div class="quest-body"><h3>${text}</h3><p>Sunucuda doğrulanan seferler, ganimetler ve yıldızlar.</p><button class="primary" data-action="open-expedition">Resmî seferlere git</button></div></div>`;
+   return;
+  }
   // A compact Sefer shortcut keeps the village panorama unobstructed.
   const expanded=activeView==='expedition' && questPanelExpanded;
   questEl.hidden=!expanded;
@@ -363,11 +372,13 @@ function renderQuest() {
 }
 
 function renderHeroes() {
-  const chosen = state.team.map(id => R.HEROES.find(hero => hero.id === id));
+  const v=villageView();
+  if(villageSignedIn()&&!accountProgressSnapshot){workspaceEl.innerHTML='<section class="guild-panel"><h2>Sunucu kahramanları doğrulanıyor</h2><button class="secondary" data-village-refresh>Yeniden bağlan</button></section>';return;}
+  const chosen = v.team.map(id => R.HEROES.find(hero => hero.id === id));
   workspaceEl.innerHTML = `<header><div><span class="eyebrow">KÜL GECESİNDEN SAĞ KALANLAR</span><h2>Kahramanlar</h2><p>Bir kalkan. Bir kıvılcım. Birlikte tutulan bir yemin.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
-    <div class="team-editor"><div><span class="eyebrow">SAVAŞ DİZİLİMİ</span><p>Konumu seç, ardından kahramanı yerleştir.</p></div><strong>${number(R.teamPower(state))}<small>TAKIM GÜCÜ</small></strong></div>
+    <div class="team-editor"><div><span class="eyebrow">SAVAŞ DİZİLİMİ</span><p>Konumu seç, ardından kahramanı yerleştir.</p></div><strong>${number(R.teamPower(v))}<small>TAKIM GÜCÜ</small></strong></div>
     <div class="formation">${chosen.map((hero, index) => `<button class="formation-slot ${selectedSlot === index ? 'active' : ''}" data-select-slot="${index}" aria-pressed="${selectedSlot === index}">${heroPortrait(hero)}<span><small>${String(index+1).padStart(2,'0')} · ${ROLES[hero.role]}</small><b>${hero.name}</b></span><span class="slot-marker">${selectedSlot === index ? '✦' : '+'}</span></button>`).join('')}</div>
-    ${state.battle?.status === 'active' ? '<p class="inline-note">Dizilimi değiştirmek için devam eden savaşı tamamla.</p>' : ''}<div class="hero-grid">${R.HEROES.map(heroCard).join('')}</div>`;
+    ${v.battle?.status === 'active' ? '<p class="inline-note">Dizilimi değiştirmek için devam eden savaşı tamamla.</p>' : ''}<div class="hero-grid">${R.HEROES.map(heroCard).join('')}</div>`;
 }
 
 function renderCommanderPath(){
@@ -384,6 +395,7 @@ function renderContractCards() {
   return `<section class="campaign-contracts" aria-label="Günlük komutan görevleri"><div class="contract-heading"><div><span class="eyebrow">GÜNLÜK KOMUTAN GÖREVLERİ · İSTEĞE BAĞLI</span><h3>Bugün kalende iz bırak</h3><p>Her gün yeni küçük hedefler. Seri kaybı veya ödeme zorunluluğu yok; ödüller yalnızca hikâye ilerlemesini destekler.</p></div><div class="banner-track"><b>✦ ${status.totalClaims} mühür</b><small>${next ? `Sonraki kozmetik unvan: ${next.name} (${next.count} mühür)` : 'Tüm unvanlar açıldı'}</small></div></div><div class="contract-grid">${status.contracts.map(c=>`<article class="contract-card"><span class="eyebrow">${c.progress} / ${c.target}</span><h4>${c.title}</h4><p>${c.detail}</p><div class="contract-progress"><i style="width:${c.progress/c.target*100}%"></i></div><small>Ödül: ${Object.entries(c.reward).map(([id,n])=>`${number(n)} ${resourceName[id]}`).join(' · ')}</small><button class="${c.progress>=c.target&&!c.claimed?'primary':'secondary'}" data-claim-contract="${c.id}" ${c.claimed||c.progress<c.target?'disabled':''}>${c.claimed?'Alındı':c.progress>=c.target?'Ödülü al':'Devam ediyor'}</button></article>`).join('')}</div><p class="contract-cosmetic">${status.earned.length?'Açılan kozmetik unvanlar: '+status.earned.join(' · '):'İlk unvan için 3 görev mühürü topla.'} · Unvanlar kozmetiktir, savaş gücünü artırmaz.</p></section>`;
 }
 function renderExpedition() {
+  if(villageSignedIn()){workspaceEl.innerHTML=accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow());return;}
   const starStatus=R.campaignStarStatus(state),season=R.seasonStatus(state);
   const completed=state.cleared.length===R.STAGES.length;
   const next = Math.min(state.cleared.length + 1, R.STAGES.length), currentStage = R.STAGES[next-1], chapter = CHAPTERS[next-1];
@@ -413,9 +425,10 @@ function renderExpedition() {
 }
 
 function renderJournal() {
+ const v=villageView();
   workspaceEl.innerHTML = `<header><div><span class="eyebrow">KÖY ARŞİVİ</span><h2>Kül Gecesi kronikleri</h2><p>Kazandığın her sefer, kaybolmuş dünyanın bir parçasını geri getirir.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
   <div class="journal-prologue"><span class="eyebrow">BAŞLANGIÇ</span><h3>Gökyüzü kırıldığında</h3><p>Yıldızlar düştüğünde krallar surlarını yükseltti. Sabah olmadı. Şimdi vadinin ortasında tek bir köy parlıyor. İçindeki çekirdek, karanlığı uzakta tutuyor; her gece biraz daha zorlanarak.</p><p>Senin yeminin, bu ışığın sönmesine izin vermemek.</p></div>
-  <div class="journal-grid">${CHAPTERS.map((chapter,index) => `<article class="journal-card ${state.cleared.includes(index+1) ? 'done' : ''}"><span class="eyebrow">${String(index+1).padStart(2,'0')} · ${R.STAGES[index].name}</span><h3>${chapter.name}</h3><p>${state.cleared.includes(index+1) ? chapter.victory : 'Bu kayıt, bölge kurtarıldığında günlüğe eklenecek.'}</p><span class="level-badge">${state.cleared.includes(index+1) ? 'KAYDA GEÇTİ' : 'KEŞFEDİLMEDİ'}</span></article>`).join('')}</div>`;
+  <div class="journal-grid">${CHAPTERS.map((chapter,index) => `<article class="journal-card ${v.cleared.includes(index+1) ? 'done' : ''}"><span class="eyebrow">${String(index+1).padStart(2,'0')} · ${R.STAGES[index].name}</span><h3>${chapter.name}</h3><p>${v.cleared.includes(index+1) ? chapter.victory : 'Bu kayıt, bölge kurtarıldığında günlüğe eklenecek.'}</p><span class="level-badge">${v.cleared.includes(index+1) ? 'KAYDA GEÇTİ' : 'KEŞFEDİLMEDİ'}</span></article>`).join('')}</div>`;
 }
 
 function itemStats(item) {
@@ -423,8 +436,10 @@ function itemStats(item) {
 }
 function itemArt(item) { return armoryArt(item); }
 function renderArmory() {
-  if(!state.heroes[selectedArmoryHero]) selectedArmoryHero=state.team[0];
-  workspaceEl.innerHTML=armoryMarkup(state,selectedArmoryHero,selectedBagSlot,selectedBagItem);
+ const v=villageView();
+ if(villageSignedIn()&&!accountProgressSnapshot){workspaceEl.innerHTML='<section class="guild-panel"><h2>Sunucu envanteri doğrulanıyor</h2><button class="secondary" data-village-refresh>Yeniden bağlan</button></section>';return;}
+  if(!v.heroes[selectedArmoryHero]) selectedArmoryHero=v.team[0];
+  workspaceEl.innerHTML=armoryMarkup(v,selectedArmoryHero,selectedBagSlot,selectedBagItem);
 }
 
 function renderShop() {
@@ -684,7 +699,7 @@ async function cloudSaveAction(action){
 function renderWorkspace() {
   if(trainingCleanup){trainingCleanup();trainingCleanup=null;}
   const open = activeView !== 'keep' && activeView !== 'expedition'; workspaceEl.hidden = !open; inspectorEl.hidden = open; document.querySelector('.app').classList.toggle('panel-open', open); workspaceEl.dataset.view = activeView;
-  if (activeView === 'heroes') renderHeroes(); else if (activeView === 'campaign') renderExpedition(); else if (activeView === 'journal') renderJournal(); else if (activeView === 'labyrinth') workspaceEl.innerHTML=labyrinthMarkup(state); else if (activeView === 'armory') renderArmory(); else if (activeView === 'shop') renderShop(); else if (activeView === 'guild') renderGuild(); else if (activeView === 'settings') renderSettings(); else if (activeView === 'training') trainingCleanup=mountTraining(workspaceEl); else if(activeView==='arena')trainingCleanup=mountArena(workspaceEl); else if(activeView==='team')trainingCleanup=mountTeamArena(workspaceEl);
+  if (activeView === 'heroes') renderHeroes(); else if (activeView === 'campaign') renderExpedition(); else if (activeView === 'journal') renderJournal(); else if (activeView === 'labyrinth') {if(villageSignedIn())renderExpedition();else workspaceEl.innerHTML=labyrinthMarkup(state);} else if (activeView === 'armory') renderArmory(); else if (activeView === 'shop') renderShop(); else if (activeView === 'guild') renderGuild(); else if (activeView === 'settings') renderSettings(); else if (activeView === 'training') trainingCleanup=mountTraining(workspaceEl); else if(activeView==='arena')trainingCleanup=mountArena(workspaceEl); else if(activeView==='team')trainingCleanup=mountTeamArena(workspaceEl);
 }
 function renderBattle(fx=null) {
   const dialog=$('#battle-dialog'), battle=(trialState||state).battle;
