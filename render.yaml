@@ -16,5 +16,7 @@ services:
         value: /tmp/starfort-beta-data
       - key: STARFORT_AUTH_REQUIRED
         value: '1'
+      - key: STARFORT_MATCH_INGEST_SECRET
+        sync: false
       - key: STARFORT_TEST_CODE
         sync: false
