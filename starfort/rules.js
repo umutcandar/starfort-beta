@@ -243,6 +243,13 @@ function newBattle(state, stage, combatVersion=2, veteranTier=0) {
     starCharge: 40, stars:0, starLoot:null, log: [`${stage.name}: Yeminliler savaşa hazır.`], reward, rewardApplied: false, loot: null };
 }
 
+function scaleLabyrinthGuardian(battle,floor){
+  const factor=1+(floor-1)*0.012+(floor%2===0?0.10:0);
+  for(const enemy of battle.enemies){
+    enemy.maxHp=Math.ceil(enemy.maxHp*factor);enemy.hp=enemy.maxHp;
+    enemy.attack=Math.ceil(enemy.attack*(1+(floor-1)*0.008));
+  }
+}
 function restoreBattle(state, saved) {
   if (!saved || !integer(saved.stageId, 1, Math.min(STAGES.length, nextStage(state)))
     || !['active', 'won', 'lost'].includes(saved.status) || !integer(saved.round, 0, 100)) return null;
@@ -255,6 +262,7 @@ function restoreBattle(state, saved) {
     && state.labyrinth.cell===labyrinthLayout(mazeFloor).guard
     && (saved.status==='active'||saved.status==='lost'||state.labyrinth.guardianDefeated)) {
     battle.labyrinthFloor=mazeFloor;
+    scaleLabyrinthGuardian(battle,mazeFloor);
     battle.reward=zeroResources();
   } else if(saved.labyrinthFloor!==undefined) return null;
   if(Number.isInteger(saved.riftWeek)&&saved.riftWeek>=0&&saved.riftWeek<=99999
@@ -306,12 +314,8 @@ export function startLabyrinthBattle(state){
   const stage=stageById(requiredStoryChapters(location.floor));
   const battle=newBattle(state,stage,2);
   battle.labyrinthFloor=location.floor;
-  // Each second floor is a tougher guardian, with a smooth bonus across the maze.
-  const factor=1+(location.floor-1)*0.012+(location.floor%2===0?0.10:0);
-  for(const enemy of battle.enemies){
-    enemy.maxHp=Math.ceil(enemy.maxHp*factor);enemy.hp=enemy.maxHp;
-    enemy.attack=Math.ceil(enemy.attack*(1+(location.floor-1)*0.008));
-  }
+  // Each second floor is a tougher guardian, with smooth scaling between chapters.
+  scaleLabyrinthGuardian(battle,location.floor);
   battle.reward=zeroResources(); // Maze treasures & floor completion are rewarded separately.
   battle.log=[`Yıldızaltı Labirenti · Kat ${location.floor}: Kapı muhafızı yolunu kesti.`];
   state.battle=battle;
