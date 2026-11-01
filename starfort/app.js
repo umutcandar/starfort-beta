@@ -245,8 +245,9 @@ function renderConstructionBanner(){
   banner.querySelector('strong').textContent=job.ready?'✓ İnşaat tamamlandı':'⚒ İnşaat sürüyor';
   $('#construction-caption').textContent=name+' · '+(job.ready?'Dokunup tamamla':time+' kaldı');
 }
-function costHtml(cost, reward = false) {
-  return Object.entries(cost || {}).map(([id, amount]) => `<span class="cost ${!reward && state.res[id] < amount ? 'short' : ''}" title="${resourceName[id]}">${svg(resourceIcon[id])}${reward ? '+' : ''}${number(amount)}</span>`).join('');
+function costHtml(cost, reward=false, wallet='server') {
+ const balance=wallet==='practice'?state.res:villageView().res;
+ return Object.entries(cost||{}).map(([id,amount])=>`<span class="cost ${!reward&&balance[id]<amount?'short':''}" title="${resourceName[id]}">${svg(resourceIcon[id])}${reward?'+':''}${number(amount)}</span>`).join('');
 }
 
 function buildingProduction() {
@@ -261,7 +262,7 @@ function heroCard(hero) {
   return `<article class="hero-card ${inTeam ? 'selected' : ''} ${unlocked ? '' : 'locked'}" style="--hero:${hero.color}">
     <div class="hero-portrait">${heroPortrait(hero)}<span class="role-tag">${ROLES[hero.role]}</span><span class="hero-level">${unlocked ? 'SEV. '+level : 'KİLİTLİ'}</span><div class="portrait-title"><small>${hero.title}</small><h3>${hero.name}</h3></div></div>
     <div class="hero-card-content"><p>${HERO_LORE[hero.id]}</p><div class="hero-stats"><span>⚔ ${attack} saldırı</span><span>♡ ${hp} can</span></div><div class="skill">${R.HERO_ABILITIES[hero.id].name}: ${R.HERO_ABILITIES[hero.id].description}</div>
-    ${unlocked ? `<button class="${inTeam ? 'secondary' : 'primary'}" data-team="${hero.id}" ${state.battle?.status === 'active' ? 'disabled' : ''}>${state.team[selectedSlot] === hero.id ? 'Bu konumda' : `${selectedSlot + 1}. konuma ${inTeam ? 'taşı' : 'al'}`}</button><div class="cost-list">${costHtml(cost)}</div><button class="secondary" data-upgrade-hero="${hero.id}" ${canUpgrade ? '' : 'disabled'}>${level >= 20 ? 'En yüksek seviye' : 'Kahramanı geliştir'}</button><button class="text-button wide" data-armory-hero="${hero.id}">Ekipmanlarını düzenle</button>` : `<div class="unlock-note">${svg('expedition')} ${R.STAGES[hero.unlockStage - 1].name} zaferiyle katılır</div>`}</div></article>`;
+    ${unlocked ? `<button class="${inTeam ? 'secondary' : 'primary'}" data-team="${hero.id}" ${state.battle?.status === 'active' ? 'disabled' : ''}>${state.team[selectedSlot] === hero.id ? 'Bu konumda' : `${selectedSlot + 1}. konuma ${inTeam ? 'taşı' : 'al'}`}</button><div class="cost-list">${costHtml(cost,false,'practice')}</div><button class="secondary" data-upgrade-hero="${hero.id}" ${canUpgrade ? '' : 'disabled'}>${level >= 20 ? 'En yüksek seviye' : 'Kahramanı geliştir'}</button><button class="text-button wide" data-armory-hero="${hero.id}">Ekipmanlarını düzenle</button>` : `<div class="unlock-note">${svg('expedition')} ${R.STAGES[hero.unlockStage - 1].name} zaferiyle katılır</div>`}</div></article>`;
 }
 
 function heroPortrait(hero) {
