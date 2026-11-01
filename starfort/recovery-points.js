@@ -6,8 +6,10 @@ export function recoveryPoints(storage){
     for(let i=0;i<storage.length;i++){
       const key=storage.key(i);
       if(!key?.startsWith(RECOVERY_PREFIX))continue;
-      const payload=storage.getItem(key),state=importSave(payload);
-      result.push({key,createdAt:key.slice(RECOVERY_PREFIX.length),state,bytes:payload.length});
+      try{
+        const payload=storage.getItem(key),state=importSave(payload);
+        result.push({key,createdAt:key.slice(RECOVERY_PREFIX.length),state,bytes:payload.length});
+      }catch{/* One corrupt checkpoint must not hide other valid copies. */}
     }
   }catch{return result.sort((a,b)=>b.createdAt.localeCompare(a.createdAt));}
   return result.sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
