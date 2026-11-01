@@ -2,7 +2,7 @@
  * 2v2 or 5v5 human players; two AI-controlled squads per hero.
  * No account economy/loot, no ranking, no public hosting.
  */
-import {randomBytes} from 'node:crypto';
+import {randomBytes} from './rand-id.js';
 import {trainingDifficulty} from './training-difficulty.js';
 import {SIEGE,createSiege,siegeWall,siegeAttack,damageSiegeRam,stepSiegeRam,siegeOutcome} from './siege-rules.js';
 

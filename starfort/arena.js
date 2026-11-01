@@ -1,5 +1,5 @@
 /** Starfort v1.2 local 1v1 duel sandbox. Server owns all HP, movement and cooldowns. */
-import {randomBytes} from 'node:crypto';
+import {randomBytes} from './rand-id.js';
 import {trainingDifficulty} from './training-difficulty.js';
 export const ARENA={width:100,height:60,speed:17,maxHp:140,duration:120,attackRange:15,attackDamage:13,attackCooldown:.7,burstRange:11,burstDamage:28,burstCooldown:8,dashCooldown:5};
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
