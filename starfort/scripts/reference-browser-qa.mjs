@@ -201,6 +201,27 @@ try{
   assert.ok(await evaluate("document.querySelector('[data-audio-toggle]').textContent.includes('Açık')"),'Ses izne bağlı açılmalı');
   await evaluate("document.querySelector('[data-audio-toggle]').click()");
   assert.ok(await evaluate("document.querySelector('[data-audio-toggle]').textContent.includes('Kapalı')"),'Ses kapatılabilmeli');
+  // Long-game smoke: a fully funded veteran building must start a real, persistent timer.
+  await evaluate(`(()=>{const key='starfort:v1',state=JSON.parse(localStorage.getItem(key));state.buildings.keep=8;
+    state.res={gold:1000000,wood:1000000,stone:1000000,aether:1000000};
+    state.cleared=[1,2,3,4,5,6,7,8];
+    state.campaignStars={1:3,2:3,3:3,4:3,5:3,6:3,7:3,8:3};
+    localStorage.setItem(key,JSON.stringify(state));location.reload();return true})()`);
+  await ready();
+  await evaluate("document.querySelector('.nav-item[data-view=keep]').click()");
+  await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
+  assert.ok(await evaluate("!!document.querySelector('[data-upgrade-building=keep]')"),'8. seviyeden sonraki inşaat başlatılabilmeli');
+  await evaluate("document.querySelector('[data-upgrade-building=keep]').click()");
+  assert.ok(await evaluate("!!document.querySelector('.ws-status-chip.building')"),'İnşaatı başlatınca seviye anında yükselmemeli');
+  assert.equal(await evaluate("document.querySelector('#construction-status').hidden"),false,'Köyde usta çalışması takip edilmeli');
+  assert.equal(await evaluate("JSON.parse(localStorage.getItem('starfort:v1')).buildings.keep"),8,'Yapı süre bitmeden 9 olmamalı');
+  assert.ok(await evaluate("!!JSON.parse(localStorage.getItem('starfort:v1')).construction"),'Aktif inşaat kayda geçmeli');
+  await evaluate("location.reload()");
+  await ready();
+  await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
+  assert.ok(await evaluate("!!document.querySelector('.ws-status-chip.building')"),'Yenileme sonrası inşaat kuyruğu kalmalı');
+  await evaluate("document.querySelector('[data-plan-building=farm]').click()");
+  assert.ok(await evaluate("!!document.querySelector('.ws-status-chip.builder-busy')"),'İkinci binaya ustanın meşgul olduğu bildirilmeli');
   console.log('STARFORT gerçek Chromium görsel/etkileşim kontrolleri BAŞARILI');
   console.log(JSON.stringify({desktop:{scenic:wideScenic,bag:wideBag},mobile:{scenic:mobileScenic,bag:mobileBag,scrollDetail}},null,2));
 } finally{
