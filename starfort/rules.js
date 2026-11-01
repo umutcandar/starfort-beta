@@ -27,11 +27,11 @@ export const RESOURCES = {
 export const BUILDINGS = [
   { id: 'keep', name: 'Yıldız Kalesi', icon: '♜', maxLevel: 20, description: 'Üretimi ve yapıların seviye sınırını artırır.', baseCost: { gold: 100, wood: 80, stone: 70 } },
   { id: 'farm', name: 'Hasat Avlusu', icon: '🌾', maxLevel: 20, description: 'Vadinin hasadından altın kazanır.', baseCost: { gold: 55, wood: 40 }, production: { resource: 'gold', perMinute: 4 } },
-  { id: 'lumber', name: 'Karaorman Keresteliği', icon: '🪵', maxLevel: 20, description: 'Kalenin yapıları için kereste üretir.', baseCost: { gold: 50, stone: 25 }, production: { resource: 'wood', perMinute: 0.6 } },
+  { id: 'lumber', name: 'Karaorman Keresteliği', icon: '🪵', maxLevel: 20, description: 'Kalenin yapıları için kereste üretir.', baseCost: { gold: 50, stone: 25 }, production: { resource: 'wood', perMinute: 3 } },
   { id: 'quarry', name: 'Aytaşı Ocağı', icon: '⬟', maxLevel: 20, description: 'Kadim kayalardan yapı taşı çıkarır.', baseCost: { gold: 60, wood: 35 }, production: { resource: 'stone', perMinute: 2.5 } },
   { id: 'forge', name: 'Kor Demirhanesi', icon: '⚒', maxLevel: 20, description: 'Her yükseltme takım saldırısını %5 artırır; 2. ve 4. seviyelerde yeni ekipmanlar açılır.', baseCost: { gold: 85, wood: 40, stone: 55 } },
   { id: 'tavern', name: 'Yemin Hanı', icon: '⚑', maxLevel: 20, description: 'Her yükseltme kahramanların canını %4 artırır.', baseCost: { gold: 80, wood: 65, stone: 30 } },
-  { id: 'observatory', name: 'Yıldız Rasathanesi', icon: '✦', maxLevel: 20, description: 'Gökyüzünden yıldız özü toplar.', baseCost: { gold: 90, wood: 45, stone: 60 }, production: { resource: 'aether', perMinute: 3 } },
+  { id: 'observatory', name: 'Yıldız Rasathanesi', icon: '✦', maxLevel: 20, description: 'Gökyüzünden yıldız özü toplar.', baseCost: { gold: 90, wood: 45, stone: 60 }, production: { resource: 'aether', perMinute: 0.6 } },
 ];
 export const HEROES = [
   { id: 'aldren', name: 'Aldren', title: 'Kül Muhafızı', role: 'tank', color: '#c89463', description: 'Kalenin son yeminli muhafızı.', skill: 'Siper: İlk hedef olur; ayaktayken takım %15 az hasar alır.', hp: 170, attack: 18, unlockStage: 0 },
