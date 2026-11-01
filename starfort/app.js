@@ -1,7 +1,9 @@
 import * as R from './rules.js';
 import {createGameAudio} from './audio.js';
-import {loadAccountSession,accountSession,accountSignIn,accountSignUp,accountSignOut,accountBackup,accountRequestPasswordReset,accountAcceptRecoveryHash,accountUpdatePassword} from './account-auth.js';
+import {loadAccountSession,accountSession,accountSignIn,accountSignUp,accountSignOut,accountBackup,accountRequestPasswordReset,accountAcceptAuthHash,accountResendConfirmation,accountUpdatePassword} from './account-auth.js';
 import {createAccountSync} from './account-sync.js';
+import {makeRecoveryPoint,recoveryPoints,loadRecoveryPoint} from './recovery-points.js';
+import {progressionSummary} from './save-summary.js';
 import { createScene, paintBuildingPreview } from './illustrated-scene.js';
 import { placeCityLabels } from './city-layout.js';
 import { ROLES, HERO_LORE, CHAPTERS } from './content.js';
@@ -61,11 +63,17 @@ let battleSpeed=1, battleFxExpires=0;
 let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
 let accountBackupInfo=null,accountBusy=false,accountSyncInfo={status:'disconnected'},accountRecovering=false;
+let syncConflictDetails=null,confirmationEmail='',signupPending=false;
+const authRedirect=()=>location.protocol==='https:'?location.origin+location.pathname:'https://umutcandar.github.io/starfort-beta/starfort/';
 const accountSync=createAccountSync({
  fetchRemote:()=>accountBackup('get'),saveRemote:(saved,revision)=>accountBackup('save',{state:saved,revision}),
  readLocal:()=>state,validateLocal:saved=>importSave(exportSave(saved)),
- onStatus:info=>{accountSyncInfo=info;if(activeView==='settings')renderSettings();},
- onConflict:()=>notify('Bulutta farklı kayıt var. Yerel ilerleme korunuyor. Ayarlar bölümünden seçim yap.')
+ onStatus:info=>{accountSyncInfo=info;if(info.status==='synced')syncConflictDetails=null;if(activeView==='settings')renderSettings();},
+ onConflict:details=>{
+   syncConflictDetails=details;
+   notify('Bu cihaz ile bulut kaydı farklı. Hiçbiri silinmedi; Ayarlar bölümünden seçim yap.');
+   if(!$('#battle-dialog').open){activeView='settings';render();}
+ }
 });
 loadAccountSession();
 const gameAudio=createGameAudio();
@@ -473,11 +481,13 @@ document.addEventListener('submit',async event=>{
  accountBusy=true;
  try{
    if(mode==='signup'){
-     const info=await accountSignUp(email,password);
-     notify(info.needsConfirmation?'E-postanı onayla, sonra giriş yap.':'E-posta hesabı oluşturuldu.');
+     const info=await accountSignUp(email,password,undefined,authRedirect());
+     signupPending=info.needsConfirmation;confirmationEmail=email;
+      notify(info.needsConfirmation?'Onay bağlantısı e-postana gönderildi. Onayla ve oyuna dön.':'E-posta hesabı oluşturuldu.');
      if(accountSession())await accountSync.start();
    }else{
      await accountSignIn(email,password);
+     signupPending=false;confirmationEmail='';
      notify('E-posta hesabına giriş yapıldı.');
      await accountSync.start();if(activeView==='guild')void refreshGuild();
    }
@@ -836,11 +846,15 @@ if (state.battle?.status === 'active') { R.prepareLiveBattle(state); persist(); 
 render();
 (async()=>{
  try{
-   if(await accountAcceptRecoveryHash(location.hash,()=>history.replaceState(null,'',location.pathname+location.search))){
-     accountRecovering=true;activeView='settings';render();notify('Kurtarma bağlantısı onaylandı. Yeni şifreni oluştur.');
-     return;
-   }
-   if(accountSession())await accountSync.start();
+   const callback=await accountAcceptAuthHash(location.hash,()=>history.replaceState(null,'',location.pathname+location.search));
+     if(callback){
+       accountRecovering=callback.type==='recovery';signupPending=false;confirmationEmail='';
+       activeView='settings';render();
+       if(accountRecovering){notify('Kurtarma bağlantısı onaylandı. Şimdi yeni şifreni yaz.');return;}
+       notify('E-posta hesabın doğrulandı. Bulut ilerlemen kontrol ediliyor.');
+     }
+     if(accountSession())await accountSync.start();
+     if(!accountSession()&&!localStorage.getItem('starfort:welcome-seen')&&!location.hash)$('#account-welcome')?.showModal();
  }catch(error){notify('Kurtarma: '+error.message);}
 })();
 setInterval(()=>{if(accountSession()&&!document.hidden)void accountSync.refresh();},45000);
