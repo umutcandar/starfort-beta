@@ -334,8 +334,9 @@ function renderShop() {
 }
 
 function renderGuild(){
+  const needsAccount=!accountSession();
   const header=`<header><div><span class="eyebrow">YILDIZ İTTİFAKLARI · GELİŞTİRME SUNUCUSU</span><h2>Klan salonu</h2><p>Arkadaşlarınla ortak klan kur, davet koduyla katıl, sohbet et ve ortak baskın etkinliğine katıl.</p></div><button class="secondary" data-close-view>Köye dön</button></header>`;
-  if(guildAvailable===false){workspaceEl.innerHTML=header+`<article class="guild-empty"><h3>Çevrim içi sunucu kapalı</h3><p>Bu klan bölümü gerçek oyuncularla veri paylaşır, ancak Node geliştirme sunucusu açık olmalıdır. Proje klasöründe <code>node guild-server.mjs</code> çalıştır, sonra buradan yeniden bağlan.</p><button class="primary" data-guild-action="refresh">Yeniden bağlan</button><p class="guild-disclaimer">1v1 ve 5v5 PvP test modunda var; 20v20 henüz yok. Klan baskını ortak ilerleme prototipidir.</p></article>`;return;}
+  if(!needsAccount && guildAvailable===false){workspaceEl.innerHTML=header+`<article class="guild-empty"><h3>Çevrim içi sunucu kapalı</h3><p>Bu klan bölümü gerçek oyuncularla veri paylaşır, ancak Node geliştirme sunucusu açık olmalıdır. Proje klasöründe <code>node guild-server.mjs</code> çalıştır, sonra buradan yeniden bağlan.</p><button class="primary" data-guild-action="refresh">Yeniden bağlan</button><p class="guild-disclaimer">1v1 ve 5v5 PvP test modunda var; 20v20 henüz yok. Klan baskını ortak ilerleme prototipidir.</p></article>`;return;}
   if(guildBusy&&!guildSnapshot){workspaceEl.innerHTML=header+'<p class="guild-loading">Klan sunucusuna bağlanılıyor…</p>';return;}
   if(!accountSession()){workspaceEl.innerHTML=header+`<article class="guild-empty"><h3>Önce hesabına giriş yap</h3><p>Artık ayrı lonca anahtarı yok. Supabase e-posta hesabın hem oyuncu hem lonca kimliğin olacak.</p><button class="primary" data-view="settings">Hesaba giriş yap</button></article>`;return;}
   if(!guildSnapshot&&!guildBusy&&!guildError){workspaceEl.innerHTML=header+`<article class="guild-empty"><h3>Komutan kaydını oluştur</h3><p>Bu cihaz için takma adla test komutanı oluştur. Çevrim içi beta sunucusunda davet kodu istenebilir. Oyuncu oturum anahtarı bu tarayıcıda tutulur.</p><div class="guild-form"><input id="guild-name" maxlength="24" placeholder="Komutan adın (3–24 karakter)" aria-label="Komutan adı"><button class="primary" data-guild-action="register">Oluştur</button></div></article>`;return;}
@@ -434,7 +435,7 @@ async function accountAction(action){
    }
    if(action==='password-update'){
      await accountUpdatePassword($('#account-new-password')?.value);
-     accountRecovering=false;notify('Şifre güncellendi.');return;
+     accountRecovering=false;notify('Şifre güncellendi.');await accountSync.start();return;
    }
    if(action==='logout'){
      accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;
