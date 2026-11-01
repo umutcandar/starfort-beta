@@ -165,3 +165,51 @@ test('new special hero skills give distinct observable combat behavior', () => {
   assert.ok(nyxara.battle.allies[0].hp>hp);
   assert.ok(nyxara.battle.enemies.every(enemy=>enemy.hp<enemy.maxHp));
 });
+
+test('auto-equipping a tank uses owned items, never steals from another hero, and survives save restore', () => {
+  const state=fresh();
+  const chosen=R.autoEquipHero(state,'aldren');
+  assert.equal(chosen.ok,true);
+  assert.equal(chosen.changed,true);
+  assert.deepEqual(state.loadouts.aldren,{weapon:'iron_sword',armor:'ward_mail'});
+  assert.deepEqual(R.autoEquipHero(state,'rovan').loadout,{});
+  assert.equal(R.autoEquipHero(state,'aldren').changed,false);
+  assert.deepEqual(restore(state),state);
+});
+
+test('gear optimizer accounts for two-piece set bonus and equipped copies held by other heroes', () => {
+  const state=fresh();
+  state.inventory={iron_sword:1,ward_mail:1,lunar_charm:1,moon_watch:1};
+  assert.equal(R.equipItem(state,'rovan','iron_sword').ok,true);
+  const other=copy(state.loadouts.rovan);
+  const result=R.autoEquipHero(state,'aldren');
+  assert.equal(result.ok,true);
+  assert.equal(state.loadouts.aldren.armor,'moon_watch');
+  assert.equal(state.loadouts.aldren.relic,'lunar_charm');
+  assert.equal(state.loadouts.aldren.weapon,undefined);
+  assert.deepEqual(state.loadouts.rovan,other);
+  assert.equal(R.equipmentStats(state,'aldren').hp,78);
+  assert.equal(R.equipmentStats(state,'aldren').armor,8);
+  assert.deepEqual(restore(state),state);
+});
+
+test('a healer favors healing gear, and unavailable or locked heroes cannot auto-equip', () => {
+  const state=fresh();
+  state.heroes.mira={level:1};
+  state.inventory.moonheart=1;
+  state.inventory.star_lens=1;
+  assert.equal(R.autoEquipHero(state,'mira').ok,true);
+  assert.equal(state.loadouts.mira.relic,'moonheart');
+  const before=copy(state);
+  rejectsUnchanged(state,()=>R.autoEquipHero(state,'not-a-hero'));
+  // The role is resolved from the game's canonical unlocked hero catalog.
+  delete state.heroes.mira;
+  rejectsUnchanged(state,()=>R.autoEquipHero(state,'mira'));
+  assert.deepEqual(state.inventory,before.inventory);
+});
+
+test('active combat forbids automatic equipment changes without mutating the save', () => {
+  const state=fresh();
+  assert.equal(R.startBattle(state,1).ok,true);
+  rejectsUnchanged(state,()=>R.autoEquipHero(state,'aldren'));
+});
