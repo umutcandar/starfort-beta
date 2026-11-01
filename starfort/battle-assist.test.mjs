@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {assistMove,nearestEnemy,hpEvents,practiceReward} from './battle-assist.js';
+import {assistMove,nearestEnemy,hpEvents,practiceReward,rewardMode} from './battle-assist.js';
 test('assist walks toward an out-of-range target only when attacking without stick input',()=>{
   const me={x:10,y:30},t={x:50,y:30};
   assert.deepEqual(assistMove(me,t,{x:0,y:0},{range:15,wantsAction:true}),{x:1,y:0,assisted:true});
@@ -19,4 +19,9 @@ test('hp events report damage and heals',()=>{
 test('practice rewards are fixed and doubled on the first win of the day',()=>{
   assert.deepEqual(practiceReward('hard',true,true),{gold:200,aether:14,bonus:true});
   assert.deepEqual(practiceReward('easy',false),{gold:10,aether:0,bonus:false});
+});
+test('mode multipliers match the server table',()=>{
+  assert.deepEqual(practiceReward('hard',true,true,'siege'),{gold:400,aether:28,bonus:true});
+  assert.deepEqual(practiceReward('normal',true,false,'team2'),{gold:90,aether:6,bonus:false});
+  assert.equal(rewardMode({variant:'siege',teamSize:5}),'siege');assert.equal(rewardMode({variant:'flags',teamSize:2}),'team2');assert.equal(rewardMode({players:[]}),'duel');
 });

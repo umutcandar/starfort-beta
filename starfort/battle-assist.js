@@ -24,8 +24,12 @@ export function hpEvents(prev,next){
 }
 /** Honest local practice rewards for bot wins (no real money, no ranking). */
 export const PRACTICE_REWARD=Object.freeze({easy:{gold:30,aether:2},normal:{gold:60,aether:4},hard:{gold:100,aether:7}});
-export function practiceReward(difficulty,won,firstWinToday=false){
+export const MODE_MULTIPLIER=Object.freeze({duel:1,team2:1.5,team5:1.5,siege:2});
+/** Mirrors the server table in public.sfb_api('reward/claim'); used offline / on the self-hosted Node server. */
+export function practiceReward(difficulty,won,firstWinToday=false,mode='duel'){
   if(!won)return {gold:10,aether:0,bonus:false};
-  const base=PRACTICE_REWARD[difficulty]||PRACTICE_REWARD.normal;
-  return firstWinToday?{gold:base.gold*2,aether:base.aether*2,bonus:true}:{...base,bonus:false};
+  const base=PRACTICE_REWARD[difficulty]||PRACTICE_REWARD.normal,m=MODE_MULTIPLIER[mode]||1;
+  const gold=Math.round(base.gold*m),aether=Math.round(base.aether*m);
+  return firstWinToday?{gold:gold*2,aether:aether*2,bonus:true}:{gold,aether,bonus:false};
 }
+export function rewardMode(room){if(!room)return 'duel';if(room.variant==='siege')return 'siege';if(room.teamSize)return room.teamSize<=2?'team2':'team5';return 'duel';}

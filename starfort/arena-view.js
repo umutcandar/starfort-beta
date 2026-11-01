@@ -89,7 +89,7 @@ export function mountArena(root){
     $('[data-arena-leave]').disabled=!token||(status==='idle'&& !error)||busy;
     const me=room?.players.find(p=>p.id===snapshot.you);
     if(room){for(const ev of hpEvents(prevPlayers,room.players))juice.hit(ev,ev.id===snapshot.you);prevPlayers=room.players.map(p=>({id:p.id,hp:p.hp}));}else prevPlayers=null;
-    if(status==='ended'&&room&&rewarded!==room.id){rewarded=room.id;const won=room.winner===snapshot.you;juice.finish(won);requestAnimationFrame(()=>$('.arena-field')?.scrollIntoView({block:'center'}));if(room.isPractice)window.dispatchEvent(new CustomEvent('starfort:practice-result',{detail:{won,difficulty:room.botDifficulty||botDifficulty}}));}
+    if(status==='ended'&&room&&rewarded!==room.id){rewarded=room.id;const won=room.winner===snapshot.you;juice.finish(won);requestAnimationFrame(()=>$('.arena-field')?.scrollIntoView({block:'center'}));if(room.isPractice)window.dispatchEvent(new CustomEvent('starfort:practice-result',{detail:{won,mode:'duel',matchId:room.id,difficulty:room.botDifficulty||botDifficulty}}));}
     $('[data-arena-burst] small').textContent=me&&me.burstReady>0?`${me.burstReady.toFixed(1)} sn`: 'Q · 8 sn';
     $('[data-arena-dash] small').textContent=me&&me.dashReady>0?`${me.dashReady.toFixed(1)} sn`: 'Space · 5 sn';
   }

@@ -28,5 +28,18 @@
   #workspace.sf-battle-live .arena-actions,#workspace.sf-battle-live .team-combat{position:fixed;z-index:14;right:12px;bottom:max(18px,env(safe-area-inset-bottom));left:auto;width:190px;margin:0;padding:6px;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#081d31d9;border:1px solid #d1ad738a;border-radius:14px}
   #workspace.sf-battle-live .arena-actions button{min-height:58px;font-size:12px;border-radius:12px;padding:4px}
   #workspace.sf-battle-live .arena-actions [data-arena-attack]{grid-column:1/-1;min-height:74px;font-size:18px;background:linear-gradient(160deg,#c2412d,#6d1410);color:#fff4d8}
+  #workspace.sf-battle-live .team-combat{display:flex;flex-direction:column;width:200px}
+  #workspace.sf-battle-live .team-combat .team-controls{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0}
+  #workspace.sf-battle-live .team-combat button{min-height:52px;font-size:12px;border-radius:12px;padding:4px;width:auto}
+  #workspace.sf-battle-live .team-combat [data-team-attack]{grid-column:1/-1;min-height:70px;font-size:18px;background:linear-gradient(160deg,#c2412d,#6d1410);color:#fff4d8}
+  #workspace.sf-battle-live .team-combat .team-orders{grid-template-columns:repeat(4,1fr);gap:4px}
+  #workspace.sf-battle-live .team-combat .team-orders button{min-height:38px;font-size:10px;padding:2px}
+  #workspace.sf-battle-live .team-combat .team-orders small{display:none}
   #workspace.sf-battle-live .team-match-hud{position:absolute;z-index:7;top:50px;left:8px;right:8px;margin:0}
 }
+.sf-coach{position:fixed;left:10px;right:10px;bottom:calc(74px + env(safe-area-inset-bottom));z-index:90;max-width:460px;margin:0 auto;padding:12px 14px;border:1px solid #e2bf78;border-radius:14px;background:linear-gradient(150deg,#1d3a55f2,#0a1a2ef5);color:#f6e6c2;box-shadow:0 10px 30px #000a;animation:sfCoach .4s ease-out}
+.sf-coach small{color:#e6c27a;letter-spacing:2px;font-size:10px}.sf-coach b{display:block;font:700 18px Georgia,serif;margin:2px 0 4px}.sf-coach p{margin:0 0 10px;font-size:13px;line-height:1.45}
+.sf-coach div{display:flex;gap:8px}.sf-coach .primary{flex:1;min-height:44px}.sf-coach .secondary{min-height:44px;padding:0 14px}
+body.sf-combat-running .sf-coach,dialog[open]~.sf-coach{display:none}
+@keyframes sfCoach{from{opacity:0;transform:translateY(16px)}}
+body:has(.sf-coach:not([hidden])) .toast{bottom:calc(250px + env(safe-area-inset-bottom))}

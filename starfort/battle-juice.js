@@ -8,7 +8,7 @@ export function createJuice(field,getCanvas){
     const w=1000*sc,h=600*sc;return {left:r.left-f.left+(r.width-w)/2+x/100*w,top:r.top-f.top+(r.height-h)/2+y/60*h};};
   function hit(ev,isMe){
     const n=document.createElement('b');const card=field.querySelector(isMe?'.sf-life-ally':'.sf-life-enemy');let left,top;
-    if(card&&card.offsetParent){const r=card.getBoundingClientRect(),f=field.getBoundingClientRect();left=r.left-f.left+r.width/2;top=r.bottom-f.top+34;}else({left,top}=place(ev.x??50,ev.y??30));
+    if(card&&card.offsetParent){const r=card.getBoundingClientRect(),f=field.getBoundingClientRect();left=r.left-f.left+r.width/2;top=r.bottom-f.top+34;}else{const f=field.getBoundingClientRect();left=f.width/2+(isMe?-46:46);top=f.height*.42;}
     n.className='sf-dmg'+(ev.delta>0?' heal':isMe?' me':'')+(ev.crit?' crit':'');n.textContent=(ev.delta>0?'+':'')+ev.delta;
     n.style.left=`${left+(Math.random()*24-12)}px`;n.style.top=`${top-18}px`;layer.appendChild(n);setTimeout(()=>n.remove(),900);
     if(ev.delta<0&&isMe){field.classList.remove('sf-hurt');void field.offsetWidth;field.classList.add('sf-hurt');try{navigator.vibrate?.(ev.crit?60:25)}catch{}}

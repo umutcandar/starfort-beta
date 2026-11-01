@@ -10,6 +10,8 @@ import {guildRequest,guildOnline,GUILD_TOKEN_KEY} from './guild-client.js';
 import {mountTraining} from './tactics-view.js';
 import {mountArena} from './arena-view.js';
 import {practiceReward} from './battle-assist.js';
+import {mountOnboarding} from './onboarding.js';
+let coach=null;
 import {mountTeamArena} from './team-view.js';
 import {ensureTestCommander} from './quick-play.js';
 import {commanderPath} from './commander-path.js';
@@ -56,13 +58,23 @@ const combatRunner=createBattleRunner({
   onPause:()=>{if(!trialState)persist(); if($('#battle-dialog').open)renderBattle();},
 });
 
-window.addEventListener('starfort:practice-result',e=>{
-  const {won,difficulty}=e.detail||{};const day=new Date().toISOString().slice(0,10);
-  const first=won&&localStorage.getItem('starfort:practice-win-day')!==day;if(first)localStorage.setItem('starfort:practice-win-day',day);
-  const r=practiceReward(difficulty,won,first);
+function grantReward(r,won,source){
   state.res.gold=(state.res.gold||0)+r.gold;state.res.aether=(state.res.aether||0)+r.aether;
   persist();try{renderResources();}catch{}
-  notify(`${won?'Zafer':'Antrenman bitti'}: +${r.gold} ◈${r.aether?` +${r.aether} ✦`:''}${r.bonus?' · Günün ilk zaferi x2!':''}`);
+  notify(`${won?'Zafer':'Savaş bitti'}: +${r.gold} ◈${r.aether?` +${r.aether} ✦`:''}${r.bonus?' · Günün ilk zaferi x2!':''}${source}`);
+}
+window.addEventListener('starfort:practice-result',async e=>{
+  const {won,difficulty,mode='duel',matchId}=e.detail||{};
+  try{coach?.fire('practice-result');}catch{}
+  const token=guildToken||localStorage.getItem(GUILD_TOKEN_KEY);
+  const id=String(matchId||'').replace(/[^a-f0-9]/gi,'').slice(0,32);
+  if(token&&id.length>=8){
+    try{const r=await guildRequest('reward/claim',token,{mode,difficulty,won:!!won,matchId:id});grantReward(r,won,'');return;}
+    catch(error){if(!/ulaşılamadı|bulunamadı|404|fetch|timeout|abort/i.test(error.message||'')){notify('Ödül verilmedi: '+error.message);return;}}
+  }
+  const day=new Date().toISOString().slice(0,10);
+  const first=won&&localStorage.getItem('starfort:practice-win-day')!==day;if(first)localStorage.setItem('starfort:practice-win-day',day);
+  grantReward(practiceReward(difficulty,won,first,mode),won,' (çevrimdışı, yerel kayıt)');
 });
 function persist() {
   try { localStorage.setItem(R.STORAGE_KEY, JSON.stringify(state)); $('#save-status').textContent = 'Yerel kayıt hazır'; return true; }
@@ -507,7 +519,7 @@ function dispatch(action) {
   if (button.dataset.upgradeBuilding) {
     selectedBuilding = button.dataset.upgradeBuilding;
     const upgraded = R.upgradeBuilding(state, selectedBuilding, Date.now());
-    if (upgraded.ok) $('#building-dialog').close();
+    if (upgraded.ok) { $('#building-dialog').close(); try{coach?.fire('upgraded');}catch{} }
     const building = R.BUILDINGS.find(item => item.id === selectedBuilding);
     result(upgraded, `${building.name} · Seviye ${state.buildings[selectedBuilding]} — ${BUILDING_EVOLUTION[selectedBuilding][state.buildings[selectedBuilding]-1]}`);
     return;
@@ -587,3 +599,5 @@ document.addEventListener('visibilitychange', () => { if(document.hidden){combat
 window.addEventListener('pagehide', () => {combatRunner.pause();persist();});
 
 document.addEventListener('fullscreenchange',()=>{const active=!!document.fullscreenElement; $('[data-fullscreen]').setAttribute('aria-label',active?'Tam ekrandan çık':'Tam ekranı aç'); scene?.resize();});
+
+try{coach=mountOnboarding({storage:localStorage,onFight:()=>{if(!localStorage.getItem('starfort:bot-difficulty'))localStorage.setItem('starfort:bot-difficulty','easy');quickPlayBot('duel');},onUpgrade:()=>{activeView='village';render();openBuilding('farm');}});}catch{}
