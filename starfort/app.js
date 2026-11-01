@@ -210,7 +210,7 @@ function renderQuest() {
     return;
   }
   const chapter=CHAPTERS[stage.id-1];
-  const power=R.teamPower(state),gear=R.itemById(R.FIRST_CLEAR_LOOT[stage.id]);
+  const power=R.teamPower(state),gear=R.itemById(R.FIRST_CLEAR_LOOT[stage.id]),gate=R.stageRequirements(state,stage,power);
   const rewards=Object.entries(stage.reward).map(([id,amount])=>`<span class="quest-reward-token" title="${resourceName[id]}">${svg(resourceIcon[id])}<b>${number(amount)}</b></span>`).join('');
   questEl.innerHTML=`<button class="quest-dismiss" type="button" data-quest-close aria-label="Sefer kartını kapat" title="Kapat">×</button><div class="quest-crown"><span aria-hidden="true">✦</span>Sıradaki Sefer</div>
     <div class="quest-layout">
@@ -225,7 +225,7 @@ function renderQuest() {
         <div class="quest-reward-title">Ödüller:${gear&&!state.cleared.includes(stage.id)?` <small>+ ${esc(gear.name)}</small>`:''}</div>
         <div class="quest-rewards">${rewards}</div>
         <div class="quest-actions">
-          <button class="primary" ${active?'data-action="resume-battle"':`data-stage="${stage.id}"`}>${active?'⚔ Savaşa Dön':'⚔ Savaşa Başla'} <span aria-hidden="true">❯</span></button>
+          <button class="primary" ${active?'data-action="resume-battle"':gate.available?`data-stage="${stage.id}"`:'data-action="open-expedition"'}>${active?'⚔ Savaşa Dön':gate.available?'⚔ Savaşa Başla':'⚑ Önce Sefer Şartları'} <span aria-hidden="true">❯</span></button>
           <button class="text-button" data-action="open-expedition">Tüm seferler</button>
         </div>
       </div>
