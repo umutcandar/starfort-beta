@@ -196,7 +196,6 @@ export function upgradeBuilding(state, id, now = state.lastCollected) {
   collect(state, now);
   pay(state, cost);
   state.buildings[id]++;
-  seasonEvent(state,'upgrade');
   return { ok: true };
 }
 
@@ -214,7 +213,6 @@ export function upgradeHero(state, id) {
   if (!canPay(state, cost)) return fail('Yeterli kaynak yok.');
   pay(state, cost);
   state.heroes[id].level++;
-  seasonEvent(state,'upgrade');
   return { ok: true };
 }
 
@@ -409,12 +407,14 @@ export function advanceCombat(state,deltaMs) {
 }
 export function setBattleStance(state,stance){
   if(!activeBattle(state))return fail('Devam eden savaş yok.');
-  return changeBattleStance(state.battle,stance);
+  const action=changeBattleStance(state.battle,stance);
+  if(action.ok&&action.events?.length)seasonEvent(state,'star');
+  return action;
 }
 export function useHeroAbility(state,heroId) {
   if(!activeBattle(state)) return fail('Devam eden savaş yok.');
   const outcome=settleLiveResult(state,castLiveAbility(state.battle,heroId));
-  if(outcome.ok)recordContract(state,'ability');
+  if(outcome.ok){recordContract(state,'ability');seasonEvent(state,'upgrade');}
   return outcome;
 }
 
@@ -445,7 +445,11 @@ function finishBattle(state, events) {
     if (!battle.rewardApplied) {
       award(state, battle.reward);
       recordContract(state,'win');
-      if(!battle.veteranTier && !battle.riftModifier)seasonEvent(state,'win');
+      if(!battle.veteranTier && !battle.riftModifier){
+        seasonEvent(state,'win');
+        if(battle.replay)seasonEvent(state,'forge');
+      }
+      if(battle.veteranTier&&!battle.riftModifier)seasonEvent(state,'maze');
       if(battle.riftModifier)seasonEvent(state,'rift');
       if(Number.isInteger(battle.riftWeek)&&battle.riftModifier&&!state.riftRecords.some(x=>x.week===battle.riftWeek)){
         state.riftRecords=restoreRiftRecords([...state.riftRecords,{week:battle.riftWeek,stageId:battle.stageId,modifier:battle.riftModifier}]);
@@ -466,7 +470,7 @@ function finishBattle(state, events) {
       const graded=recordCampaignStars(state,battle);
       battle.stars=graded.stars;
       battle.starLoot=graded.loot;
-      if(graded.improved && graded.stars)seasonEvent(state,'star');
+
       if(graded.improved && graded.stars)events.push(`Sefer derecesi: ${'★'.repeat(graded.stars)}${'☆'.repeat(3-graded.stars)}.`);
       if(graded.loot)events.push(`${itemById(graded.loot).name} üç yıldız zaferiyle kazanıldı.`);
       for (const hero of HEROES.filter(item => unlocked(state, item) && !state.heroes[item.id])) {
