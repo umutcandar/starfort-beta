@@ -61,7 +61,7 @@ test('authenticated RPC transmits action IDs only, never client levels, damage, 
  const fetcher=async(url,opts)=>{received={url,opts};return {ok:true,json:async()=>source()}};
  const got=await accountProgressRequest('mission_turn',{target:null,aux:'skill',requestId:'22222222-2222-4222-8222-222222222222',fetcher});
  assert.equal(got.identity,uid);
- assert.match(received.url,/\/rest\/v1\/rpc\/sfb_account_api$/);
+ assert.match(received.url,/\/rest\/v1\/rpc\/sfb_starfort_progress$/);
  assert.equal(received.opts.headers.Authorization,'Bearer qa-token');
  const args=JSON.parse(received.opts.body);
  assert.deepEqual(Object.keys(args).sort(),['p_action','p_aux','p_request_id','p_target']);
@@ -107,7 +107,7 @@ test('server migration has a locked canonical ledger, active mission, server-cal
  assert.match(sql,/if ms-last_action<3000/);
  assert.match(sql,/if ehp=0 or php=0 or turns>=14/);
  assert.match(sql,/stage:=p_target::integer/);
- assert.match(sql,/grant execute on function public\.sfb_account_api/);
+ assert.match(sql,/grant execute on function public\.sfb_starfort_progress/);
  assert.match(patch,/gear:=jsonb_set\(gear,array\[hero\],coalesce\(gear->hero/);
  assert.match(patch,/counter_value<=fee/);
  assert.doesNotMatch(sql,/grant\s+update\s+on\s+public\.starfort_player_progress\s+to\s+authenticated/i);
