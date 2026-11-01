@@ -406,6 +406,21 @@ async function guildAction(name){
   catch(error){guildError=error.message;notify(error.message);}
   finally{guildBusy=false;if(activeView==='guild')renderGuild();}
 }
+function renderAccountExtras(){
+  const local=progressionSummary(state);
+  let remote=null;
+  try{if(syncConflictDetails?.remote)remote=progressionSummary(syncConflictDetails.remote);}catch{}
+  const label=p=>p?`Kale ${p.keep}, ${p.chapters} bölüm, ${p.heroes} kahraman, ${number(p.gold)} altın`:'Bulut bilgisi henüz alınamadı';
+  const points=recoveryPoints(localStorage);
+  return `<section class="account-extra-grid">
+    ${accountSyncInfo.status==='conflict'?`<article class="guild-panel account-conflict"><h3>İki farklı köy kaydı bulundu</h3><p>İkisini karşılaştır. Seçim yapmadan ilerleme silinmez.</p>
+    <div class="account-compare"><div><small>BU CİHAZ</small><p>${esc(label(local))}</p></div><div><small>BULUT</small><p>${esc(label(remote))}</p></div></div>
+    <p>Önce kayıt dosyanı indir. Ardından hangi köyle devam edeceğini seç.</p></article>`:''}
+    ${signupPending&&!accountSession()?`<article class="guild-panel account-pending"><h3>E-posta onayı bekleniyor</h3><p>${esc(confirmationEmail)} adresine gönderilen bağlantıyı açıp oyuna dön.</p>
+    <button class="secondary wide" data-account-action="resend-confirmation">Onay e-postasını tekrar gönder</button></article>`:''}
+    <article class="guild-panel account-recovery"><h3>Önceki köy kurtarma noktaları</h3><p>Bir yedeği geri yüklemeden önce önceki kaydın son üç kopyası saklanır.</p>
+    ${points.length?points.map((p,i)=>`<button class="secondary wide" data-recovery-key="${esc(p.key)}">${i+1}. Kurtarma kaydı · ${esc(label(progressionSummary(p.state)))}</button>`).join(''):'<small>Henüz kurtarma kopyası yok.</small>'}</article></section>`;
+}
 function renderSettings(){
   const hosted=location.hostname.endsWith('github.io')||new URLSearchParams(location.search).get('hosted')==='1';
   const cloudReady=hosted&&!!guildToken,cloudLabel=!hosted?'Bulut yedeği GitHub Pages çevrim içi beta hesabında kullanılabilir.':!cloudReady?'Önce İttifak bölümünden bu cihazda komutan hesabı oluştur.':cloudSaveInfo?.exists?`Bulut yedeği: ${new Date(cloudSaveInfo.savedAt).toLocaleString('tr-TR')} · Rev. ${cloudSaveInfo.revision}`:cloudSaveInfo?'Henüz bulut yedeği yok.':'Bulut durumu henüz sorgulanmadı.';
@@ -429,6 +444,7 @@ function renderSettings(){
       ${accountRecovering?'<div class="guild-form"><input id="account-new-password" type="password" minlength="8" maxlength="100" autocomplete="new-password" placeholder="Yeni şifren"><button class="primary" data-account-action="password-update">Şifremi güncelle</button></div>':''}
       <small>Otomatik eşitleme yalnızca hesaba giriş yapıldığında çalışır. Bulut çatışmalarını oyuncu çözer.</small>
     </article></div>`;
+  workspaceEl.insertAdjacentHTML('beforeend',renderAccountExtras());
 }
 
 async function accountAction(action){
