@@ -306,6 +306,12 @@ export function startLabyrinthBattle(state){
   const stage=stageById(requiredStoryChapters(location.floor));
   const battle=newBattle(state,stage,2);
   battle.labyrinthFloor=location.floor;
+  // Each second floor is a tougher guardian, with a smooth bonus across the maze.
+  const factor=1+(location.floor-1)*0.012+(location.floor%2===0?0.10:0);
+  for(const enemy of battle.enemies){
+    enemy.maxHp=Math.ceil(enemy.maxHp*factor);enemy.hp=enemy.maxHp;
+    enemy.attack=Math.ceil(enemy.attack*(1+(location.floor-1)*0.008));
+  }
   battle.reward=zeroResources(); // Maze treasures & floor completion are rewarded separately.
   battle.log=[`Yıldızaltı Labirenti · Kat ${location.floor}: Kapı muhafızı yolunu kesti.`];
   state.battle=battle;
