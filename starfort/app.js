@@ -55,6 +55,7 @@ let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
 let guildToken='';try{guildToken=localStorage.getItem(GUILD_TOKEN_KEY)||''}catch{}
 let trainingCleanup = null;
+let questPanelExpanded=false;
 let activeView = 'keep', selectedBuilding = 'keep', toastTimer, scene, selectedSlot = 0, selectedArmoryHero = 'aldren', selectedBagSlot = 'all', selectedBagItem='starbreaker', trialState = null;
 const cityLabelNodes = new Map();
 const resourcesEl = $('#resources'), navEl = $('#navigation'), inspectorEl = $('#inspector'), workspaceEl = $('#workspace'), questEl = $('#next-quest');
@@ -188,10 +189,16 @@ function renderInspector() {
   inspectorEl.innerHTML = `<div class="building-details"><div class="section-head"><small>KÖY YÖNETİMİ</small><span class="level-badge">SEVİYE ${level}</span></div><div class="building-portrait">${svg(building.id)}</div><h2>${building.name}</h2><p class="building-description">${building.description}</p><div class="stat-line"><span>Gelişim</span><b>${level} / ${building.maxLevel}</b></div>${building.production ? `<div class="stat-line"><span>Üretim hızı</span><b>${number(building.production.perMinute * level * (1 + (state.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk</b></div>` : `<div class="stat-line"><span>Köy etkisi</span><b>${building.id === 'keep' ? '+%5 üretim / seviye' : building.id === 'forge' ? '+%5 saldırı / seviye' : '+%4 can / seviye'}</b></div>`}<div class="cost-list">${costHtml(cost)}</div><button class="primary wide" data-upgrade-building="${building.id}" ${blocked ? 'disabled' : ''}>${level >= building.maxLevel ? 'En yüksek seviye' : `Yapıyı geliştir · ${number(cost.gold || 0)} altın`}</button>${buildingProduction(building)}</div><div class="squad-block"><div class="squad-heading"><h3>Kahramanlar</h3><button class="text-button" data-view="heroes">Dizilimi düzenle</button></div><div class="squad">${team.map(hero => `<div class="squad-member">${heroPortrait(hero)}<span>${hero.name}</span><small>Lv.${state.heroes[hero.id].level}</small></div>`).join('')}</div><div class="team-power"><span>Dizilim gücü</span><strong>${number(R.teamPower(state))} ✦</strong></div></div><p class="inspector-note">Yapılar yükseldikçe görünüşleri değişir. Üretim 24 saate kadar birikir; ilk 4 saat tam hızda, sonrası yavaş üretir.</p>`;
 }
 function renderQuest() {
+  // A compact Sefer shortcut keeps the village panorama unobstructed.
+  const expanded=activeView==='expedition' && questPanelExpanded;
+  questEl.hidden=!expanded;
+  const mini=$('#quest-mini');
+  mini.hidden=expanded || !['keep','expedition'].includes(activeView);
+  mini.setAttribute('aria-expanded',String(expanded));
   const active=state.battle?.status==='active';
   const stage=active?R.STAGES[state.battle.stageId-1]:R.STAGES[state.cleared.length];
   if(!stage){
-    questEl.innerHTML=`<div class="quest-crown"><span aria-hidden="true">✦</span>Sıradaki Sefer</div>
+    questEl.innerHTML=`<button class="quest-dismiss" type="button" data-quest-close aria-label="Sefer kartını kapat" title="Kapat">×</button><div class="quest-crown"><span aria-hidden="true">✦</span>Sıradaki Sefer</div>
       <div class="quest-layout"><div class="quest-illustration" aria-hidden="true"></div><div class="quest-body"><small>KUZEY SINIRI · ZAFER</small>
       <h3>Hikâye tamamlandı!</h3><p>Sekiz sefer tamamlandı. Yıldız derecelerini geliştirmeye ve yeni mücadelelere devam et.</p>
       <div class="quest-actions"><button class="primary" data-action="open-expedition">Seferlere dön ❯</button></div></div></div>`;
@@ -200,7 +207,7 @@ function renderQuest() {
   const chapter=CHAPTERS[stage.id-1];
   const power=R.teamPower(state),gear=R.itemById(R.FIRST_CLEAR_LOOT[stage.id]);
   const rewards=Object.entries(stage.reward).map(([id,amount])=>`<span class="quest-reward-token" title="${resourceName[id]}">${svg(resourceIcon[id])}<b>${number(amount)}</b></span>`).join('');
-  questEl.innerHTML=`<div class="quest-crown"><span aria-hidden="true">✦</span>Sıradaki Sefer</div>
+  questEl.innerHTML=`<button class="quest-dismiss" type="button" data-quest-close aria-label="Sefer kartını kapat" title="Kapat">×</button><div class="quest-crown"><span aria-hidden="true">✦</span>Sıradaki Sefer</div>
     <div class="quest-layout">
       <div class="quest-illustration" aria-hidden="true"><span>✧</span></div>
       <div class="quest-body">
@@ -608,7 +615,12 @@ function dispatch(action) {
   if(button.dataset.equip) { result(R.equipItem(state,selectedArmoryHero,button.dataset.equip),'Ekipman kuşanıldı. Savaş gücü güncellendi.'); return; }
   if(button.dataset.unequip) { result(R.unequipItem(state,selectedArmoryHero,button.dataset.unequip),'Ekipman çantaya alındı.'); return; }
   if(button.dataset.trial) { if(state.battle?.status==='active') return notify('Önce devam eden savaşı tamamla.'); trialState=R.createHeroTrial(state,button.dataset.trial); renderBattle(); combatRunner.resume(); renderBattle(); return; }
-  if (button.dataset.view) { activeView = button.dataset.view; render(); if(activeView==='guild')refreshGuild(); return; }
+  if(button.hasAttribute('data-quest-toggle')) { activeView='expedition'; questPanelExpanded=true; render(); return; }
+  if(button.hasAttribute('data-quest-close')) { questPanelExpanded=false; render(); return; }
+  if (button.dataset.view) {
+    questPanelExpanded=button.dataset.view==='expedition';
+    activeView = button.dataset.view; render(); if(activeView==='guild')refreshGuild(); return;
+  }
   if (button.dataset.building) { openBuilding(button.dataset.building); return; }
   if (button.hasAttribute('data-close-building')) { $('#building-dialog').close(); return; }
   if (button.dataset.upgradeBuilding) {
@@ -685,7 +697,7 @@ try {
 } catch (error) {
   cityFallback(error);
 }
-$('#recenter').addEventListener('click', () => { activeView = 'keep'; scene?.overview(); render(); });
+$('#recenter').addEventListener('click', () => { activeView = 'keep'; questPanelExpanded=false; scene?.overview(); render(); });
 if (state.battle?.status === 'active') { R.prepareLiveBattle(state); persist(); renderBattle(); }
 render();
 setInterval(() => { const pending = $('#production-gain'); if (pending) pending.innerHTML = costHtml(R.production(state), true); renderCityProduction(); }, 3000);

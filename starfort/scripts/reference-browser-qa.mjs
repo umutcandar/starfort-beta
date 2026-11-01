@@ -70,7 +70,19 @@ try{
   await cdp('Emulation.setDeviceMetricsOverride',{width:1536,height:864,deviceScaleFactor:1,mobile:false});
   await cdp('Page.navigate',{url:origin});
   await ready();
+  // Do not block the castle view unless the player explicitly requests a quest.
+  assert.equal(await evaluate("document.querySelector('#next-quest').hidden"),true,'Köyde sefer kartı ilk açılışta kapalı olmalı');
+  assert.equal(await evaluate("document.querySelector('#quest-mini').hidden"),false,'Küçük Sefer düğmesi görünmeli');
+  await evaluate("document.querySelector('#quest-mini').click()");
+  assert.equal(await evaluate("document.querySelector('#next-quest').hidden"),false,'Sefer kısayolu kartı açmalı');
+  await evaluate("document.querySelector('.quest-dismiss').click()");
+  assert.equal(await evaluate("document.querySelector('#next-quest').hidden"),true,'X düğmesi kartı kapatmalı');
+  assert.equal(await evaluate("document.querySelector('#quest-mini').hidden"),false,'Kapatılan kart tekrar açılabilir olmalı');
+  // Rerendering after collapsing must not reopen the card.
+  await evaluate("document.querySelector('.nav-item[data-view=keep]').click()");
+  assert.equal(await evaluate("document.querySelector('#next-quest').hidden"),true,'Köye dönünce kart kapalı kalmalı');
   await evaluate("document.querySelector('.nav-item[data-view=expedition]').click()");
+  assert.equal(await evaluate("document.querySelector('#next-quest').hidden"),false,'Seferler sekmesi kartı açmalı');
   let scenic=await evaluate(layoutExpression());
   assert.equal(scenic.questButton,true,'Sefer kartından savaş başlatılabilmeli');
   assert.ok(scenic.quest.x>scenic.viewport.w/2,'Sefer kartı sağda olmalı');

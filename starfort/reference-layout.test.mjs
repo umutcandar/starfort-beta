@@ -25,6 +25,16 @@ test('village next-sefer panel stays data-driven with live battle actions',()=>{
  assert.ok(app.includes("data-stage="));
  assert.match(css,/\.next-quest\s*\{/);
 });
+test('quest card starts closed and can be explicitly opened and dismissed',()=>{
+  assert.match(page,/id="quest-mini" data-quest-toggle/);
+  assert.match(page,/id="next-quest"[^>]*hidden/);
+  assert.match(css,/#next-quest\[hidden\],#quest-mini\[hidden\]/);
+  assert.match(app,/let questPanelExpanded=false/);
+  assert.match(app,/questEl\.hidden=!expanded/);
+  assert.match(app,/data-quest-close/);
+  assert.match(app,/data-quest-toggle/);
+  assert.match(app,/questPanelExpanded=button\.dataset\.view==='expedition'/);
+});
 test('bag renders all four screenshot columns with a real detail panel',()=>{
  const state=R.createState(Date.UTC(2026,10,1));
  const html=armoryMarkup(state,'aldren','all','iron_sword');
