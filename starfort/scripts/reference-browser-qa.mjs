@@ -207,6 +207,7 @@ try{
     state.cleared=[1,2,3,4,5,6,7,8];
     state.campaignStars={1:3,2:3,3:3,4:3,5:3,6:3,7:3,8:3};
     localStorage.setItem(key,JSON.stringify(state));location.reload();return true})()`);
+  await sleep(450);
   await ready();
   await evaluate("document.querySelector('.nav-item[data-view=keep]').click()");
   await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
