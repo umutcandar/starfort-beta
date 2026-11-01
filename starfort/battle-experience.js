@@ -10,7 +10,7 @@ export function battleExperience(locationLike={},storageMode=null,pointerCoarse=
   const graphicsLab=params.get('graphicslab')==='1';
   return Object.freeze({
     hosted,
-    liveMatchmaking:!hosted,
+    liveMatchmaking:true,
     graphicsLab,
     renderMode:graphicsLab && storageMode==='3d'?'3d':'2d',
     defaultQuality:pointerCoarse?'balanced':'ultra',
