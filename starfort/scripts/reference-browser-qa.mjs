@@ -117,6 +117,8 @@ try{
   assert.ok(bag.roster&&bag.hero&&bag.inventory&&bag.detail,'Dar ekranda tüm çanta parçaları korunmalı');
   assert.ok(bag.workScroll<=bag.workWidth+4,`Telefon çantasında yatay taşma: ${bag.workScroll}/${bag.workWidth}`);
   assert.ok(bag.nav.y>=300,'Telefon yatay menü görünür kalmalı');
+  assert.ok(Math.abs(bag.inventory.y-bag.detail.y)<=15,'Telefon çantasında seçili eşya ve envanter aynı sırada görünmeli');
+  assert.ok(bag.detail.x>bag.inventory.x,'Telefon çantasında eşya ayrıntısı seçimin sağında görünmeli');
   const mobile=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
   await writeFile('qa-artifacts/starfort-667x375-bag.png',Buffer.from(mobile.data,'base64'));
   const mobileBag=bag;
