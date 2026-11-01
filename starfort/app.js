@@ -24,6 +24,7 @@ import {armoryArt} from './armory-art.js';
 import {armoryMarkup} from './armory-v212.js';
 import {createMatchReceiptRecovery} from './match-receipts.js';
 import {buildingWorkshopMarkup} from './building-workshop.js';
+import {villageAuthorityRequest,villageServerView} from './village-authority.js';
 import {trustedConstructionNow} from './construction-clock.js';
 import {labyrinthMarkup} from './labyrinth-view.js';
 import {premiumCatalogMarkup} from './premium-catalog.js';
@@ -139,9 +140,49 @@ function notify(message) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
 }
 function result(action, success) { if (!action.ok) { notify(action.error); return false; } if (success) notify(success); persist(); render(); return true; }
+let villageSnapshot=null,villageOwner=null,villageBusy=false,villageGeneration=0;
+const villageSignedIn=()=>!!accountSession();
+function villageView(){
+ if(!villageSignedIn())return state;
+ return villageServerView(state,villageOwner===accountSession()?.user?.id?villageSnapshot:null);
+}
+function acceptVillage(response){
+ if(!villageSignedIn()||response.identity!==accountSession().user.id)return false;
+ villageOwner=response.identity;villageSnapshot=response.snapshot;
+ verifiedClockAnchor={now:response.snapshot.serverNow,monotonic:performance.now()};
+ render();if($('#building-dialog').open)renderBuildingDialog();
+ return true;
+}
+async function refreshVillage(){
+ const uid=accountSession()?.user?.id;
+ if(!uid){villageGeneration++;villageOwner=null;villageSnapshot=null;render();return false;}
+ const gen=++villageGeneration;
+ villageOwner=uid;villageSnapshot=null;render();
+ try{
+  const response=await villageAuthorityRequest('get');
+  if(gen!==villageGeneration||accountSession()?.user?.id!==uid)return false;
+  return acceptVillage(response);
+ }catch(error){if(gen===villageGeneration){notify('Sunucu köyü: '+error.message);render();}return false;}
+}
+async function serverVillageAction(action,building=null,roomId=null){
+ if(villageBusy)return;
+ if(!villageSignedIn())return;
+ villageBusy=true;
+ try{
+  const uid=accountSession().user.id;
+  const response=await villageAuthorityRequest(action,{building,roomId});
+  if(accountSession()?.user?.id!==uid)return;
+  if(acceptVillage(response)){
+   const label=action==='upgrade'?'Sunucu inşaatı başlatıldı':action==='finish'?'Sunucu inşaatı tamamlandı':action==='daily'?'Sunucu günlük ödülü alındı':action==='collect'?'Sunucu üretimi toplandı':'Doğrulanmış maç ödülü alındı';
+   notify(label+' · Revizyon '+response.snapshot.revision);
+  }
+ }catch(error){notify('Sunucu işlemi: '+error.message);await refreshVillage();}
+ finally{villageBusy=false;}
+}
 function renderResources() {
-  $('#commander-power').textContent=number(R.teamPower(state)); $('#village-level').textContent=state.buildings.keep;
-  resourcesEl.innerHTML = Object.entries(R.RESOURCES).map(([id, item]) => `<div class="resource" data-res="${id}">${svg(resourceIcon[id])}<span><b>${number(state.res[id])}</b><small>${item.name}</small></span></div>`).join('');
+ const view=villageView();
+ $('#commander-power').textContent=number(R.teamPower(state)); $('#village-level').textContent=view.buildings.keep;
+ resourcesEl.innerHTML=Object.entries(R.RESOURCES).map(([id,item])=>`<div class="resource" data-res="${id}">${svg(resourceIcon[id])}<span><b>${villageSignedIn()&&!villageSnapshot?'…':number(view.res[id])}</b><small>${item.name}${villageSignedIn()?' · Sunucu':''}</small></span></div>`).join('');
 }
 function renderNav() {
   navEl.innerHTML = navItems.map(([id, icon, label]) => `<button class="nav-item ${(activeView === id || (activeView === 'campaign' && id === 'expedition')) ? 'active' : ''}" data-view="${id}" aria-label="${label}" aria-current="${(activeView === id || (activeView === 'campaign' && id === 'expedition')) ? 'page' : 'false'}">${svg(icon)}<span>${label}</span></button>`).join('') + '<div class="rail-foot">✦ &nbsp; BETA · UZUN OYUN TESTİ</div>';
@@ -162,18 +203,18 @@ function renderPicker() {
     label.setAttribute('aria-label', `${building.name}, seviye ${state.buildings[building.id]}, geliştirmeyi aç`);
   }
   renderCityProduction();
-  const daily=R.dailyRewardState(state);$('#daily-status').textContent=daily.available?'Sandığı aç':'Yarın tekrar gel';
-  $('#daily-reward').classList.toggle('ready',daily.available);$('#daily-reward').disabled=!daily.available||state.battle?.status==='active';
+  const daily=R.dailyRewardState(villageView(),constructionUiNow());$('#daily-status').textContent=villageSignedIn()&&!villageSnapshot?'Sunucuya bağlanılıyor':daily.available?'Sandığı aç':'Yarın tekrar gel';
+  $('#daily-reward').classList.toggle('ready',daily.available&&(!villageSignedIn()||!!villageSnapshot));$('#daily-reward').disabled=!daily.available||state.battle?.status==='active'||(villageSignedIn()&&!villageSnapshot);
 }
 function renderCityProduction() {
-  const gain = R.production(state);
+  const gain = R.production(villageView(),constructionUiNow());
   const total = Object.values(gain).reduce((sum, n) => sum+n, 0);
   $('#city-production').textContent = total ? Object.entries(gain).filter(([,n])=>n).map(([id,n])=>`${number(n)} ${resourceName[id]}`).join(' · ') : 'Kaynaklar birikiyor';
   $('.city-collect').classList.toggle('ready', total > 0);
   renderConstructionBanner();
 }
 function renderConstructionBanner(){
-  const job=R.constructionStatus(state,constructionUiNow());
+  const job=R.constructionStatus(villageView(),constructionUiNow());
   const banner=$('#construction-status');
   banner.hidden=!job;
   if(!job)return;
@@ -190,7 +231,7 @@ function costHtml(cost, reward = false) {
 }
 
 function buildingProduction() {
-  return `<div class="production-box"><div class="production-top"><strong>Köyün üretimi</strong><small>24 saate kadar</small></div><div class="cost-list" id="production-gain">${costHtml(R.production(state), true)}</div><button class="secondary wide" data-collect>Biriken kaynakları topla</button></div>`;
+  return `<div class="production-box"><div class="production-top"><strong>Köyün üretimi</strong><small>24 saate kadar</small></div><div class="cost-list" id="production-gain">${costHtml(R.production(villageView(),constructionUiNow()), true)}</div><button class="secondary wide" data-collect ${villageSignedIn()&&!villageSnapshot?'disabled':''}>Biriken kaynakları topla</button></div>`;
 }
 
 function heroCard(hero) {
@@ -212,7 +253,7 @@ function renderBuildingDialog() {
   const dialog=$('#building-dialog'), previousScroll=dialog.scrollTop;
   const building=R.BUILDINGS.find(item=>item.id===selectedBuilding);
   if(!building)return;
-  $('#building-content').innerHTML=buildingWorkshopMarkup(state,selectedBuilding,{icon:svg,number,now:constructionUiNow()});
+  $('#building-content').innerHTML=buildingWorkshopMarkup(villageView(),selectedBuilding,{icon:svg,number,now:constructionUiNow()});
   dialog.scrollTop=previousScroll;
   for(const canvas of $('#building-content').querySelectorAll('[data-building-preview]')){
     paintBuildingPreview(canvas,building.id,Number(canvas.dataset.buildingPreview)).catch(()=>{
@@ -229,8 +270,8 @@ function openBuilding(id) {
 }
 
 function renderInspector() {
-  const building = R.BUILDINGS.find(item => item.id === selectedBuilding) || R.BUILDINGS[0], level = state.buildings[building.id], cost = R.upgradeCost(state, building.id);
-  const blocked = level >= building.maxLevel || (building.id !== 'keep' && level >= state.buildings.keep + 1) || Object.entries(cost).some(([id, amount]) => state.res[id] < amount) || state.battle?.status === 'active';
+  const v=villageView(),building = R.BUILDINGS.find(item => item.id === selectedBuilding) || R.BUILDINGS[0], level = v.buildings[building.id], cost = R.upgradeCost(v, building.id);
+  const blocked = (v.serverVillage&&!v.serverVillageReady)||level>=building.maxLevel||(building.id!=='keep'&&level>=v.buildings.keep+1)||Object.entries(cost).some(([id,amount])=>v.res[id]<amount)||state.battle?.status==='active';
   const team = state.team.map(id => R.HEROES.find(hero => hero.id === id));
   inspectorEl.innerHTML = `<div class="building-details"><div class="section-head"><small>KÖY YÖNETİMİ</small><span class="level-badge">SEVİYE ${level}</span></div><div class="building-portrait">${svg(building.id)}</div><h2>${building.name}</h2><p class="building-description">${building.description}</p><div class="stat-line"><span>Gelişim</span><b>${level} / ${building.maxLevel}</b></div>${building.production ? `<div class="stat-line"><span>Üretim hızı</span><b>${number(building.production.perMinute * level * (1 + (state.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk</b></div>` : `<div class="stat-line"><span>Köy etkisi</span><b>${building.id === 'keep' ? '+%5 üretim / seviye' : building.id === 'forge' ? '+%5 saldırı / seviye' : '+%4 can / seviye'}</b></div>`}<div class="cost-list">${costHtml(cost)}</div><button class="primary wide" data-upgrade-building="${building.id}" ${blocked ? 'disabled' : ''}>${level >= building.maxLevel ? 'En yüksek seviye' : `Yapıyı geliştir · ${number(cost.gold || 0)} altın`}</button>${buildingProduction(building)}</div><div class="squad-block"><div class="squad-heading"><h3>Kahramanlar</h3><button class="text-button" data-view="heroes">Dizilimi düzenle</button></div><div class="squad">${team.map(hero => `<div class="squad-member">${heroPortrait(hero)}<span>${hero.name}</span><small>Lv.${state.heroes[hero.id].level}</small></div>`).join('')}</div><div class="team-power"><span>Dizilim gücü</span><strong>${number(R.teamPower(state))} ✦</strong></div></div><p class="inspector-note">Yapılar yükseldikçe görünüşleri değişir. Üretim 24 saate kadar birikir; ilk 4 saat tam hızda, sonrası yavaş üretir.</p>`;
 }
@@ -705,7 +746,7 @@ function castHeroSkill(heroId) {
 function render() {
   gameAudio.setScene($('#battle-dialog').open?'combat':'village');
   renderResources(); renderNav(); renderPicker(); renderInspector(); renderQuest(); renderWorkspace();
-  scene?.update(state);
+  scene?.update(villageView());
   if ($('#building-dialog').open) renderBuildingDialog();
 }
 function openBattle(stageId) {
