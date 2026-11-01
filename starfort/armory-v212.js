@@ -60,7 +60,7 @@ export function armoryMarkup(state,heroId='aldren',filter='all',selectedId=null)
       data-bag-item="${item.id}" aria-label="${item.name}, ${R.RARITIES[item.rarity]}, ${count} adet" aria-pressed="${selected?.id===item.id}">
       <span class="bag-v212-item-art">${itemImage(item)}</span>
       <span class="bag-v212-item-name">${item.name}</span>
-      ${count?`<span class="bag-v212-count">×${count}</span>`:''}
+      ${count?`<span class="bag-v212-count">×${count}</span>`:'<span class="bag-v213-lock" title="Henüz kazanılmadı" aria-hidden="true">⌑</span>'}
       ${equipped?'<span class="bag-v212-worn">Takılı</span>':''}
     </button>`;
   }).join('');
