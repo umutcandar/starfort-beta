@@ -337,7 +337,8 @@ function renderGuild(){
   const header=`<header><div><span class="eyebrow">YILDIZ İTTİFAKLARI · GELİŞTİRME SUNUCUSU</span><h2>Klan salonu</h2><p>Arkadaşlarınla ortak klan kur, davet koduyla katıl, sohbet et ve ortak baskın etkinliğine katıl.</p></div><button class="secondary" data-close-view>Köye dön</button></header>`;
   if(guildAvailable===false){workspaceEl.innerHTML=header+`<article class="guild-empty"><h3>Çevrim içi sunucu kapalı</h3><p>Bu klan bölümü gerçek oyuncularla veri paylaşır, ancak Node geliştirme sunucusu açık olmalıdır. Proje klasöründe <code>node guild-server.mjs</code> çalıştır, sonra buradan yeniden bağlan.</p><button class="primary" data-guild-action="refresh">Yeniden bağlan</button><p class="guild-disclaimer">1v1 ve 5v5 PvP test modunda var; 20v20 henüz yok. Klan baskını ortak ilerleme prototipidir.</p></article>`;return;}
   if(guildBusy&&!guildSnapshot){workspaceEl.innerHTML=header+'<p class="guild-loading">Klan sunucusuna bağlanılıyor…</p>';return;}
-  if(!guildToken){workspaceEl.innerHTML=header+`<article class="guild-empty"><h3>Komutan kaydını oluştur</h3><p>Bu cihaz için takma adla test komutanı oluştur. Çevrim içi beta sunucusunda davet kodu istenebilir. Oyuncu oturum anahtarı bu tarayıcıda tutulur.</p><div class="guild-form"><input id="guild-name" maxlength="24" placeholder="Komutan adın (3–24 karakter)" aria-label="Komutan adı"><button class="primary" data-guild-action="register">Oluştur</button></div></article>`;return;}
+  if(!accountSession()){workspaceEl.innerHTML=header+`<article class="guild-empty"><h3>Önce hesabına giriş yap</h3><p>Artık ayrı lonca anahtarı yok. Supabase e-posta hesabın hem oyuncu hem lonca kimliğin olacak.</p><button class="primary" data-view="settings">Hesaba giriş yap</button></article>`;return;}
+  if(!guildSnapshot&&!guildBusy&&!guildError){workspaceEl.innerHTML=header+`<article class="guild-empty"><h3>Komutan kaydını oluştur</h3><p>Bu cihaz için takma adla test komutanı oluştur. Çevrim içi beta sunucusunda davet kodu istenebilir. Oyuncu oturum anahtarı bu tarayıcıda tutulur.</p><div class="guild-form"><input id="guild-name" maxlength="24" placeholder="Komutan adın (3–24 karakter)" aria-label="Komutan adı"><button class="primary" data-guild-action="register">Oluştur</button></div></article>`;return;}
   if(!guildSnapshot){workspaceEl.innerHTML=header+`<article class="guild-empty"><p>${esc(guildError||'Klan sunucusuna bağlanılıyor…')}</p><button class="primary" data-guild-action="refresh">Tekrar dene</button></article>`;return;}
   const g=guildSnapshot.guild;
   const overview=`<div class="guild-server-status"><span class="online-dot"></span>${esc(guildSnapshot.player.name)} · Test sunucusunda bağlı <button class="text-button" data-guild-action="refresh">Yenile ↻</button></div>`;
@@ -362,9 +363,12 @@ function renderGuild(){
 async function refreshGuild(){
   guildBusy=true;guildError='';
   if(activeView==='guild')renderGuild();
-  try{await guildOnline();guildAvailable=true;guildSnapshot=guildToken?await guildRequest('me',guildToken):null;}
+  try{if(!accountSession()){guildAvailable=true;guildSnapshot=null;return;}
+     await guildOnline();guildAvailable=true;guildSnapshot=await guildRequest('me',null);guildError='';}
   catch(error){
-    if(/oturum yok|yetkisiz|unauthorized|401/i.test(error.message||'')){
+    if(/komutan adı|Önce bu e-posta/i.test(error.message||'')){
+      guildSnapshot=null;guildAvailable=true;guildError='';
+    }else if(/oturum yok|yetkisiz|unauthorized|401/i.test(error.message||'')){
       localStorage.removeItem(GUILD_TOKEN_KEY);guildToken='';guildAvailable=true;
       guildSnapshot=null;guildError='Eski oturum bulunamadı. Yeni komutan oluşturabilirsin.';
     }else{guildAvailable=false;guildSnapshot=null;guildError=error.message;}
@@ -388,7 +392,7 @@ async function guildAction(name){
   else return;
   guildBusy=true;guildError='';
   try{const result=await guildRequest(route,name==='register'?null:guildToken,data);
-    if(result.token){guildToken=result.token;localStorage.setItem(GUILD_TOKEN_KEY,guildToken);}
+    // Auth-linked guild returns no legacy bearer credential.
     guildSnapshot=result;guildAvailable=true;notify('Klan işlemi başarılı.');}
   catch(error){guildError=error.message;notify(error.message);}
   finally{guildBusy=false;if(activeView==='guild')renderGuild();}
@@ -396,7 +400,7 @@ async function guildAction(name){
 function renderSettings(){
   const hosted=location.hostname.endsWith('github.io')||new URLSearchParams(location.search).get('hosted')==='1';
   const cloudReady=hosted&&!!guildToken,cloudLabel=!hosted?'Bulut yedeği GitHub Pages çevrim içi beta hesabında kullanılabilir.':!cloudReady?'Önce İttifak bölümünden bu cihazda komutan hesabı oluştur.':cloudSaveInfo?.exists?`Bulut yedeği: ${new Date(cloudSaveInfo.savedAt).toLocaleString('tr-TR')} · Rev. ${cloudSaveInfo.revision}`:cloudSaveInfo?'Henüz bulut yedeği yok.':'Bulut durumu henüz sorgulanmadı.';
-  workspaceEl.innerHTML=`<header><div><span class="eyebrow">KOMUTA MERKEZİ</span><h2>Ayarlar ve kayıt güvenliği</h2><p>Starfort ilerlemen bu tarayıcıda kayıtlıdır. Önemli aşamalarda yedek almanı öneririz.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
+  workspaceEl.innerHTML=`<header><div><span class="eyebrow">KOMUTA MERKEZİ</span><h2>Ayarlar ve kayıt güvenliği</h2><p>Köyün yerel kayıtla korunur; e-posta hesabındaysan bulut eşitlemesi de çalışır.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
     <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">OYUN İLERLEMESİ</span><h3>Kayıt yedeği</h3><p>Binan, kaynakların, kahramanların, ekipmanların ve savaş kaydın JSON dosyası olarak saklanır.</p><button class="primary wide" data-export-save>Kayıt dosyasını indir</button><button class="secondary wide" data-import-save>Yedeği geri yükle</button><small>İçe aktarma mevcut ilerlemenin üzerine yazar. Önce bir yedek al.</small></article><article class="guild-panel"><span class="eyebrow">OYUN DENEYİMİ</span><h3>Kontroller</h3><p>Köyü sürükle; +/− ile yakınlaştır. Savaşta hedef seç, 1 / 2 / 3 ile kahraman yeteneklerini kullan, Space ile taktik mola ver.</p><button class="secondary wide" data-fullscreen>Tam ekranı değiştir</button><button class="secondary wide" data-audio-toggle>Ses ve özgün müzik: ${gameAudio.enabled?'Açık · Kapat':'Kapalı · Aç'}</button><small>Sesler yalnızca sen açtığında başlar; köy melodisi ve savaş efektleri orijinaldir.</small><p class="guild-disclaimer">Klan oturumu, ana oyun kaydından ayrı bir geliştirme sunucusuna bağlıdır.</p></article>
     <article class="guild-panel"><span class="eyebrow">GÜVENLİ HESAP · SUPABASE AUTH</span><h3>E-posta hesabı ve özel yedek</h3>
       <p>Tek e-posta hesabıyla farklı cihazlarda oynayabilirsin. Kayıtlar otomatik eşitlenir; çakışmada hiçbir kayıt sessizce silinmez. PvP ekonomisi ayrı sunucu doğrulaması gerektirir.</p>
@@ -470,9 +474,11 @@ document.addEventListener('submit',async event=>{
    if(mode==='signup'){
      const info=await accountSignUp(email,password);
      notify(info.needsConfirmation?'E-postanı onayla, sonra giriş yap.':'E-posta hesabı oluşturuldu.');
+     if(accountSession())await accountSync.start();
    }else{
      await accountSignIn(email,password);
      notify('E-posta hesabına giriş yapıldı.');
+     await accountSync.start();if(activeView==='guild')void refreshGuild();
    }
  }catch(error){notify('Hesap: '+error.message);}
  finally{accountBusy=false;if(activeView==='settings')renderSettings();}
