@@ -1,5 +1,6 @@
 /** 1v1 online duel UX. The server is authoritative; the canvas only renders snapshots. */
 import {guildRequest,GUILD_TOKEN_KEY} from './guild-client.js';
+import {createMatchContinuity} from './match-continuity.js';
 import {accountSession} from './account-auth.js';
 import {ARENA_HERO_STYLES} from './arena-heroes.js';
 import * as R from './rules.js';
@@ -21,6 +22,7 @@ export function mountArena(root){
   let graphics=graphicsPreset(localStorage.getItem('starfort:graphics')||policy.defaultQuality);
   let renderMode=policy.renderMode;
   let botDifficulty=trainingDifficulty(localStorage.getItem('starfort:bot-difficulty'))||'normal';
+  const matchContinuity=createMatchContinuity(sessionStorage,'starfort:arena-last-active');
   let snapshot={status:'idle'},destroyed=false,raf=0,gameTimer=0,queueTimer=0,busy=false,seq=0;
   const keys=new Set(),touch=new Set();let pendingBurst=false,pendingDash=false,pendingAttack=false,uiTime=0,lastStateTime=0;
   const api=(route,data=null)=>guildRequest(`arena/${route}`,token,data);
@@ -72,6 +74,7 @@ export function mountArena(root){
     const status=snapshot.status,room=snapshot.room;
     const wasLive=root.classList.contains('sf-battle-live');root.classList.toggle('sf-battle-live',status==='active');document.body.classList.toggle('sf-combat-running',status==='active');if(wasLive!==(status==='active'))requestAnimationFrame(resizeCanvas);let title='',detail='';
     if(error){title='BAĞLANTI HATASI';detail=error;}
+    else if(status==='interrupted'){title='MAÇ OTURUMU İPTAL';detail=snapshot.message||'Sunucu yeniden başladı. Yenilgi veya ödül yazılmadı; yeni maça girebilirsin.';}
     else if(status==='idle'){title='ARENA HAZIR';detail='Hemen denemek için Botla Savaş (Tek Başına) düğmesine bas. Gerçek oyuncuyla oynamak için Rakip Ara.';}
     else if(status==='waiting'){title='RAKİP BEKLENİYOR';detail='Gerçek oyuncu bekleniyor. Tek başına denemek istersen Botla Savaş düğmesine bas; bekleme kuyruğundan çıkıp botla hemen eşleşirsin.';}
     else if(status==='ended'){
@@ -80,7 +83,7 @@ export function mountArena(root){
     }
     const el=$('#arena-message');el.hidden=status==='active'&&!error;
     el.innerHTML=title?`<b>${esc(title)}</b><p>${esc(detail)}</p>`:'';
-    $('#arena-connection').textContent=error?'Bağlantı kesildi':({idle:'Arena hazır',waiting:'Eşleşme bekleniyor',active:'Canlı düello sürüyor',ended:'Maç tamamlandı'})[status]||'Hazırlanıyor';
+    $('#arena-connection').textContent=error?'Bağlantı kesildi':({idle:'Arena hazır',interrupted:'Maç oturumu iptal',waiting:'Eşleşme bekleniyor',active:'Canlı düello sürüyor',ended:'Maç tamamlandı'})[status]||'Hazırlanıyor';
     $('#arena-match').textContent=room?`${room.isPractice?'BOT ('+trainingLabel(room.botDifficulty)+') · ':''}${room.players.map(p=>p.name).join(' ⚔ ')} · ${Math.max(0,Math.ceil(120-room.elapsed))} sn kaldı`:'Sunuculu 1v1 · bot antrenmanı veya gerçek oyuncu';
     const you=room?.players.find(p=>p.id===snapshot.you),enemy=room?.players.find(p=>p.id!==snapshot.you);
     const hud=$('#arena-live-hud');hud.hidden=!(room&&(status==='active'||status==='ended'));
@@ -101,8 +104,8 @@ export function mountArena(root){
   }
   function draw(time){paint(time);raf=requestAnimationFrame(draw);}
   let epoch=0;
-  async function poll(){if(destroyed||busy||!token)return;const my=epoch;try{const next=await api('state');if(my!==epoch)return;snapshot=next;if(Number.isSafeInteger(next.inputSeq))seq=Math.max(seq,next.inputSeq);error='';}catch(e){error=e.message;}if(!destroyed)message();if(!destroyed&&sessionStorage.getItem('starfort:autostart-duel')&&snapshot.status!=='active'&&snapshot.status!=='waiting'){sessionStorage.removeItem('starfort:autostart-duel');playBot();}}
-  async function queue(){if(busy||!token||!policy.liveMatchmaking)return;busy=true;epoch++;try{snapshot=await api('queue',{heroId});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
+  async function poll(){if(destroyed||busy||!token)return;const my=epoch;try{const next=await api('state');if(my!==epoch)return;snapshot=matchContinuity.accept(next);if(Number.isSafeInteger(next.inputSeq))seq=Math.max(seq,next.inputSeq);error='';}catch(e){error=e.message;}if(!destroyed)message();if(!destroyed&&sessionStorage.getItem('starfort:autostart-duel')&&snapshot.status!=='active'&&snapshot.status!=='waiting'){sessionStorage.removeItem('starfort:autostart-duel');playBot();}}
+  async function queue(){if(busy||!token||!policy.liveMatchmaking)return;busy=true;epoch++;try{snapshot=matchContinuity.accept(await api('queue',{heroId}));error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function playBot(){if(busy||!token)return;busy=true;epoch++;try{snapshot=await api('bot',{difficulty:botDifficulty,heroId});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function leave(){if(busy||!token)return;busy=true;epoch++;try{snapshot=await api('leave',{});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function send(){if(destroyed||busy||snapshot.status!=='active')return;
