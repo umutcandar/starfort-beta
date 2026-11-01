@@ -112,7 +112,7 @@ export function mountTeamArena(root){
   }
   async function refresh(){if(disposed||busy||!token)return;try{snapshot=matchContinuity.accept(await api('state'));if(Number.isSafeInteger(snapshot.inputSeq))seq=Math.max(seq,snapshot.inputSeq);error='';}catch(e){error=e.message;}if(!disposed)status();}
   async function start(size,variant='flags'){if(disposed||busy||!token||!policy.liveMatchmaking)return;busy=true;try{const data=await api('queue',{size,variant,heroId});snapshot=matchContinuity.accept(data);error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
-  async function startBot(size,variant='flags'){if(disposed||busy||!token)return;busy=true;try{snapshot=await api('bot',{size,variant,difficulty:botDifficulty,heroId});error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
+  async function startBot(size,variant='flags'){if(disposed||busy||!token)return;busy=true;try{snapshot=matchContinuity.accept(await api('bot',{size,variant,difficulty:botDifficulty,heroId}));error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
   async function startParty(size,variant='flags'){if(disposed||busy||!token||!policy.liveMatchmaking)return;busy=true;try{snapshot=await api('party/queue',{size,variant});error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
   async function leave(){if(disposed||busy||!token)return;busy=true;try{snapshot=await api('leave',{});error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
   async function send(){if(disposed||busy||snapshot.status!=='active')return;
@@ -122,7 +122,7 @@ export function mountTeamArena(root){
     const data={seq:++seq,x:axis.x,y:axis.y,attack:keys.has('j')||touch.has('attack')||pendingAttack,burst:pendingBurst,dash:pendingDash};
     if(pendingOrder){data.order=pendingOrder;data.focus=pendingFocus;data.squad=pendingSquad;}
     pendingAttack=false;pendingBurst=false;pendingDash=false;pendingOrder=null;pendingFocus=null;pendingSquad='all';busy=true;
-    try{snapshot=await api('input',data);error='';}catch(e){error=e.message;if(data.order){pendingOrder=data.order;pendingFocus=data.focus;pendingSquad=data.squad;}if(data.burst)pendingBurst=true;if(data.dash)pendingDash=true;if(data.attack)pendingAttack=true;}
+    try{snapshot=matchContinuity.accept(await api('input',data));error='';}catch(e){error=e.message;if(data.order){pendingOrder=data.order;pendingFocus=data.focus;pendingSquad=data.squad;}if(data.burst)pendingBurst=true;if(data.dash)pendingDash=true;if(data.attack)pendingAttack=true;}
     finally{busy=false;if(!disposed)status();}
   }
   function selectSquad(value){if(!['all','guard','archer'].includes(value))return;selectedSquad=value;
@@ -142,6 +142,6 @@ export function mountTeamArena(root){
   function blur(){keys.clear();touch.clear();joystick.reset();}
   window.addEventListener('keydown',keyDown);window.addEventListener('keyup',keyUp);window.addEventListener('blur',blur);root.addEventListener('click',click);root.addEventListener('pointerdown',pointerDown);root.addEventListener('pointerup',pointerUp);root.addEventListener('pointercancel',pointerUp);canvas.addEventListener('click',selectEnemy);
   window.addEventListener('resize',resizeCanvas);updateGraphics(graphics);
-  if(!token)error='Önce İttifak sekmesinden yerel komutan hesabı oluştur.';else refresh();status();raf=requestAnimationFrame(draw);sending=setInterval(send,135);checking=setInterval(()=>{if(!busy&&snapshot.status!=='active')refresh()},1000);
+  if(!token)error='Önce İttifak sekmesinden yerel komutan hesabı oluştur.';else refresh();status();raf=requestAnimationFrame(draw);sending=setInterval(send,135);checking=setInterval(()=>{if(!busy)refresh()},1100);
   return ()=>{disposed=true;joystick.dispose();root.classList.remove('sf-battle-live');document.body.classList.remove('sf-combat-running');clearInterval(sending);clearInterval(checking);cancelAnimationFrame(raf);window.removeEventListener('resize',resizeCanvas);motion.reset();renderer.dispose();window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);window.removeEventListener('blur',blur);root.removeEventListener('click',click);root.removeEventListener('pointerdown',pointerDown);root.removeEventListener('pointerup',pointerUp);root.removeEventListener('pointercancel',pointerUp);canvas.removeEventListener('click',selectEnemy);if(snapshot.status==='active'||snapshot.status==='waiting')api('leave',{}).catch(()=>{});};
 }
