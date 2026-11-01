@@ -8,7 +8,7 @@ Oyuncu olmayan beta için değişikliği ayrı küçük sürümlere bölmek yeri
 - Kahramanlar: 7 standart kahraman, açılma eşikleri, gerçek seviye ve her yükseltmenin kaynak maliyeti sunucuda.
 - Demirhane: 12 üretilebilir eşya, gerçek altın/kereste/taş/öz maliyetleri, üretim seviyesi kilidi, 20 kopya sınırı. 8 hikâye ganimeti ve ilk 5 ayrı 3★ sefer ganimeti sunucuda kayıt edilir.
 - Kuşanma/çıkarma ve üç kişilik takım: eşyaların adedi ve her kahramanın yuvası sunucuda denetlenir. Tek kopya iki kahramana kuşandırılamaz. Otomatik donanım istemcide önerilir, **her değişiklik** sunucu tarafından ayrı doğrulanır.
-- Hikâye seferleri: 8 hikâye bölgesi, birbirini açan bölge koşulu, her seferin sunucu savaşı ve 1–3★ derece.
+- Hikâye seferleri: 8 hikâye bölgesi, birbirini açan bölge koşulu, her seferin sunucu savaşı ve 1–3★ derece. **Bu resmî yıldızların toplamı köy ustalığına yansır; gelişim eşikleri için PvP zorunlu değildir.**
 - Sunucuda savaş: oyuncu yalnızca **saldır/savun/yetenek** komutunu gönderir. Kahraman gücü sunucu kahraman/eşya/köy kayıtlarından hesaplanır; düşman HP, hasar, cooldown, tur ve kazanma kararı sunucuda tutulur. Hamleler arasında en az 3 saniye, sefer başlangıçları arasında en az 20 saniye vardır. Klonlanmış istemci sahte "kazandım" ile kaynak alamaz.
 - Usta seferleri (1–3 kademe), haftalık yarık (tek haftalık resmî ödül), 16 kat labirent, günlük doğrulanmış görev ödülleri, kalıcı üç komutan unvanı.
 - Resmî kaynak ve kozmetik ödülleri sunucu durumuna bağlıdır. Doğrulanmış PvP galibiyet ödülü v2.24 HMAC/match-history hattından gelir ve iki kez kullanılamaz.
@@ -36,7 +36,8 @@ Oyuncu olmayan beta için değişikliği ayrı küçük sürümlere bölmek yeri
 - `sql/starfort-v225-account-progression.sql`: yeni sunucu ilerleme tablosu ve ilk RPC kaynağı.
 - `sql/starfort-v225-account-safety-patch.sql`: ekipman yuvası açılması ve günlük kontrat tekrarı savunması.
 - `sql/starfort-v225-unique-progress-api.sql`: yalnızca STARFORT'a ait benzersiz RPC adı ve önceki fonksiyonun kaldırılması.
-- `sql/starfort-v225-runtime-ambiguity-fix.sql`: PL/pgSQL UPDATE değişken/kolon belirsizliğini düzeltir. En güncel SQL burada ve benzersiz API dosyasında mevcuttur.
+- `sql/starfort-v225-runtime-ambiguity-fix.sql`: PL/pgSQL UPDATE değişken/kolon belirsizliğini düzeltir.
+- `sql/starfort-v225-mastery-final.sql`: **tekil son RPC kaynak sürümü**; bütün doğrulanmış 1–3★ hikâye kazanımları köy ustalığını açar. Canlı fonksiyonun en güncel kopyası budur.
 - Projede login/guest değişimi mevcut. Geri alma: eski arayüz branch'ına dönmek sunucudaki resmî oyuncu verilerini silmez; migrasyonlar geriye dönük silinmemelidir.
 
 ## Bilinen sınırlamalar
