@@ -48,7 +48,7 @@ export async function accountProgressRequest(action,{target=null,aux=null,reques
  const id=action==='get'?null:requestId??crypto.randomUUID();
  let response,data;
  try{
-  response=await fetcher(SUPABASE_URL+'/rest/v1/rpc/sfb_account_api',{
+  response=await fetcher(SUPABASE_URL+'/rest/v1/rpc/sfb_starfort_progress',{
    method:'POST',signal:AbortSignal.timeout(20000),
    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},
    body:JSON.stringify({p_action:action,p_target:target,p_aux:aux,p_request_id:id})
