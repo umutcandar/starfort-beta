@@ -239,9 +239,14 @@ try{
   assert.equal(timeSkew.claim,false,'Tarayıcı duvar saatini ileri almak teslim al düğmesini açmamalı');
   assert.equal(timeSkew.level,8,'Sahte ileri saat binayı tamamlayamamalı');
   await evaluate("document.querySelector('[data-close-building]').click()");
-  await evaluate(`(()=>{const key='starfort:v1',saved=JSON.parse(localStorage.getItem(key));saved.construction=null;saved.buildings.keep=10;localStorage.setItem(key,JSON.stringify(saved));location.reload();return true})()`);
-  await sleep(450);
+  await evaluate("(()=>{const key='starfort:v1',saved=JSON.parse(localStorage.getItem(key));saved.construction=null;saved.buildings.keep=10;localStorage.setItem(key,JSON.stringify(saved));return true})()");
+  await cdp('Page.navigate',{url:origin});
+  await sleep(550);
   await ready();
+  for(let retry=0;retry<25;retry++){
+    if(await evaluate("!!document.querySelector('#city-labels [data-building=keep]')"))break;
+    await sleep(100);
+  }
   await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
   assert.ok(await evaluate("!!document.querySelector('[data-building-preview=10]')"),'10. seviye mimari önizlemesi gösterilmeli');
   assert.ok(await evaluate("!!document.querySelector('[data-building-preview=11]')"),'11. seviye yeni mimari önizlemesi gösterilmeli');
