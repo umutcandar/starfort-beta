@@ -169,6 +169,20 @@ function renderCityProduction() {
   const total = Object.values(gain).reduce((sum, n) => sum+n, 0);
   $('#city-production').textContent = total ? Object.entries(gain).filter(([,n])=>n).map(([id,n])=>`${number(n)} ${resourceName[id]}`).join(' · ') : 'Kaynaklar birikiyor';
   $('.city-collect').classList.toggle('ready', total > 0);
+  renderConstructionBanner();
+}
+function renderConstructionBanner(){
+  const job=R.constructionStatus(state);
+  const banner=$('#construction-status');
+  banner.hidden=!job;
+  if(!job)return;
+  banner.dataset.building=job.id;
+  banner.classList.toggle('ready',job.ready);
+  const name=R.BUILDINGS.find(b=>b.id===job.id)?.name||'Yapı';
+  const minutes=Math.ceil(job.remainingMs/60000);
+  const time=minutes>=1440?Math.ceil(minutes/1440)+' gün':minutes>=60?Math.ceil(minutes/60)+' saat':Math.max(1,minutes)+' dk';
+  banner.querySelector('strong').textContent=job.ready?'✓ İnşaat tamamlandı':'⚒ İnşaat sürüyor';
+  $('#construction-caption').textContent=name+' · '+(job.ready?'Dokunup tamamla':time+' kaldı');
 }
 function costHtml(cost, reward = false) {
   return Object.entries(cost || {}).map(([id, amount]) => `<span class="cost ${!reward && state.res[id] < amount ? 'short' : ''}" title="${resourceName[id]}">${svg(resourceIcon[id])}${reward ? '+' : ''}${number(amount)}</span>`).join('');
@@ -875,7 +889,7 @@ document.addEventListener('keydown',event=>{
 $('#recenter').innerHTML = svg('keepMenu');
 let buildingBackdropDown = false;
 // Update long-term construction countdowns and claim availability while the panel is open.
-setInterval(()=>{if($('#building-dialog').open&&state.construction)renderBuildingDialog()},30000);
+setInterval(()=>{if(state.construction){renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}},30000);
 $('#building-dialog').addEventListener('pointerdown', event => { buildingBackdropDown = event.target === $('#building-dialog'); });
 $('#building-dialog').addEventListener('click', event => { if (buildingBackdropDown && event.target === $('#building-dialog')) $('#building-dialog').close(); buildingBackdropDown = false; });
 $('#battle-dialog').addEventListener('click', event => { if (event.target === $('#battle-dialog')) closeBattle(); });
