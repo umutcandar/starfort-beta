@@ -1,8 +1,8 @@
 {
   "name": "starfort",
   "private": true,
-  "version": "2.13.0",
-  "description": "Starfort v2.13.0: referans görseline uygun köy, sefer ve dört sütunlu çanta arayüzü",
+  "version": "2.14.0",
+  "description": "Starfort v2.14.0: bölüm koşulları, düşman çeşitliliği, sezonlar, hesap yedeği ve ses",
   "type": "module",
   "scripts": {
     "start": "node launch-starfort.mjs",
