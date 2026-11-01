@@ -218,7 +218,13 @@ try{
   assert.equal(await evaluate("JSON.parse(localStorage.getItem('starfort:v1')).buildings.keep"),8,'Yapı süre bitmeden 9 olmamalı');
   assert.ok(await evaluate("!!JSON.parse(localStorage.getItem('starfort:v1')).construction"),'Aktif inşaat kayda geçmeli');
   await evaluate("location.reload()");
+  await sleep(400);
   await ready();
+  for(let retry=0;retry<25;retry++){
+    if(await evaluate("!!document.querySelector('#city-labels [data-building=keep]')"))break;
+    await sleep(100);
+  }
+  assert.ok(await evaluate("!!document.querySelector('#city-labels [data-building=keep]')"),'Yenileme sonrası köy haritası yeniden kurulmalı');
   await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
   assert.ok(await evaluate("!!document.querySelector('.ws-status-chip.building')"),'Yenileme sonrası inşaat kuyruğu kalmalı');
   await evaluate("document.querySelector('[data-plan-building=farm]').click()");
