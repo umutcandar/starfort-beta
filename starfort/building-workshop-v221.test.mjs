@@ -49,7 +49,7 @@ test('collect + upgrade accepts stored production and changes only the intended 
  const state=scene();
  state.res={gold:5,wood:5,stone:0,aether:0};
  state.buildings.keep=2;
- const later=NOW+40*60000;
+ const later=NOW+50*60000;
  const b=buildingUpgradePlan(state,'farm',later);
  assert.equal(b.status,'collect');
  assert.equal(b.level,1);
@@ -70,7 +70,7 @@ test('workshop shows collect action or locks the level behind keep with explicit
  const b=buildingUpgradePlan(s,'farm',NOW);
  assert.equal(b.status,'locked');
  assert.match(render(s,'farm'),/data-workshop-keep/);
- s.buildings.keep=8;s.buildings.farm=8;
+ s.buildings.keep=20;s.buildings.farm=20;
  assert.equal(buildingUpgradePlan(s,'farm',NOW).status,'maxed');
  assert.doesNotMatch(render(s,'farm'),/data-upgrade-building="farm"/);
  assert.equal(buildingUpgradePlan(s,'nonexistent',NOW),null);
@@ -93,5 +93,5 @@ test('source wires accessible village tabs, collect-and-build, preserves modal, 
  assert.match(css,/@media\(max-width:730px\)/);
  assert.match(css,/@media\(orientation:landscape\)/);
  assert.match(html,/href="building-workshop\.css"/);
- assert.match(html,/v2\.21\.0/);
+ assert.match(html,/v2\.22\.0/);
 });

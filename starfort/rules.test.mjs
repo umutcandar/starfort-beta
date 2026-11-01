@@ -83,9 +83,9 @@ test('malformed, incompatible and partially damaged saves get valid defaults', (
 
 test('production accrues one day with slower reserve earnings and cannot duplicate it', () => {
   const state = fresh(), before = copy(state.res);
-  assert.deepEqual(R.production(state, NOW + 60000), { gold: 20, wood: 15, stone: 12, aether: 3 });
+  assert.deepEqual(R.production(state, NOW + 60000), { gold: 4, wood: 3, stone: 2, aether: 0 });
   const gain = R.production(state, NOW + 48 * 3600000);
-  assert.deepEqual(gain, { gold: 7680, wood: 5760, stone: 4608, aether: 1152 });
+  assert.deepEqual(gain, { gold: 1536, wood: 1152, stone: 960, aether: 230 });
   assert.deepEqual(R.production(state, NOW + 24 * 3600000), gain);
   const result = R.collect(state, NOW + 48 * 3600000);
   assert.deepEqual(result.gain, gain);
@@ -100,14 +100,14 @@ test('building costs are paid once, cannot overspend and obey keep level limits'
   assert.equal(R.upgradeBuilding(state, 'farm').ok, true);
   assert.equal(state.buildings.farm, 2);
   for (const [id, amount] of Object.entries(cost)) assert.equal(state.res[id], before[id] - amount);
-  assert.equal(R.production(state, NOW + 60000).gold, 40);
+  assert.equal(R.production(state, NOW + 60000).gold, 8);
   rejectsUnchanged(state, () => R.upgradeBuilding(state, 'farm'));
   assert.equal(R.upgradeBuilding(state, 'keep').ok, true);
-  assert.equal(R.production(state, NOW + 60000).gold, 42);
+  assert.equal(R.production(state, NOW + 60000).gold, 8);
   state.res = { gold: 0, wood: 0, stone: 0, aether: 0 };
   rejectsUnchanged(state, () => R.upgradeBuilding(state, 'forge'));
   rejectsUnchanged(state, () => R.upgradeBuilding(state, 'unknown'));
-  state.buildings.keep = 8;
+  state.buildings.keep = 20;
   rejectsUnchanged(state, () => R.upgradeBuilding(state, 'keep'));
   assert.ok(Object.values(state.res).every(amount => amount >= 0));
 });
@@ -130,9 +130,9 @@ test('upgrading a producer settles elapsed output at its old rate', () => {
   const state = fresh();
   const cost = R.upgradeCost(state, 'farm');
   assert.equal(R.upgradeBuilding(state, 'farm', NOW + 60000).ok, true);
-  assert.equal(state.res.gold, 280 + 20 - cost.gold);
+  assert.equal(state.res.gold, 280 + 4 - cost.gold);
   assert.equal(state.lastCollected, NOW + 60000);
-  assert.equal(R.production(state, NOW + 120000).gold, 40);
+  assert.equal(R.production(state, NOW + 120000).gold, 8);
   rejectsUnchanged(state, () => R.upgradeBuilding(state, 'keep', NOW));
 });
 

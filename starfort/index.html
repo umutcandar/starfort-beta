@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111918">
   <meta name="description" content="Starfort: yıldızın etrafında kaleni yükselt, kahramanlarını topla ve karanlığa karşı savaş.">
-  <title>Starfort v2.21.0 Beta — Yıldız Köyü</title>
+  <title>Starfort v2.22.0 Beta — Yıldız Köyü</title>
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="preload" as="image" href="assets/city/starfall-valley.webp">
   <link rel="stylesheet" href="style.css">
@@ -38,7 +38,7 @@
   <div class="app">
     <header class="topbar">
       <a class="brand" href="./" aria-label="Starfort ana ekran"><img src="icon.svg" alt=""><span>STARFORT<small>YILDIZ KÖYÜ</small></span></a>
-      <span class="build-badge" title="Kapalı beta için hazırlanmış geliştirme sürümü">v2.21.0 Beta</span><button class="commander" data-view="heroes" aria-label="Kahramanları ve dizilimi aç"><img src="assets/aldren.webp" alt=""><span>Köy Muhafızı<small>Güç <b id="commander-power">—</b></small></span><b id="village-level" title="Kale seviyesi">1</b></button>
+      <span class="build-badge" title="Kapalı beta için hazırlanmış geliştirme sürümü">v2.22.0 Beta</span><button class="commander" data-view="heroes" aria-label="Kahramanları ve dizilimi aç"><img src="assets/aldren.webp" alt=""><span>Köy Muhafızı<small>Güç <b id="commander-power">—</b></small></span><b id="village-level" title="Kale seviyesi">1</b></button>
       <div class="resources" id="resources" aria-label="Kaynaklar"></div>
       <div class="hud-tools"><button class="header-action" data-view="journal" title="Kronik" aria-label="Kronik">📜</button><button class="header-action" data-view="settings" title="Ayarlar ve kayıt yedeği" aria-label="Ayarlar ve kayıt yedeği">⚙</button><span class="save-indicator" id="save-status" title="İlerleme bu cihazda kaydedilir">Yerel kayıt hazır</span><button class="fullscreen-button" data-fullscreen aria-label="Tam ekranı aç" title="Tam ekran">⛶</button></div>
     </header>
@@ -51,7 +51,8 @@
       </div>
       <div class="city-controls" aria-label="Harita kontrolleri"><button data-city-buildings aria-expanded="false" aria-controls="building-picker" title="Bina listesi">▦</button><button data-city-zoom="1.2" aria-label="Yakınlaştır" title="Yakınlaştır">+</button><button data-city-zoom="0.833333" aria-label="Uzaklaştır" title="Uzaklaştır">−</button><button data-city-labels aria-pressed="true" title="Bina adlarını göster veya gizle">Adlar</button></div>
       <button class="city-collect" data-collect><span>✦ Üretimi topla</span><small id="city-production">Kaynaklar birikiyor</small></button>
-      <div id="world-fallback" hidden>Köy görselleri yüklenemedi. Bina listesinden geliştirmelerine devam edebilirsin; görseller için sayfayı yenile.</div>
+      <button class="construction-banner" id="construction-status" data-building="keep" hidden aria-label="Devam eden inşaatı aç"><strong>⚒ İnşaat sürüyor</strong><small id="construction-caption"></small></button>
+       <div id="world-fallback" hidden>Köy görselleri yüklenemedi. Bina listesinden geliştirmelerine devam edebilirsin; görseller için sayfayı yenile.</div>
       <div class="orientation-hint">↻ Yatay ekranda daha geniş bir köy seni bekliyor</div>
       <div class="world-help">Binaya dokunarak geliştir · Haritayı sürükleyerek gez</div>
       <div class="world-caption"><span class="status-light"></span>Yıldız Çekirdeği etkin<span class="divider">/</span><span id="keep-caption">Kale seviyesi 1</span></div>

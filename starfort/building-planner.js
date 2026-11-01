@@ -1,7 +1,7 @@
 /** Read-only building roadmap. All resource and effect numbers are derived
  * from the existing economy; never invents upgrades, timers or rewards.
  */
-import {BUILDINGS,production,upgradeCost} from './rules.js';
+import {BUILDINGS,production,upgradeCost,constructionDuration,constructionStatus,buildingMasteryGate} from './rules.js';
 const CAP=1e9,DAY=24*60*60*1000;
 const kinds={keep:'Merkez',farm:'Üretim',lumber:'Üretim',quarry:'Üretim',forge:'Ordu',tavern:'Ordu',observatory:'Üretim'};
 const labels={gold:'Altın',wood:'Kereste',stone:'Taş',aether:'Yıldız özü'};
@@ -41,11 +41,16 @@ export function buildingUpgradePlan(state,id,now=Date.now()){
  const affordable=Object.values(missing).every(n=>n===0);
  const locked=building.id!=='keep'&&level>=state.buildings.keep+1;
  const battling=state.battle?.status==='active';
- const status=maxed?'maxed':battling?'battle':locked?'locked':direct?'ready':affordable?'collect':'short';
+ const construction=constructionStatus(state,now),mastery=buildingMasteryGate(state,id);
+ const status=maxed?'maxed':
+   construction?.id===id?(construction.ready?'claim':'building'):
+   construction?'builder-busy':
+   battling?'battle':locked?'locked':!mastery.ok?'mastery':direct?'ready':affordable?'collect':'short';
+ const durationMs=constructionDuration(level);
  const progress=maxed?100:Object.keys(cost).length?Math.round(100*Math.min(...Object.entries(cost).map(([r,n])=>Math.min(1,available[r]/n)))):100;
  const etaMinutes=status==='short'?waitUntilAffordable(state,cost,now):null;
  return {building,id,kind:kinds[id],level,nextLevel:Math.min(level+1,building.maxLevel),maxed,cost,pending,available,missing,
-   locked,battling,status,progress,etaMinutes,
+   locked,battling,status,progress,etaMinutes,construction,durationMs,mastery,
    current:upgradeEffect(state,building,level),
    next:upgradeEffect(state,building,Math.min(level+1,building.maxLevel)),
    effectIncrease:upgradeEffect(state,building,Math.min(level+1,building.maxLevel)).value-upgradeEffect(state,building,level).value};
@@ -53,6 +58,8 @@ export function buildingUpgradePlan(state,id,now=Date.now()){
 export function buildingRoadmap(state,now=Date.now()){
  const plans=BUILDINGS.map(b=>buildingUpgradePlan(state,b.id,now));
  const actionable=plans.filter(p=>['ready','collect'].includes(p.status));
- const next=actionable.find(p=>p.id==='keep')||actionable.find(p=>p.id!=='keep')||plans.find(p=>p.status==='short'&&p.id==='keep')||plans.find(p=>p.status==='short')||null;
+ const next=plans.find(p=>p.status==='claim')||plans.find(p=>p.status==='building')
+   ||actionable.find(p=>p.id==='keep')||actionable.find(p=>p.id!=='keep')
+   ||plans.find(p=>p.status==='mastery')||plans.find(p=>p.status==='short'&&p.id==='keep')||plans.find(p=>p.status==='short')||null;
  return {plans,ready:actionable.length,completed:plans.filter(p=>p.maxed).length,next};
 }

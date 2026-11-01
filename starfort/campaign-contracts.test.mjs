@@ -9,8 +9,8 @@ test('contracts are optional, cannot be claimed early, and grant bounded rewards
   assert.equal(R.collect(s,t+60000).ok,true);
   assert.equal(contractsStatus(s,t).contracts[0].progress,1);
   assert.equal(R.claimCampaignContract(s,'supply',t).ok,true);
-  assert.equal(s.res.gold,before.gold+20+60);
-  assert.equal(s.res.wood,before.wood+15+35);
+  assert.equal(s.res.gold,before.gold+R.production(R.createState(t),t+60000).gold+60);
+  assert.equal(s.res.wood,before.wood+R.production(R.createState(t),t+60000).wood+35);
   const saved=JSON.stringify(s);
   assert.equal(R.claimCampaignContract(s,'supply',t).ok,false);
   assert.deepEqual(s,JSON.parse(saved));

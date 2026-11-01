@@ -166,3 +166,17 @@
 @media(prefers-reduced-motion:reduce){
  .ws-building-tab{transition:none}
 }
+
+/* Twenty-level mastery, two legible rows instead of 20 microscopic columns. */
+#building-dialog .ws-levels{grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+#building-dialog .ws-levels>span{height:23px;font-size:9px}
+.ws-status-chip.building,.ws-status-chip.claim{background:#4c3b24;color:#ffdc9a;border-color:#cfa66b}
+.ws-status-chip.mastery,.ws-status-chip.builder-busy{background:#344055;color:#e4c394;border-color:#9d855e}
+.ws-queue{margin:10px 0;padding:10px 12px;border:1px solid #d6ab689c;border-radius:7px;background:#86603928;display:flex;flex-direction:column;gap:5px;font-size:11px}
+.ws-queue b{color:#f0cf88}.ws-queue span{color:#dbe4e8}
+.construction-banner{position:absolute;top:calc(var(--city-hud-top) + 60px);left:max(19px,env(safe-area-inset-left));z-index:3;min-width:175px;max-width:min(300px,40vw);padding:9px 12px;border:1px solid #d4a96b;border-radius:7px;background:linear-gradient(130deg,#374134f2,#19283deb);color:#f8e3b6;text-align:left;box-shadow:0 5px 20px #0a0f1d6b}
+.construction-banner strong,.construction-banner small{display:block}
+.construction-banner strong{font-size:12px}.construction-banner small{font-size:9px;margin-top:5px;color:#c6d3d9}
+.construction-banner.ready{background:#264b40ed;border-color:#a9e2bf}
+@media(max-width:730px){.construction-banner{top:calc(var(--city-hud-top) + 68px);left:14px;max-width:190px;padding:7px 10px}.construction-banner strong{font-size:10px}}
+@media(orientation:landscape) and (max-height:520px){.construction-banner{top:calc(var(--city-hud-top) + 51px);left:12px;max-width:180px}}

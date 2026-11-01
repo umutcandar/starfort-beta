@@ -25,13 +25,13 @@ export const RESOURCES = {
   stone: { name: 'Taş', icon: '⬟' }, aether: { name: 'Yıldız özü', icon: '✦' },
 };
 export const BUILDINGS = [
-  { id: 'keep', name: 'Yıldız Kalesi', icon: '♜', maxLevel: 8, description: 'Üretimi ve yapıların seviye sınırını artırır.', baseCost: { gold: 100, wood: 80, stone: 70 } },
-  { id: 'farm', name: 'Hasat Avlusu', icon: '🌾', maxLevel: 8, description: 'Vadinin hasadından altın kazanır.', baseCost: { gold: 55, wood: 40 }, production: { resource: 'gold', perMinute: 20 } },
-  { id: 'lumber', name: 'Karaorman Keresteliği', icon: '🪵', maxLevel: 8, description: 'Kalenin yapıları için kereste üretir.', baseCost: { gold: 50, stone: 25 }, production: { resource: 'wood', perMinute: 15 } },
-  { id: 'quarry', name: 'Aytaşı Ocağı', icon: '⬟', maxLevel: 8, description: 'Kadim kayalardan yapı taşı çıkarır.', baseCost: { gold: 60, wood: 35 }, production: { resource: 'stone', perMinute: 12 } },
-  { id: 'forge', name: 'Kor Demirhanesi', icon: '⚒', maxLevel: 8, description: 'Her yükseltme takım saldırısını %5 artırır; 2. ve 4. seviyelerde yeni ekipmanlar açılır.', baseCost: { gold: 85, wood: 40, stone: 55 } },
-  { id: 'tavern', name: 'Yemin Hanı', icon: '⚑', maxLevel: 8, description: 'Her yükseltme kahramanların canını %4 artırır.', baseCost: { gold: 80, wood: 65, stone: 30 } },
-  { id: 'observatory', name: 'Yıldız Rasathanesi', icon: '✦', maxLevel: 8, description: 'Gökyüzünden yıldız özü toplar.', baseCost: { gold: 90, wood: 45, stone: 60 }, production: { resource: 'aether', perMinute: 3 } },
+  { id: 'keep', name: 'Yıldız Kalesi', icon: '♜', maxLevel: 20, description: 'Üretimi ve yapıların seviye sınırını artırır.', baseCost: { gold: 100, wood: 80, stone: 70 } },
+  { id: 'farm', name: 'Hasat Avlusu', icon: '🌾', maxLevel: 20, description: 'Vadinin hasadından altın kazanır.', baseCost: { gold: 55, wood: 40 }, production: { resource: 'gold', perMinute: 4 } },
+  { id: 'lumber', name: 'Karaorman Keresteliği', icon: '🪵', maxLevel: 20, description: 'Kalenin yapıları için kereste üretir.', baseCost: { gold: 50, stone: 25 }, production: { resource: 'wood', perMinute: 3 } },
+  { id: 'quarry', name: 'Aytaşı Ocağı', icon: '⬟', maxLevel: 20, description: 'Kadim kayalardan yapı taşı çıkarır.', baseCost: { gold: 60, wood: 35 }, production: { resource: 'stone', perMinute: 2.5 } },
+  { id: 'forge', name: 'Kor Demirhanesi', icon: '⚒', maxLevel: 20, description: 'Her yükseltme takım saldırısını %5 artırır; 2. ve 4. seviyelerde yeni ekipmanlar açılır.', baseCost: { gold: 85, wood: 40, stone: 55 } },
+  { id: 'tavern', name: 'Yemin Hanı', icon: '⚑', maxLevel: 20, description: 'Her yükseltme kahramanların canını %4 artırır.', baseCost: { gold: 80, wood: 65, stone: 30 } },
+  { id: 'observatory', name: 'Yıldız Rasathanesi', icon: '✦', maxLevel: 20, description: 'Gökyüzünden yıldız özü toplar.', baseCost: { gold: 90, wood: 45, stone: 60 }, production: { resource: 'aether', perMinute: 0.6 } },
 ];
 export const HEROES = [
   { id: 'aldren', name: 'Aldren', title: 'Kül Muhafızı', role: 'tank', color: '#c89463', description: 'Kalenin son yeminli muhafızı.', skill: 'Siper: İlk hedef olur; ayaktayken takım %15 az hasar alır.', hp: 170, attack: 18, unlockStage: 0 },
@@ -94,7 +94,7 @@ export function createState(now = Date.now()) {
     buildings: Object.fromEntries(BUILDINGS.map(item => [item.id, 1])),
     heroes: Object.fromEntries(HEROES.filter(hero => !hero.unlockStage).map(hero => [hero.id, { level: 1 }])),
     team: ['aldren', 'lyra', 'rovan'], cleared: [], campaignStars: {}, labyrinth:createLabyrinth(), veteranMedals: {}, riftRecords: [], cosmeticWishlist: [], selectedStage: 1,
-    lastCollected: safeNow(now), lastDailyReward: null, contracts:createContracts(now), season:newSeason(now), battle: null, ...createGearState(),
+    lastCollected: safeNow(now), construction:null, lastDailyReward: null, contracts:createContracts(now), season:newSeason(now), battle: null, ...createGearState(),
   };
 }
 
@@ -120,6 +120,17 @@ export function restoreState(raw, now = Date.now()) {
     if (validTeam(state, saved.team)) state.team = [...saved.team];
     if (integer(saved.selectedStage, 1, Math.min(STAGES.length, nextStage(state)))) state.selectedStage = saved.selectedStage;
     if (timestamp(saved.lastCollected)) state.lastCollected = Math.min(time, saved.lastCollected);
+    // Restore at most one valid job; each queued level has an exact build duration.
+    const job=saved.construction;
+    if(job&&typeof job==='object'&&typeof job.id==='string'){
+      const target=buildingById(job.id);
+      const from=state.buildings[job.id];
+      if(target&&integer(from,2,target.maxLevel-1)&&job.fromLevel===from
+         &&timestamp(job.startedAt)&&timestamp(job.endsAt)&&job.endsAt>job.startedAt
+         &&job.endsAt-job.startedAt===constructionDuration(from)){
+        state.construction={id:job.id,fromLevel:from,startedAt:job.startedAt,endsAt:job.endsAt};
+      }
+    }
     if(typeof saved.lastDailyReward==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(saved.lastDailyReward))state.lastDailyReward=saved.lastDailyReward;
     state.contracts=restoreContracts(saved.contracts,time);
     state.season=restoreSeason(saved.season,time);
@@ -182,44 +193,89 @@ export function collect(state, now = Date.now()) {
   return { ok: true, gain };
 }
 
-export function upgradeCost(state, id) {
-  const building = buildingById(id);
-  if (!building) return null;
-  return Object.fromEntries(Object.entries(building.baseCost).map(([resource, amount]) => [resource, Math.ceil(amount * 1.65 ** (state.buildings[id] - 1))]));
+// A full 20-level village: one free onboarding upgrade, then an actual queue.
+ // Durations are deliberate, testable balance constants in minutes. At one
+ // builder they impose an approximately multi-month path even with rich stockpiles.
+export const CONSTRUCTION_START_LEVEL=2;
+export const CONSTRUCTION_MINUTES=Object.freeze([0,0,3,10,25,50,90,180,300,480,720,960,1200,1500,1860,2220,2580,2880,3240,3600]);
+export function constructionDuration(fromLevel){
+ if(!Number.isInteger(fromLevel)||fromLevel<CONSTRUCTION_START_LEVEL||fromLevel>=20)return 0;
+ return CONSTRUCTION_MINUTES[fromLevel]*60000;
 }
-
-export function upgradeBuilding(state, id, now = state.lastCollected) {
-  const building = buildingById(id);
-  if (!building) return fail('Bilinmeyen yapı.');
-  if (activeBattle(state)) return fail('Önce devam eden savaşı tamamla.');
-  if (state.buildings[id] >= building.maxLevel) return fail('Yapı en yüksek seviyede.');
-  if (id !== 'keep' && state.buildings[id] >= state.buildings.keep + 1) return fail('Önce Yıldız Kalesi’ni yükselt.');
-  const cost = upgradeCost(state, id);
-  if (!canPay(state, cost)) return fail('Yeterli kaynak yok.');
-  if (!timestamp(now) || now < state.lastCollected) return fail('Geçersiz geliştirme zamanı.');
-  // Settle elapsed production at the old level before changing its rate.
-  collect(state, now);
-  pay(state, cost);
-  state.buildings[id]++;
-  return { ok: true };
+export function constructionStatus(state,now=Date.now()){
+ const job=state.construction;
+ if(!job)return null;
+ const remainingMs=Math.max(0,job.endsAt-now);
+ return {...job,remainingMs,ready:remainingMs===0};
 }
-
-/** Atomic alternative: include already-earned idle resources in a single upgrade.
- * A failed attempt leaves resources, lastCollected and the building unchanged.
- * Never creates additional resources or bypasses keep/active-combat restrictions.
- */
+export function completeConstruction(state,now=Date.now()){
+ const job=state.construction;
+ if(!job)return fail('Devam eden inşaat yok.');
+ if(!timestamp(now)||now<job.endsAt)return fail('İnşaat henüz tamamlanmadı.');
+ const building=buildingById(job.id);
+ if(!building||state.buildings[job.id]!==job.fromLevel||job.fromLevel>=building.maxLevel)
+   return fail('İnşaat kaydı geçersiz.');
+ if(activeBattle(state))return fail('Önce devam eden savaşı tamamla.');
+ state.buildings[job.id]++;
+ state.construction=null;
+ return {ok:true,id:job.id,level:state.buildings[job.id]};
+}
+export function upgradeCost(state,id){
+ const building=buildingById(id);
+ if(!building)return null;
+ const level=state.buildings[id];
+ // The starter economy is deliberately affordable; the 20-level long game
+ // uses bounded exponential material requirements and a separate build queue.
+ const factor=level<=8?1.65**(level-1):1.65**7*1.42**(level-8);
+ return Object.fromEntries(Object.entries(building.baseCost).map(([resource,amount])=>[resource,Math.ceil(amount*factor)]));
+}
+export function buildingMasteryGate(state,id){
+ const building=buildingById(id);
+ if(!building)return {required:0,total:0,ok:false};
+ const level=state.buildings[id];
+ // The long-term tiers demand replayable 1–3 star expedition mastery,
+ // not only waiting for the construction clock.
+ const required=level>=18?24:level>=14?18:level>=10?12:level>=7?6:level>=4?3:0;
+ const total=campaignStarStatus(state).total;
+ return {required,total,ok:total>=required};
+}
+function upgradePrerequisite(state,id){
+ const building=buildingById(id);
+ if(!building)return fail('Bilinmeyen yapı.');
+ if(activeBattle(state))return fail('Önce devam eden savaşı tamamla.');
+ if(state.construction)return fail('Önce devam eden inşaatı tamamla.');
+ if(state.buildings[id]>=building.maxLevel)return fail('Yapı en yüksek seviyede.');
+ if(id!=='keep'&&state.buildings[id]>=state.buildings.keep+1)return fail('Önce Yıldız Kalesi’ni yükselt.');
+ const mastery=buildingMasteryGate(state,id);
+ if(!mastery.ok)return fail('Yıldız ustalığı gerekli: seferlerde '+mastery.required+' / 24 yıldız topla. Şu an '+mastery.total+' yıldızın var.');
+ return {ok:true};
+}
+function finishOrQueueUpgrade(state,id,now){
+ const level=state.buildings[id],durationMs=constructionDuration(level);
+ if(!durationMs){state.buildings[id]++;return {ok:true,level:state.buildings[id]};}
+ state.construction={id,fromLevel:level,startedAt:now,endsAt:now+durationMs};
+ return {ok:true,started:true,durationMs,endsAt:now+durationMs};
+}
+export function upgradeBuilding(state,id,now=state.lastCollected){
+ const gate=upgradePrerequisite(state,id);
+ if(!gate.ok)return gate;
+ const cost=upgradeCost(state,id);
+ if(!canPay(state,cost))return fail('Yeterli kaynak yok.');
+ if(!timestamp(now)||now<state.lastCollected)return fail('Geçersiz geliştirme zamanı.');
+ collect(state,now);pay(state,cost);
+ return finishOrQueueUpgrade(state,id,now);
+}
+/** Atomically pay with pending idle production, or leave everything unchanged. */
 export function upgradeBuildingFromProduction(state,id,now=Date.now()){
-  const building=buildingById(id);
-  if(!building)return fail('Bilinmeyen yapı.');
-  if(activeBattle(state))return fail('Önce devam eden savaşı tamamla.');
-  if(state.buildings[id]>=building.maxLevel)return fail('Yapı en yüksek seviyede.');
-  if(id!=='keep'&&state.buildings[id]>=state.buildings.keep+1)return fail('Önce Yıldız Kalesi’ni yükselt.');
-  if(!timestamp(now)||now<state.lastCollected)return fail('Geçersiz geliştirme zamanı.');
-  const cost=upgradeCost(state,id),gain=production(state,now);
-  if(!Object.entries(cost).every(([resource,amount])=>state.res[resource]+Math.min(gain[resource],MAX_RESOURCE-state.res[resource])>=amount))
-    return fail('Toplanabilir üretimle birlikte bile yeterli kaynak yok.');
-  collect(state,now);pay(state,cost);state.buildings[id]++;
-  return {ok:true};
+ const gate=upgradePrerequisite(state,id);
+ if(!gate.ok)return gate;
+ if(!timestamp(now)||now<state.lastCollected)return fail('Geçersiz geliştirme zamanı.');
+ const cost=upgradeCost(state,id),gain=production(state,now);
+ if(!Object.entries(cost).every(([resource,amount])=>
+   state.res[resource]+Math.min(gain[resource],MAX_RESOURCE-state.res[resource])>=amount))
+   return fail('Toplanabilir üretimle birlikte bile yeterli kaynak yok.');
+ collect(state,now);pay(state,cost);
+ return finishOrQueueUpgrade(state,id,now);
 }
 
 export function heroCost(state, id) {
