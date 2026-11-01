@@ -127,6 +127,7 @@ export function finishLabyrinthGuardian(state,floor){
 }
 export function completeLabyrinthFloor(state){
   const view=labyrinthStatus(state),maze=state.labyrinth;
+  if(state.battle?.status==='active')return fail('Önce savaşı bitir.');
   if(!view.canFinish)return fail('Önce çıkışa ulaş ve kat muhafızını yen.');
   if(maze.cleared>=maze.floor)return fail('Bu katın ödülü daha önce alındı.');
   const floor=maze.floor;
@@ -139,5 +140,6 @@ export function completeLabyrinthFloor(state){
   if(!maze.completed){
     maze.floor=floor+1;maze.cell=0;maze.visited=[0];maze.claimed=[];maze.guardianDefeated=false;
   }
+  if(state.battle?.labyrinthFloor===floor)state.battle=null;
   return {ok:true,reward,loot,finished:maze.completed,floor};
 }
