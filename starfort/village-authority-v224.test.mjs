@@ -71,4 +71,12 @@ test('SQL ledger is protected with RLS, no direct auth table writes, server cloc
  assert.match(sql,/v_row\.mastery<v_required/);
  assert.match(sql,/from public\.starfort_match_history/);
  assert.doesNotMatch(sql,/grant\s+(?:insert|update|delete|all)\s+on\s+public\.starfort_village_ledger\s+to\s+authenticated/i);
+ const replay=readFileSync(new URL('./sql/starfort-village-replay-guard.sql',import.meta.url),'utf8');
+ assert.match(replay,/primary key\(user_id,request_id\)/);
+ assert.match(replay,/alter table public\.starfort_village_requests enable row level security/);
+ assert.match(replay,/revoke all on public\.starfort_village_requests from public,anon,authenticated/);
+ assert.match(replay,/select response into v_previous from public\.starfort_village_requests/);
+ assert.match(replay,/if found then return v_previous/);
+ assert.match(replay,/insert into public\.starfort_village_requests\(user_id,request_id,response\)/);
+
 });
