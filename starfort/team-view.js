@@ -1,5 +1,6 @@
 /** Starfort v1.4 team arena. The browser renders state; all combat rules live on server. */
 import {guildRequest,GUILD_TOKEN_KEY} from './guild-client.js';
+import {createMatchContinuity} from './match-continuity.js';
 import {accountSession} from './account-auth.js';
 import {ARENA_HERO_STYLES} from './arena-heroes.js';
 import * as R from './rules.js';
@@ -26,6 +27,7 @@ export function mountTeamArena(root){
   let selectedSquad='all';
   let botDifficulty=trainingDifficulty(localStorage.getItem('starfort:bot-difficulty'))||'normal';
   let minimapVisible=localStorage.getItem('starfort:minimap-visible')!=='false';
+  const matchContinuity=createMatchContinuity(sessionStorage,'starfort:team-last-active');
   let snapshot={status:'idle'},error='',seq=0,busy=false,disposed=false,raf=0,sending=0,checking=0,pendingBurst=false,pendingDash=false,pendingOrder=null,pendingFocus=null,pendingSquad='all',pendingAttack=false;
   const keys=new Set(),touch=new Set();
   const api=(endpoint,data=null)=>guildRequest('team/'+endpoint,token,data);
@@ -80,10 +82,10 @@ export function mountTeamArena(root){
   }
   function status(){const state=snapshot.status,room=snapshot.room;
     const wasLive=root.classList.contains('sf-battle-live');root.classList.toggle('sf-battle-live',state==='active');document.body.classList.toggle('sf-combat-running',state==='active');if(wasLive!==(state==='active'))requestAnimationFrame(resizeCanvas);
-    let headline='',detail='';if(error){headline='BAĞLANTI HATASI';detail=error;}else if(state==='idle'){headline='SAVAŞI DENE';detail='Botla hemen 2v2 veya kuşatma başlat; gerçek takım için diğer eşleşme düğmelerini kullan.';}else if(state==='waiting'){headline=`${snapshot.mode} İÇİN OYUNCULAR BEKLENİYOR`;detail=snapshot.party?`${snapshot.waiting}/${snapshot.required} oyuncu · Klan takımı sırada. Tüm üyeler bu ekranı açık tutmalı. Rakip klan da aynı formatı seçmeli.`:`${snapshot.waiting}/${snapshot.required} oyuncu hazır. Diğer oyuncular farklı tarayıcı profillerinden aynı modu seçmeli.`;}else if(state==='ended'){headline=room.winner===null?'BERABERE':room.players.find(p=>p.id===snapshot.you)?.team===room.winner?'ZAFER':'MAĞLUBİYET';detail=room.reason==='disconnect'?'Bağlantı kesilmesi nedeniyle maç sona erdi.':room.reason==='siege-victory'?'Kuşatanlar yıldız çekirdeğini ele geçirdi.':room.reason==='siege-defense'?'Savunmacılar 3 dakika boyunca kaleyi korudu.':'Yeni maça girmek için Çık ardından eşleşme seç.';}
+    let headline='',detail='';if(error){headline='BAĞLANTI HATASI';detail=error;}else if(state==='interrupted'){headline='MAÇ OTURUMU İPTAL';detail=snapshot.message||'Sunucu yeniden başladı. Yenilgi yazılmadı; yeniden eşleşebilirsin.';}else if(state==='idle'){headline='SAVAŞI DENE';detail='Botla hemen 2v2 veya kuşatma başlat; gerçek takım için diğer eşleşme düğmelerini kullan.';}else if(state==='waiting'){headline=`${snapshot.mode} İÇİN OYUNCULAR BEKLENİYOR`;detail=snapshot.party?`${snapshot.waiting}/${snapshot.required} oyuncu · Klan takımı sırada. Tüm üyeler bu ekranı açık tutmalı. Rakip klan da aynı formatı seçmeli.`:`${snapshot.waiting}/${snapshot.required} oyuncu hazır. Diğer oyuncular farklı tarayıcı profillerinden aynı modu seçmeli.`;}else if(state==='ended'){headline=room.winner===null?'BERABERE':room.players.find(p=>p.id===snapshot.you)?.team===room.winner?'ZAFER':'MAĞLUBİYET';detail=room.reason==='disconnect'?'Bağlantı kesilmesi nedeniyle maç sona erdi.':room.reason==='siege-victory'?'Kuşatanlar yıldız çekirdeğini ele geçirdi.':room.reason==='siege-defense'?'Savunmacılar 3 dakika boyunca kaleyi korudu.':'Yeni maça girmek için Çık ardından eşleşme seç.';}
     if(state==='ended'&&room&&rewarded!==room.id){rewarded=room.id;const meEnd=room.players.find(p=>p.id===snapshot.you);if(room.isPractice)window.dispatchEvent(new CustomEvent('starfort:practice-result',{detail:{won:room.winner!==null&&meEnd?.team===room.winner,mode:rewardMode(room),matchId:room.id,difficulty:room.botDifficulty||botDifficulty}}));}
     $('#team-overlay').hidden=state==='active'&&!error;$('#team-overlay').innerHTML=headline?`<b>${clean(headline)}</b><p>${clean(detail)}</p>`:'';
-    $('#team-status').textContent=error?'Sunucuya bağlanılamıyor':({idle:'Takım arenası hazır',waiting:'Eşleşme bekleniyor',active:'CANLI MUHAREBE',ended:'Maç tamamlandı'})[state]||'Hazırlanıyor';
+    $('#team-status').textContent=error?'Sunucuya bağlanılamıyor':({idle:'Takım arenası hazır',interrupted:'Maç iptal edildi',waiting:'Eşleşme bekleniyor',active:'CANLI MUHAREBE',ended:'Maç tamamlandı'})[state]||'Hazırlanıyor';
     $('#team-detail').textContent=room?`${room.guilds?room.guilds.join(' ⚔ '):clean(room.mode)} · ${room.players.map(p=>p.name).join(' · ')}`:'Sunucu doğrulamalı hareket, hasar ve birlik emirleri';
     $('#team-score-0').textContent=room?.score?.[0]??0;$('#team-score-1').textContent=room?.score?.[1]??0;
     const siege=room?.variant==='siege';
@@ -108,8 +110,8 @@ export function mountTeamArena(root){
       b.title=maxHp?`Can ${Math.ceil(hp)}/${maxHp}`:'Birlikler henüz savaş alanında değil';
     }
   }
-  async function refresh(){if(disposed||busy||!token)return;try{snapshot=await api('state');if(Number.isSafeInteger(snapshot.inputSeq))seq=Math.max(seq,snapshot.inputSeq);error='';}catch(e){error=e.message;}if(!disposed)status();}
-  async function start(size,variant='flags'){if(disposed||busy||!token||!policy.liveMatchmaking)return;busy=true;try{const data=await api('queue',{size,variant,heroId});snapshot=data;error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
+  async function refresh(){if(disposed||busy||!token)return;try{snapshot=matchContinuity.accept(await api('state'));if(Number.isSafeInteger(snapshot.inputSeq))seq=Math.max(seq,snapshot.inputSeq);error='';}catch(e){error=e.message;}if(!disposed)status();}
+  async function start(size,variant='flags'){if(disposed||busy||!token||!policy.liveMatchmaking)return;busy=true;try{const data=await api('queue',{size,variant,heroId});snapshot=matchContinuity.accept(data);error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
   async function startBot(size,variant='flags'){if(disposed||busy||!token)return;busy=true;try{snapshot=await api('bot',{size,variant,difficulty:botDifficulty,heroId});error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
   async function startParty(size,variant='flags'){if(disposed||busy||!token||!policy.liveMatchmaking)return;busy=true;try{snapshot=await api('party/queue',{size,variant});error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
   async function leave(){if(disposed||busy||!token)return;busy=true;try{snapshot=await api('leave',{});error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
