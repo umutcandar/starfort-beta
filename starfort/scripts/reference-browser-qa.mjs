@@ -202,7 +202,7 @@ try{
   await evaluate("document.querySelector('[data-audio-toggle]').click()");
   assert.ok(await evaluate("document.querySelector('[data-audio-toggle]').textContent.includes('Kapalı')"),'Ses kapatılabilmeli');
   // Long-game smoke: a fully funded veteran building must start a real, persistent timer.
-  await evaluate(`(()=>{const key='starfort:v1',state=JSON.parse(localStorage.getItem(key));state.buildings.keep=8;
+  await evaluate(`(()=>{const key='starfort:v1',state=JSON.parse(localStorage.getItem(key));state.buildings.keep=8;state.battle=null;
     state.res={gold:1000000,wood:1000000,stone:1000000,aether:1000000};
     state.cleared=[1,2,3,4,5,6,7,8];
     state.campaignStars={1:3,2:3,3:3,4:3,5:3,6:3,7:3,8:3};
