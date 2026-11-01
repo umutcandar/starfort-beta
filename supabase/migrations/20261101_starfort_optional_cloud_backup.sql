@@ -65,12 +65,12 @@ begin
   snapshot := data->'state';
   if snapshot is null
     or jsonb_typeof(snapshot)<>'object'
-    or jsonb_typeof(snapshot->'version')<>'number'
-    or snapshot->>'version'<>'1'
-    or jsonb_typeof(snapshot->'res')<>'object'
-    or jsonb_typeof(snapshot->'buildings')<>'object'
-    or jsonb_typeof(snapshot->'team')<>'array'
-    or jsonb_typeof(snapshot->'heroes')<>'object'
+    or coalesce(jsonb_typeof(snapshot->'version'),'')<>'number'
+    or coalesce(snapshot->>'version','')<>'1'
+    or coalesce(jsonb_typeof(snapshot->'res'),'')<>'object'
+    or coalesce(jsonb_typeof(snapshot->'buildings'),'')<>'object'
+    or coalesce(jsonb_typeof(snapshot->'team'),'')<>'array'
+    or coalesce(jsonb_typeof(snapshot->'heroes'),'')<>'object'
     or octet_length(snapshot::text)>131072 then
     return jsonb_build_object('status',400,'body',jsonb_build_object('error','Kayıt boyutu veya biçimi geçersiz.'));
   end if;
