@@ -461,6 +461,11 @@ async function accountAction(action){
      await accountUpdatePassword($('#account-new-password')?.value);
      accountRecovering=false;notify('Şifre güncellendi.');await accountSync.start();return;
    }
+   if(action==='resend-confirmation'){
+     if(!confirmationEmail)throw Error('Önce e-posta adresinle hesap oluştur.');
+     await accountResendConfirmation(confirmationEmail,authRedirect());
+     notify('Onay e-postası yeniden istendi. Gelen kutunu kontrol et.');return;
+   }
    if(action==='logout'){
      accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;
      notify('E-posta hesabından çıkış yapıldı. Yerel oyun korundu.');return;
@@ -468,17 +473,20 @@ async function accountAction(action){
    if(action==='sync'){await accountSync.refresh();return;}
    if(action==='use-local'){
      if(!confirm('Bu cihazdaki ilerleme bulut kaydının üzerine yazılacak. Diğer cihazdaki ilerlemeyi kaybedebilirsin. Emin misin?'))return;
+     makeRecoveryPoint(localStorage,state);
      await accountSync.useLocal();notify('Bu cihazın kaydı buluta yüklendi.');return;
    }
    const remote=await accountBackup('get');accountBackupInfo=remote;
    if(action==='status'){notify(remote?'Bulut yedeği bulundu.':'Bulut yedeği henüz yok.');return;}
    if(action==='save'){
      if(remote&&!confirm('Bulut yedeğinin üzerine yazılacak. Devam edilsin mi?'))return;
+     makeRecoveryPoint(localStorage,state);
      await accountSync.useLocal();notify('Buluta yedeklendi.');
    }else if(action==='restore'){
      if(!remote)throw Error('Bulut yedeği bulunamadı.');
      const candidate=importSave(JSON.stringify({format:'starfort-save',key:R.STORAGE_KEY,state:remote.state}));
      if(!confirm('Bulut ilerlemesi bu cihazın kaydını değiştirecek. Önce JSON yedeğini indirdin mi?'))return;
+     makeRecoveryPoint(localStorage,state);
      accountSync.stop();combatRunner.pause();trialState=null;const old=state;state=candidate;
      if(!persist()){state=old;throw Error('Tarayıcı kaydı değiştirilemedi.');}
      location.reload();
@@ -730,7 +738,25 @@ function dispatch(action) {
   if(saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
   if(button.hasAttribute('data-audio-toggle')){const enabled=gameAudio.toggle();notify(enabled?'Ses ve müzik açıldı.':'Ses ve müzik kapatıldı.');if(activeView==='settings')renderSettings();return;}
   gameAudio.cue('click');
+  if(button.dataset.welcome){
+    $('#account-welcome').close();
+    localStorage.setItem('starfort:welcome-seen','1');
+    if(button.dataset.welcome==='account'){activeView='settings';render();}
+    return;
+  }
   if(button.dataset.accountAction){accountAction(button.dataset.accountAction);return;}
+  if(button.dataset.recoveryKey){
+    try{
+      const recovered=loadRecoveryPoint(localStorage,button.dataset.recoveryKey);
+      if(!confirm('Bu kurtarma noktası mevcut köyün üzerine yazılacak. Devam edilsin mi?'))return;
+      makeRecoveryPoint(localStorage,state);
+      accountSync.stop();combatRunner.pause();trialState=null;
+      const old=state;state=recovered;
+      if(!persist()){state=old;throw Error('Bu sekme başka bir kayıtla çakıştı. Sayfayı yenile.');}
+      location.reload();
+    }catch(error){notify('Kurtarma başarısız: '+error.message);}
+    return;
+  }
   if(button.hasAttribute('data-fullscreen')) { toggleFullscreen(); return; }
   if(button.dataset.quickBot){quickPlayBot(button.dataset.quickBot);return;}
   if(button.hasAttribute('data-labyrinth-open')){activeView='labyrinth';render();return;}
