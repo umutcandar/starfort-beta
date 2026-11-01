@@ -28,8 +28,8 @@ export const MASTERY_PALETTE=Object.freeze({
 });
 /** Returns fresh ornaments, one cumulative visible addition per level from 10 to 20. */
 export function masteryArchitectureForLevel(id,level) {
+ if(typeof id!=='string'||!Object.hasOwn(ART_PLOTS,id)||!Number.isFinite(level)||level<MASTERY_START_LEVEL)return [];
  const plot=ART_PLOTS[id];
- if(!plot||!Number.isFinite(level)||level<MASTERY_START_LEVEL)return [];
  const count=Math.min(MASTERY_ARCHITECTURE.length,Math.floor(level)-MASTERY_START_LEVEL+1);
  const [accent,highlight,base]=MASTERY_PALETTE[id];
  return MASTERY_ARCHITECTURE.slice(0,count).map((stage,i)=>({
