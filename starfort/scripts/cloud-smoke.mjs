@@ -20,7 +20,7 @@ try{
   assert.equal(health.ok,true);
   assert.equal(health.inviteOnly,true);
   const homepage=await (await check('/starfort/',200)).text();
-  assert.match(homepage,/Starfort v2\.8\.0/i);
+  assert.match(homepage,/Starfort v2\.8\.1/i);
   const pathCode=await (await check('/starfort/commander-path.js',200)).text();
   assert.match(pathCode,/commanderPath/);
   await check('/starfort/.local-data/guilds.json',403);

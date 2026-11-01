@@ -4,6 +4,7 @@ import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
 import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import {createArenaService} from './arena.js';
 import {trainingDifficulty} from './training-difficulty.js';
+import {newWeeklyRaid,rotateGuildRaids} from './guild-weekly-raid.js';
 import {createTeamService} from './team-arena.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,7 +30,7 @@ const publicUser=user=>({id:user.id,name:user.name,joinedAt:user.joinedAt});
 const publicGuild=(guild,db)=>({id:guild.id,name:guild.name,code:guild.code,createdAt:guild.createdAt,ownerId:guild.ownerId,raid:guild.raid,
   warPlan:guild.warPlan||{objective:'gate',brief:'Önce kapıyı aş, sonra merkezi koru.',updatedAt:guild.createdAt},
   warRoster:guild.members.map(id=>({userId:id,role:guild.warRoster?.[id]?.role||'frontline',ready:Boolean(guild.warRoster?.[id]?.ready)})),
-  members:guild.members.map(id=>db.users.find(user=>user.id===id)).filter(Boolean).map(publicUser),messages:guild.messages.slice(-25)});
+  members:guild.members.map(id=>db.users.find(user=>user.id===id)).filter(Boolean).map(publicUser),messages:guild.messages.slice(-25),raidWins:guild.raidWins||0});
 const json=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(data));};
 async function bodyOf(req){let body='';for await(const chunk of req){body+=chunk.toString();if(body.length>8192)throw new Error('İstek çok büyük.');}try{return JSON.parse(body||'{}')}catch{throw new Error('Geçersiz JSON.')}}
 async function loadDb(){try{const db=JSON.parse(await readFile(DB_FILE,'utf8'));return db?.version===1&&Array.isArray(db.users)&&Array.isArray(db.guilds)?db:newDb();}catch(error){if(error.code==='ENOENT')return newDb();throw error;}}
@@ -44,7 +45,7 @@ function action(db,user,route,data,now=Date.now()){
     const name=safeName(data.name,32);if(!name)return [400,{error:'Klan adı 3–32 karakter olmalı.'}];
     if(db.guilds.some(g=>g.name.toLocaleLowerCase('tr')===name.toLocaleLowerCase('tr')))return [409,{error:'Bu klan adı kullanımda.'}];
     let code;do{code=randomBytes(3).toString('hex').toUpperCase();}while(db.guilds.some(g=>g.code===code));
-    db.guilds.push({id:randomBytes(12).toString('hex'),code,name,ownerId:user.id,members:[user.id],createdAt:now,messages:[],warPlan:{objective:'gate',brief:'Önce kapıyı aş, sonra merkezi koru.',updatedAt:now},warRoster:{[user.id]:{role:'frontline',ready:false}},raid:{health:2500,maxHealth:2500,damage:0,completed:false,attacks:[]}});
+    db.guilds.push({id:randomBytes(12).toString('hex'),code,name,ownerId:user.id,members:[user.id],createdAt:now,messages:[],warPlan:{objective:'gate',brief:'Önce kapıyı aş, sonra merkezi koru.',updatedAt:now},warRoster:{[user.id]:{role:'frontline',ready:false}},raid:newWeeklyRaid(now),raidWins:0});
   } else if(route==='/api/guild/join'){
     if(guild)return [409,{error:'Başka bir klana üyesin.'}];
     const target=db.guilds.find(g=>g.code===normalize(data.code).toUpperCase());
@@ -80,7 +81,7 @@ function action(db,user,route,data,now=Date.now()){
     if(raid.attacks.some(a=>a.userId===user.id&&now-a.at<60000))return [429,{error:'Yeni saldırı için 60 saniye beklemelisin.'}];
     const damage=randomInt(80,131);raid.health=Math.max(0,raid.health-damage);raid.damage+=damage;
     raid.attacks.push({userId:user.id,name:user.name,damage,at:now});raid.attacks=raid.attacks.slice(-50);
-    if(raid.health===0)raid.completed=true;
+    if(raid.health===0){raid.completed=true;guild.raidWins=(guild.raidWins||0)+1;}
   } else return [404,{error:'İşlem bulunamadı.'}];
   return [200,oneGuild(db,user)];
 }
@@ -111,7 +112,8 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
       try {
         const url=new URL(req.url,'http://localhost');const route=url.pathname;
         if(route.startsWith('/api/')){
-          if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-test',version:'2.8.0-commander-journey',online:true,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']});
+          if(rotateGuildRaids(db,Date.now()))await saveDb(db);
+          if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-test',version:'2.8.1-weekly-raid',online:true,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']});
           const data=req.method==='POST'?await bodyOf(req):{};
           if(route==='/api/register'&&req.method==='POST'){
             const gate=inviteAllowed(req,data.testCode);

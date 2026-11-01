@@ -35,7 +35,7 @@ async function scenario(label,viewport,options,base){
  try{
   await runCase(label+' · şehir açılışı',async()=>{
    await visit(page,base);
-   assert.equal(await page.locator('.build-badge').innerText(),'v2.8.0');
+   assert.equal(await page.locator('.build-badge').innerText(),'v2.8.1');
    await snap(page,label+'_01_sehir');
   });
   for(const [view,description] of [['heroes','Kahramanlar'],['armory','Cephanelik'],['guild','İttifak'],['expedition','Seferler']]){
