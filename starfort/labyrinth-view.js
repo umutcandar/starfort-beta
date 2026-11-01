@@ -28,13 +28,13 @@ export function labyrinthMarkup(state){
       <aside class="maze-side">
         <span class="eyebrow">KAT ${m.floor} · ${esc(m.zone.name)}</span>
         <h3>${m.completed?'Yıldızın Yeminini Tamamladın':!m.available?'Mühürlü Kapı':m.guardianDefeated?'Kapı Muhafızı Düştü':'Koridorları Keşfet'}</h3>
-        <p>${m.completed?'Labirentin 12 katını da tamamladın. Kalenin altında saklanan yolu geri aldın.':!m.available?`Bu katta ilerlemek için önce ${m.requiredChapters} ana hikâye bölümünü bitir.`:esc(m.zone.hint)}</p>
+        <p>${m.completed?'Labirentin 16 katını da tamamladın. Kalenin altında saklanan yolu geri aldın.':!m.available?`Bu katta ilerlemek için önce ${m.requiredChapters} ana hikâye bölümünü bitir.`:esc(m.zone.hint)}</p>
         <div class="maze-mission"><span>GÖREV</span><b>${m.guardianDefeated?'Muhafızı yendin · çıkışa ulaş':'Kat muhafızını bul ve yen'}</b><small>${m.guardianDefeated?'Çıkış odasına giderek kat ödülünü al.':'Sandıkları ve yıldız pınarlarını arayabilirsin. Her ödül yalnızca bir kez alınır.'}</small></div>
         ${m.canFight?`<button class="primary maze-primary" data-labyrinth-fight ${battleActive?'disabled':''}>⚔ Muhafızla savaş</button>`:''}
         ${m.canFinish?`<button class="primary maze-primary" data-labyrinth-complete>✦ ${m.floor===MAZE_FLOORS?'Son mühürü tamamla':'Portaldan sonraki kata geç'}</button>`:''}
         ${battleActive&&state.battle?.labyrinthFloor?`<button class="secondary maze-primary" data-action="resume-battle">▶ Muhafız savaşına dön</button>`:''}
         ${m.available&&!m.canFight&&!m.canFinish&&!m.completed?`<small class="maze-hint">Sadece mevcut odana bağlı parlayan taşlara ilerleyebilirsin. Tuzaklar biraz altın eksiltebilir, diğer odalar ganimet sağlar.</small>`:''}
-        ${m.completed?'<p class="maze-complete">✦ LABİRENT TAMAMLANDI · 12/12</p>':''}
+        ${m.completed?'<p class="maze-complete">✦ LABİRENT TAMAMLANDI · 16/16</p>':''}
         <div class="maze-floor-list">${Array.from({length:MAZE_FLOORS},(_,i)=>`<span class="${i<m.cleared?'is-done':i===m.floor-1?'is-now':''}" title="Kat ${i+1}">${i<m.cleared?'✓':i+1}</span>`).join('')}</div>
         <small class="maze-terms">Labirent kaynakları yerel hikâyeye eklenir. PvP derecesi, klan ödülleri ve sefer yıldızları etkilenmez.</small>
       </aside>
