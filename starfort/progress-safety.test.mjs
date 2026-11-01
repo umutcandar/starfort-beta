@@ -58,7 +58,7 @@ test('maxed-out heroes, stars, forge and maze still reach the 29-point season ti
  assert.equal(R.claimSeasonTitle(s,'Yıldız Vekili',time).ok,true);
 });
 test('live win and ability after midnight apply to the new daily contract',()=>{
- const yesterday=Date.UTC(2026,9,31,21,0,0),today=yesterday+2*60*60*1000;
+ const yesterday=Date.UTC(2026,9,31,11,0,0),today=yesterday+24*60*60*1000;
  const s=R.createState(yesterday);s.contracts.day='2026-10-31';
  assert.equal(R.startLiveBattle(s,1).ok,true);
  for(const enemy of s.battle.enemies)enemy.hp=0;
