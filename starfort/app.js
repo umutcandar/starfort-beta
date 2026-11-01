@@ -13,6 +13,7 @@ import {practiceReward} from './battle-assist.js';
 import {mountTeamArena} from './team-view.js';
 import {ensureTestCommander} from './quick-play.js';
 import {commanderPath} from './commander-path.js';
+import {battleExperience} from './battle-experience.js';
 import {cloudSaveRequest,cloudBackupSummary} from './cloud-save.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -40,6 +41,7 @@ const iconPaths = {
 };
 const svg = (name, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name] || iconPaths.star}</svg>`;
 const resourceIcon = { gold: 'coin', wood: 'wood', stone: 'stone', aether: 'star' };
+const battlePolicy=battleExperience(window.location);
 const resourceName = { gold: 'Altın', wood: 'Kereste', stone: 'Taş', aether: 'Yıldız özü' };
 const navItems = [ ['keep', 'keep', 'Köy'], ['heroes', 'heroes', 'Kahramanlar'], ['expedition', 'expedition', 'Seferler'], ['guild', 'guild', 'İttifak'], ['armory', 'forge', 'Cephanelik'], ['shop', 'shop', 'Mağaza'] ];
 let state;
@@ -228,9 +230,9 @@ function renderExpedition() {
     ${renderWeeklyRift()}
     <details class="mode-hub"><summary>Savaş salonu ve antrenmanlar<small>Hikâyeden ayrı, isteğe bağlı düello, takım savaşı ve tatbikat modları</small></summary><div class="mode-hub-grid">
     <article class="arena-invitation quick-bot-invitation"><div><span class="eyebrow">TEK OYUNCU · HIZLI EĞİTİM</span><h3>Hemen savaş dene</h3><p>İlk kez giriyorsan otomatik bir deneme komutanı oluşturulur. Başka oyuncu gerekmiyor. Bot antrenmanında sınırlı yerel kaynak ödülü kazanılabilir; rekabetçi sıralama etkilenmez.</p></div><button class="primary" data-quick-bot="duel">⚔ Botla 1v1</button><button class="secondary" data-quick-bot="siege">🏰 Botlarla 5v5 Kuşatma</button></article>
-    <article class="arena-invitation"><div><span class="eyebrow"> ÇEVRİM İÇİ 1v1</span><h3>Yıldız Düellosu</h3><p>Gerçek oyuncuyla eşleş, kahramanını kontrol et, savaş. Önce İttifak bölümünde hesap oluştur. Derecesiz geliştirme modu.</p></div><button class="primary" data-arena-open>Düello salonuna git</button></article>
-    <article class="arena-invitation team-invitation"><div><span class="eyebrow"> 2v2 / 5v5 · KLAN TAKIMI</span><h3>İki Sancak Muharebesi</h3><p>Arkadaşlarınla veya klan arkadaşlarınla aynı takımda savaş, askerlerine emir ver, iki hakimiyet noktasını ele geçir. Sunucu tabanlı derecesiz test modu.</p></div><button class="primary" data-team-open>Sancak meydanına git</button></article>
-    <article class="training-invitation"><div><span class="eyebrow"> KOMUTAN AKADEMİSİ</span><h3>Kahramanı yönet, orduna emir ver</h3><p>WASD ile hareket et, üç birliğini seç, kale kapısını yıkıp hakimiyet kur. Eğitim ödül veya çevrim içi rekabet sunmaz.</p></div><button class="primary" data-training-open>Kuşatma tatbikatına gir →</button></article>
+    <article class="arena-invitation"><div><span class="eyebrow">${battlePolicy.liveMatchmaking?'CANLI 1v1':'BOT DÜELLOSU · CANLI PvP ÖZEL SUNUCUDA'}</span><h3>Yıldız Düellosu</h3><p>${battlePolicy.liveMatchmaking?'Gerçek rakibe meydan oku veya botla antrenman yap. Önce İttifak bölümünde hesap oluştur.':'Düello salonunda botla savaş. Gerçek oyuncu eşleşmesi bu GitHub Pages betasında henüz açık değil.'}</p></div><button class="primary" data-arena-open>Düello salonuna git</button></article>
+    <article class="arena-invitation team-invitation"><div><span class="eyebrow">${battlePolicy.liveMatchmaking?'2v2 / 5v5 · KLAN TAKIMI':'2v2 / 5v5 BOT TATBİKATI'}</span><h3>İki Sancak Muharebesi</h3><p>${battlePolicy.liveMatchmaking?'Klan arkadaşlarınla savaş, askerlerine emir ver, sancakları ele geçir. Derecesiz test modu.':'Bot birliklere emir ver, sancakları ele geçir veya kale kuşat. Canlı eşleşme özel sunucuda kullanılabilir.'}</p></div><button class="primary" data-team-open>Sancak meydanına git</button></article>
+    <article class="training-invitation"><div><span class="eyebrow">KOMUTAN AKADEMİSİ</span><h3>Kahramanı yönet, orduna emir ver</h3><p>WASD ile hareket et, üç birliğini seç, kale kapısını yıkıp hakimiyet kur. Eğitim ödül veya çevrim içi rekabet sunmaz.</p></div><button class="primary" data-training-open>Kuşatma tatbikatına gir →</button></article>
     </div></details>
 `;
 }
