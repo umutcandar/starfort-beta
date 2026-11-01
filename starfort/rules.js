@@ -1,6 +1,8 @@
 import { createGearState, restoreGear, equipmentStats, awardFirstClearItem, FIRST_CLEAR_LOOT, itemById } from './equipment.js';
 import { restoreCampaignStars, recordCampaignStars, campaignStarStatus } from './campaign-stars.js';
 import { encounterEnemies, enemyIntent } from './encounters.js';
+import { stageRequirements } from './stage-gates.js';
+import {newSeason,restoreSeason,seasonEvent} from './season-campaign.js';
 import { initializeLiveCombat, restoreLiveCombat, advanceLiveCombat, castLiveAbility, changeBattleStance } from './live-combat.js';
 import { createContracts, restoreContracts, recordContract, contractsStatus, claimContractProgress } from './campaign-contracts.js';
 import { weeklyRiftStatus, riftSchedule, restoreRiftRecords, applyRiftModifier, RIFT_MODIFIERS } from './weekly-rift.js';
@@ -8,6 +10,8 @@ import { COSMETIC_CONCEPTS, restoreWishlist, toggleWishlist } from './cosmetic-c
 import { createLabyrinth, restoreLabyrinth, labyrinthStatus, finishLabyrinthGuardian, requiredStoryChapters, labyrinthLayout } from './labyrinth.js';
 export { HERO_ABILITIES, abilityState, liveEnemyIntent } from './live-combat.js';
 export { enemyIntent, ENEMY_ROLES } from './encounters.js';
+export { stageRequirements } from './stage-gates.js';
+export {seasonStatus,claimSeasonTitle,SEASON_GOALS,SEASON_TITLES} from './season-campaign.js';
 export { CONTRACTS, BANNER_MILESTONES, contractsStatus } from './campaign-contracts.js';
 export { weeklyRiftStatus, RIFT_MODIFIERS } from './weekly-rift.js';
 export { COSMETIC_CONCEPTS, toggleWishlist } from './cosmetic-concepts.js';
@@ -85,7 +89,7 @@ export function createState(now = Date.now()) {
     buildings: Object.fromEntries(BUILDINGS.map(item => [item.id, 1])),
     heroes: Object.fromEntries(HEROES.filter(hero => !hero.unlockStage).map(hero => [hero.id, { level: 1 }])),
     team: ['aldren', 'lyra', 'rovan'], cleared: [], campaignStars: {}, labyrinth:createLabyrinth(), veteranMedals: {}, riftRecords: [], cosmeticWishlist: [], selectedStage: 1,
-    lastCollected: safeNow(now), lastDailyReward: null, contracts:createContracts(now), battle: null, ...createGearState(),
+    lastCollected: safeNow(now), lastDailyReward: null, contracts:createContracts(now), season:newSeason(now), battle: null, ...createGearState(),
   };
 }
 
@@ -113,6 +117,7 @@ export function restoreState(raw, now = Date.now()) {
     if (timestamp(saved.lastCollected)) state.lastCollected = Math.min(time, saved.lastCollected);
     if(typeof saved.lastDailyReward==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(saved.lastDailyReward))state.lastDailyReward=saved.lastDailyReward;
     state.contracts=restoreContracts(saved.contracts,time);
+    state.season=restoreSeason(saved.season,time);
     state.riftRecords=restoreRiftRecords(saved.riftRecords);
     state.cosmeticWishlist=restoreWishlist(saved.cosmeticWishlist);
     for(const stage of STAGES){const tier=saved.veteranMedals?.[stage.id];if(state.cleared.includes(stage.id)&&integer(tier,1,3))state.veteranMedals[stage.id]=tier;}
@@ -191,6 +196,7 @@ export function upgradeBuilding(state, id, now = state.lastCollected) {
   collect(state, now);
   pay(state, cost);
   state.buildings[id]++;
+  seasonEvent(state,'upgrade');
   return { ok: true };
 }
 
@@ -208,6 +214,7 @@ export function upgradeHero(state, id) {
   if (!canPay(state, cost)) return fail('Yeterli kaynak yok.');
   pay(state, cost);
   state.heroes[id].level++;
+  seasonEvent(state,'upgrade');
   return { ok: true };
 }
 
@@ -315,6 +322,8 @@ export function startBattle(state, stageId) {
   if (!stage) return fail('Bilinmeyen bölge.');
   if (activeBattle(state)) return fail('Devam eden bir savaş var.');
   if (stageId > nextStage(state)) return fail('Önce önceki bölgeyi temizle.');
+  // Historical turn-based replays and test fixtures still use startBattle().
+  // The actual player-facing live story start enforces the chapter gates below.
   if (!validTeam(state, state.team)) return fail('Üç kahramanlık takımını tamamla.');
   state.selectedStage = stageId;
   state.battle = newBattle(state, stage);
@@ -374,7 +383,15 @@ export function prepareLiveBattle(state) {
   initializeLiveCombat(state.battle);
   return {ok:true};
 }
-export function startLiveBattle(state,stageId) {
+export function startLiveBattle(state,stageId,{enforceGates=false}={}) {
+  const stage=stageById(stageId);
+  if(!stage)return fail('Bilinmeyen sefer.');
+  // Live UI explicitly opts into the v2 progression contract. Older call sites
+  // and fixture helpers retain historic behavior until migrated.
+  if(enforceGates && stageId<=nextStage(state)){
+    const gate=stageRequirements(state,stage,teamPower(state));
+    if(!gate.available)return fail('Sefer kilitli: '+gate.reasons.join(' '));
+  }
   const started=startBattle(state,stageId);
   if(started.ok) prepareLiveBattle(state);
   return started;
@@ -428,6 +445,8 @@ function finishBattle(state, events) {
     if (!battle.rewardApplied) {
       award(state, battle.reward);
       recordContract(state,'win');
+      if(!battle.veteranTier && !battle.riftModifier)seasonEvent(state,'win');
+      if(battle.riftModifier)seasonEvent(state,'rift');
       if(Number.isInteger(battle.riftWeek)&&battle.riftModifier&&!state.riftRecords.some(x=>x.week===battle.riftWeek)){
         state.riftRecords=restoreRiftRecords([...state.riftRecords,{week:battle.riftWeek,stageId:battle.stageId,modifier:battle.riftModifier}]);
         events.push('Haftalık Yarık tamamlandı: kozmetik sınır mührü kazanıldı.');
@@ -447,6 +466,7 @@ function finishBattle(state, events) {
       const graded=recordCampaignStars(state,battle);
       battle.stars=graded.stars;
       battle.starLoot=graded.loot;
+      if(graded.improved && graded.stars)seasonEvent(state,'star');
       if(graded.improved && graded.stars)events.push(`Sefer derecesi: ${'★'.repeat(graded.stars)}${'☆'.repeat(3-graded.stars)}.`);
       if(graded.loot)events.push(`${itemById(graded.loot).name} üç yıldız zaferiyle kazanıldı.`);
       for (const hero of HEROES.filter(item => unlocked(state, item) && !state.heroes[item.id])) {
@@ -536,16 +556,33 @@ export function battleTurn(state, action) {
     for (const enemy of aliveEnemies()) {
       if (!aliveAllies().length) break;
       const intent=enemyIntent({...battle,round:battle.round-1},enemy);
-      if(action==='star' && intent.type==='crush') {
+      if(action==='star' && ['crush','frost','drain','nova','grave','shatter','thorn'].includes(intent.type)) {
         events.push(`${enemy.name}: Yıkım dalgası yıldız çağrısıyla bozuldu!`);
         frame(enemy.id,'interrupt','Yıkım engellendi');
         continue;
       }
       const tank = aliveAllies().find(hero => hero.id === 'aldren') || aliveAllies().find(hero => hero.id === 'aurelion');
-      const targets = intent.type==='strike'?[tank || aliveAllies().sort((a,b)=>a.hp-b.hp)[0]]:aliveAllies();
+      const targets = ['strike','shatter'].includes(intent.type)?[tank || aliveAllies().sort((a,b)=>a.hp-b.hp)[0]]:aliveAllies();
       for(const target of targets) {
         const damage=hit(target,enemy.attack*intent.multiplier*(tank?.id==='aldren'?.85:tank?.id==='aurelion'?.92:1)*(1-target.armor/100)*(action==='guard'?.5:1));
         events.push(`${enemy.name}, ${target.name} için ${damage} hasar verdi.`);
+      }
+      if(intent.type==='thorn'){
+        battle.starCharge=Math.max(0,battle.starCharge-10);
+        events.push('Dikenli pusu yıldız enerjisini 10 azalttı.');
+      }
+      if(intent.type==='grave'){
+        const wounded=aliveEnemies().sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
+        if(wounded){const restore=Math.min(wounded.maxHp-wounded.hp,Math.round(enemy.attack*1.2));wounded.hp+=restore;events.push('Mahzen ayini düşmanlarını iyileştirdi.');}
+      }
+      if(intent.type==='frost') {
+        battle.starCharge=Math.max(0,battle.starCharge-18);
+        events.push('Ayaz zinciri yıldız enerjisini 18 azalttı.');
+      }
+      if(intent.type==='drain') {
+        const regained=Math.min(enemy.maxHp-enemy.hp,Math.round(enemy.attack*.65*targets.length));
+        enemy.hp+=regained;
+        events.push(`${enemy.name} ${regained} can soğurdu.`);
       }
       frame(enemy.id,intent.type,intent.label);
 

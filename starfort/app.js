@@ -1,4 +1,6 @@
 import * as R from './rules.js';
+import {createGameAudio} from './audio.js';
+import {loadAccountSession,accountSession,accountSignIn,accountSignUp,accountSignOut,accountBackup} from './account-auth.js';
 import { createScene, paintBuildingPreview } from './illustrated-scene.js';
 import { placeCityLabels } from './city-layout.js';
 import { ROLES, HERO_LORE, CHAPTERS } from './content.js';
@@ -53,6 +55,9 @@ try { state = R.restoreState(localStorage.getItem(R.STORAGE_KEY)); } catch { sta
 let battleSpeed=1, battleFxExpires=0;
 let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
+let accountBackupInfo=null,accountBusy=false;
+loadAccountSession();
+const gameAudio=createGameAudio();
 let guildToken='';try{guildToken=localStorage.getItem(GUILD_TOKEN_KEY)||''}catch{}
 let trainingCleanup = null;
 let questPanelExpanded=false;
@@ -205,7 +210,7 @@ function renderQuest() {
     return;
   }
   const chapter=CHAPTERS[stage.id-1];
-  const power=R.teamPower(state),gear=R.itemById(R.FIRST_CLEAR_LOOT[stage.id]);
+  const power=R.teamPower(state),gear=R.itemById(R.FIRST_CLEAR_LOOT[stage.id]),gate=R.stageRequirements(state,stage,power);
   const rewards=Object.entries(stage.reward).map(([id,amount])=>`<span class="quest-reward-token" title="${resourceName[id]}">${svg(resourceIcon[id])}<b>${number(amount)}</b></span>`).join('');
   questEl.innerHTML=`<button class="quest-dismiss" type="button" data-quest-close aria-label="Sefer kartını kapat" title="Kapat">×</button><div class="quest-crown"><span aria-hidden="true">✦</span>Sıradaki Sefer</div>
     <div class="quest-layout">
@@ -220,7 +225,7 @@ function renderQuest() {
         <div class="quest-reward-title">Ödüller:${gear&&!state.cleared.includes(stage.id)?` <small>+ ${esc(gear.name)}</small>`:''}</div>
         <div class="quest-rewards">${rewards}</div>
         <div class="quest-actions">
-          <button class="primary" ${active?'data-action="resume-battle"':`data-stage="${stage.id}"`}>${active?'⚔ Savaşa Dön':'⚔ Savaşa Başla'} <span aria-hidden="true">❯</span></button>
+          <button class="primary" ${active?'data-action="resume-battle"':gate.available?`data-stage="${stage.id}"`:'data-action="open-expedition"'}>${active?'⚔ Savaşa Dön':gate.available?'⚔ Savaşa Başla':'⚑ Önce Sefer Şartları'} <span aria-hidden="true">❯</span></button>
           <button class="text-button" data-action="open-expedition">Tüm seferler</button>
         </div>
       </div>
@@ -249,7 +254,7 @@ function renderContractCards() {
   return `<section class="campaign-contracts" aria-label="Günlük komutan görevleri"><div class="contract-heading"><div><span class="eyebrow">GÜNLÜK KOMUTAN GÖREVLERİ · İSTEĞE BAĞLI</span><h3>Bugün kalende iz bırak</h3><p>Her gün yeni küçük hedefler. Seri kaybı veya ödeme zorunluluğu yok; ödüller yalnızca hikâye ilerlemesini destekler.</p></div><div class="banner-track"><b>✦ ${status.totalClaims} mühür</b><small>${next ? `Sonraki kozmetik unvan: ${next.name} (${next.count} mühür)` : 'Tüm unvanlar açıldı'}</small></div></div><div class="contract-grid">${status.contracts.map(c=>`<article class="contract-card"><span class="eyebrow">${c.progress} / ${c.target}</span><h4>${c.title}</h4><p>${c.detail}</p><div class="contract-progress"><i style="width:${c.progress/c.target*100}%"></i></div><small>Ödül: ${Object.entries(c.reward).map(([id,n])=>`${number(n)} ${resourceName[id]}`).join(' · ')}</small><button class="${c.progress>=c.target&&!c.claimed?'primary':'secondary'}" data-claim-contract="${c.id}" ${c.claimed||c.progress<c.target?'disabled':''}>${c.claimed?'Alındı':c.progress>=c.target?'Ödülü al':'Devam ediyor'}</button></article>`).join('')}</div><p class="contract-cosmetic">${status.earned.length?'Açılan kozmetik unvanlar: '+status.earned.join(' · '):'İlk unvan için 3 görev mühürü topla.'} · Unvanlar kozmetiktir, savaş gücünü artırmaz.</p></section>`;
 }
 function renderExpedition() {
-  const starStatus=R.campaignStarStatus(state);
+  const starStatus=R.campaignStarStatus(state),season=R.seasonStatus(state);
   const completed=state.cleared.length===R.STAGES.length;
   const next = Math.min(state.cleared.length + 1, R.STAGES.length), currentStage = R.STAGES[next-1], chapter = CHAPTERS[next-1];
   workspaceEl.innerHTML = `<header><div><span class="eyebrow">KUZEY SINIRI · ${completed?'HİKÂYE TAMAMLANDI':`SEFER ${String(next).padStart(2,'0')} / 08`}</span><h2>${completed?'Kuzeyin Işığı Yeniden Doğdu':'Kuzeyin Sefer Günlüğü'}</h2><p>${completed?'Sekiz sefer tamamlandı. Yıldızlarını geliştir, usta sınavlarına gir.':'Köyün ışığını karanlığın unuttuğu topraklara taşı. Önce hikâyeni ilerlet.'}</p></div><button class="secondary" data-close-view>Köye dön</button></header>
@@ -258,11 +263,12 @@ function renderExpedition() {
     <div class="campaign-priority"><strong>✦ ANA HİKÂYE · ${state.cleared.length}/8 BÖLGE</strong><small>Seferi seç, kahramanlarını donat, yıldızlarını tamamla.</small></div>
     <div class="progress-banner"><span>${state.cleared.length} / 8 bölge temizlendi</span><div class="progress-track"><span style="width:${state.cleared.length / 8 * 100}%"></span></div><span>Takım gücü ${number(R.teamPower(state))}</span></div>
     <section class="star-track" aria-label="Sefer yıldız yolu"><strong>★ Yıldız Yolu · ${starStatus.total}/24</strong><small>Her normal sefer 1–3 yıldız kazandırır. Takımın ne kadar sağlıklı bitirirse o kadar fazla yıldız alırsın. İlk beş farklı 3 yıldız zaferi özel ekipman açar. PvP sonuçları bu sayacı etkilemez.</small><div class="star-milestones">${starStatus.milestones.map(m=>`<span class="${m.unlocked?'unlocked':''}">${m.unlocked?'✓':'☆'} ${m.total}: ${esc(m.title)}</span>`).join('')}</div></section>
+    <section class="season-quest" aria-label="Sezon görevleri"><span class="eyebrow">28 GÜNLÜK ÜCRETSİZ SEZON · PvE</span><h3>Yıldız Sezonu ${season.id} · ${season.points}/29</h3><p>Sefer kazan, kahraman geliştir, eşya üret ve labirenti keşfet. Unvanlar kalıcıdır ve PvP gücü vermez.</p><div class="season-goals">${season.progress.map(g=>`<span>${esc(g.name)} <b>${g.count}/${g.target}</b></span>`).join('')}</div><div class="season-titles">${season.titles.map(t=>`<button class="secondary" data-season-title="${esc(t.name)}" ${!t.ready||t.claimed?'disabled':''}>${t.claimed?'✓ ':''}${esc(t.name)} · ${t.target} puan</button>`).join('')}</div>${season.legacy.length?`<small>Kalıcı geçmiş unvanlar: ${season.legacy.map(esc).join(' · ')}</small>`:''}</section>
     <div class="veteran-intro"><b>Usta Seferleri</b><p>Temizlediğin bölgelere üç farklı güçlükte geri dön. Her yeni seviyede daha güçlü düşmanlar ve kozmetik ustalık mühürleri kazan. Ödüller hikâye kaynaklarıdır; çevrim içi PvP gücünü artırmaz.</p></div>
     <div class="stage-list">${R.STAGES.map(stage => {
-      const done = state.cleared.includes(stage.id), locked = stage.id > next, resume = state.battle?.status === 'active' && state.battle.stageId === stage.id;
+      const done=state.cleared.includes(stage.id),gate=R.stageRequirements(state,stage,R.teamPower(state)),locked=stage.id>next||!gate.available,resume=state.battle?.status==='active'&&state.battle.stageId===stage.id;
       const medal=state.veteranMedals?.[stage.id]||0, veteranTier=Math.min(3,medal+1);
-      return `<article class="stage-card ${done ? 'done' : stage.id === next ? 'current' : 'locked'}"><div class="stage-number">${done ? '✓' : String(stage.id).padStart(2, '0')}</div><div><span class="eyebrow">${CHAPTERS[stage.id-1].name} · ${stage.id<=2?'KOLAY':stage.id<=4?'NORMAL':stage.id<=6?'ZOR':'EFSANEVİ'}</span><h3>${stage.name}</h3><span class="stage-stars" aria-label="${state.campaignStars?.[stage.id]||0} / 3 yıldız">${'★'.repeat(state.campaignStars?.[stage.id]||0)}${'☆'.repeat(3-(state.campaignStars?.[stage.id]||0))}</span><p>${stage.description} · ${stage.enemyCount} düşman · Önerilen güç ${stage.recommendedPower}</p><div class="cost-list">${costHtml(done?R.replayReward(stage.id):stage.reward, true)}</div>${done?'<small class="replay-reward-note">↻ Tekrar zaferi: normal kaynak ödülünün %40\'ı. Yıldız derecesini artırabilirsin.</small>':''}${R.FIRST_CLEAR_LOOT[stage.id]?`<p class="loot-preview">${svg('forge')} İlk zafer: ${R.itemById(R.FIRST_CLEAR_LOOT[stage.id]).name}${done?' · Alındı':''}</p>`:''}</div><button class="${done ? 'secondary' : 'primary'}" ${resume ? 'data-action="resume-battle"' : `data-stage="${stage.id}"`} ${locked || (state.battle?.status === 'active' && !resume) ? 'disabled' : ''}>${resume ? 'Savaşa dön' : done ? 'Yeniden oyna' : locked ? 'Kilitli' : 'Savaşa gir'}</button>${done?`<button class="secondary veteran-start" data-veteran-stage="${stage.id}" data-veteran-tier="${veteranTier}" ${state.battle?.status==='active'?'disabled':''}>✦ Usta Seferi ${veteranTier} ${medal?`· ${medal}/3 mühür`: '· İlk sınav'}</button>`:''}</article>`;
+      return `<article class="stage-card ${done ? 'done' : stage.id === next ? 'current' : 'locked'}"><div class="stage-number">${done ? '✓' : String(stage.id).padStart(2, '0')}</div><div><span class="eyebrow">${CHAPTERS[stage.id-1].name} · ${stage.id<=2?'KOLAY':stage.id<=4?'NORMAL':stage.id<=6?'ZOR':'EFSANEVİ'}</span><h3>${stage.name}</h3><span class="stage-stars" aria-label="${state.campaignStars?.[stage.id]||0} / 3 yıldız">${'★'.repeat(state.campaignStars?.[stage.id]||0)}${'☆'.repeat(3-(state.campaignStars?.[stage.id]||0))}</span><p>${stage.description} · ${stage.enemyCount} düşman · Önerilen güç ${stage.recommendedPower}</p><div class="cost-list">${costHtml(done?R.replayReward(stage.id):stage.reward, true)}</div>${!done&&stage.id<=next&&gate.requirements.length?`<div class="stage-prerequisites">${gate.requirements.map(r=>`<small class="${r.met?'met':'unmet'}">${r.met?'✓':'◻'} ${esc(r.label)} (${r.value}/${r.target})</small>`).join('')}</div>`:''}${done?'<small class="replay-reward-note">↻ Tekrar zaferi: normal kaynak ödülünün %40\'ı. Yıldız derecesini artırabilirsin.</small>':''}${R.FIRST_CLEAR_LOOT[stage.id]?`<p class="loot-preview">${svg('forge')} İlk zafer: ${R.itemById(R.FIRST_CLEAR_LOOT[stage.id]).name}${done?' · Alındı':''}</p>`:''}</div><button class="${done ? 'secondary' : 'primary'}" ${resume ? 'data-action="resume-battle"' : `data-stage="${stage.id}"`} ${locked || (state.battle?.status === 'active' && !resume) ? 'disabled' : ''}>${resume ? 'Savaşa dön' : done ? 'Yeniden oyna' : locked ? 'Kilitli' : 'Savaşa gir'}</button>${done?`<button class="secondary veteran-start" data-veteran-stage="${stage.id}" data-veteran-tier="${veteranTier}" ${state.battle?.status==='active'?'disabled':''}>✦ Usta Seferi ${veteranTier} ${medal?`· ${medal}/3 mühür`: '· İlk sınav'}</button>`:''}</article>`;
     }).join('')}</div>
     ${renderCommanderPath()}
     ${renderContractCards()}
@@ -364,8 +370,67 @@ function renderSettings(){
   const hosted=location.hostname.endsWith('github.io')||new URLSearchParams(location.search).get('hosted')==='1';
   const cloudReady=hosted&&!!guildToken,cloudLabel=!hosted?'Bulut yedeği GitHub Pages çevrim içi beta hesabında kullanılabilir.':!cloudReady?'Önce İttifak bölümünden bu cihazda komutan hesabı oluştur.':cloudSaveInfo?.exists?`Bulut yedeği: ${new Date(cloudSaveInfo.savedAt).toLocaleString('tr-TR')} · Rev. ${cloudSaveInfo.revision}`:cloudSaveInfo?'Henüz bulut yedeği yok.':'Bulut durumu henüz sorgulanmadı.';
   workspaceEl.innerHTML=`<header><div><span class="eyebrow">KOMUTA MERKEZİ</span><h2>Ayarlar ve kayıt güvenliği</h2><p>Starfort ilerlemen bu tarayıcıda kayıtlıdır. Önemli aşamalarda yedek almanı öneririz.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
-    <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">OYUN İLERLEMESİ</span><h3>Kayıt yedeği</h3><p>Binan, kaynakların, kahramanların, ekipmanların ve savaş kaydın JSON dosyası olarak saklanır.</p><button class="primary wide" data-export-save>Kayıt dosyasını indir</button><button class="secondary wide" data-import-save>Yedeği geri yükle</button><small>İçe aktarma mevcut ilerlemenin üzerine yazar. Önce bir yedek al.</small></article><article class="guild-panel"><span class="eyebrow">OYUN DENEYİMİ</span><h3>Kontroller</h3><p>Köyü sürükle; +/− ile yakınlaştır. Savaşta hedef seç, 1 / 2 / 3 ile kahraman yeteneklerini kullan, Space ile taktik mola ver.</p><button class="secondary wide" data-fullscreen>Tam ekranı değiştir</button><p class="guild-disclaimer">Klan oturumu, ana oyun kaydından ayrı bir geliştirme sunucusuna bağlıdır.</p></article><article class="guild-panel"><span class="eyebrow">İSTEĞE BAĞLI · SUPABASE</span><h3>Bulut kayıt yedeği</h3><p>Yerel ilerlemeni bağlı komutan hesabına yedekle veya bulut yedeğini geri getir. Otomatik eşitleme yapılmaz; çevrim içi savaş ödüllerini etkilemez.</p><small>${esc(cloudLabel)}</small>${cloudReady?`<button class="secondary wide" data-cloud-action="status" ${cloudSaveBusy?'disabled':''}>Bulut durumunu kontrol et</button><button class="primary wide" data-cloud-action="upload" ${cloudSaveBusy?'disabled':''}>Bu cihazın kaydını buluta yedekle</button><button class="secondary wide" data-cloud-action="download" ${cloudSaveBusy?'disabled':''}>Buluttan geri yükle</button><button class="text-button wide" data-cloud-action="delete" ${cloudSaveBusy?'disabled':''}>Bulut yedeğini sil</button>`:hosted?'<button class="secondary wide" data-view="guild">Komutan hesabı oluştur</button>':''}<small>Geri yükleme bu cihazdaki ilerlemeyi değiştirir. Önce JSON yedeği indir.</small>${hosted?`<hr><h4>Hesabını başka cihazda aç</h4><p>Bu aktarım anahtarı tüm beta hesabına erişim verir. Kimseye gönderme; yalnızca kendi cihazında kullan.</p>${guildToken?'<button class="secondary wide" data-account-transfer="copy">Gizli hesap aktarım anahtarını kopyala</button>':''}<button class="secondary wide" data-account-transfer="import">Mevcut hesabımı bu cihaza bağla</button>`:''}</article></div>`;
+    <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">OYUN İLERLEMESİ</span><h3>Kayıt yedeği</h3><p>Binan, kaynakların, kahramanların, ekipmanların ve savaş kaydın JSON dosyası olarak saklanır.</p><button class="primary wide" data-export-save>Kayıt dosyasını indir</button><button class="secondary wide" data-import-save>Yedeği geri yükle</button><small>İçe aktarma mevcut ilerlemenin üzerine yazar. Önce bir yedek al.</small></article><article class="guild-panel"><span class="eyebrow">OYUN DENEYİMİ</span><h3>Kontroller</h3><p>Köyü sürükle; +/− ile yakınlaştır. Savaşta hedef seç, 1 / 2 / 3 ile kahraman yeteneklerini kullan, Space ile taktik mola ver.</p><button class="secondary wide" data-fullscreen>Tam ekranı değiştir</button><button class="secondary wide" data-audio-toggle>Ses ve özgün müzik: ${gameAudio.enabled?'Açık · Kapat':'Kapalı · Aç'}</button><small>Sesler yalnızca sen açtığında başlar; köy melodisi ve savaş efektleri orijinaldir.</small><p class="guild-disclaimer">Klan oturumu, ana oyun kaydından ayrı bir geliştirme sunucusuna bağlıdır.</p></article><article class="guild-panel"><span class="eyebrow">İSTEĞE BAĞLI · SUPABASE</span><h3>Bulut kayıt yedeği</h3><p>Yerel ilerlemeni bağlı komutan hesabına yedekle veya bulut yedeğini geri getir. Otomatik eşitleme yapılmaz; çevrim içi savaş ödüllerini etkilemez.</p><small>${esc(cloudLabel)}</small>${cloudReady?`<button class="secondary wide" data-cloud-action="status" ${cloudSaveBusy?'disabled':''}>Bulut durumunu kontrol et</button><button class="primary wide" data-cloud-action="upload" ${cloudSaveBusy?'disabled':''}>Bu cihazın kaydını buluta yedekle</button><button class="secondary wide" data-cloud-action="download" ${cloudSaveBusy?'disabled':''}>Buluttan geri yükle</button><button class="text-button wide" data-cloud-action="delete" ${cloudSaveBusy?'disabled':''}>Bulut yedeğini sil</button>`:hosted?'<button class="secondary wide" data-view="guild">Komutan hesabı oluştur</button>':''}<small>Geri yükleme bu cihazdaki ilerlemeyi değiştirir. Önce JSON yedeği indir.</small>${hosted?`<hr><h4>Hesabını başka cihazda aç</h4><p>Bu aktarım anahtarı tüm beta hesabına erişim verir. Kimseye gönderme; yalnızca kendi cihazında kullan.</p>${guildToken?'<button class="secondary wide" data-account-transfer="copy">Gizli hesap aktarım anahtarını kopyala</button>':''}<button class="secondary wide" data-account-transfer="import">Mevcut hesabımı bu cihaza bağla</button>`:''}</article>
+    <article class="guild-panel"><span class="eyebrow">GÜVENLİ HESAP · SUPABASE AUTH</span><h3>E-posta hesabı ve özel yedek</h3>
+      <p>Farklı cihazdan aynı e-postayla giriş yap. Bu yedek yalnızca hesabına açıktır. Yerel kaynaklar PvP için doğrulanmış kabul edilmez.</p>
+      ${accountSession()?`<strong>${esc(accountSession().user.email||'Doğrulanmış hesap')}</strong>
+      <small>${accountBackupInfo?`Sunucu yedeği: sürüm ${accountBackupInfo.revision}`:'Sunucu yedeğini kontrol et.'}</small>
+      <button class="secondary wide" data-account-action="status" ${accountBusy?'disabled':''}>Hesap yedeğini kontrol et</button>
+      <button class="primary wide" data-account-action="save" ${accountBusy?'disabled':''}>Bu cihazı hesabıma yedekle</button>
+      <button class="secondary wide" data-account-action="restore" ${accountBusy?'disabled':''}>Hesap yedeğini geri yükle</button>
+      <button class="secondary wide" data-account-action="logout" ${accountBusy?'disabled':''}>E-posta hesabından çıkış</button>`:
+      `<form id="starfort-account-form" autocomplete="on">
+        <label>E-posta <input required name="email" type="email" maxlength="180" autocomplete="username" placeholder="eposta@ornek.com"></label>
+        <label>Şifre <input required name="password" type="password" minlength="8" maxlength="100" autocomplete="current-password"></label>
+        <div class="season-titles"><button type="submit" class="primary" name="account-mode" value="login">Giriş yap</button>
+        <button type="submit" class="secondary" name="account-mode" value="signup">Hesap oluştur</button></div></form>`}
+      <small>Yedekler manuel yüklenir; sunucu ekonomisi ve çevrim içi rekabet ayrı doğrulama gerektirir.</small>
+    </article></div>`;
 }
+
+async function accountAction(action){
+ if(accountBusy)return;
+ accountBusy=true;if(activeView==='settings')renderSettings();
+ try {
+   if(action==='logout'){await accountSignOut();accountBackupInfo=null;notify('E-posta hesabından çıkış yapıldı. Yerel oyun korunuyor.');return;}
+   const remote=await accountBackup('get');
+   accountBackupInfo=remote;
+   if(action==='status'){notify(remote?'Sunucu yedeği bulundu.':'Bu hesapta henüz yedek yok.');return;}
+   if(action==='save'){
+     if(remote&&!confirm('Hesaptaki mevcut yedeğin üzerine bu cihazdaki ilerleme yazılacak. Devam edilsin mi?'))return;
+     const clean=importSave(exportSave(state));
+     accountBackupInfo=await accountBackup('save',{state:clean,revision:remote?.revision||0});
+     notify('E-posta hesabına özel yedek başarıyla kaydedildi.');
+   }else if(action==='restore'){
+     if(!remote)throw Error('Henüz bulut yedeğin yok.');
+     const candidate=importSave(JSON.stringify({format:'starfort-save',key:R.STORAGE_KEY,state:remote.state}));
+     if(!confirm('Bu cihazdaki mevcut köy ilerlemesi değişecek. Önce dosya yedeği indirdin mi?'))return;
+     combatRunner.pause();trialState=null;const old=state;state=candidate;
+     if(!persist()){state=old;throw Error('Bu cihazın yerel kaydına yazılamadı.');}
+     location.reload();
+   }
+ }catch(error){notify('Hesap yedeği: '+error.message);}
+ finally{accountBusy=false;if(activeView==='settings')renderSettings();}
+}
+document.addEventListener('submit',async event=>{
+ if(event.target?.id!=='starfort-account-form')return;
+ event.preventDefault();
+ if(accountBusy)return;
+ const fd=new FormData(event.target),email=String(fd.get('email')||'').trim(),password=String(fd.get('password')||'');
+ const mode=event.submitter?.value==='signup'?'signup':'login';
+ if(!email.includes('@')||password.length<8)return notify('E-posta ve en az 8 karakterli şifre yaz.');
+ accountBusy=true;
+ try{
+   if(mode==='signup'){
+     const info=await accountSignUp(email,password);
+     notify(info.needsConfirmation?'E-postanı onayla, sonra giriş yap.':'E-posta hesabı oluşturuldu.');
+   }else{
+     await accountSignIn(email,password);
+     notify('E-posta hesabına giriş yapıldı.');
+   }
+ }catch(error){notify('Hesap: '+error.message);}
+ finally{accountBusy=false;if(activeView==='settings')renderSettings();}
+});
 
 async function transferAccount(action){
   if(action==='copy'){
@@ -530,6 +595,8 @@ function tickCombat(deltaMs) {
     if(!trialState)persist();
     if(combatState.battle.status!=='active')render();
     presentBattleEvents(result.events);
+    if(combatState.battle.status==='won')gameAudio.cue('victory');
+    else if(result.events.some(e=>['crush','nova','frost','drain','strike'].includes(e.kind)))gameAudio.cue('hit');
   }
   updateLiveHud();
 }
@@ -542,13 +609,14 @@ function castHeroSkill(heroId) {
 }
 
 function render() {
+  gameAudio.setScene($('#battle-dialog').open?'combat':'village');
   renderResources(); renderNav(); renderPicker(); renderInspector(); renderQuest(); renderWorkspace();
   scene?.update(state);
   if ($('#building-dialog').open) renderBuildingDialog();
 }
 function openBattle(stageId) {
   if (stageId !== undefined) {
-    const started = R.startLiveBattle(state, Number(stageId));
+    const started = R.startLiveBattle(state, Number(stageId),{enforceGates:true});
     if (!started.ok) return notify(started.error);
   }
   if(state.battle?.status==='active')R.prepareLiveBattle(state);
@@ -580,6 +648,9 @@ async function quickPlayBot(mode) {
 }
 function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
+  if(button.hasAttribute('data-audio-toggle')){const enabled=gameAudio.toggle();notify(enabled?'Ses ve müzik açıldı.':'Ses ve müzik kapatıldı.');if(activeView==='settings')renderSettings();return;}
+  gameAudio.cue('click');
+  if(button.dataset.accountAction){accountAction(button.dataset.accountAction);return;}
   if(button.hasAttribute('data-fullscreen')) { toggleFullscreen(); return; }
   if(button.dataset.quickBot){quickPlayBot(button.dataset.quickBot);return;}
   if(button.hasAttribute('data-labyrinth-open')){activeView='labyrinth';render();return;}
@@ -591,6 +662,7 @@ function dispatch(action) {
   if(button.hasAttribute('data-team-open')){activeView='team';render();return;}
   if(button.hasAttribute('data-daily-reward')){result(R.claimDailyReward(state),'Günlük kaynak sandığın açıldı!');return;}
   if(button.dataset.cosmeticInterest){const vote=R.toggleWishlist(state,button.dataset.cosmeticInterest);result(vote,vote.selected?'Tasarım istek listene eklendi.':'Tasarım istek listenden çıkarıldı.');return;}
+  if(button.dataset.seasonTitle){result(R.claimSeasonTitle(state,button.dataset.seasonTitle),'Yeni sezon unvanı koleksiyonuna eklendi.');return;}
   if(button.dataset.claimContract){result(R.claimCampaignContract(state,button.dataset.claimContract),'Görev ödülü alındı; kozmetik unvan ilerlemen güncellendi.');return;}
   if(button.hasAttribute('data-start-rift')){const outcome=R.startWeeklyRift(state);if(!outcome.ok)return notify(outcome.error);openBattle();return;}
   if(button.dataset.veteranStage){const outcome=R.startVeteranBattle(state,Number(button.dataset.veteranStage),Number(button.dataset.veteranTier));if(!outcome.ok)return notify(outcome.error);openBattle();return;}
@@ -702,7 +774,7 @@ if (state.battle?.status === 'active') { R.prepareLiveBattle(state); persist(); 
 render();
 setInterval(() => { const pending = $('#production-gain'); if (pending) pending.innerHTML = costHtml(R.production(state), true); renderCityProduction(); }, 3000);
 setInterval(()=>{if(activeView==='guild'&&!guildBusy&&!document.hidden&&guildToken&&document.activeElement?.tagName!=='INPUT')refreshGuild();},7000);
-document.addEventListener('visibilitychange', () => { if(document.hidden){combatRunner.pause();persist();} });
+document.addEventListener('visibilitychange', () => { if(document.hidden){gameAudio.suspend();combatRunner.pause();persist();}else gameAudio.resume(); });
 window.addEventListener('pagehide', () => {combatRunner.pause();persist();});
 
 document.addEventListener('fullscreenchange',()=>{const active=!!document.fullscreenElement; $('[data-fullscreen]').setAttribute('aria-label',active?'Tam ekrandan çık':'Tam ekranı aç'); scene?.resize();});

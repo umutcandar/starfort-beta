@@ -7,3 +7,13 @@
 .stage-stars{display:block;color:#dfb45e;letter-spacing:2px;font-weight:800;margin:5px 0}
 .star-loot-tag{display:block;color:#e7bd7f;font-size:.8rem;margin:3px 0}
 .star-result{font-size:1.5rem;letter-spacing:6px;color:#e5bd70;margin:4px 0 7px}
+
+.stage-prerequisites{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0}
+.stage-prerequisites small{padding:4px 6px;border:1px solid #a5a29c5c;border-radius:6px;font-size:10px}
+.stage-prerequisites .met{color:#b6d7ad}.stage-prerequisites .unmet{color:#f4c08f}
+.season-quest{margin:14px 0;padding:18px;border:1px solid #b9a16c81;border-radius:10px;background:linear-gradient(145deg,#132945e8,#07182ce8)}
+.season-quest h3{font:700 22px Georgia,serif;color:#ffe6b7;margin:4px 0}
+.season-goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:7px;margin:10px 0}
+.season-goals span{display:flex;justify-content:space-between;padding:8px;border:1px solid #c8ad746c;border-radius:5px;font-size:12px}
+.season-titles{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.season-titles button{min-height:32px}

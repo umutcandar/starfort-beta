@@ -1,3 +1,4 @@
+import {seasonEvent} from './season-campaign.js';
 export const SLOTS = { weapon: 'Silah', armor: 'Zırh', relic: 'Tılsım' };
 export const RARITIES = { common: 'Nadir', epic: 'Destansı', legendary: 'Efsanevi' };
 export const ITEMS = [
@@ -76,6 +77,7 @@ export function forgeItem(state,id) {
   if(Object.entries(item.cost).some(([key,value])=>state.res[key]<value)) return fail('Yeterli kaynak yok.');
   for(const [key,value] of Object.entries(item.cost)) state.res[key]-=value;
   state.inventory[id]=(state.inventory[id]||0)+1;
+  seasonEvent(state,'forge');
   return {ok:true};
 }
 export function equipItem(state,heroId,id) {
