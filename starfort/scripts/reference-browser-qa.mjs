@@ -212,7 +212,8 @@ try{
   await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
   assert.ok(await evaluate("!!document.querySelector('[data-upgrade-building=keep]')"),'8. seviyeden sonraki inşaat başlatılabilmeli');
   await evaluate("document.querySelector('[data-upgrade-building=keep]').click()");
-  assert.ok(await evaluate("!!document.querySelector('.ws-status-chip.building')"),'İnşaatı başlatınca seviye anında yükselmemeli');
+  const started=await evaluate("(()=>({status:document.querySelector('.ws-status-chip')?.className,notice:document.querySelector('#toast')?.textContent,job:JSON.parse(localStorage.getItem('starfort:v1'))?.construction,level:JSON.parse(localStorage.getItem('starfort:v1'))?.buildings.keep,button:document.querySelector('.ws-upgrade-button')?.outerHTML}))()");
+  assert.ok(started.job&&started.status?.includes('building'),'İnşaatı başlatınca seviye anında yükselmemeli: '+JSON.stringify(started));
   assert.equal(await evaluate("document.querySelector('#construction-status').hidden"),false,'Köyde usta çalışması takip edilmeli');
   assert.equal(await evaluate("JSON.parse(localStorage.getItem('starfort:v1')).buildings.keep"),8,'Yapı süre bitmeden 9 olmamalı');
   assert.ok(await evaluate("!!JSON.parse(localStorage.getItem('starfort:v1')).construction"),'Aktif inşaat kayda geçmeli');
