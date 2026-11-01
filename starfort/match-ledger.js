@@ -5,7 +5,7 @@ const HERO=/^[a-z_]{1,20}$/;
 export function matchRecord(room,kind,ended=Date.now()){
  if(!room || room.status!=='ended'||room.isPractice||!Array.isArray(room.players))return null;
  const duel=kind==='duel',team=room.teamSize,mode=duel?'duel':room.variant==='siege'?'siege-5':team===2?'team-2':team===5?'team-5':null;
- if(!mode||!['win','loss','draw','cancel'].includes('win'))return null;
+ if(!mode)return null;
  const people=room.players.filter(p=>UUID.test(p.id)).map(p=>{
    const isDraw=room.winner==null;
    const winner=duel?room.winner===p.id:room.winner===p.team;
