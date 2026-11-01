@@ -22,7 +22,7 @@ test('empty set filter is a safe UI state; all filter includes all gear',()=>{
  const state=R.createState();
  assert.match(armoryMarkup(state,'aldren','set'),/data-bag-item="moon_watch"/);
  assert.match(armoryMarkup(state,'aldren','all'),/data-bag-item="moonheart"/);
- assert.match(armoryMarkup(state,'aldren','all'),/disabled/);
+ assert.match(armoryMarkup(state,'aldren','all','moonheart'),/disabled/);
 });
 test('equipment preview includes actual set effects and does not mutate any save',()=>{
  const state=R.createState();
