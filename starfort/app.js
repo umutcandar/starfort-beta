@@ -1,4 +1,6 @@
 import * as R from './rules.js';
+import {createGameAudio} from './audio.js';
+import {loadAccountSession,accountSession,accountSignIn,accountSignUp,accountSignOut,accountBackup} from './account-auth.js';
 import { createScene, paintBuildingPreview } from './illustrated-scene.js';
 import { placeCityLabels } from './city-layout.js';
 import { ROLES, HERO_LORE, CHAPTERS } from './content.js';
@@ -53,6 +55,9 @@ try { state = R.restoreState(localStorage.getItem(R.STORAGE_KEY)); } catch { sta
 let battleSpeed=1, battleFxExpires=0;
 let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
+let accountBackupInfo=null,accountBusy=false;
+loadAccountSession();
+const gameAudio=createGameAudio();
 let guildToken='';try{guildToken=localStorage.getItem(GUILD_TOKEN_KEY)||''}catch{}
 let trainingCleanup = null;
 let questPanelExpanded=false;
@@ -531,6 +536,8 @@ function tickCombat(deltaMs) {
     if(!trialState)persist();
     if(combatState.battle.status!=='active')render();
     presentBattleEvents(result.events);
+    if(combatState.battle.status==='won')gameAudio.cue('victory');
+    else if(result.events.some(e=>['crush','nova','frost','drain','strike'].includes(e.kind)))gameAudio.cue('hit');
   }
   updateLiveHud();
 }
@@ -543,6 +550,7 @@ function castHeroSkill(heroId) {
 }
 
 function render() {
+  gameAudio.setScene($('#battle-dialog').open?'combat':'village');
   renderResources(); renderNav(); renderPicker(); renderInspector(); renderQuest(); renderWorkspace();
   scene?.update(state);
   if ($('#building-dialog').open) renderBuildingDialog();
@@ -581,6 +589,9 @@ async function quickPlayBot(mode) {
 }
 function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
+  if(button.hasAttribute('data-audio-toggle')){const enabled=gameAudio.toggle();notify(enabled?'Ses ve müzik açıldı.':'Ses ve müzik kapatıldı.');if(activeView==='settings')renderSettings();return;}
+  gameAudio.cue('click');
+  if(button.dataset.accountAction){accountAction(button.dataset.accountAction);return;}
   if(button.hasAttribute('data-fullscreen')) { toggleFullscreen(); return; }
   if(button.dataset.quickBot){quickPlayBot(button.dataset.quickBot);return;}
   if(button.hasAttribute('data-labyrinth-open')){activeView='labyrinth';render();return;}
@@ -704,7 +715,7 @@ if (state.battle?.status === 'active') { R.prepareLiveBattle(state); persist(); 
 render();
 setInterval(() => { const pending = $('#production-gain'); if (pending) pending.innerHTML = costHtml(R.production(state), true); renderCityProduction(); }, 3000);
 setInterval(()=>{if(activeView==='guild'&&!guildBusy&&!document.hidden&&guildToken&&document.activeElement?.tagName!=='INPUT')refreshGuild();},7000);
-document.addEventListener('visibilitychange', () => { if(document.hidden){combatRunner.pause();persist();} });
+document.addEventListener('visibilitychange', () => { if(document.hidden){gameAudio.suspend();combatRunner.pause();persist();}else gameAudio.resume(); });
 window.addEventListener('pagehide', () => {combatRunner.pause();persist();});
 
 document.addEventListener('fullscreenchange',()=>{const active=!!document.fullscreenElement; $('[data-fullscreen]').setAttribute('aria-label',active?'Tam ekrandan çık':'Tam ekranı aç'); scene?.resize();});
