@@ -153,11 +153,11 @@ function acceptVillage(response){
  render();if($('#building-dialog').open)renderBuildingDialog();
  return true;
 }
-async function refreshVillage(){
+async function refreshVillage({preserve=false}={}){
  const uid=accountSession()?.user?.id;
  if(!uid){villageGeneration++;villageOwner=null;villageSnapshot=null;render();return false;}
  const gen=++villageGeneration;
- villageOwner=uid;villageSnapshot=null;render();
+ if(!preserve||villageOwner!==uid){villageOwner=uid;villageSnapshot=null;render();}
  try{
   const response=await villageAuthorityRequest('get');
   if(gen!==villageGeneration||accountSession()?.user?.id!==uid)return false;
@@ -210,8 +210,9 @@ function renderPicker() {
 function renderCityProduction() {
   const gain = R.production(villageView(),constructionUiNow());
   const total = Object.values(gain).reduce((sum, n) => sum+n, 0);
-  $('#city-production').textContent = total ? Object.entries(gain).filter(([,n])=>n).map(([id,n])=>`${number(n)} ${resourceName[id]}`).join(' · ') : 'Kaynaklar birikiyor';
-  $('.city-collect').classList.toggle('ready', total > 0);
+  $('#city-production').textContent = villageSignedIn()&&!villageSnapshot?'Sunucu kaynakları doğrulanıyor':total ? Object.entries(gain).filter(([,n])=>n).map(([id,n])=>`${number(n)} ${resourceName[id]}`).join(' · ') : 'Kaynaklar birikiyor';
+  $('.city-collect').classList.toggle('ready', total > 0 &&(!villageSignedIn()||!!villageSnapshot));
+  $('.city-collect').disabled=villageSignedIn()&&!villageSnapshot;
   renderConstructionBanner();
 }
 function renderConstructionBanner(){
@@ -274,7 +275,7 @@ function renderInspector() {
   const v=villageView(),building = R.BUILDINGS.find(item => item.id === selectedBuilding) || R.BUILDINGS[0], level = v.buildings[building.id], cost = R.upgradeCost(v, building.id);
   const blocked = (v.serverVillage&&!v.serverVillageReady)||level>=building.maxLevel||(building.id!=='keep'&&level>=v.buildings.keep+1)||Object.entries(cost).some(([id,amount])=>v.res[id]<amount)||state.battle?.status==='active';
   const team = state.team.map(id => R.HEROES.find(hero => hero.id === id));
-  inspectorEl.innerHTML = `<div class="building-details"><div class="section-head"><small>KÖY YÖNETİMİ</small><span class="level-badge">SEVİYE ${level}</span></div><div class="building-portrait">${svg(building.id)}</div><h2>${building.name}</h2><p class="building-description">${building.description}</p><div class="stat-line"><span>Gelişim</span><b>${level} / ${building.maxLevel}</b></div>${building.production ? `<div class="stat-line"><span>Üretim hızı</span><b>${number(building.production.perMinute * level * (1 + (state.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk</b></div>` : `<div class="stat-line"><span>Köy etkisi</span><b>${building.id === 'keep' ? '+%5 üretim / seviye' : building.id === 'forge' ? '+%5 saldırı / seviye' : '+%4 can / seviye'}</b></div>`}<div class="cost-list">${costHtml(cost)}</div><button class="primary wide" data-upgrade-building="${building.id}" ${blocked ? 'disabled' : ''}>${level >= building.maxLevel ? 'En yüksek seviye' : `Yapıyı geliştir · ${number(cost.gold || 0)} altın`}</button>${buildingProduction(building)}</div><div class="squad-block"><div class="squad-heading"><h3>Kahramanlar</h3><button class="text-button" data-view="heroes">Dizilimi düzenle</button></div><div class="squad">${team.map(hero => `<div class="squad-member">${heroPortrait(hero)}<span>${hero.name}</span><small>Lv.${state.heroes[hero.id].level}</small></div>`).join('')}</div><div class="team-power"><span>Dizilim gücü</span><strong>${number(R.teamPower(state))} ✦</strong></div></div><p class="inspector-note">Yapılar yükseldikçe görünüşleri değişir. Üretim 24 saate kadar birikir; ilk 4 saat tam hızda, sonrası yavaş üretir.</p>`;
+  inspectorEl.innerHTML = `<div class="building-details"><div class="section-head"><small>KÖY YÖNETİMİ</small><span class="level-badge">SEVİYE ${level}</span></div><div class="building-portrait">${svg(building.id)}</div><h2>${building.name}</h2><p class="building-description">${building.description}</p><div class="stat-line"><span>Gelişim</span><b>${level} / ${building.maxLevel}</b></div>${building.production ? `<div class="stat-line"><span>Üretim hızı</span><b>${number(building.production.perMinute * level * (1 + (v.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk</b></div>` : `<div class="stat-line"><span>Köy etkisi</span><b>${building.id === 'keep' ? '+%5 üretim / seviye' : building.id === 'forge' ? '+%5 saldırı / seviye' : '+%4 can / seviye'}</b></div>`}<div class="cost-list">${costHtml(cost)}</div><button class="primary wide" data-upgrade-building="${building.id}" ${blocked ? 'disabled' : ''}>${level >= building.maxLevel ? 'En yüksek seviye' : `Yapıyı geliştir · ${number(cost.gold || 0)} altın`}</button>${buildingProduction(building)}</div><div class="squad-block"><div class="squad-heading"><h3>Kahramanlar</h3><button class="text-button" data-view="heroes">Dizilimi düzenle</button></div><div class="squad">${team.map(hero => `<div class="squad-member">${heroPortrait(hero)}<span>${hero.name}</span><small>Lv.${state.heroes[hero.id].level}</small></div>`).join('')}</div><div class="team-power"><span>Dizilim gücü</span><strong>${number(R.teamPower(state))} ✦</strong></div></div><p class="inspector-note">Yapılar yükseldikçe görünüşleri değişir. Üretim 24 saate kadar birikir; ilk 4 saat tam hızda, sonrası yavaş üretir.</p>`;
 }
 function renderQuest() {
   // A compact Sefer shortcut keeps the village panorama unobstructed.
@@ -1007,6 +1008,7 @@ render();
  }catch(error){notify('Kurtarma: '+error.message);}
 })();
 setInterval(()=>{if(accountSession()&&!document.hidden)void accountSync.refresh();},45000);
+setInterval(()=>{if(accountSession()&&!document.hidden&&!villageBusy)void refreshVillage({preserve:true});},60000);
 setInterval(() => { const pending = $('#production-gain'); if (pending) pending.innerHTML = costHtml(R.production(villageView(),constructionUiNow()), true); renderCityProduction(); }, 3000);
 setInterval(()=>{if(activeView==='guild'&&!guildBusy&&!document.hidden&&guildToken&&document.activeElement?.tagName!=='INPUT')refreshGuild();},7000);
 document.addEventListener('visibilitychange', () => {
