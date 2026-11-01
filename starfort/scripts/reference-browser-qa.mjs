@@ -273,7 +273,7 @@ try{
   await evaluate("document.querySelector('[data-action=open-expedition]').click()");
   assert.equal(await evaluate("document.querySelectorAll('[data-account-stage]').length"),8,'Eight official server missions must render');
   assert.equal(await evaluate("document.querySelectorAll('.server-stage-card [data-stage]').length"),0,'Signed-in battle must not use a client-trusted victory');
-  await evaluate("document.querySelector('[data-account-stage=1]').click()");
+  await evaluate("document.querySelector('[data-account-stage]').click()");
   for(let i=0;i<20;i++){if(await evaluate("!!document.querySelector('.server-mission')"))break;await sleep(100);}
   assert.ok(await evaluate("!!document.querySelector('.server-mission [data-account-turn=skill]')"),'Server combat must expose real turn commands');
   const authScreenshot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
