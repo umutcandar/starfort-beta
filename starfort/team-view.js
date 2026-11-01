@@ -96,7 +96,8 @@ export function mountTeamArena(root){
     const goal=$('#siege-status');goal.hidden=!siege;
     if(siege){const r=room.siege.ram;const ramState=!r?'—':r.hp<=0?`Yıkıldı · ${Math.max(0,Math.ceil(r.respawnAt-room.elapsed))} sn`:`${r.hp}/${r.maxHp} · ${r.phase==='ramming'?'Kapıyı dövüyor':r.phase==='advancing'?'İlerliyor':'Muhafız bekliyor'}`;goal.textContent=`⚔ KUŞATMA · Kapı ${room.siege.gate.hp}/${room.siege.gate.maxHp} · Koçbaşı ${ramState} · Kristal ${room.siege.core.hp}/${room.siege.core.maxHp} · Saldıranlar koçbaşına eskort olmalı; savunanlar koçbaşını vurabilir.`;}
     const seconds=Math.max(0,180-(room?.elapsed||0));$('#team-clock').textContent=`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
-    root.querySelectorAll('[data-team-mode],[data-team-party]').forEach(b=>b.disabled=!policy.liveMatchmaking||!token||state!=='idle'||busy);
+    root.querySelectorAll('[data-team-mode]').forEach(b=>b.disabled=!policy.liveMatchmaking||!token||!['idle','interrupted'].includes(state)||busy);
+    root.querySelectorAll('[data-team-party]').forEach(b=>b.disabled=true);
     $('[data-team-leave]').disabled=!token||state==='idle'||busy;
     root.querySelectorAll('[data-team-bot]').forEach(b=>b.disabled=!token||state==='active'||busy);const me=room?.players.find(p=>p.id===snapshot.you);$('#team-detail').title=room?.isPractice?`Bot zorluğu: ${trainingLabel(room.botDifficulty)} · Derecesiz ve ödülsüz`:'Gerçek oyunculu takım maçı';
     $('[data-team-burst] small').textContent=me?.burstReady>0?me.burstReady.toFixed(1)+' sn':'Q';$('[data-team-dash] small').textContent=me?.dashReady>0?me.dashReady.toFixed(1)+' sn':'Space';
