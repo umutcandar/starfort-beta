@@ -34,7 +34,7 @@
 .battle-graphics-control{justify-content:flex-start;flex-wrap:wrap;padding:8px 0}
 .battle-graphics-control>span{color:#bdcbd0;letter-spacing:.08em}
 .battle-graphics-control>small{max-width:250px;letter-spacing:0;font-weight:400;color:#b9c9d0}
-.sf-battle-bar [data-sf-render]{display:none}
+.sf-battle-bar [data-sf-render]{border-color:#ac8b63;color:#f4ddb4}
 @media(max-width:820px){.mode-hub-grid{grid-template-columns:1fr}.mode-hub-grid .quick-bot-invitation{display:flex;grid-column:auto}.mode-group-board{grid-template-columns:1fr}.mode-card .mode-actions button{min-width:120px}}
 @media(max-width:540px){.mode-hub>summary{padding:16px;font-size:15px}.mode-hub-grid{padding:0 10px 12px}.mode-card{padding:12px}.mode-card h3{font-size:19px}.campaign-priority{align-items:flex-start;flex-direction:column}}
 @media(prefers-reduced-motion:reduce){.mode-hub,.mode-card{transition:none}}
