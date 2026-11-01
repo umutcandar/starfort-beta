@@ -893,9 +893,25 @@ async function runBuildingAction(mode,id,button){
  }catch(error){notify(error.message||'İnşaat saati doğrulanamadı. Kaynak harcanmadı.');}
  finally{constructionRequestPending=false;button.disabled=false;if($('#building-dialog').open)renderBuildingDialog();}
 }
+async function accountAutoEquip(heroId){
+ if(villageBusy||!accountProgressSnapshot)return;
+ const candidate=villageView();
+ const draft=structuredClone({heroes:candidate.heroes,inventory:candidate.inventory,loadouts:candidate.loadouts,battle:null});
+ const optimized=R.autoEquipHero(draft,heroId);
+ if(!optimized.ok)return notify(optimized.error);
+ const original=accountProgressSnapshot.loadouts[heroId]||{},desired=draft.loadouts[heroId]||{};
+ const changes=['weapon','armor','relic'].filter(slot=>original[slot]!==desired[slot]);
+ if(!changes.length)return notify('Mevcut donanım rolüne uygun.');
+ for(const slot of changes){
+  if(original[slot])await accountProgressAction('unequip',heroId,slot);
+ }
+ for(const slot of changes){
+  if(desired[slot])await accountProgressAction('equip',heroId,desired[slot]);
+ }
+}
 function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
-  if(saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.hasAttribute('data-finish-building')||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
+  if(!villageSignedIn()&&saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.hasAttribute('data-finish-building')||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
   if(button.hasAttribute('data-audio-toggle')){const enabled=gameAudio.toggle();notify(enabled?'Ses ve müzik açıldı.':'Ses ve müzik kapatıldı.');if(activeView==='settings')renderSettings();return;}
   gameAudio.cue('click');
   if(button.dataset.welcome){
@@ -906,6 +922,15 @@ function dispatch(action) {
   }
   if(button.hasAttribute('data-village-refresh')){void refreshVillage();return;}
   if(button.hasAttribute('data-village-match-claim')){void claimServerMatchRewards();return;}
+  if(button.dataset.accountStage||button.dataset.accountVeteran||button.dataset.accountTurn||button.dataset.accountContract||button.dataset.accountTitle||button.hasAttribute('data-account-maze')||button.hasAttribute('data-account-rift')||button.hasAttribute('data-account-abandon')){
+    if(!villageSignedIn())return notify('Önce hesabına giriş yap.');
+    const action=button.dataset.accountTurn?'mission_turn':
+      button.hasAttribute('data-account-abandon')?'mission_abandon':
+      button.dataset.accountContract?'contract':button.dataset.accountTitle?'title':'mission_start';
+    const target=button.dataset.accountStage||button.dataset.accountContract||button.dataset.accountTitle||
+      (button.dataset.accountVeteran?'veteran:'+button.dataset.accountVeteran:button.hasAttribute('data-account-maze')?'maze:'+((accountProgressSnapshot?.mazeFloor||0)+1):button.hasAttribute('data-account-rift')?'rift':null);
+    void accountProgressAction(action,target,button.dataset.accountTurn||null);return;
+  }
   if(button.dataset.accountAction){accountAction(button.dataset.accountAction);return;}
   if(button.dataset.recoveryKey){
     try{
@@ -921,19 +946,19 @@ function dispatch(action) {
   }
   if(button.hasAttribute('data-fullscreen')) { toggleFullscreen(); return; }
   if(button.dataset.quickBot){quickPlayBot(button.dataset.quickBot);return;}
-  if(button.hasAttribute('data-labyrinth-open')){activeView='labyrinth';render();return;}
-  if(button.dataset.labyrinthMove!==undefined){const step=R.moveLabyrinth(state,Number(button.dataset.labyrinthMove));result(step,step.event||'Yeni koridor keşfedildi.');return;}
-  if(button.hasAttribute('data-labyrinth-fight')){const step=R.startLabyrinthBattle(state);if(!step.ok)return notify(step.error);openBattle();return;}
-  if(button.hasAttribute('data-labyrinth-complete')){const step=R.completeLabyrinthFloor(state);result(step,step.ok?`Kat ${step.floor} tamamlandı! +${step.reward.gold} altın, +${step.reward.aether} yıldız özü.`:null);return;}
+  if(button.hasAttribute('data-labyrinth-open')){activeView=villageSignedIn()?'campaign':'labyrinth';render();return;}
+  if(button.dataset.labyrinthMove!==undefined){if(villageSignedIn()){activeView='campaign';render();return;}const step=R.moveLabyrinth(state,Number(button.dataset.labyrinthMove));result(step,step.event||'Yeni koridor keşfedildi.');return;}
+  if(button.hasAttribute('data-labyrinth-fight')){if(villageSignedIn()){void accountProgressAction('mission_start','maze:'+((accountProgressSnapshot?.mazeFloor||0)+1));return;}const step=R.startLabyrinthBattle(state);if(!step.ok)return notify(step.error);openBattle();return;}
+  if(button.hasAttribute('data-labyrinth-complete')){if(villageSignedIn())return notify('Sunucu labirentinde ödül savaş sonucuyla otomatik kaydedilir.');const step=R.completeLabyrinthFloor(state);result(step,step.ok?`Kat ${step.floor} tamamlandı! +${step.reward.gold} altın, +${step.reward.aether} yıldız özü.`:null);return;}
   if(button.hasAttribute('data-training-open')){activeView='training';render();return;}
   if(button.hasAttribute('data-arena-open')){activeView='arena';render();return;}
   if(button.hasAttribute('data-team-open')){activeView='team';render();return;}
   if(button.hasAttribute('data-daily-reward')){if(villageSignedIn())void serverVillageAction('daily');else result(R.claimDailyReward(state),'Yerel günlük ödül alındı. Sunucu köyüne aktarılmaz.');return;}
   if(button.dataset.cosmeticInterest){const vote=R.toggleWishlist(state,button.dataset.cosmeticInterest);result(vote,vote.selected?'Tasarım istek listene eklendi.':'Tasarım istek listenden çıkarıldı.');return;}
-  if(button.dataset.seasonTitle){result(R.claimSeasonTitle(state,button.dataset.seasonTitle),'Yeni sezon unvanı koleksiyonuna eklendi.');return;}
-  if(button.dataset.claimContract){result(R.claimCampaignContract(state,button.dataset.claimContract),'Görev ödülü alındı; kozmetik unvan ilerlemen güncellendi.');return;}
-  if(button.hasAttribute('data-start-rift')){const outcome=R.startWeeklyRift(state);if(!outcome.ok)return notify(outcome.error);openBattle();return;}
-  if(button.dataset.veteranStage){const outcome=R.startVeteranBattle(state,Number(button.dataset.veteranStage),Number(button.dataset.veteranTier));if(!outcome.ok)return notify(outcome.error);openBattle();return;}
+  if(button.dataset.seasonTitle){if(villageSignedIn())return notify('Sunucu unvanları Seferler bölümündeki doğrulanmış görevlerden alınır.');result(R.claimSeasonTitle(state,button.dataset.seasonTitle),'Yeni sezon unvanı koleksiyonuna eklendi.');return;}
+  if(button.dataset.claimContract){if(villageSignedIn())return notify('Sunucu görev ödülleri Seferler bölümünden alınır.');result(R.claimCampaignContract(state,button.dataset.claimContract),'Görev ödülü alındı; kozmetik unvan ilerlemen güncellendi.');return;}
+  if(button.hasAttribute('data-start-rift')){if(villageSignedIn()){void accountProgressAction('mission_start','rift');activeView='campaign';return;}const outcome=R.startWeeklyRift(state);if(!outcome.ok)return notify(outcome.error);openBattle();return;}
+  if(button.dataset.veteranStage){if(villageSignedIn()){void accountProgressAction('mission_start','veteran:'+button.dataset.veteranStage+':'+button.dataset.veteranTier);activeView='campaign';return;}const outcome=R.startVeteranBattle(state,Number(button.dataset.veteranStage),Number(button.dataset.veteranTier));if(!outcome.ok)return notify(outcome.error);openBattle();return;}
   if(button.dataset.guildAction){guildAction(button.dataset.guildAction);return;}
   if(button.dataset.copy){navigator.clipboard?.writeText(button.dataset.copy).then(()=>notify('Davet kodu kopyalandı.')).catch(()=>notify('Kodu seçerek kopyalayabilirsin.'));return;}
   if(button.hasAttribute('data-export-save')){const file=new Blob([exportSave(state)],{type:'application/json'});const url=URL.createObjectURL(file);const link=document.createElement('a');link.href=url;link.download='starfort-kayit-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('Kayıt yedeği hazırlandı.');return;}
@@ -951,10 +976,10 @@ function dispatch(action) {
   if(button.dataset.bagSlot){selectedBagSlot=button.dataset.bagSlot;renderArmory();return;}
   if(button.dataset.bagItem){selectedBagItem=button.dataset.bagItem;renderArmory();return;}
   if(button.dataset.armoryHero) { selectedArmoryHero=button.dataset.armoryHero; activeView='armory'; render(); return; }
-  if(button.dataset.autoEquip) { const choice=R.autoEquipHero(state,button.dataset.autoEquip); result(choice,choice.changed?'Rolüne uygun en güçlü boşta ekipmanlar kuşanıldı.':'Kahramanın mevcut donanımı zaten uygun.'); return; }
-  if(button.dataset.forge) { result(R.forgeItem(state,button.dataset.forge),'Ekipman üretildi; bir kahramana kuşandırabilirsin.'); return; }
-  if(button.dataset.equip) { result(R.equipItem(state,selectedArmoryHero,button.dataset.equip),'Ekipman kuşanıldı. Savaş gücü güncellendi.'); return; }
-  if(button.dataset.unequip) { result(R.unequipItem(state,selectedArmoryHero,button.dataset.unequip),'Ekipman çantaya alındı.'); return; }
+  if(button.dataset.autoEquip) {if(villageSignedIn()){void accountAutoEquip(button.dataset.autoEquip);return;} const choice=R.autoEquipHero(state,button.dataset.autoEquip); result(choice,choice.changed?'Rolüne uygun en güçlü boşta ekipmanlar kuşanıldı.':'Kahramanın mevcut donanımı zaten uygun.'); return; }
+  if(button.dataset.forge) {if(villageSignedIn()){void accountProgressAction('forge',button.dataset.forge);return;} result(R.forgeItem(state,button.dataset.forge),'Ekipman üretildi; bir kahramana kuşandırabilirsin.'); return; }
+  if(button.dataset.equip) {if(villageSignedIn()){void accountProgressAction('equip',selectedArmoryHero,button.dataset.equip);return;} result(R.equipItem(state,selectedArmoryHero,button.dataset.equip),'Ekipman kuşanıldı. Savaş gücü güncellendi.'); return; }
+  if(button.dataset.unequip) {if(villageSignedIn()){void accountProgressAction('unequip',selectedArmoryHero,button.dataset.unequip);return;} result(R.unequipItem(state,selectedArmoryHero,button.dataset.unequip),'Ekipman çantaya alındı.'); return; }
   if(button.dataset.trial) { if(state.battle?.status==='active') return notify('Önce devam eden savaşı tamamla.'); trialState=R.createHeroTrial(state,button.dataset.trial); renderBattle(); combatRunner.resume(); renderBattle(); return; }
   if(button.hasAttribute('data-quest-toggle')) { activeView='expedition'; questPanelExpanded=true; render(); return; }
   if(button.hasAttribute('data-quest-close')) { questPanelExpanded=false; render(); return; }
@@ -982,18 +1007,20 @@ function dispatch(action) {
     void runBuildingAction(mode,id,button);
     return;
   }
-  if (button.dataset.upgradeHero) { result(R.upgradeHero(state, button.dataset.upgradeHero), 'Kahraman güçlendi.'); return; }
+  if (button.dataset.upgradeHero) {if(villageSignedIn()){void accountProgressAction('hero',button.dataset.upgradeHero);return;} result(R.upgradeHero(state, button.dataset.upgradeHero), 'Kahraman güçlendi.'); return; }
   if (button.dataset.selectSlot !== undefined) { selectedSlot = Number(button.dataset.selectSlot); renderHeroes(); return; }
-  if (button.dataset.team) {
-    const id = button.dataset.team, team = [...state.team], previousIndex = team.indexOf(id);
-    if (previousIndex >= 0) [team[selectedSlot], team[previousIndex]] = [team[previousIndex], team[selectedSlot]];
-    else team[selectedSlot] = id;
-    result(R.setTeam(state, team), 'Savaş dizilimi güncellendi.'); return;
+  if(button.dataset.team){
+    const id=button.dataset.team,current=villageView(),team=[...current.team],previous=team.indexOf(id);
+    if(previous>=0)[team[selectedSlot],team[previous]]=[team[previous],team[selectedSlot]];
+    else team[selectedSlot]=id;
+    if(villageSignedIn())void accountProgressAction('team',team.join(','));
+    else result(R.setTeam(state,team),'Savaş dizilimi güncellendi.');
+    return;
   }
   if(button.hasAttribute('data-collect')){if(villageSignedIn())void serverVillageAction('collect');else {const collected=R.collect(state);result(collected,'Yerel üretim toplandı. Sunucu köyüne aktarılmaz.');}return;}
   if (button.dataset.action === 'open-expedition') { activeView = 'campaign'; render(); return; }
-  if (button.dataset.action === 'resume-battle') { openBattle(); return; }
-  if (button.dataset.stage) { openBattle(button.dataset.stage); return; }
+  if (button.dataset.action === 'resume-battle') {if(villageSignedIn()){activeView='campaign';render();return;}openBattle(); return; }
+  if (button.dataset.stage) {if(villageSignedIn()){activeView='campaign';void accountProgressAction('mission_start',button.dataset.stage);render();return;} openBattle(button.dataset.stage); return; }
   if (button.dataset.closeView !== undefined) { activeView = 'keep'; render(); return; }
   if (button.dataset.closeBattle !== undefined) { closeBattle(); render(); return; }
   if (button.dataset.retryStage) {
