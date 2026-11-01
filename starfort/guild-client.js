@@ -2,6 +2,7 @@
 export const GUILD_TOKEN_KEY='starfort:guild-token';
 export const STARFORT_BETA_CODE_KEY='starfort:beta-test-code';
 import {SUPABASE_URL,SUPABASE_KEY} from './online-config.js';
+import {accountSession,freshAccountSession} from './account-auth.js';
 // Hosted mode (GitHub Pages): accounts/guilds via Supabase RPC, bot battles simulated in the browser.
 const hostedMode=()=>{try{return !!SUPABASE_URL&&(globalThis.location?.hostname?.endsWith('github.io')||globalThis.location?.search?.includes('hosted=1'));}catch{return false;}};
 let localSvc=null,localPlayer=null;
@@ -13,8 +14,13 @@ async function local(){
   return localSvc={arena,teams};
 }
 async function rpc(route,token,data){
-  const r=await fetch(`${SUPABASE_URL}/rest/v1/rpc/sfb_api`,{method:'POST',signal:AbortSignal.timeout(8000),headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({route,token,data:data||{}})});
-  if(!r.ok)throw new Error('Sunucuya ulaşılamadı.');
+  const active=await freshAccountSession();
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/rpc/sfb_account_api`,{
+    method:'POST',signal:AbortSignal.timeout(10000),
+    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+active.access_token,'Content-Type':'application/json'},
+    body:JSON.stringify({route,data:data||{}})
+  });
+  if(!r.ok)throw new Error('Supabase hesabına bağlanılamadı.');
   const {status,body}=await r.json();
   if(body?.player)localPlayer=body.player;
   if(status>=300)throw new Error(body?.error||'Sunucuda işlem gerçekleştirilemedi.');
@@ -35,7 +41,23 @@ async function hostedRequest(route,token,data){
   if(op==='input')return unwrap(svc.input(user,data||{}));
   throw new Error('İşlem bulunamadı.');
 }
+const LIVE_SERVER='https://starfort-online-beta.onrender.com';
+async function liveRequest(route,data){
+  const current=await freshAccountSession();
+  const response=await fetch(LIVE_SERVER+'/api/'+route,{
+    method:data===null?'GET':'POST',signal:AbortSignal.timeout(35000),
+    headers:{Authorization:'Bearer '+current.access_token,...(data===null?{}:{'Content-Type':'application/json'})},
+    ...(data===null?{}:{body:JSON.stringify(data)})
+  });
+  const payload=await response.json().catch(()=>({}));
+  if(!response.ok)throw Error(payload.error||'Canlı savaş sunucusu yanıt vermedi.');
+  return payload;
+}
 export async function guildRequest(route,token=null,data=null){
+  if(accountSession()){
+    if(/^(arena|team)\//.test(route))return liveRequest(route,data);
+    return rpc(route,token,data);
+  }
   if(hostedMode())return hostedRequest(route,token,data);
   let body=data;
   if(route==='register'&&body){

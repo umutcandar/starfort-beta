@@ -71,3 +71,29 @@ export async function accountBackup(action,body={},fetcher=fetch){
  if(!Array.isArray(rows)||rows.length!==1)throw Error('Kayıt başka cihazda değişmiş. Önce bulut durumunu yenile.');
  return rows[0];
 }
+
+export async function accountRequestPasswordReset(email,redirectTo,fetcher=fetch){
+ if(typeof email!=='string'||!email.includes('@'))throw Error('Geçerli e-posta adresi yaz.');
+ // Redirect URLs must be registered under Supabase Auth > URL Configuration.
+ if(typeof redirectTo!=='string'||!/^https:\/\//.test(redirectTo))throw Error('Güvenli kurtarma adresi gerekli.');
+ await request('/auth/v1/recover?redirect_to='+encodeURIComponent(redirectTo),{method:'POST',body:JSON.stringify({email})},fetcher);
+ return {ok:true};
+}
+export async function accountAcceptRecoveryHash(hash,clearHash=()=>{},fetcher=fetch){
+ if(typeof hash!=='string'||hash.length>5000)return false;
+ const args=new URLSearchParams(hash.replace(/^#/,''));
+ if(args.get('type')!=='recovery')return false;
+ const token=args.get('access_token'),refresh=args.get('refresh_token');
+ if(!token||!refresh)throw Error('Şifre kurtarma bağlantısı geçersiz veya süresi dolmuş.');
+ const user=await request('/auth/v1/user',{method:'GET',headers:{Authorization:'Bearer '+token}},fetcher);
+ if(typeof user.id!=='string')throw Error('Hesap bilgisi alınamadı.');
+ saveSession({access_token:token,refresh_token:refresh,expires_in:Number(args.get('expires_in')||3600),user});
+ clearHash();
+ return true;
+}
+export async function accountUpdatePassword(password,fetcher=fetch){
+ if(typeof password!=='string'||password.length<8||password.length>100)throw Error('Yeni şifren 8–100 karakter olmalı.');
+ const active=await freshAccountSession(fetcher);
+ await request('/auth/v1/user',{method:'PUT',headers:{Authorization:'Bearer '+active.access_token},body:JSON.stringify({password})},fetcher);
+ return true;
+}

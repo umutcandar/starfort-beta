@@ -4,6 +4,7 @@
  */
 import {randomBytes} from './rand-id.js';
 import {trainingDifficulty} from './training-difficulty.js';
+import {validArenaHero,arenaHeroStyle} from './arena-heroes.js';
 import {SIEGE,createSiege,siegeWall,siegeAttack,damageSiegeRam,stepSiegeRam,siegeOutcome} from './siege-rules.js';
 
 export const TEAM_RULES=Object.freeze({width:100,height:60,heroHp:140,speed:16,attackRange:13,attackDamage:12,attackCooldown:.8,burstDamage:22,burstRange:12,burstCooldown:8,dashCooldown:5,respawnSeconds:9,duration:180,targetScore:100});
@@ -13,7 +14,7 @@ const factions=['Şafak Muhafızları','Gece Lejyonu'];
 const stand=[{x:50,y:20},{x:50,y:40}];
 const orders=new Set(['follow','push','hold','focus']);
 export const SQUAD_TARGETS=Object.freeze(['all','guard','archer']);
-const makeHero=(user,team,index,now)=>({id:user.id,name:user.name,team,x:team?87:13,y:13+index*9,hp:TEAM_RULES.heroHp,maxHp:TEAM_RULES.heroHp,lastSeen:now,lastSeq:-1,attackAt:0,burstAt:0,dashAt:0,respawnAt:0,input:{x:0,y:0,attack:false},burst:false,dash:false,order:'follow',focus:null,orderAt:-1});
+const makeHero=(user,team,index,now)=>({id:user.id,name:user.name,heroId:validArenaHero(user.heroId),team,x:team?87:13,y:13+index*9,hp:TEAM_RULES.heroHp,maxHp:TEAM_RULES.heroHp,lastSeen:now,lastSeq:-1,attackAt:0,burstAt:0,dashAt:0,respawnAt:0,input:{x:0,y:0,attack:false},burst:false,dash:false,order:'follow',focus:null,orderAt:-1});
 const makeSquad=(owner,type,idx)=>({id:owner.id+':'+type,ownerId:owner.id,team:owner.team,type,x:owner.x+(owner.team?3:-3),y:owner.y+(idx?4:-4),hp:type==='guard'?90:60,maxHp:type==='guard'?90:60,attackAt:0,order:'follow',focus:null});
 export function createTeamRoom(users,teamSize,now=Date.now(),variant='flags'){
   if(![2,5].includes(teamSize)||users.length!==teamSize*2||!['flags','siege'].includes(variant)||(variant==='siege'&&teamSize!==5))throw Error('Invalid team room');
@@ -38,13 +39,16 @@ export function stepTeamRoom(room,seconds){
   const damage=[];
   for(const p of room.players){
     if(p.hp<=0){if(room.elapsed>=p.respawnAt){p.hp=p.maxHp;p.x=p.team?87:13;p.y=30;p.input={x:0,y:0,attack:false};fx('respawn',p,p.team);}else continue;}
-    p.x=bound(p.x+p.input.x*TEAM_RULES.speed*dt,3,97);p.y=bound(p.y+p.input.y*TEAM_RULES.speed*dt,4,56);siegeWall(room,p);
+    p.x=bound(p.x+p.input.x*TEAM_RULES.speed*arenaHeroStyle(p.heroId).speed*dt,3,97);p.y=bound(p.y+p.input.y*TEAM_RULES.speed*arenaHeroStyle(p.heroId).speed*dt,4,56);siegeWall(room,p);
     if(p.dash&&room.elapsed>=p.dashAt){p.x=bound(p.x+p.input.x*9,3,97);p.y=bound(p.y+p.input.y*9,4,56);p.dashAt=room.elapsed+TEAM_RULES.dashCooldown;siegeWall(room,p);fx('dash',p,p.team);}p.dash=false;
     const enemies=room.players.filter(e=>e.team!==p.team&&e.hp>0);
-    if(p.burst&&room.elapsed>=p.burstAt){p.burstAt=room.elapsed+TEAM_RULES.burstCooldown;fx('burst',p,p.team);for(const e of [...enemies,...room.squads.filter(s=>s.team!==p.team&&s.hp>0)])if(dist(p,e)<=TEAM_RULES.burstRange)damage.push({target:e,amount:TEAM_RULES.burstDamage});siegeAttack(room,p,TEAM_RULES.burstDamage,TEAM_RULES.burstRange);damageSiegeRam(room,p,TEAM_RULES.burstDamage,TEAM_RULES.burstRange);}p.burst=false;
+    if(p.burst&&room.elapsed>=p.burstAt){p.burstAt=room.elapsed+TEAM_RULES.burstCooldown;fx('burst',p,p.team);
+      const style=arenaHeroStyle(p.heroId),burstDamage=Math.round(TEAM_RULES.burstDamage*style.burst),burstRange=TEAM_RULES.burstRange*style.burstRange;
+      if(style.heal)p.hp=Math.min(p.maxHp,p.hp+style.heal);for(const e of [...enemies,...room.squads.filter(s=>s.team!==p.team&&s.hp>0)])if(dist(p,e)<=burstRange)damage.push({target:e,amount:burstDamage});siegeAttack(room,p,burstDamage,burstRange);damageSiegeRam(room,p,burstDamage,burstRange);}p.burst=false;
     if(p.input.attack&&room.elapsed>=p.attackAt){
-      if(siegeAttack(room,p,TEAM_RULES.attackDamage,TEAM_RULES.attackRange)){p.attackAt=room.elapsed+TEAM_RULES.attackCooldown;}
-      else {const victim=nearest(p,enemies,TEAM_RULES.attackRange)||nearest(p,room.squads,TEAM_RULES.attackRange);if(victim){damage.push({target:victim,amount:TEAM_RULES.attackDamage});p.attackAt=room.elapsed+TEAM_RULES.attackCooldown;fx('attack',victim,p.team);}else if(damageSiegeRam(room,p,TEAM_RULES.attackDamage,TEAM_RULES.attackRange)){p.attackAt=room.elapsed+TEAM_RULES.attackCooldown;}}
+      const style=arenaHeroStyle(p.heroId),strike=Math.round(TEAM_RULES.attackDamage*style.damage),reach=TEAM_RULES.attackRange*style.range;
+      if(siegeAttack(room,p,strike,reach)){p.attackAt=room.elapsed+TEAM_RULES.attackCooldown;}
+      else {const victim=nearest(p,enemies,reach)||nearest(p,room.squads,reach);if(victim){damage.push({target:victim,amount:strike});p.attackAt=room.elapsed+TEAM_RULES.attackCooldown;fx('attack',victim,p.team);}else if(damageSiegeRam(room,p,strike,reach)){p.attackAt=room.elapsed+TEAM_RULES.attackCooldown;}}
     }
   }
   for(const s of room.squads){
@@ -104,7 +108,7 @@ export function teamBotInput(room,bot,difficulty='normal'){
 }
 
 export function createTeamService({now=()=>Date.now()}={}){
-  const queues=new Map([[2,[]],[5,[]],['siege',[]]]),partyQueues=new Map([[2,[]],[5,[]],['siege',[]]]),entries=new Map(),rooms=new Map(),names=new Map(),seen=new Map();
+  const queues=new Map([[2,[]],[5,[]],['siege',[]]]),partyQueues=new Map([[2,[]],[5,[]],['siege',[]]]),entries=new Map(),rooms=new Map(),names=new Map(),heroChoices=new Map(),seen=new Map();
   const removeParty=(party)=>{const list=partyQueues.get(party.key);const at=list.indexOf(party);if(at>=0)list.splice(at,1);for(const id of party.ids){const e=entries.get(id);if(e?.type==='party-waiting'&&e.partyId===party.guildId)entries.delete(id);names.delete(id);seen.delete(id);}};
   const cleanupWait=()=>{for(const [mode,q] of queues){for(let i=q.length-1;i>=0;i--)if(now()-(seen.get(q[i])||0)>20000){entries.delete(q[i]);names.delete(q[i]);seen.delete(q[i]);q.splice(i,1);}}
     // Every guild member must keep the arena open while awaiting an opponent.
@@ -114,7 +118,7 @@ export function createTeamService({now=()=>Date.now()}={}){
     if(entry.type==='waiting'){seen.set(user.id,now());return {status:'waiting',mode:entry.key==='siege'?'Kuşatma 5v5':`${entry.size}v${entry.size}`,waiting:queues.get(entry.key??entry.size).length,required:entry.size*2};}
     if(entry.type==='party-waiting'){seen.set(user.id,now());return {status:'waiting',party:true,mode:entry.key==='siege'?'Kuşatma 5v5':`${entry.size}v${entry.size}`,waiting:partyQueues.get(entry.key??entry.size).length*entry.size,required:entry.size*2};}
     const room=rooms.get(entry.roomId);if(!room){entries.delete(user.id);return {status:'idle'};}
-    return {status:room.status==='active'?'active':'ended',you:user.id,inputSeq:room.players.find(p=>p.id===user.id)?.lastSeq??-1,room:{id:room.id,mode:room.mode,variant:room.variant,isPractice:room.isPractice===true,botDifficulty:room.isPractice?room.botDifficulty||'normal':null,siege:room.siege,teamSize:room.teamSize,elapsed:room.elapsed,ticks:room.ticks,status:room.status,winner:room.winner,reason:room.reason,teams:factions,guilds:room.guilds||null,score:room.score.map(x=>Math.round(x)),capture:room.capture,players:room.players.map(p=>({id:p.id,name:p.name,isBot:p.isBot===true,team:p.team,x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,order:p.order,focus:p.focus,burstReady:Math.max(0,p.burstAt-room.elapsed),dashReady:Math.max(0,p.dashAt-room.elapsed),respawnReady:p.hp===0?Math.max(0,p.respawnAt-room.elapsed):0})),squads:room.squads.map(s=>({id:s.id,ownerId:s.ownerId,team:s.team,type:s.type,x:s.x,y:s.y,hp:s.hp,maxHp:s.maxHp,order:s.order??'follow',focus:s.focus??null})),fx:room.fx}};
+    return {status:room.status==='active'?'active':'ended',you:user.id,inputSeq:room.players.find(p=>p.id===user.id)?.lastSeq??-1,room:{id:room.id,mode:room.mode,variant:room.variant,isPractice:room.isPractice===true,botDifficulty:room.isPractice?room.botDifficulty||'normal':null,siege:room.siege,teamSize:room.teamSize,elapsed:room.elapsed,ticks:room.ticks,status:room.status,winner:room.winner,reason:room.reason,teams:factions,guilds:room.guilds||null,score:room.score.map(x=>Math.round(x)),capture:room.capture,players:room.players.map(p=>({id:p.id,name:p.name,heroId:p.heroId,isBot:p.isBot===true,team:p.team,x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,order:p.order,focus:p.focus,burstReady:Math.max(0,p.burstAt-room.elapsed),dashReady:Math.max(0,p.dashAt-room.elapsed),respawnReady:p.hp===0?Math.max(0,p.respawnAt-room.elapsed):0})),squads:room.squads.map(s=>({id:s.id,ownerId:s.ownerId,team:s.team,type:s.type,x:s.x,y:s.y,hp:s.hp,maxHp:s.maxHp,order:s.order??'follow',focus:s.focus??null})),fx:room.fx}};
   }
   function queue(user,body){if(entries.has(user.id))return [200,result(user)];cleanupWait();const size=body?.size;const variant=body?.variant??'flags';
     if(!['flags','siege'].includes(variant))return [400,{error:'Geçersiz savaş türü.'}];
@@ -122,8 +126,8 @@ export function createTeamService({now=()=>Date.now()}={}){
     if(size!==2&&size!==5)return [400,{error:'2v2 veya 5v5 formatı seç.'}];
     if(rooms.size>=32)return [503,{error:'Bu test sunucusunun maç kapasitesi dolu.'}];
     const key=variant==='siege'?'siege':size;const q=queues.get(key);if(q.length>=size*2)return [503,{error:'Eşleşme kuyruğu dolu.'}];
-    q.push(user.id);names.set(user.id,user.name);seen.set(user.id,now());entries.set(user.id,{type:'waiting',size,key});
-    if(q.length===size*2){const ids=q.splice(0,size*2);const room=createTeamRoom(ids.map(id=>({id,name:names.get(id)})),size,now(),variant);rooms.set(room.id,room);ids.forEach(id=>{entries.set(id,{type:'room',roomId:room.id});seen.delete(id)});}
+    q.push(user.id);names.set(user.id,user.name);heroChoices.set(user.id,validArenaHero(body.heroId));seen.set(user.id,now());entries.set(user.id,{type:'waiting',size,key});
+    if(q.length===size*2){const ids=q.splice(0,size*2);const room=createTeamRoom(ids.map(id=>({id,name:names.get(id),heroId:heroChoices.get(id)})),size,now(),variant);rooms.set(room.id,room);ids.forEach(id=>{entries.set(id,{type:'room',roomId:room.id});seen.delete(id)});}
     return [200,result(user)];
   }
   function queueBot(user,body){
@@ -138,7 +142,7 @@ export function createTeamService({now=()=>Date.now()}={}){
     }
     entries.delete(user.id);names.delete(user.id);seen.delete(user.id);
     if(rooms.size>=32)return [503,{error:'Antrenman sunucusu kapasitesi dolu.'}];
-    const roster=[user];
+    const roster=[{...user,heroId:validArenaHero(body.heroId)}];
     for(let i=1;i<size*2;i++)roster.push({id:'bot-'+randomBytes(9).toString('hex'),name:['Kızıl Muhafız','Kule Bekçisi','Demir Okçu','Ay Şövalyesi','Gölge Komutan'][(i-1)%5]+' '+i});
     const room=createTeamRoom(roster,size,now(),variant);
     room.isPractice=true;room.botDifficulty=difficulty;
@@ -163,7 +167,7 @@ export function createTeamService({now=()=>Date.now()}={}){
       const [alpha,beta]=q.splice(0,2);
       // Alternating roster is deliberate: createTeamRoom assigns i%2 to teams.
       const ids=alpha.ids.flatMap((id,i)=>[id,beta.ids[i]]);
-      const room=createTeamRoom(ids.map(id=>({id,name:names.get(id)})),size,now(),variant);
+      const room=createTeamRoom(ids.map(id=>({id,name:names.get(id),heroId:heroChoices.get(id)})),size,now(),variant);
       room.guilds=[alpha.guildName,beta.guildName];
       rooms.set(room.id,room);
       ids.forEach(id=>{entries.set(id,{type:'room',roomId:room.id});seen.delete(id)});

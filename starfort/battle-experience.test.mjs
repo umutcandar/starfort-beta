@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {battleExperience} from './battle-experience.js';
-test('public GitHub beta offers AI practice but no misleading real-player queues',()=>{
+test('GitHub beta offers login-gated live queues through Render as well as AI practice',()=>{
   const mode=battleExperience({hostname:'umutcandar.github.io',search:''},'3d',true);
   assert.equal(mode.hosted,true);
-  assert.equal(mode.liveMatchmaking,false);
+  assert.equal(mode.liveMatchmaking,true);
   assert.equal(mode.renderMode,'2d');
   assert.equal(mode.defaultQuality,'balanced');
 });

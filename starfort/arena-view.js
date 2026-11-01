@@ -1,5 +1,8 @@
 /** 1v1 online duel UX. The server is authoritative; the canvas only renders snapshots. */
 import {guildRequest,GUILD_TOKEN_KEY} from './guild-client.js';
+import {accountSession} from './account-auth.js';
+import {ARENA_HERO_STYLES} from './arena-heroes.js';
+import * as R from './rules.js';
 import {trainingDifficulty,trainingLabel} from './training-difficulty.js';
 import {createBattleRenderer} from './battle-render-adapter.js';
 import {getPreferredBattleMode,savePreferredBattleMode} from './battle-render-preference.js';
@@ -10,7 +13,10 @@ import {mountJoystick,combineMovement} from './mobile-controls.js';
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export function mountArena(root){
-  const token=localStorage.getItem(GUILD_TOKEN_KEY)||'';
+  const token=accountSession()?.access_token||localStorage.getItem(GUILD_TOKEN_KEY)||'';
+  const saved=R.restoreState(localStorage.getItem(R.STORAGE_KEY));
+  const heroes=Object.entries(ARENA_HERO_STYLES).filter(([id])=>saved.heroes[id]);
+  let heroId=heroes.some(([id])=>id===localStorage.getItem('starfort:arena-hero'))?localStorage.getItem('starfort:arena-hero'):heroes[0]?.[0]||'aldren';
   const policy=battleExperience(window.location,getPreferredBattleMode(localStorage),window.matchMedia?.('(pointer:coarse)').matches||false);
   let graphics=graphicsPreset(localStorage.getItem('starfort:graphics')||policy.defaultQuality);
   let renderMode=policy.renderMode;
@@ -20,7 +26,7 @@ export function mountArena(root){
   const api=(route,data=null)=>guildRequest(`arena/${route}`,token,data);
   root.innerHTML=`<header class="training-title"><div><span class="eyebrow">YILDIZ KALESİ · ŞAFAK DÜELLOSU</span><h2>Yıldız Düellosu</h2><p>Tek başına yapay rakibe karşı antrenman yap veya gerçek oyuncuyla 1v1 düelloya gir.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
     <div class="sf-portrait-hint" role="note">↻ <strong>Yatay oyun önerilir.</strong> Telefonu yana çevir; savaşta soldaki joystick ve sağdaki yetenek tuşlarını kullan.</div>
-  <div class="battle-graphics-control"><span>SAVAŞ GÖRÜNÜMÜ</span><select id="arena-render-mode" aria-label="Savaş görünümü">${policy.graphicsLab?'<option value="3d">3B geliştirme laboratuvarı</option>':''}<option value="2d">Sinematik 2.5B · asıl oyun</option></select><small id="arena-render-status">STARFORT sinematik savaş görünümü etkin</small><span>GÖRÜNTÜ KALİTESİ</span><select id="arena-graphics" aria-label="Grafik kalitesi"><option value="ultra">Ultra</option><option value="balanced">Dengeli</option><option value="performance">Performans</option></select>${policy.graphicsLab?'<a class="sf-3d-lab-link" href="./graphics-3d-preview.html" target="_blank" rel="noopener noreferrer">3B geliştirme sahnesi</a>':''}</div>
+  <label class="sf-hero-choice">ARENADAKİ KAHRAMAN <select id="starfort-hero-choice" aria-label="Arena kahramanı">${heroes.map(([id,h])=>`<option value="${id}" ${heroId===id?'selected':''}>${h.name} · ${h.title}</option>`).join('')}</select></label><div class="battle-graphics-control"><span>SAVAŞ GÖRÜNÜMÜ</span><select id="arena-render-mode" aria-label="Savaş görünümü">${policy.graphicsLab?'<option value="3d">3B geliştirme laboratuvarı</option>':''}<option value="2d">Sinematik 2.5B · asıl oyun</option></select><small id="arena-render-status">STARFORT sinematik savaş görünümü etkin</small><span>GÖRÜNTÜ KALİTESİ</span><select id="arena-graphics" aria-label="Grafik kalitesi"><option value="ultra">Ultra</option><option value="balanced">Dengeli</option><option value="performance">Performans</option></select>${policy.graphicsLab?'<a class="sf-3d-lab-link" href="./graphics-3d-preview.html" target="_blank" rel="noopener noreferrer">3B geliştirme sahnesi</a>':''}</div>
     <div class="arena-head"><div><span class="online-dot"></span><b id="arena-connection">Bağlantı hazırlanıyor</b><small id="arena-match">${policy.liveMatchmaking?'Gerçek oyuncu veya bot antrenmanı · derecesiz':'Kendi kahramanınla bot antrenmanı · canlı eşleşme bu sunucuda kapalı'}</small></div><label class="sf-difficulty-picker" for="arena-bot-difficulty">Bot seviyesi <select id="arena-bot-difficulty" aria-label="Bot seviyesi"><option value="easy">Kolay</option><option value="normal">Normal</option><option value="hard">Zor</option></select></label><button class="primary" data-arena-bot>⚔ Botla Savaş (Tek Başına)</button><button class="secondary" data-arena-queue ${policy.liveMatchmaking?'':'disabled title="Gerçek oyuncu eşleşmesi özel oyun sunucusunda açılır"'}>Gerçek Rakip Ara</button><button class="secondary" data-arena-leave>Çık / Vazgeç</button></div>
     <div class="arena-field"><div class="sf-arena-live-hud" id="arena-live-hud" hidden aria-live="off"><div class="sf-life-card sf-life-ally"><small id="arena-me-name">SEN</small><div class="sf-life-track"><i id="arena-me-life"></i></div><b id="arena-me-hp">—</b></div><div class="sf-combat-timer" id="arena-timer">02:00</div><div class="sf-life-card sf-life-enemy"><small id="arena-enemy-name">RAKİP</small><div class="sf-life-track"><i id="arena-enemy-life"></i></div><b id="arena-enemy-hp">—</b></div></div><canvas id="arena-canvas" width="1000" height="600" aria-label="Düello arenası; klavyede WASD yön, J saldırı, Q büyü, Space atılma"></canvas><div class="sf-battle-bar"><button class="sf-back" data-close-view aria-label="Köye dön">‹ Köy</button><span><strong>STARFORT</strong><small>Yıldız Düellosu</small></span>${policy.graphicsLab?'<button data-sf-render aria-label="Deneysel 3B ve sinematik görünüm değiştir">✦ SİNEMATİK</button>':''}<button data-sf-graphics aria-label="Grafik kalitesini değiştir">✦ Ultra</button><button data-sf-fullscreen aria-label="Tam ekran yap">⛶</button></div><div class="sf-joystick" aria-label="Kahraman hareket joysticki" role="group"><div class="sf-joystick-rim"></div><div class="sf-joystick-thumb"></div><small>HAREKET</small></div><div class="sf-rotation-tip">↻ En iyi deneyim için telefonu yatay çevir</div><div class="arena-center-message cinematic-intro" id="arena-message"><b>YILDIZ DÜELLOSU</b><p>⚔ Botla Savaş düğmesiyle hemen tek başına dene. Gerçek oyuncu için Rakip Ara'yı kullan.</p></div></div>
     <div class="arena-actions"><button data-arena-attack>Saldır <small>J / dokun</small></button><button data-arena-burst>✦ Yıldız Darbesi <small>Q · 8 sn</small></button><button data-arena-dash>➤ Atılma <small>Space · 5 sn</small></button></div>
@@ -30,6 +36,7 @@ export function mountArena(root){
   let error='';
   $('#arena-graphics').value=graphics;
   $('#arena-bot-difficulty').value=botDifficulty;
+  $('#starfort-hero-choice').addEventListener('change',e=>{const chosen=e.target.value;if(Object.hasOwn(ARENA_HERO_STYLES,chosen)){heroId=chosen;localStorage.setItem('starfort:arena-hero',chosen);}});
   $('#arena-bot-difficulty').addEventListener('change',event=>{botDifficulty=trainingDifficulty(event.target.value)||'normal';localStorage.setItem('starfort:bot-difficulty',botDifficulty);});
   $('#arena-graphics').addEventListener('change',e=>updateGraphics(e.target.value));
   const motion=createBattleMotion();
@@ -95,8 +102,8 @@ export function mountArena(root){
   function draw(time){paint(time);raf=requestAnimationFrame(draw);}
   let epoch=0;
   async function poll(){if(destroyed||busy||!token)return;const my=epoch;try{const next=await api('state');if(my!==epoch)return;snapshot=next;if(Number.isSafeInteger(next.inputSeq))seq=Math.max(seq,next.inputSeq);error='';}catch(e){error=e.message;}if(!destroyed)message();if(!destroyed&&sessionStorage.getItem('starfort:autostart-duel')&&snapshot.status!=='active'&&snapshot.status!=='waiting'){sessionStorage.removeItem('starfort:autostart-duel');playBot();}}
-  async function queue(){if(busy||!token||!policy.liveMatchmaking)return;busy=true;epoch++;try{snapshot=await api('queue',{});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
-  async function playBot(){if(busy||!token)return;busy=true;epoch++;try{snapshot=await api('bot',{difficulty:botDifficulty});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
+  async function queue(){if(busy||!token||!policy.liveMatchmaking)return;busy=true;epoch++;try{snapshot=await api('queue',{heroId});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
+  async function playBot(){if(busy||!token)return;busy=true;epoch++;try{snapshot=await api('bot',{difficulty:botDifficulty,heroId});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function leave(){if(busy||!token)return;busy=true;epoch++;try{snapshot=await api('leave',{});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function send(){if(destroyed||busy||snapshot.status!=='active')return;
     const x=(keys.has('d')||keys.has('arrowright')||touch.has('right')?1:0)-(keys.has('a')||keys.has('arrowleft')||touch.has('left')?1:0);

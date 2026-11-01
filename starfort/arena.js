@@ -1,10 +1,11 @@
 /** Starfort v1.2 local 1v1 duel sandbox. Server owns all HP, movement and cooldowns. */
 import {randomBytes} from './rand-id.js';
 import {trainingDifficulty} from './training-difficulty.js';
+import {validArenaHero,arenaHeroStyle} from './arena-heroes.js';
 export const ARENA={width:100,height:60,speed:17,maxHp:140,duration:120,attackRange:15,attackDamage:13,attackCooldown:.7,burstRange:11,burstDamage:28,burstCooldown:8,dashCooldown:5};
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-const player=(user,side)=>({id:user.id,name:user.name,side,x:side?85:15,y:30,hp:ARENA.maxHp,maxHp:ARENA.maxHp,attackAt:0,burstAt:0,dashAt:0,lastSeen:Date.now(),input:{x:0,y:0,attack:false},pendingBurst:false,pendingDash:false,lastSeq:-1});
+const player=(user,side)=>({id:user.id,name:user.name,heroId:validArenaHero(user.heroId),side,x:side?85:15,y:30,hp:ARENA.maxHp,maxHp:ARENA.maxHp,attackAt:0,burstAt:0,dashAt:0,lastSeen:Date.now(),input:{x:0,y:0,attack:false},pendingBurst:false,pendingDash:false,lastSeq:-1});
 export const newRoom=(left,right,now=Date.now())=>({id:randomBytes(8).toString('hex'),startedAt:now,elapsed:0,status:'active',winner:null,reason:'',players:[player(left,0),player(right,1)],fx:[],ticks:0});
 
 const BOT_NAMES=['Gölge Muhafız','Kızıl Şövalye','Sis Avcısı','Demir Komutan'];
@@ -36,8 +37,8 @@ export function stepRoom(room,seconds,now=Date.now()){
   for(const p of room.players){
     if(p.hp<=0)continue;
     const input=p.input;
-    p.x=clamp(p.x+input.x*ARENA.speed*dt,3,ARENA.width-3);
-    p.y=clamp(p.y+input.y*ARENA.speed*dt,4,ARENA.height-4);
+    p.x=clamp(p.x+input.x*ARENA.speed*arenaHeroStyle(p.heroId).speed*dt,3,ARENA.width-3);
+    p.y=clamp(p.y+input.y*ARENA.speed*arenaHeroStyle(p.heroId).speed*dt,4,ARENA.height-4);
   }
   // Use elapsed simulation time for cooldowns, never client's clock.
   const attacks=[];
@@ -54,12 +55,15 @@ export function stepRoom(room,seconds,now=Date.now()){
     if(p.pendingBurst && room.elapsed>=p.burstAt){
       p.burstAt=room.elapsed+ARENA.burstCooldown;
       room.fx.push({type:'burst',x:p.x,y:p.y,side:p.side,t:room.elapsed});
-      if(distance(p,enemy)<=ARENA.burstRange)attacks.push({target:enemy,damage:ARENA.burstDamage});
+      const style=arenaHeroStyle(p.heroId);
+       if(style.heal)p.hp=Math.min(p.maxHp,p.hp+style.heal);
+       if(distance(p,enemy)<=ARENA.burstRange*style.burstRange)
+         attacks.push({target:enemy,damage:Math.round(ARENA.burstDamage*style.burst)});
     }
     p.pendingBurst=false;
-    if(p.input.attack&&room.elapsed>=p.attackAt&&distance(p,enemy)<=ARENA.attackRange){
+    if(p.input.attack&&room.elapsed>=p.attackAt&&distance(p,enemy)<=ARENA.attackRange*arenaHeroStyle(p.heroId).range){
       p.attackAt=room.elapsed+ARENA.attackCooldown;
-      attacks.push({target:enemy,damage:ARENA.attackDamage});
+      attacks.push({target:enemy,damage:Math.round(ARENA.attackDamage*arenaHeroStyle(p.heroId).damage)});
       room.fx.push({type:'attack',x:enemy.x,y:enemy.y,side:p.side,t:room.elapsed});
     }
   }
@@ -72,21 +76,21 @@ export function stepRoom(room,seconds,now=Date.now()){
   return room;
 }
 export function createArenaService({now=()=>Date.now()}={}){
-  const waiting=[];const rooms=new Map();const members=new Map();const waitingSeen=new Map();
+  const waiting=[];const rooms=new Map();const members=new Map();const waitingSeen=new Map(),heroChoices=new Map();
   function result(user){
     const entry=members.get(user.id);
     if(!entry)return {status:'idle'};
     if(entry==='waiting'){waitingSeen.set(user.id,now());return {status:'waiting',queuePosition:waiting.indexOf(user.id)+1};}
     const room=rooms.get(entry);
     if(!room){members.delete(user.id);return {status:'idle'};}
-    return {status:room.status==='active'?'active':'ended',inputSeq:room.players.find(p=>p.id===user.id)?.lastSeq??-1,room:{id:room.id,status:room.status,isPractice:room.isPractice===true,botDifficulty:room.isPractice?room.botDifficulty||'normal':null,elapsed:room.elapsed,winner:room.winner,reason:room.reason,ticks:room.ticks,players:room.players.map(p=>({id:p.id,name:p.name,isBot:p.isBot===true,side:p.side,x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attackReady:Math.max(0,p.attackAt-room.elapsed),burstReady:Math.max(0,p.burstAt-room.elapsed),dashReady:Math.max(0,p.dashAt-room.elapsed)})),fx:room.fx},you:user.id};
+    return {status:room.status==='active'?'active':'ended',inputSeq:room.players.find(p=>p.id===user.id)?.lastSeq??-1,room:{id:room.id,status:room.status,isPractice:room.isPractice===true,botDifficulty:room.isPractice?room.botDifficulty||'normal':null,elapsed:room.elapsed,winner:room.winner,reason:room.reason,ticks:room.ticks,players:room.players.map(p=>({id:p.id,name:p.name,heroId:p.heroId,isBot:p.isBot===true,side:p.side,x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attackReady:Math.max(0,p.attackAt-room.elapsed),burstReady:Math.max(0,p.burstAt-room.elapsed),dashReady:Math.max(0,p.dashAt-room.elapsed)})),fx:room.fx},you:user.id};
   }
-  function queue(user){
+  function queue(user,options={}){
     if(members.has(user.id))return result(user);
     for(let i=waiting.length-1;i>=0;i--)if(now()-(waitingSeen.get(waiting[i])||0)>15000){members.delete(waiting[i]);waitingSeen.delete(waiting[i]);this.names.delete(waiting[i]);waiting.splice(i,1);}
     const rivalId=waiting.shift();
-    if(rivalId){waitingSeen.delete(rivalId);const rival={id:rivalId,name:this.names.get(rivalId)};const room=newRoom(rival,user,now());rooms.set(room.id,room);members.set(rivalId,room.id);members.set(user.id,room.id);return result(user);}
-    this.names.set(user.id,user.name);waiting.push(user.id);members.set(user.id,'waiting');waitingSeen.set(user.id,now());return result(user);
+    if(rivalId){waitingSeen.delete(rivalId);const rival={id:rivalId,name:this.names.get(rivalId),heroId:heroChoices.get(rivalId)};const room=newRoom(rival,{...user,heroId:validArenaHero(options.heroId)},now());rooms.set(room.id,room);members.set(rivalId,room.id);members.set(user.id,room.id);return result(user);}
+    this.names.set(user.id,user.name);heroChoices.set(user.id,validArenaHero(options.heroId));waiting.push(user.id);members.set(user.id,'waiting');waitingSeen.set(user.id,now());return result(user);
   }
   function queueBot(user,options={}){
     const difficulty=trainingDifficulty(options?.difficulty??'normal');
@@ -103,7 +107,7 @@ export function createArenaService({now=()=>Date.now()}={}){
       waitingSeen.delete(user.id);members.delete(user.id);this.names.delete(user.id);
     }
     const botUser={id:'bot-'+randomBytes(9).toString('hex'),name:BOT_NAMES[Math.floor(Math.random()*BOT_NAMES.length)]};
-    const room=newRoom(user,botUser,now());room.isPractice=true;room.botDifficulty=difficulty;
+    const room=newRoom({...user,heroId:validArenaHero(options.heroId)},botUser,now());room.isPractice=true;room.botDifficulty=difficulty;
     room.players[1].isBot=true;room.players[1].lastSeen=now();
     rooms.set(room.id,room);members.set(user.id,room.id);
     return result(user);
@@ -111,7 +115,7 @@ export function createArenaService({now=()=>Date.now()}={}){
   function leave(user){
     const entry=members.get(user.id);if(entry==='waiting'){const i=waiting.indexOf(user.id);if(i>=0)waiting.splice(i,1);}
     else if(entry){const room=rooms.get(entry);if(room?.isPractice){room.status='ended';room.reason='forfeit';rooms.delete(entry);}else if(room?.status==='active'){room.status='ended';room.reason='forfeit';room.winner=room.players.find(p=>p.id!==user.id)?.id??null;}}
-    members.delete(user.id);this.names.delete(user.id);waitingSeen.delete(user.id);return {status:'idle'};
+    members.delete(user.id);this.names.delete(user.id);heroChoices.delete(user.id);waitingSeen.delete(user.id);return {status:'idle'};
   }
   function input(user,data){
     const entry=members.get(user.id);const room=rooms.get(entry);

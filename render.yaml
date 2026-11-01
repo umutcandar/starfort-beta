@@ -14,5 +14,7 @@ services:
         value: 0.0.0.0
       - key: STARFORT_DATA_DIR
         value: /tmp/starfort-beta-data
+      - key: STARFORT_AUTH_REQUIRED
+        value: '1'
       - key: STARFORT_TEST_CODE
         sync: false
