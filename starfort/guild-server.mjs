@@ -7,6 +7,7 @@ import {trainingDifficulty} from './training-difficulty.js';
 import {newWeeklyRaid,rotateGuildRaids} from './guild-weekly-raid.js';
 import {createTeamService} from './team-arena.js';
 import {verifiedArenaUser} from './arena-auth.js';
+import {createMatchLedger} from './match-ledger.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -93,7 +94,14 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
   const arena=createArenaService();
   const teams=createTeamService();
   const serverEpoch=randomBytes(12).toString('hex');
-  const arenaTimer=setInterval(()=>{arena.tick(.05);arena.prune();teams.tick(.05);teams.prune();},50);arenaTimer.unref();
+  const matchLedger=createMatchLedger();
+  const arenaTimer=setInterval(()=>{
+    arena.tick(.05);teams.tick(.05);
+    for(const room of arena.rooms.values())if(room.status==='ended')matchLedger.enqueue(room,'duel');
+    for(const room of teams.rooms.values())if(room.status==='ended')matchLedger.enqueue(room,'team');
+    if(matchLedger.status.pending)void matchLedger.flush();
+    arena.prune();teams.prune();
+  },50);arenaTimer.unref();
   const failedInvites=new Map();
   const maxFailedInvites=10, inviteWindowMs=15*60*1000;
   function inviteAllowed(req,code){
@@ -136,7 +144,7 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
     try{route=new URL(req.url,'http://localhost').pathname;}
     catch{return json(res,400,{error:'Geçersiz adres.'});}
     // Health and static assets never depend on guild disk writes.
-    if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-live-arena',version:'2.18.0-reconnect',serverEpoch,online:true,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']})
+    if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-live-arena',version:'2.18.0-reconnect',serverEpoch,online:true,historyReady:matchLedger.status.enabled,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']})
     if(!route.startsWith('/api/')){void serveStatic(req,res,route);return;}
     function enqueue(data,authenticatedArenaUser=null){
       lock=lock.then(async()=>{
