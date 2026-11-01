@@ -23,14 +23,14 @@ export const CITY_VIEW = { target: [-2, 2.5, 1.5], offset: [10, 25, 40], halfWid
 export const CITY_PALETTE = { stone:'#8295a3', dark:'#3e5265', edge:'#b4c1c7', roof:'#263d58', gold:'#d0ae68', wood:'#6a5546', plaster:'#88959c', cyan:'#8be5ee', ember:'#ffc47a', grass:'#465e54' };
 
 // Keep labels attached to their courtyards while separating crowded rows on narrow screens.
-export function placeCityLabels(points, width, height, obstacles=[]) {
+export function placeCityLabels(points, width, height, obstacles=[],maxShift=Infinity) {
   const placed=[];
   const intersects=(a,b)=>a.x-a.width/2<b.x+b.width/2+4&&a.x+a.width/2>b.x-b.width/2-4&&a.y<b.y+b.height+4&&a.y+a.height>b.y-4;
   for(const point of points.filter(p=>p.visible).sort((a,b)=>a.y-b.y)) {
     const w=point.width||120,h=point.height||28,x=Math.min(width-w/2-4,Math.max(w/2+4,point.x));
     const occupied=[...placed,...obstacles];
     const candidates=[Math.max(4,point.y),...occupied.flatMap(p=>[p.y-h-5,p.y+p.height+5])];
-    const y=candidates.filter(y=>y>=4&&y+h<=height-4&&!occupied.some(p=>intersects({x,y,width:w,height:h},p))).sort((a,b)=>Math.abs(a-point.y)-Math.abs(b-point.y))[0];
+    const y=candidates.filter(y=>y>=4&&y+h<=height-4&&Math.abs(y-point.y)<=maxShift&&!occupied.some(p=>intersects({x,y,width:w,height:h},p))).sort((a,b)=>Math.abs(a-point.y)-Math.abs(b-point.y))[0];
     if(y===undefined)continue;
     placed.push({...point,x,y,width:w,height:h,shift:y-point.y});
   }
