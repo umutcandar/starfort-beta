@@ -40,6 +40,9 @@ test('completed story stages stay replayable even if new gates were introduced',
 });
 test('stage 6 frost and stage 7 siphon and three final boss phases have distinct intents',()=>{
  const frozen={stageId:6,combatVersion:2,round:1};
+ assert.equal(specialEnemyAttack({stageId:3,combatVersion:2},{role:'raider'},3).type,'thorn');
+ assert.equal(specialEnemyAttack({stageId:4,combatVersion:2},{role:'boss'},4).type,'shatter');
+ assert.equal(specialEnemyAttack({stageId:5,combatVersion:2},{role:'caster'},2).type,'grave');
  assert.equal(specialEnemyAttack(frozen,{role:'caster',hp:20,maxHp:20},2).type,'frost');
  assert.equal(specialEnemyAttack({stageId:7,combatVersion:2},{role:'caster'},2).type,'drain');
  const s={stageId:8,combatVersion:2};
