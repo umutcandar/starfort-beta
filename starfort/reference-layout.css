@@ -329,3 +329,7 @@ body{font-synthesis:none}
   .armory-v212 .bag-v212-right{overflow:visible}
 }
 @media(prefers-reduced-motion:reduce){.nav-item,.bag-v212-item,.city-label{transition:none!important}}
+
+/* Unowned gear remains visible as a colorful preview, never as owned inventory. */
+.armory-v212 .bag-v212-item.missing{opacity:.94!important;filter:saturate(.86)!important}
+.bag-v213-lock{position:absolute;top:3px;right:3px;font:700 12px Georgia,serif;color:#e7d4a6;background:#071525c7;padding:1px 4px;border-radius:4px}
