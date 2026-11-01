@@ -47,9 +47,10 @@ export function restoreLiveCombat(battle,saved) {
     unit.stunnedUntil=clamp(source.stunnedUntil,0,t+1800,0);
     unit.markedUntil=clamp(source.markedUntil,0,t+6000,0);
     const cast=source.casting;
-    if(cast && (['crush','nova'].includes(cast.kind)&&enemy.role==='boss'
-      || ['volley','frost','drain'].includes(cast.kind)&&enemy.role==='caster'
-      || cast.kind==='drain'&&enemy.role==='boss'&&battle.stageId===8)
+    if(cast && (['crush','nova','shatter'].includes(cast.kind)&&enemy.role==='boss'
+      || ['volley','frost','drain','grave'].includes(cast.kind)&&enemy.role==='caster'
+      || cast.kind==='drain'&&enemy.role==='boss'&&battle.stageId===8
+      || cast.kind==='thorn'&&enemy.role==='raider')
       && Number.isFinite(cast.startedAt) && Number.isFinite(cast.endsAt) && cast.startedAt>=0
       && cast.startedAt<=t && cast.endsAt>=t && cast.endsAt<=t+2400) {
       unit.casting={kind:cast.kind,startedAt:cast.startedAt,endsAt:cast.endsAt};
@@ -68,7 +69,7 @@ export function liveEnemyIntent(battle,enemy) {
   const unit=battle.live?.enemies[enemy.id], t=battle.live?.elapsedMs||0;
   if(!unit) return {label:'Otomatik saldırı',danger:false};
   if(unit.stunnedUntil>t) return {label:'Sersemledi',danger:false,remaining:unit.stunnedUntil-t};
-  if(unit.casting) return {label:({crush:'Yıkım hazırlanıyor',volley:'Gölge yağmuru',frost:'Ayaz zinciri',drain:'Can soğurma',nova:'Boşluk patlaması'})[unit.casting.kind]||'Tehlike',danger:true,remaining:Math.max(0,unit.casting.endsAt-t),progress:(t-unit.casting.startedAt)/(unit.casting.endsAt-unit.casting.startedAt)};
+  if(unit.casting) return {label:({crush:'Yıkım hazırlanıyor',volley:'Gölge yağmuru',frost:'Ayaz zinciri',drain:'Can soğurma',nova:'Boşluk patlaması',thorn:'Dikenli pusu',shatter:'Demir kırıcı',grave:'Mahzen ayini'})[unit.casting.kind]||'Tehlike',danger:true,remaining:Math.max(0,unit.casting.endsAt-t),progress:(t-unit.casting.startedAt)/(unit.casting.endsAt-unit.casting.startedAt)};
   return {label:enemy.role==='boss'?'Ağır kesiş':enemy.role==='caster'?'Gölge oku':'Ön safa saldırı',danger:false};
 }
 
@@ -181,20 +182,26 @@ function enemyAttack(battle,enemy) {
     if(kind) {
       const duration=kind==='crush'?2400:kind==='nova'?2100:1500;
       unit.casting={kind,startedAt:now,endsAt:now+duration}; unit.nextAt=now+duration;
-      return record(battle,enemy.id,'windup',`${enemy.name} · ${({crush:'Yıkım',volley:'Gölge yağmuru',frost:'Ayaz zinciri',drain:'Can soğurma',nova:'Boşluk patlaması'})[kind]} hazırlanıyor!`,()=>{});
+      return record(battle,enemy.id,'windup',`${enemy.name} · ${({crush:'Yıkım',volley:'Gölge yağmuru',frost:'Ayaz zinciri',drain:'Can soğurma',nova:'Boşluk patlaması',thorn:'Dikenli pusu',shatter:'Demir kırıcı',grave:'Mahzen ayini'})[kind]} hazırlanıyor!`,()=>{});
     }
   }
   unit.casting=null; unit.nextAt=now+enemyPeriod(enemy);
   return record(battle,enemy.id,cast?.kind||'strike',`${enemy.name} · ${cast?.kind==='crush'?'Yıkım dalgası':cast?'Gölge yağmuru':'Saldırı'}`,()=>{
     const allies=living(battle.allies), tank=allies.find(hero=>hero.id==='aldren')||allies.find(hero=>hero.id==='aurelion');
-    const targets=cast?allies:[tank||allies.sort((a,b)=>a.hp-b.hp)[0]];
-    const scale={crush:1.3,volley:.75,frost:.7,drain:1,nova:1.65}[cast?.kind]||1;
+    const targets=cast?.kind==='shatter'?[tank||allies.sort((a,b)=>a.hp-b.hp)[0]]:cast?allies:[tank||allies.sort((a,b)=>a.hp-b.hp)[0]];
+    const scale={crush:1.3,volley:.75,frost:.7,drain:1,nova:1.65,thorn:.75,shatter:1.8,grave:.45}[cast?.kind]||1;
     let drained=0;
     targets.forEach(hero=>{
       drained+=damageHero(battle,hero,enemy.attack*scale);
       if(cast?.kind==='frost')battle.live.allies[hero.id].nextAt+=400;
     });
     if(cast?.kind==='drain')enemy.hp=Math.min(enemy.maxHp,enemy.hp+Math.round(drained*.55));
+    if(cast?.kind==='thorn')targets.forEach(hero=>battle.live.allies[hero.id].energy=Math.max(0,battle.live.allies[hero.id].energy-12));
+    if(cast?.kind==='grave') {
+      const injured=living(battle.enemies).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
+      if(injured)injured.hp=Math.min(injured.maxHp,injured.hp+Math.round(enemy.attack*1.5));
+    }
+    if(cast?.kind==='shatter')targets.forEach(hero=>battle.live.allies[hero.id].shield=0);
   });
 }
 
