@@ -1,0 +1,42 @@
+/* STARFORT v2.11 – story/maze teaser and illustrated hero inventory */
+.labyrinth-teaser{display:flex;gap:18px;align-items:center;justify-content:space-between;margin:17px 0;padding:21px 23px;border:1px solid #bf9e668e;border-radius:13px;background:linear-gradient(105deg,#081c2edd,#132e43a3),radial-gradient(circle at 85% 20%,#d0b1694d,transparent 38%),url('assets/city/starfall-valley.webp') 51% 53%/cover;box-shadow:inset 0 1px #f4e1ab37,0 12px 26px #0006}
+.labyrinth-teaser h3{font:700 25px Georgia,serif;color:#fff1c4;margin:7px 0}
+.labyrinth-teaser p{max-width:580px;color:#e3eaf0;font-size:12px;line-height:1.65}
+.labyrinth-teaser small{display:block;color:#f6d797}
+.labyrinth-teaser button{flex:none;min-height:49px;white-space:nowrap}
+.bag-hero-display{display:flex;align-items:center;gap:20px;margin:18px 0;padding:18px 23px;border:1px solid #bb98678c;border-radius:14px;background:radial-gradient(ellipse at 12% 15%,#52738469,transparent 42%),linear-gradient(125deg,#1b354b,#091929);box-shadow:0 14px 35px #04132166}
+.bag-hero-art{display:grid;place-items:center;width:130px;height:148px;flex-shrink:0;border:1px solid #c2aa7869;border-radius:11px;background:radial-gradient(circle at 50% 45%,#8c80555c,#0b1b30 70%);overflow:hidden}
+.bag-hero-art img{width:100%;height:100%;object-fit:contain}
+.bag-hero-display h3{font:700 31px Georgia,serif;margin:5px 0;color:#f5ddaa}
+.bag-hero-display p{margin:5px 0;color:#e3d3b3}
+.bag-hero-display small{color:#b9cbd5}
+.bag-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-bottom:1px solid #ad8d5c66;padding:10px 0;margin:16px 0}
+.bag-toolbar h3{font:700 23px Georgia,serif;color:#f2d7a0;margin:0}
+.bag-toolbar h3 small{font:12px system-ui;color:#a4bcc7;margin-left:8px}
+.bag-filters{display:flex;gap:5px;flex-wrap:wrap}
+.bag-filters button{min-height:37px;padding:6px 11px;background:#102439;border:1px solid #7c8b8a7c;color:#cad6d7;border-radius:7px}
+.bag-filters button.selected{background:#765831;border-color:#f1c980;color:#fff0c8;box-shadow:0 0 13px #e6b7664b}
+.bag-item-grid .item-card{position:relative;min-width:0;background:radial-gradient(circle at 50% 23%,#57758e2c,transparent 49%),linear-gradient(145deg,#142d44,#0b1929);border-radius:13px}
+.bag-item-grid .item-card.bag-owned{border-color:#b79a6896;box-shadow:inset 0 1px #eadcba22,0 7px 20px #010c1980}
+.bag-item-grid .item-card.bag-owned.legendary{border-color:#e5c174}
+.bag-item-grid .item-card.bag-owned.epic{border-color:#b9a0ed}
+.bag-item-grid .item-card.bag-locked{opacity:.66;filter:saturate(.65)}
+.bag-item-grid .item-card .item-art{min-height:80px;max-height:94px;filter:drop-shadow(0 4px 13px #e9b65e2c)}
+.bag-item-grid .item-card .item-bonus{font-weight:750;color:#f5d5a2}
+.bag-item-grid .item-card button.wide{min-height:41px}
+.bag-item-grid .item-card:has(.item-bonus){transition:border-color .15s}
+.bag-item-grid .item-card:focus-within{outline:2px solid #e2c389;outline-offset:2px}
+.premium-gear-section{margin-top:21px;padding:22px;border:1px solid #d4a95a75;border-radius:14px;background:radial-gradient(circle at 80% 10%,#69503556,transparent 40%),#102035}
+.premium-gear-section h3{font:700 27px Georgia,serif;color:#f8d99e;margin:5px 0}
+.premium-gear-section p{color:#becad6;font-size:12px}
+.premium-gear-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:16px 0}
+.premium-gear-card{border:1px solid #d7b37292;border-radius:10px;background:linear-gradient(165deg,#24354a,#0b1b30);padding:19px 13px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.premium-gear-card .item-art{width:86px;height:100px;filter:drop-shadow(0 0 15px #eec77a5e)}
+.premium-gear-card h4{margin:0;color:#f3d59a;font:700 17px Georgia,serif}
+.premium-gear-card p{font-size:12px;line-height:1.5}
+.premium-gear-card strong{color:#fce8bf}
+.premium-gear-card button{margin-top:auto;width:100%;min-height:43px}
+.premium-gear-section .premium-terms{color:#d5beb1;font-size:11px}
+@media(max-width:750px){.premium-gear-grid{grid-template-columns:1fr}.premium-gear-card{display:grid;grid-template-columns:100px 1fr;align-items:center;text-align:left}.premium-gear-card .item-art{grid-row:span 4}.premium-gear-card button{grid-column:1/-1}.labyrinth-teaser{flex-wrap:wrap}.labyrinth-teaser button{width:100%}}
+@media(max-width:480px){.bag-hero-display{gap:12px;padding:12px}.bag-hero-art{width:92px;height:124px}.bag-hero-display h3{font-size:24px}.bag-toolbar{align-items:flex-start}.bag-item-grid .item-card{padding:12px}.premium-gear-section{padding:14px}}
+@media(prefers-reduced-motion:reduce){.bag-item-grid .item-card{transition:none}}
