@@ -562,6 +562,7 @@ async function cloudSaveAction(action){
       if(!remote.exists)throw new Error('Bu hesapta henüz bulut yedeği yok.');
       const candidate=importSave(JSON.stringify({format:'starfort-save',key:R.STORAGE_KEY,state:remote.state}));
       if(!confirm('Bulut kaydı bu cihazdaki mevcut ilerlemenin yerine geçecek. Önce yerel kayıt dosyasını indirdin mi?'))return;
+      makeRecoveryPoint(localStorage,state);
       combatRunner.pause();trialState=null;
       const previous=state;state=candidate;
       if(!persist()){state=previous;throw new Error('Tarayıcı kaydı değiştirilemedi.');}
@@ -840,6 +841,7 @@ $('#import-save').addEventListener('change',async event=>{
   try{if(file.size>2_000_000)throw new Error('Kayıt dosyası 2 MB sınırını aşıyor.');
     const candidate=importSave(await file.text());
     if(!confirm('Mevcut köy ilerlemesi yedekteki kayıtla değiştirilecek. Devam edilsin mi?'))return;
+    makeRecoveryPoint(localStorage,state);
     combatRunner.pause();trialState=null;const previous=state;state=candidate;
     if(!persist()){state=previous;throw new Error('Tarayıcı kayda izin vermiyor. Mevcut köy değişmedi.');}
     location.reload();
