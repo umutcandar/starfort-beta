@@ -1,4 +1,6 @@
 import { ART_SIZE, ART_PLOTS, ATLAS_SIZE, ATLAS_RECTS, architectureForLevel, viewportTransform, worldToScreen, screenToWorld, pickBuilding } from './city-art-layout.js';
+import {paintMasteryArchitecture} from './mastery-art-renderer.js';
+import {masteryArchitectureForLevel} from './mastery-architecture.js';
 
 const urls={panorama:new URL('./assets/city/starfall-valley.webp',import.meta.url).href,atlas:new URL('./assets/city/architecture-atlas-v2.webp',import.meta.url).href};
 let assetsPromise;
@@ -16,6 +18,8 @@ function paintArchitecture(context,assets,levels) {
   context.drawImage(assets.panorama,0,0,ART_SIZE.width,ART_SIZE.height);
   const parts=Object.keys(ART_PLOTS).flatMap(id=>architectureForLevel(id,levels[id]||1)).sort((a,b)=>a.y-b.y);
   for(const p of parts)paintPart(context,assets.atlas,p);
+  // Architectural mastery starts at level 10, not level 9.
+  paintMasteryArchitecture(context,levels);
 }
 
 // The preview uses exactly the same artwork and additions as the playable map.
@@ -105,7 +109,7 @@ export function createScene(canvas,{onSelect=()=>{},onProject=()=>{},onLoadError
       else {
         const plot=ART_PLOTS[upgrade.id],alpha=Math.sin(Math.min(1,elapsed)*Math.PI);
         outline(upgrade.id,alpha);glow(plot.anchor[0],plot.anchor[1]-50,125,'#ffe4a8',alpha*.24);
-        const newest=architectureForLevel(upgrade.id,levels[upgrade.id]).filter(p=>p.level===levels[upgrade.id]);
+        const newest=[...architectureForLevel(upgrade.id,levels[upgrade.id]),...masteryArchitectureForLevel(upgrade.id,levels[upgrade.id])].filter(p=>p.level===levels[upgrade.id]);
         for(const p of newest) {
           for(let i=0;i<10;i++) {const a=i*Math.PI/5;ctx.fillStyle=`rgba(255,222,151,${(1-elapsed)*.8})`;ctx.beginPath();ctx.arc(p.x+Math.cos(a)*elapsed*35,p.y-25-elapsed*65+Math.sin(a)*elapsed*20,1.7,0,Math.PI*2);ctx.fill();}
         }
