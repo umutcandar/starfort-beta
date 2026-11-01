@@ -15,6 +15,11 @@ create table if not exists public.starfort_account_backups (
 alter table public.starfort_account_backups enable row level security;
 revoke all on public.starfort_account_backups from anon;
 grant select,insert,update,delete on public.starfort_account_backups to authenticated;
+-- Safe for replay after an initial beta deployment; policies are replaced atomically.
+drop policy if exists "starfort_bak_select" on public.starfort_account_backups;
+drop policy if exists "starfort_bak_insert" on public.starfort_account_backups;
+drop policy if exists "starfort_bak_update" on public.starfort_account_backups;
+drop policy if exists "starfort_bak_delete" on public.starfort_account_backups;
 create policy "starfort_bak_select" on public.starfort_account_backups
   for select to authenticated using ((select auth.uid())=user_id);
 create policy "starfort_bak_insert" on public.starfort_account_backups
