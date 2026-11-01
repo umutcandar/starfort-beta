@@ -31,14 +31,14 @@ export function buildingWorkshopMarkup(state,selectedId,{icon,number=nice,now=Da
  const guidance=status==='building'?`Tek inşaat ustası burada çalışıyor. Kalan süre: ${durationLabel(job.remainingMs)}. Oyun kapalıyken de süre ilerler.`:
    status==='claim'?'İnşaat tamamlandı! Seviyeyi aktifleştirmek için tamamla düğmesine bas.':
    status==='builder-busy'?`${roadmap.plans.find(p=>p.id===job.id)?.building.name||'Başka bir bina'} üzerinde çalışan tek inşaat ustası boşalana kadar yeni inşaat başlayamaz.`:
-   status==='ready'?(durationMs?`Kaynaklar hazır. İnşaat ${durationLabel(durationMs)} sürecek; sıraya aynı anda tek yapı alınabilir.`:'Kaynaklar hazır. İlk gelişim aşamalarında yükseltme anında tamamlanır.'):
+   status==='ready'?(durationMs?`Kaynaklar hazır. İnşaat ${durationLabel(durationMs)} sürecek; sıraya aynı anda tek yapı alınabilir.`:'Kaynaklar hazır. İlk yükseltme anında tamamlanır.'):
    status==='collect'?(durationMs?'Bekleyen üretim maliyeti karşılıyor. Topla ve zamanlı inşaatı başlat.':'Üretim maliyeti karşılıyor. Tek dokunuşla topla ve geliştir.'):
    status==='locked'?`Bu bina seviye ${nextLevel} için önce Yıldız Kalesi’nin seviye ${state.buildings.keep+1} olmasını istiyor.`:
    status==='mastery'?`Mimarların yeni planlar için en az ${mastery.required} sefer yıldızı görmesi gerekiyor. Şimdi ${mastery.total}/24 yıldızın var. Eski bölümleri tekrar oynayarak 1–3 yıldızı artırabilirsin.`:
    status==='short'?(`${missingItems.map(([id,n])=>number(n)+' '+villageResourceNames[id]).join(' · ')} eksik. `+timeLabel(etaMinutes)):
    status==='battle'?'Geliştirme için önce aktif savaşı bitir.':
    'Bu yapı tüm 20 seviyeyi tamamladı. Krallığın en yüksek yapı rütbesine ulaştı.';
- const buildingMenu=roadmap.plans.map(p=>`<button class="ws-building-tab ${p.id===building.id?'selected':''} ${p.status}" data-plan-building="${p.id}" aria-current="${p.id===building.id?'true':'false'}" aria-label="${p.building.name} · seviye ${p.level}"><span class="ws-building-tab-icon">${icon(p.id)}</span><span class="ws-building-tab-info"><b>${p.building.name}</b><small>Sv. ${p.level} / ${p.building.maxLevel}</small></span><span class="ws-building-tab-state" aria-hidden="true">${p.status==='maxed'?'✓':p.status==='claim'?'✓':p.status==='building'?'⌛':p.status==='ready'||p.status==='collect'?'✦':p.status==='locked'?'🔒':'·'}</span></button>`).join('');
+ const buildingMenu=roadmap.plans.map(p=>`<button class="ws-building-tab ${p.id===building.id?'selected':''} ${p.status}" data-plan-building="${p.id}" aria-current="${p.id===building.id?'true':'false'}" aria-label="${p.building.name} · seviye ${p.level}"><span class="ws-building-tab-icon">${icon(p.id)}</span><span class="ws-building-tab-info"><b>${p.building.name}</b><small>Sv. ${p.level} / ${p.building.maxLevel}</small></span><span class="ws-building-tab-state" aria-hidden="true">${p.status==='maxed'?'✓':p.status==='claim'?'✓':p.status==='building'?'⌛':p.status==='ready'||p.status==='collect'?'✦':p.status==='locked'||p.status==='mastery'?'🔒':'·'}</span></button>`).join('');
  return `<section class="ws-shell">
    <header class="ws-header">
      <div><span class="eyebrow">STARFORT · KRALLIK MİMARISI</span><h2 id="building-title">Köy Geliştirme Merkezi</h2><p>Yapılarını planla, güçlenmeni gör, doğru yatırımı yap.</p></div>
@@ -55,14 +55,14 @@ export function buildingWorkshopMarkup(state,selectedId,{icon,number=nice,now=Da
        <div class="ws-effect-box"><div class="ws-effect-title"><span>YÜKSELTME ETKİSİ</span><b>${plan.maxed?'TAMAMLANDI':'+'+numberLabel(plan.effectIncrease)+' kazanım'}</b></div><div class="ws-effect-values"><div><small>Şimdiki güç</small><strong>${numberLabel(current.value)}</strong><span>${current.unit}</span></div><span class="ws-effect-arrow">→</span><div class="ws-after"><small>${plan.maxed?'Son seviye':'Sonraki seviye'}</small><strong>${numberLabel(next.value)}</strong><span>${next.unit}</span></div></div></div>
        <div class="ws-levels-header"><b>Köy gelişimi</b><span>${level} / ${building.maxLevel} seviye</span></div>
        <div class="building-levels ws-levels" aria-label="${building.name} seviye ${level}">${Array.from({length:building.maxLevel},(_,i)=>`<span class="${i<level?'built':''} ${i===level?'upcoming':''}" title="Seviye ${i+1}">${i+1}</span>`).join('')}</div>
-       <div class="ws-next-evolution"><span>✦ ${level>=8?'YAPI USTALIĞI':'SIRADAKİ MİMARİ DETAY'}</span><strong>${level>=8?'Ustalık Çağı · '+(level<=12?'I. Kademe':level<=16?'II. Kademe':'III. Kademe'):ART_EVOLUTION[building.id][level]}</strong><small>${level>=8?'Sekiz mimari görünüm korunur. 9–20. seviyelerde üretim ve savaş bonusları gelişir; yeni bina çizimi henüz yok.': 'Yükseltince bu görsel eklenti köye eklenir.'}</small></div>
+       <div class="ws-next-evolution"><span>✦ ${level>=8?'YAPI USTALIĞI':'SIRADAKİ MİMARİ DETAY'}</span><strong>${level>=8?'Ustalık Çağı · '+(level<=12?'I. Kademe':level<=16?'II. Kademe':'III. Kademe'):ART_EVOLUTION[building.id][level]}</strong><small>${level>=8?'İlk sekiz mimari görünüme 9–20. seviyelerde kalıcı üretim ve savunma uzmanlığı eklenir. Görsel mimarinin yeni kademeleri sonraki sanat çalışmasında eklenecek.': 'Yükseltince bu görsel eklenti köye eklenir.'}</small></div>
      </main>
      <aside class="ws-investment"><div class="ws-invest-head"><span class="eyebrow">YATIRIM PLANI</span><h3>${plan.maxed?'Bina tamamlandı':'Seviye '+nextLevel+' maliyeti'}</h3><p>${plan.maxed?'Bu bina için yeni maliyet yok.':'Toplanabilecek üretim de hesaplandı.'}</p></div>
        ${plan.maxed?'':`<div class="ws-resource-list">${resources}</div><div class="ws-funding"><div><b>Hazırlık durumu</b><strong>%${progress}</strong></div><div class="ws-bar"><i style="width:${progress}%"></i></div></div>`}
        <p class="ws-guidance" role="status">${guidance}</p>
        ${job? `<div class="ws-queue"><b>⚒ Tek inşaat ustası</b><span>${roadmap.plans.find(p=>p.id===job.id)?.building.name||'Yapı'} · ${job.ready?'Tamamlanmaya hazır':durationLabel(job.remainingMs)+' kaldı'}</span></div>`:''}
        <div class="ws-actions">${actions}${!plan.maxed&&Object.values(plan.pending).some(n=>n>0)&&status!=='collect'?'<button class="secondary ws-collect-button" data-collect>✧ Biriken kaynakları topla</button>':''}</div>
-       <small class="ws-fair-note">1–8. seviyeler temel gelişimdir. 9–20. seviyeler tek ustayla süreli inşa edilir; oyun kapalıyken de devam eder. Gerçek para ile hızlandırma yok.</small>
+       <small class="ws-fair-note">İlk yükseltme anında tamamlanır. 3–20. seviyeler tek ustayla, dakikalardan günlere uzayan gerçek inşaatlardır. 1–3 yıldızlı sefer başarıları ileri aşamaları açar. Para ile hızlandırma yok.</small>
      </aside>
    </div>
  </section>`;
