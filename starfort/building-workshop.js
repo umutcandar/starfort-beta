@@ -3,13 +3,13 @@ import {buildingUpgradePlan,buildingRoadmap,villageResourceNames} from './buildi
 import {ART_EVOLUTION} from './city-art-layout.js';
 const nice=v=>new Intl.NumberFormat('tr-TR',{maximumFractionDigits:2}).format(v);
 const resourceIcons={gold:'coin',wood:'wood',stone:'stone',aether:'star'};
-const statusLabel={ready:'Geliştirmeye hazır',collect:'Üretim hazır',short:'Kaynak bekleniyor',locked:'Kale seviyesi gerekli',maxed:'Tamamlandı',battle:'Savaş devam ediyor',building:'İnşaat sürüyor',claim:'İnşaat tamamlandı','builder-busy':'Usta başka binada'};
+const statusLabel={ready:'Geliştirmeye hazır',collect:'Üretim hazır',short:'Kaynak bekleniyor',locked:'Kale seviyesi gerekli',maxed:'Tamamlandı',battle:'Savaş devam ediyor',building:'İnşaat sürüyor',claim:'İnşaat tamamlandı','builder-busy':'Usta başka binada',mastery:'Sefer yıldızları gerekli'};
 const timeLabel=minutes=>minutes===null?'Üretim tek başına yetmiyor; seferlerden de kaynak kazan.':minutes<60?'Yaklaşık '+minutes+' dk sonra':minutes<1440?'Yaklaşık '+Math.ceil(minutes/60)+' saat sonra':'Yaklaşık 1 gün sonra';
 const durationLabel=ms=>{const minutes=Math.ceil(ms/60000);return minutes>=1440?Math.ceil(minutes/1440)+' gün':minutes>=60?Math.ceil(minutes/60)+' saat':Math.max(1,minutes)+' dk';};
 export function buildingWorkshopMarkup(state,selectedId,{icon,number=nice,now=Date.now()}={}){
  const roadmap=buildingRoadmap(state,now),plan=buildingUpgradePlan(state,selectedId,now);
  if(!plan)return '';
- const {building,level,nextLevel,status,cost,progress,missing,available,current,next,etaMinutes,construction,durationMs}=plan;
+ const {building,level,nextLevel,status,cost,progress,missing,available,current,next,etaMinutes,construction,durationMs,mastery}=plan;
  const job=construction,buildingNow=status==='building'||status==='claim';
  const isAvailable=status==='ready'||status==='collect';
  const missingItems=Object.entries(missing).filter(([,value])=>value>0);
@@ -25,6 +25,7 @@ export function buildingWorkshopMarkup(state,selectedId,{icon,number=nice,now=Da
    status==='ready'? `<button class="primary ws-upgrade-button" data-upgrade-building="${building.id}">${durationMs?'⚒ İnşaatı başlat · '+durationLabel(durationMs):'✦ Şimdi geliştir · Seviye '+nextLevel}</button>`:
    status==='collect'? `<button class="primary ws-upgrade-button" data-collect-upgrade="${building.id}">${durationMs?'⚒ Üretimi topla ve inşaatı başlat':'✦ Üretimi topla ve geliştir'}</button>`:
    status==='locked'? `<button class="secondary ws-upgrade-button" data-workshop-keep>♜ Kaleyi geliştirmeye git</button>`:
+   status==='mastery'? `<button class="secondary ws-upgrade-button" data-workshop-expedition>✦ Seferlerde yıldız kazan · ${mastery.total}/${mastery.required}</button>`:
    status==='builder-busy'? `<button class="secondary ws-upgrade-button" data-plan-building="${job.id}">⛏ Devam eden inşaata git</button>`:
    `<button class="secondary ws-upgrade-button" disabled>${status==='maxed'?'✓ En yüksek seviye':status==='battle'?'Savaşta geliştirilemez':'Kaynaklar eksik'}</button>`;
  const guidance=status==='building'?`Tek inşaat ustası burada çalışıyor. Kalan süre: ${durationLabel(job.remainingMs)}. Oyun kapalıyken de süre ilerler.`:
@@ -33,6 +34,7 @@ export function buildingWorkshopMarkup(state,selectedId,{icon,number=nice,now=Da
    status==='ready'?(durationMs?`Kaynaklar hazır. İnşaat ${durationLabel(durationMs)} sürecek; sıraya aynı anda tek yapı alınabilir.`:'Kaynaklar hazır. İlk gelişim aşamalarında yükseltme anında tamamlanır.'):
    status==='collect'?(durationMs?'Bekleyen üretim maliyeti karşılıyor. Topla ve zamanlı inşaatı başlat.':'Üretim maliyeti karşılıyor. Tek dokunuşla topla ve geliştir.'):
    status==='locked'?`Bu bina seviye ${nextLevel} için önce Yıldız Kalesi’nin seviye ${state.buildings.keep+1} olmasını istiyor.`:
+   status==='mastery'?`Mimarların yeni planlar için en az ${mastery.required} sefer yıldızı görmesi gerekiyor. Şimdi ${mastery.total}/24 yıldızın var. Eski bölümleri tekrar oynayarak 1–3 yıldızı artırabilirsin.`:
    status==='short'?(`${missingItems.map(([id,n])=>number(n)+' '+villageResourceNames[id]).join(' · ')} eksik. `+timeLabel(etaMinutes)):
    status==='battle'?'Geliştirme için önce aktif savaşı bitir.':
    'Bu yapı tüm 20 seviyeyi tamamladı. Krallığın en yüksek yapı rütbesine ulaştı.';
