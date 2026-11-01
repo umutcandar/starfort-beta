@@ -44,9 +44,10 @@ export function createMatchReceiptRecovery({storage,userId,fetcher=fetch,now=()=
    return save([...existing,receipt]);
  }
  async function flush(){
-   if(!enabled||sending||now()<nextRetryAt)return false;
+   if(!enabled||sending)return false;
    const pending=read();
    if(!pending.length){save([]);return true;}
+   if(now()<nextRetryAt)return false;
    sending=true;nextRetryAt=now()+30000;
    try{
      for(const receipt of pending.slice(0,4)){
