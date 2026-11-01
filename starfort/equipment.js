@@ -20,6 +20,17 @@ export const ITEMS = [
   { id:'star_spear', set:'moon', exclusive:true, name:'Ayışığı Mızrağı', slot:'weapon', rarity:'legendary', forge:0, stats:{attack:11}, cost:{}, description:'Dördüncü üç yıldız zaferine özel ay silahı.' },
   { id:'dawn_guard', set:'dawn', exclusive:true, name:'Şafak Muhafızı Levhası', slot:'armor', rarity:'legendary', forge:0, stats:{hp:70,armor:6}, cost:{}, description:'Beşinci üç yıldız zaferine özel kraliyet zırhı.' },
 ];
+// Visual-reference signature equipment: real forgeable gear, using the existing combat stats.
+const REFERENCE_ITEMS = [
+  {id:'starbreaker',name:'Yıldızkıran Kılıç',slot:'weapon',rarity:'legendary',set:'dawn',forge:6,
+    stats:{attack:28},cost:{gold:1450,aether:220},description:'Yıldız Muhafızı ustalarının ışıkla işlediği kılıç.'},
+  {id:'ashes_plate',name:'Küllerin Zırhı',slot:'armor',rarity:'legendary',set:'ember',forge:5,
+    stats:{hp:150,armor:14},cost:{gold:1250,stone:390},description:'Alevin sınavından geçmiş mavi çelik zırh.'},
+  {id:'guardian_seal',name:'Koruyucu Mühür',slot:'relic',rarity:'legendary',set:'dawn',forge:5,
+    stats:{healing:17,hp:35},cost:{gold:1100,aether:185},description:'Kadim yıldızın nöbet yeminiyle güçlenen tılsım.'},
+];
+// Keep old item IDs and the starting inventory intact so historic saves load.
+ITEMS.push(...REFERENCE_ITEMS);
 export const FIRST_CLEAR_LOOT = { 1:'lunar_charm', 2:'ember_blade', 3:'warden_plate', 4:'star_lens',5:'grave_seal', 6:'royal_blade',7:'eclipse_edge', 8:'moonheart' };
 const fail=error=>({ok:false,error});
 export const itemById=id=>ITEMS.find(item=>item.id===id);

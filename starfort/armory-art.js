@@ -4,6 +4,9 @@
  * Decorative markup is static and never takes untrusted input.
  */
 export const ITEM_GLYPHS=Object.freeze({
+  starbreaker:'<path d="M32 2 39 14 35 42 29 42 25 14Z" fill="#d4e7ff" stroke="#e6b85c" stroke-width="2"/><path d="M32 6V41M15 41 27 38 32 44 37 38 49 41M32 45V64" stroke="#ffdf9a" stroke-width="3.5" fill="none"/><path d="M32 16 37 28 49 33 37 38 32 49 27 38 15 33 27 28Z" fill="#c6a3f9" opacity=".8"/>',
+  ashes_plate:'<path d="M21 10 11 22 16 32 22 28 22 57 42 57 42 28 48 32 53 22 43 10 37 16H27Z" fill="#8ba6cb" stroke="#e8bb77" stroke-width="3"/><path d="M32 17 37 30 32 43 27 30Z" fill="#f6da94"/><path d="M22 33 32 41 42 33M22 47 32 53 42 47" stroke="#dbbe80" stroke-width="3" fill="none"/>',
+  guardian_seal:'<path d="M17 6Q32 20 47 6" fill="none" stroke="#e4c074" stroke-width="3"/><path d="M32 15 45 25 45 45 32 59 19 45 19 25Z" fill="#1e739d" stroke="#e3c87a" stroke-width="3"/><path d="M32 19 36 32 49 36 36 40 32 53 28 40 15 36 28 32Z" fill="#c5ebff" stroke="#fff5bc" stroke-width="1.5"/>',
   iron_sword:'<path d="M32 7 38 16 35 43 29 43 26 16Z" fill="currentColor"/><path d="M32 12V41M18 42H46M27 43L25 57H39L37 43" stroke="#eee0bc" stroke-width="3" fill="none"/>',
   ward_mail:'<path d="M19 14 11 24 17 31 21 27V55H43V27L47 31 53 24 45 14 39 20H25Z" fill="currentColor"/><path d="M21 29H43M21 41H43M32 20V55M26 30 37 41M38 30 26 42" stroke="#162a3b" stroke-width="2.5" opacity=".75"/>',
   lunar_charm:'<path d="M38 9C23 15 23 38 43 42 22 51 12 27 26 14Z" fill="currentColor"/><path d="M32 40 44 49 32 62 20 49Z" fill="#c6e8ee"/><path d="M32 44V57M25 49H39" stroke="#f5e5b7" stroke-width="2"/>',

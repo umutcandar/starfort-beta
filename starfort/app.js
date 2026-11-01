@@ -55,7 +55,7 @@ let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
 let guildToken='';try{guildToken=localStorage.getItem(GUILD_TOKEN_KEY)||''}catch{}
 let trainingCleanup = null;
-let activeView = 'keep', selectedBuilding = 'keep', toastTimer, scene, selectedSlot = 0, selectedArmoryHero = 'aldren', selectedBagSlot = 'owned', selectedBagItem='iron_sword', trialState = null;
+let activeView = 'keep', selectedBuilding = 'keep', toastTimer, scene, selectedSlot = 0, selectedArmoryHero = 'aldren', selectedBagSlot = 'all', selectedBagItem='starbreaker', trialState = null;
 const cityLabelNodes = new Map();
 const resourcesEl = $('#resources'), navEl = $('#navigation'), inspectorEl = $('#inspector'), workspaceEl = $('#workspace'), questEl = $('#next-quest');
 const combatRunner=createBattleRunner({
@@ -95,7 +95,7 @@ function renderResources() {
   resourcesEl.innerHTML = Object.entries(R.RESOURCES).map(([id, item]) => `<div class="resource" data-res="${id}">${svg(resourceIcon[id])}<span><b>${number(state.res[id])}</b><small>${item.name}</small></span></div>`).join('');
 }
 function renderNav() {
-  navEl.innerHTML = navItems.map(([id, icon, label]) => `<button class="nav-item ${activeView === id ? 'active' : ''}" data-view="${id}" aria-label="${label}" aria-current="${activeView === id ? 'page' : 'false'}">${svg(icon)}<span>${label}</span></button>`).join('') + '<div class="rail-foot">✦ &nbsp; BETA · UZUN OYUN TESTİ</div>';
+  navEl.innerHTML = navItems.map(([id, icon, label]) => `<button class="nav-item ${(activeView === id || (activeView === 'campaign' && id === 'expedition')) ? 'active' : ''}" data-view="${id}" aria-label="${label}" aria-current="${(activeView === id || (activeView === 'campaign' && id === 'expedition')) ? 'page' : 'false'}">${svg(icon)}<span>${label}</span></button>`).join('') + '<div class="rail-foot">✦ &nbsp; BETA · UZUN OYUN TESTİ</div>';
 }
 function renderPicker() {
   $('#building-picker').innerHTML = R.BUILDINGS.map(building => `<button class="building-choice ${selectedBuilding === building.id ? 'active' : ''}" data-building="${building.id}" aria-label="${building.name}, seviye ${state.buildings[building.id]}">${svg(building.id)}<span>${building.name.replace('Karaorman ', '').replace('Yıldız ', '').replace('Kor ', '').replace('Aytaşı ', '')}</span></button>`).join('');
@@ -188,25 +188,36 @@ function renderInspector() {
   inspectorEl.innerHTML = `<div class="building-details"><div class="section-head"><small>KÖY YÖNETİMİ</small><span class="level-badge">SEVİYE ${level}</span></div><div class="building-portrait">${svg(building.id)}</div><h2>${building.name}</h2><p class="building-description">${building.description}</p><div class="stat-line"><span>Gelişim</span><b>${level} / ${building.maxLevel}</b></div>${building.production ? `<div class="stat-line"><span>Üretim hızı</span><b>${number(building.production.perMinute * level * (1 + (state.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk</b></div>` : `<div class="stat-line"><span>Köy etkisi</span><b>${building.id === 'keep' ? '+%5 üretim / seviye' : building.id === 'forge' ? '+%5 saldırı / seviye' : '+%4 can / seviye'}</b></div>`}<div class="cost-list">${costHtml(cost)}</div><button class="primary wide" data-upgrade-building="${building.id}" ${blocked ? 'disabled' : ''}>${level >= building.maxLevel ? 'En yüksek seviye' : `Yapıyı geliştir · ${number(cost.gold || 0)} altın`}</button>${buildingProduction(building)}</div><div class="squad-block"><div class="squad-heading"><h3>Kahramanlar</h3><button class="text-button" data-view="heroes">Dizilimi düzenle</button></div><div class="squad">${team.map(hero => `<div class="squad-member">${heroPortrait(hero)}<span>${hero.name}</span><small>Lv.${state.heroes[hero.id].level}</small></div>`).join('')}</div><div class="team-power"><span>Dizilim gücü</span><strong>${number(R.teamPower(state))} ✦</strong></div></div><p class="inspector-note">Yapılar yükseldikçe görünüşleri değişir. Üretim 24 saate kadar birikir; ilk 4 saat tam hızda, sonrası yavaş üretir.</p>`;
 }
 function renderQuest() {
-  const active = state.battle?.status === 'active';
-  const stage = active ? R.STAGES[state.battle.stageId - 1] : R.STAGES[state.cleared.length];
-  if (!stage) {
-    questEl.innerHTML = '<div class="quest-seal">✦</div><div class="quest-copy"><small>KUZEY SINIRI KURTARILDI</small><h3>Hikâyenin sekiz bölümü tamamlandı</h3><p>Yıldızlarını geliştir, usta seferlerini ve yeni maceraları keşfet.</p></div><div class="quest-actions"><button class="primary" data-action="open-expedition">Seferlere dön →</button></div>';
+  const active=state.battle?.status==='active';
+  const stage=active?R.STAGES[state.battle.stageId-1]:R.STAGES[state.cleared.length];
+  if(!stage){
+    questEl.innerHTML=`<div class="quest-crown"><span aria-hidden="true">✦</span>Sıradaki Sefer</div>
+      <div class="quest-layout"><div class="quest-illustration" aria-hidden="true"></div><div class="quest-body"><small>KUZEY SINIRI · ZAFER</small>
+      <h3>Hikâye tamamlandı!</h3><p>Sekiz sefer tamamlandı. Yıldız derecelerini geliştirmeye ve yeni mücadelelere devam et.</p>
+      <div class="quest-actions"><button class="primary" data-action="open-expedition">Seferlere dön ❯</button></div></div></div>`;
     return;
   }
-  const rewardGear=R.itemById(R.FIRST_CLEAR_LOOT[stage.id]);
-  const alreadyWon=state.cleared.includes(stage.id);
   const chapter=CHAPTERS[stage.id-1];
-  const power=R.teamPower(state);
-  questEl.innerHTML = `<div class="quest-seal">✦</div>
-    <div class="quest-copy">
-      <small>${active?'DEVAM EDEN SAVAŞ':'SIRADAKİ SEFER'} · BÖLÜM ${String(stage.id).padStart(2,'0')} / 08</small>
-      <h3>${stage.name}</h3>
-      <p>${chapter.brief.slice(0,190)}${chapter.brief.length>190?'…':''}</p>
-      <div class="quest-power ${power<stage.recommendedPower?'underpowered':''}"><span>⚔ Takım gücü <strong>${number(power)}</strong></span><span>Önerilen <strong>${number(stage.recommendedPower)}</strong></span></div>
-      <div class="quest-rewards"><span class="quest-reward-label">ZAFER ÖDÜLÜ</span><div class="cost-list">${costHtml(stage.reward,true)}</div>${rewardGear&&!alreadyWon?`<small class="quest-gear">✦ ${rewardGear.name}</small>`:''}</div>
-    </div>
-    <div class="quest-actions"><button class="primary" ${active?'data-action="resume-battle"':`data-stage="${stage.id}"`}>${active?'Savaşa dön':'⚔ Savaşa başla'} <span aria-hidden="true">→</span></button><button class="text-button" data-action="open-expedition">Bütün seferleri gör</button></div>`;
+  const power=R.teamPower(state),gear=R.itemById(R.FIRST_CLEAR_LOOT[stage.id]);
+  const rewards=Object.entries(stage.reward).map(([id,amount])=>`<span class="quest-reward-token" title="${resourceName[id]}">${svg(resourceIcon[id])}<b>${number(amount)}</b></span>`).join('');
+  questEl.innerHTML=`<div class="quest-crown"><span aria-hidden="true">✦</span>Sıradaki Sefer</div>
+    <div class="quest-layout">
+      <div class="quest-illustration" aria-hidden="true"><span>✧</span></div>
+      <div class="quest-body">
+        <small>Bölüm ${stage.id} / 8 · ${esc(chapter.name)}</small>
+        <h3>${stage.name}</h3>
+        <div class="quest-power ${power<stage.recommendedPower?'underpowered':''}">
+          <span>⚔ Önerilen Güç <strong>${number(stage.recommendedPower)}</strong></span>
+          <small>Takımın: ${number(power)}</small>
+        </div>
+        <div class="quest-reward-title">Ödüller:${gear&&!state.cleared.includes(stage.id)?` <small>+ ${esc(gear.name)}</small>`:''}</div>
+        <div class="quest-rewards">${rewards}</div>
+        <div class="quest-actions">
+          <button class="primary" ${active?'data-action="resume-battle"':`data-stage="${stage.id}"`}>${active?'⚔ Savaşa Dön':'⚔ Savaşa Başla'} <span aria-hidden="true">❯</span></button>
+          <button class="text-button" data-action="open-expedition">Tüm seferler</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 function renderHeroes() {
@@ -279,7 +290,7 @@ function renderShop() {
     ${premiumCatalogMarkup()}
     <section class="cosmetic-concepts"><div><span class="eyebrow">KOZMETİK TASARIM ANKETİ · GERÇEK SATIŞ YOK</span><h3>Hangi görünümleri oyunda istersin?</h3><p>Beğendiklerini işaretle. Bu seçim yalnızca cihazındaki kayıt dosyasında tutulur; ödeme, satın alma veya sunucuya veri gönderme değildir.</p></div><div class="concept-grid">${R.COSMETIC_CONCEPTS.map(c=>`<article class="concept-card"><span class="eyebrow">${c.category}</span><h4>${c.name}</h4><p>${c.detail}</p><button class="${state.cosmeticWishlist.includes(c.id)?'primary':'secondary'}" data-cosmetic-interest="${c.id}" aria-pressed="${state.cosmeticWishlist.includes(c.id)}">${state.cosmeticWishlist.includes(c.id)?'✓ İstek listemde':'İsterim'}</button></article>`).join('')}</div><small>Bir tasarımı beğenmek, ona para ödeyeceğin anlamına gelmez. Gerçek oyuncu anketi ve ödeme altyapısı ayrıca geliştirilecek.</small></section>
     <div class="premium-grid">${R.SPECIAL_HEROES.map(hero=>`<article class="premium-card"><div class="premium-portrait">${heroPortrait(hero)}<span class="premium-seal">EFSANEVİ</span><div class="portrait-title"><small>${hero.title}</small><h3>${hero.name}</h3></div></div><div class="premium-copy"><span class="eyebrow">${ROLES[hero.role]} · ÖZEL KAHRAMAN</span><h3>${hero.name}</h3><p>${hero.description}</p><p class="skill">${R.HERO_ABILITIES[hero.id].name}: ${R.HERO_ABILITIES[hero.id].description}</p><div class="hero-stats"><span>Seviye 1 · ⚔ ${hero.attack} saldırı</span><span>♡ ${hero.hp} can</span></div><p class="trial-note">Denemede takımının ortalama seviyesine uyarlanır.</p><button class="primary wide" data-trial="${hero.id}" ${state.battle?.status==='active'?'disabled':''}>Eğitim savaşında dene</button><button class="secondary wide" disabled>Satış henüz açık değil</button></div></article>`).join('')}</div>
-    <div class="shop-armory"><div><span class="eyebrow">KÖY USTALARININ ESERLERİ</span><h3>Gücünü çantanda biriktir</h3><p>16 silah, zırh ve tılsım (5 özel üç yıldız ganimeti). Seferlerden kazan veya oyun içi kaynaklarla üret.</p></div><button class="secondary" data-view="armory">Çantaya git →</button></div>`;
+    <div class="shop-armory"><div><span class="eyebrow">KÖY USTALARININ ESERLERİ</span><h3>Gücünü çantanda biriktir</h3><p>${R.ITEMS.length} silah, zırh ve tılsım (5 özel üç yıldız ganimeti). Seferlerden kazan veya oyun içi kaynaklarla üret.</p></div><button class="secondary" data-view="armory">Çantaya git →</button></div>`;
 }
 
 function renderGuild(){
@@ -408,8 +419,8 @@ async function cloudSaveAction(action){
 }
 function renderWorkspace() {
   if(trainingCleanup){trainingCleanup();trainingCleanup=null;}
-  const open = activeView !== 'keep'; workspaceEl.hidden = !open; inspectorEl.hidden = open; document.querySelector('.app').classList.toggle('panel-open', open); workspaceEl.dataset.view = activeView;
-  if (activeView === 'heroes') renderHeroes(); else if (activeView === 'expedition') renderExpedition(); else if (activeView === 'journal') renderJournal(); else if (activeView === 'labyrinth') workspaceEl.innerHTML=labyrinthMarkup(state); else if (activeView === 'armory') renderArmory(); else if (activeView === 'shop') renderShop(); else if (activeView === 'guild') renderGuild(); else if (activeView === 'settings') renderSettings(); else if (activeView === 'training') trainingCleanup=mountTraining(workspaceEl); else if(activeView==='arena')trainingCleanup=mountArena(workspaceEl); else if(activeView==='team')trainingCleanup=mountTeamArena(workspaceEl);
+  const open = activeView !== 'keep' && activeView !== 'expedition'; workspaceEl.hidden = !open; inspectorEl.hidden = open; document.querySelector('.app').classList.toggle('panel-open', open); workspaceEl.dataset.view = activeView;
+  if (activeView === 'heroes') renderHeroes(); else if (activeView === 'campaign') renderExpedition(); else if (activeView === 'journal') renderJournal(); else if (activeView === 'labyrinth') workspaceEl.innerHTML=labyrinthMarkup(state); else if (activeView === 'armory') renderArmory(); else if (activeView === 'shop') renderShop(); else if (activeView === 'guild') renderGuild(); else if (activeView === 'settings') renderSettings(); else if (activeView === 'training') trainingCleanup=mountTraining(workspaceEl); else if(activeView==='arena')trainingCleanup=mountArena(workspaceEl); else if(activeView==='team')trainingCleanup=mountTeamArena(workspaceEl);
 }
 function renderBattle(fx=null) {
   const dialog=$('#battle-dialog'), battle=(trialState||state).battle;
@@ -617,7 +628,7 @@ function dispatch(action) {
     result(R.setTeam(state, team), 'Savaş dizilimi güncellendi.'); return;
   }
   if (button.hasAttribute('data-collect')) { const collected = R.collect(state); result(collected, `Üretim toplandı: ${Object.entries(collected.gain).filter(([, n]) => n).map(([id, n]) => `+${number(n)} ${resourceName[id]}`).join(' · ') || 'Henüz biriken kaynak yok.'}`); return; }
-  if (button.dataset.action === 'open-expedition') { activeView = 'expedition'; render(); return; }
+  if (button.dataset.action === 'open-expedition') { activeView = 'campaign'; render(); return; }
   if (button.dataset.action === 'resume-battle') { openBattle(); return; }
   if (button.dataset.stage) { openBattle(button.dataset.stage); return; }
   if (button.dataset.closeView !== undefined) { activeView = 'keep'; render(); return; }

@@ -26,7 +26,7 @@ test('navigation links story, maze, bag and disabled premium catalog',()=>{
  assert.match(app,/data-labyrinth-complete/);
  assert.match(app,/labyrinthMarkup\(state\)/);
  assert.match(armory,/Çanta ve Donanım/);
- assert.match(app,/selectedBagSlot = 'owned'/);
+ assert.match(app,/selectedBagSlot = 'all'/);
  assert.match(armory,/data-bag-slot/);
  assert.match(app,/premiumCatalogMarkup\(\)/);
  assert.match(bag,/\.bag-hero-display/);
