@@ -26,9 +26,9 @@ export const RESOURCES = {
 };
 export const BUILDINGS = [
   { id: 'keep', name: 'Yıldız Kalesi', icon: '♜', maxLevel: 20, description: 'Üretimi ve yapıların seviye sınırını artırır.', baseCost: { gold: 100, wood: 80, stone: 70 } },
-  { id: 'farm', name: 'Hasat Avlusu', icon: '🌾', maxLevel: 20, description: 'Vadinin hasadından altın kazanır.', baseCost: { gold: 55, wood: 40 }, production: { resource: 'gold', perMinute: 20 } },
-  { id: 'lumber', name: 'Karaorman Keresteliği', icon: '🪵', maxLevel: 20, description: 'Kalenin yapıları için kereste üretir.', baseCost: { gold: 50, stone: 25 }, production: { resource: 'wood', perMinute: 15 } },
-  { id: 'quarry', name: 'Aytaşı Ocağı', icon: '⬟', maxLevel: 20, description: 'Kadim kayalardan yapı taşı çıkarır.', baseCost: { gold: 60, wood: 35 }, production: { resource: 'stone', perMinute: 12 } },
+  { id: 'farm', name: 'Hasat Avlusu', icon: '🌾', maxLevel: 20, description: 'Vadinin hasadından altın kazanır.', baseCost: { gold: 55, wood: 40 }, production: { resource: 'gold', perMinute: 4 } },
+  { id: 'lumber', name: 'Karaorman Keresteliği', icon: '🪵', maxLevel: 20, description: 'Kalenin yapıları için kereste üretir.', baseCost: { gold: 50, stone: 25 }, production: { resource: 'wood', perMinute: 0.6 } },
+  { id: 'quarry', name: 'Aytaşı Ocağı', icon: '⬟', maxLevel: 20, description: 'Kadim kayalardan yapı taşı çıkarır.', baseCost: { gold: 60, wood: 35 }, production: { resource: 'stone', perMinute: 2.5 } },
   { id: 'forge', name: 'Kor Demirhanesi', icon: '⚒', maxLevel: 20, description: 'Her yükseltme takım saldırısını %5 artırır; 2. ve 4. seviyelerde yeni ekipmanlar açılır.', baseCost: { gold: 85, wood: 40, stone: 55 } },
   { id: 'tavern', name: 'Yemin Hanı', icon: '⚑', maxLevel: 20, description: 'Her yükseltme kahramanların canını %4 artırır.', baseCost: { gold: 80, wood: 65, stone: 30 } },
   { id: 'observatory', name: 'Yıldız Rasathanesi', icon: '✦', maxLevel: 20, description: 'Gökyüzünden yıldız özü toplar.', baseCost: { gold: 90, wood: 45, stone: 60 }, production: { resource: 'aether', perMinute: 3 } },
@@ -120,12 +120,12 @@ export function restoreState(raw, now = Date.now()) {
     if (validTeam(state, saved.team)) state.team = [...saved.team];
     if (integer(saved.selectedStage, 1, Math.min(STAGES.length, nextStage(state)))) state.selectedStage = saved.selectedStage;
     if (timestamp(saved.lastCollected)) state.lastCollected = Math.min(time, saved.lastCollected);
-    // Never trust an arbitrary queue: only one actual 8+ upgrade can be restored.
+    // Restore at most one valid job; each queued level has an exact build duration.
     const job=saved.construction;
     if(job&&typeof job==='object'&&typeof job.id==='string'){
       const target=buildingById(job.id);
       const from=state.buildings[job.id];
-      if(target&&integer(from,8,target.maxLevel-1)&&job.fromLevel===from
+      if(target&&integer(from,2,target.maxLevel-1)&&job.fromLevel===from
          &&timestamp(job.startedAt)&&timestamp(job.endsAt)&&job.endsAt>job.startedAt
          &&job.endsAt-job.startedAt===constructionDuration(from)){
         state.construction={id:job.id,fromLevel:from,startedAt:job.startedAt,endsAt:job.endsAt};
@@ -193,12 +193,14 @@ export function collect(state, now = Date.now()) {
   return { ok: true, gain };
 }
 
-// Levels 1-8 are the preserved onboarding era. Level 9-20 are the
-// long-term stronghold era. Their build queue is single-slot and real-time.
-export const CONSTRUCTION_START_LEVEL=8;
+// A full 20-level village: one free onboarding upgrade, then an actual queue.
+ // Durations are deliberate, testable balance constants in minutes. At one
+ // builder they impose an approximately multi-month path even with rich stockpiles.
+export const CONSTRUCTION_START_LEVEL=2;
+export const CONSTRUCTION_MINUTES=Object.freeze([0,0,3,10,25,50,90,180,300,480,720,960,1200,1500,1860,2220,2580,2880,3240,3600]);
 export function constructionDuration(fromLevel){
  if(!Number.isInteger(fromLevel)||fromLevel<CONSTRUCTION_START_LEVEL||fromLevel>=20)return 0;
- return Math.round(Math.min(72,2*1.4**(fromLevel-8))*60)*60000;
+ return CONSTRUCTION_MINUTES[fromLevel]*60000;
 }
 export function constructionStatus(state,now=Date.now()){
  const job=state.construction;
@@ -222,8 +224,8 @@ export function upgradeCost(state,id){
  const building=buildingById(id);
  if(!building)return null;
  const level=state.buildings[id];
- // Before level 9, respect historic costs. Later tiers stay bounded but
- // need meaningful production and expedition activity rather than a click spree.
+ // The starter economy is deliberately affordable; the 20-level long game
+ // uses bounded exponential material requirements and a separate build queue.
  const factor=level<=8?1.65**(level-1):1.65**7*1.42**(level-8);
  return Object.fromEntries(Object.entries(building.baseCost).map(([resource,amount])=>[resource,Math.ceil(amount*factor)]));
 }
@@ -233,7 +235,7 @@ export function buildingMasteryGate(state,id){
  const level=state.buildings[id];
  // The long-term tiers demand replayable 1–3 star expedition mastery,
  // not only waiting for the construction clock.
- const required=level>=19?24:level>=16?18:level>=12?12:0;
+ const required=level>=18?24:level>=14?18:level>=10?12:level>=7?6:level>=4?3:0;
  const total=campaignStarStatus(state).total;
  return {required,total,ok:total>=required};
 }
