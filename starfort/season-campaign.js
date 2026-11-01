@@ -4,10 +4,10 @@ const PERIOD=28*86400000;
 const ORIGIN=Date.UTC(2026,10,1);
 export const SEASON_GOALS=Object.freeze([
   {id:'win',name:'Sefer zaferi',target:8},
-  {id:'upgrade',name:'Köy veya kahraman geliştirmesi',target:8},
-  {id:'forge',name:'Ekipman üretimi',target:4},
-  {id:'maze',name:'Labirent katı',target:4},
-  {id:'star',name:'İyileştirilen yıldız derecesi',target:4},
+  {id:'upgrade',name:'Kahraman yetenekleri',target:8},
+  {id:'forge',name:'Tekrar seferi zaferleri',target:4},
+  {id:'maze',name:'Usta seferi zaferleri',target:4},
+  {id:'star',name:'Savaş taktiği değişimleri',target:4},
   {id:'rift',name:'Haftalık yarık zaferi',target:1},
 ]);
 export const SEASON_TITLES=Object.freeze([
