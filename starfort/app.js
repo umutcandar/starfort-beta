@@ -609,7 +609,7 @@ function updateLiveHud() {
   }
 }
 function tickCombat(deltaMs) {
-  const combatState=trialState||state, result=R.advanceCombat(combatState,deltaMs);
+  const combatState=trialState||state, result=R.advanceCombat(combatState,deltaMs,Date.now());
   if(!result.ok){combatRunner.pause();return;}
   if(result.events.length) {
     if(!trialState)persist();
@@ -621,7 +621,7 @@ function tickCombat(deltaMs) {
   updateLiveHud();
 }
 function castHeroSkill(heroId) {
-  const used=R.useHeroAbility(trialState||state,heroId);
+  const used=R.useHeroAbility(trialState||state,heroId,Date.now());
   if(!used.ok)return notify(used.error);
   if(!trialState)persist();
   if((trialState||state).battle.status!=='active'){combatRunner.pause();render();}
