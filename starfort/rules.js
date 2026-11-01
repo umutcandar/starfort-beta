@@ -1,4 +1,4 @@
-import { createGearState, restoreGear, equipmentStats, awardFirstClearItem, FIRST_CLEAR_LOOT, itemById } from './equipment.js';
+import { createGearState, restoreGear, equipmentStats, awardFirstClearItem, FIRST_CLEAR_LOOT, itemById, optimizeHeroEquipment } from './equipment.js';
 import { restoreCampaignStars, recordCampaignStars, campaignStarStatus } from './campaign-stars.js';
 import { encounterEnemies, enemyIntent } from './encounters.js';
 import { stageRequirements } from './stage-gates.js';
@@ -42,6 +42,11 @@ export const HEROES = [
   { id: 'vesper', name: 'Vesper', title: 'Gölge Düellocusu', role: 'assassin', color: '#ba8cbd', description: 'Karaorman’ın sessiz adımı, yeminlilerin keskin hançeri.', skill: 'Son gölge: En az canı kalan düşmana %160 hasar. Düşük canıyla korunmaya ihtiyaç duyar.', hp: 85, attack: 27, unlockStage: 3 },
   { id: 'eira', name: 'Eira', title: 'Kutup Kâhini', role: 'mage', color: '#9ecfe2', description: 'Kuzeyin buzunda, yıldızların sesini duyan kâhin.', skill: 'Ayaz çemberi: Her düşmana %55 hasar; en yaralı müttefike saldırısının %60’ı kadar can.', hp: 120, attack: 24, unlockStage: 6 },
 ];
+// One-click equipment respects canonical hero roles and never equips locked heroes.
+export function autoEquipHero(state,heroId) {
+  const hero=HEROES.find(item=>item.id===heroId);
+  return optimizeHeroEquipment(state,heroId,hero?.role);
+}
 // Premium candidates are playable only in isolated training until server entitlements exist.
 export const SPECIAL_HEROES = [
   { id:'aurelion',name:'Aurelion',title:'Şafak Mareşali',role:'tank',color:'#dfbd74',premium:true,hp:185,attack:29,description:'Şafak yeminiyle mühürlenmiş kraliyet muhafızı.',skill:'Güneş darbesi: İlk hedefe %160, diğerlerine %30 hasar. Aldren yoksa darbeleri karşılar ve %8 siper sağlar.' },
