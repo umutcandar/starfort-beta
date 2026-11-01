@@ -17,6 +17,8 @@ export const ITEM_GLYPHS=Object.freeze({
   ember_guard:'<path d="M21 10 12 23 17 33 23 29V56H41V29L47 33 52 23 43 10 36 17H28Z" fill="#9f4c3e"/><path d="M23 30 32 37 41 30M32 37V56" stroke="#f7bd7c" stroke-width="3" fill="none"/><path d="M32 13 38 25 32 32 26 25Z" fill="#ffe09b"/>',
   dawn_relic:'<path d="M32 6V58M7 32H57M15 15 49 49M49 15 15 49" stroke="#f8e6a6" stroke-width="2.5"/><circle cx="32" cy="32" r="15" fill="currentColor"/><path d="M32 20 36 28 45 32 36 36 32 45 28 36 19 32 28 28Z" fill="#fff5d8"/><circle cx="32" cy="32" r="4" fill="#e3a851"/>',
   star_spear:'<path d="M32 4 42 20 32 35 22 20Z" fill="currentColor"/><path d="M32 17V62M25 34 32 39 39 34" stroke="#f4e7be" stroke-width="4" fill="none"/><path d="M32 8 36 20 32 26 28 20Z" fill="#b5edfa"/>',
+  grave_seal:'<path d="M32 4 48 14 52 32 43 52 32 64 21 52 12 32 16 14Z" fill="#555b7d"/><path d="M32 10 37 25 51 30 37 35 32 54 27 35 13 30 27 25Z" fill="#b5d4eb"/><path d="M20 44 32 50 44 44" stroke="#d8b6fa" stroke-width="3" fill="none"/>',
+  eclipse_edge:'<path d="M32 3 42 18 37 41 27 41 22 18Z" fill="#8f66b7"/><path d="M32 7V42" stroke="#f2cbe1" stroke-width="3"/><path d="M17 43 25 38 32 44 39 38 47 43 39 49 32 46 25 49Z" fill="#473258" stroke="#e8bb94" stroke-width="2"/><path d="M30 47V63H34V47" fill="#c8a26f"/>',
   dawn_guard:'<path d="M32 5 54 15 48 44 32 62 16 44 10 15Z" fill="currentColor"/><path d="M32 13V55M17 23 32 31 47 23M21 44 32 50 43 44" stroke="#fff1c5" stroke-width="3" fill="none"/><path d="M32 17 38 27 32 35 26 27Z" fill="#d38d52"/>',
 });
 export function armoryArt(item){
