@@ -21,16 +21,16 @@ test('all eight campaign chapters grow in recommended power and grant first-clea
  }
 });
 test('navigation links story, maze, bag and disabled premium catalog',()=>{
- const app=file('./app.js'),html=file('./index.html'),bag=file('./bag.css');
+ const app=file('./app.js'),html=file('./index.html'),bag=file('./bag.css'),armory=file('./armory-v212.js');
  assert.match(app,/data-labyrinth-open/);
  assert.match(app,/data-labyrinth-complete/);
  assert.match(app,/labyrinthMarkup\(state\)/);
- assert.match(app,/Çanta ve Donanım/);
+ assert.match(armory,/Çanta ve Donanım/);
  assert.match(app,/selectedBagSlot = 'owned'/);
- assert.match(app,/data-bag-slot/);
+ assert.match(armory,/data-bag-slot/);
  assert.match(app,/premiumCatalogMarkup\(\)/);
  assert.match(bag,/\.bag-hero-display/);
- for(const css of ['labyrinth.css','bag.css'])assert.ok(html.includes('href="'+css+'"'));
+ for(const css of ['labyrinth.css','bag.css','v212-visuals.css'])assert.ok(html.includes('href="'+css+'"'));
 });
 test('premium items are visible concepts only, no payment or client-side grant',()=>{
  assert.equal(PREMIUM_PVE_CONCEPTS.length,3);
