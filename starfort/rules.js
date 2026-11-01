@@ -383,10 +383,12 @@ export function prepareLiveBattle(state) {
   initializeLiveCombat(state.battle);
   return {ok:true};
 }
-export function startLiveBattle(state,stageId) {
+export function startLiveBattle(state,stageId,{enforceGates=false}={}) {
   const stage=stageById(stageId);
   if(!stage)return fail('Bilinmeyen sefer.');
-  if(stageId<=nextStage(state)){
+  // Live UI explicitly opts into the v2 progression contract. Older call sites
+  // and fixture helpers retain historic behavior until migrated.
+  if(enforceGates && stageId<=nextStage(state)){
     const gate=stageRequirements(state,stage,teamPower(state));
     if(!gate.available)return fail('Sefer kilitli: '+gate.reasons.join(' '));
   }
