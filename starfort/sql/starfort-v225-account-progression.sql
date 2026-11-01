@@ -196,6 +196,7 @@ begin
     if v<>hero and (gear->v->>item_slot)=item_id then used:=used+1; end if;
    end loop;
    if used>=(items->>item_id)::integer then raise exception 'Eşya başka kahramanda kullanılıyor.'; end if;
+   gear:=jsonb_set(gear,array[hero],coalesce(gear->hero,'{}'::jsonb),true);
    gear:=jsonb_set(gear,array[hero,item_slot],to_jsonb(item_id),true);
   else
    if p_aux not in ('weapon','armor','relic') then raise exception 'Geçersiz ekipman yuvası.'; end if;
@@ -372,14 +373,18 @@ begin
   if claims ? contract_key then raise exception 'Günlük sözleşme zaten alındı.'; end if;
   counter_target:=case p_target when 'win' then 1 when 'hero' then 1 when 'forge' then 1 else 1 end;
   counter_value:=coalesce((counters->>p_target)::integer,0);
-  if counter_value<counter_target then raise exception 'Önce sözleşme hedefini tamamla.'; end if;
+  select coalesce(max(value::integer),0) into fee
+    from jsonb_each_text(claims) where key like '%:'||p_target;
+  if counter_value<counter_target or counter_value<=fee then
+   raise exception 'Bu görev için yeni bir doğrulanmış ilerleme gerekli.';
+  end if;
   reward:=case p_target when 'win' then '{"gold":65,"wood":25}'::jsonb
     when 'hero' then '{"aether":12,"gold":35}'::jsonb when 'forge' then '{"stone":55,"gold":40}'::jsonb
     else '{"aether":18,"wood":40}'::jsonb end;
   for c in select jsonb_object_keys(reward) loop
    resources:=jsonb_set(resources,array[c],to_jsonb(least(1000000000,(resources->>c)::bigint+(reward->>c)::bigint)));
   end loop;
-  claims:=jsonb_set(claims,array[contract_key],to_jsonb(true),true);
+  claims:=jsonb_set(claims,array[contract_key],to_jsonb(counter_value),true);
  elsif p_action='title' then
   if p_target not in ('Sınır Nöbetçisi','Yıldız Ustası','Kuzey Muhafızı') then raise exception 'Bilinmeyen unvan.'; end if;
   req:=case p_target when 'Sınır Nöbetçisi' then 5 when 'Yıldız Ustası' then 20 else 40 end;
