@@ -1,0 +1,14 @@
+.account-welcome{border:2px solid #deb76e;border-radius:14px;background:#0a1c34;color:#ffedc7;max-width:min(92vw,520px);max-height:90vh;padding:0;box-shadow:0 20px 60px #000b,0 0 40px #e5ab5c38}
+.account-welcome::backdrop{background:#030b18d8;backdrop-filter:blur(4px)}
+.account-welcome-inner{padding:clamp(16px,3vw,30px);background:radial-gradient(circle at 70% 5%,#26496d,#07172a 72%)}
+.account-welcome h2{font:700 clamp(23px,3vw,34px)/1.13 Georgia,serif;color:#ffe3a4;margin:12px 0}
+.account-welcome p{font:15px/1.6 Georgia,serif;color:#efdec0}
+.account-welcome-actions{display:grid;grid-template-columns:1fr;gap:10px;margin:20px 0}
+.account-welcome-actions button{min-height:48px;font:700 16px Georgia,serif}
+.account-welcome small{display:block;color:#c9cfde;font:12px/1.5 Georgia,serif}
+.account-conflict{border:1px solid #edb771;border-radius:8px;padding:12px;margin:8px 0;background:#122d49}
+.account-conflict strong{color:#ffe2a0}.account-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:9px 0}
+.account-compare>div{border:1px solid #a7adbe77;border-radius:5px;padding:9px;background:#091a30}.account-compare small{color:#edcc95}
+.account-pending{border-left:3px solid #e0ad67;padding:9px;background:#392e1e80}
+.account-recovery button{margin:5px 0}
+@media(max-width:480px),(max-height:460px){.account-welcome-inner{padding:12px 16px}.account-welcome h2{font-size:22px;margin:7px 0}.account-welcome p{font-size:12px;line-height:1.4}.account-welcome-actions{margin:10px 0;gap:6px}.account-welcome-actions button{min-height:37px;font-size:13px}.account-compare{grid-template-columns:1fr}}
