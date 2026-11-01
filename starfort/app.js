@@ -370,8 +370,67 @@ function renderSettings(){
   const hosted=location.hostname.endsWith('github.io')||new URLSearchParams(location.search).get('hosted')==='1';
   const cloudReady=hosted&&!!guildToken,cloudLabel=!hosted?'Bulut yedeği GitHub Pages çevrim içi beta hesabında kullanılabilir.':!cloudReady?'Önce İttifak bölümünden bu cihazda komutan hesabı oluştur.':cloudSaveInfo?.exists?`Bulut yedeği: ${new Date(cloudSaveInfo.savedAt).toLocaleString('tr-TR')} · Rev. ${cloudSaveInfo.revision}`:cloudSaveInfo?'Henüz bulut yedeği yok.':'Bulut durumu henüz sorgulanmadı.';
   workspaceEl.innerHTML=`<header><div><span class="eyebrow">KOMUTA MERKEZİ</span><h2>Ayarlar ve kayıt güvenliği</h2><p>Starfort ilerlemen bu tarayıcıda kayıtlıdır. Önemli aşamalarda yedek almanı öneririz.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
-    <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">OYUN İLERLEMESİ</span><h3>Kayıt yedeği</h3><p>Binan, kaynakların, kahramanların, ekipmanların ve savaş kaydın JSON dosyası olarak saklanır.</p><button class="primary wide" data-export-save>Kayıt dosyasını indir</button><button class="secondary wide" data-import-save>Yedeği geri yükle</button><small>İçe aktarma mevcut ilerlemenin üzerine yazar. Önce bir yedek al.</small></article><article class="guild-panel"><span class="eyebrow">OYUN DENEYİMİ</span><h3>Kontroller</h3><p>Köyü sürükle; +/− ile yakınlaştır. Savaşta hedef seç, 1 / 2 / 3 ile kahraman yeteneklerini kullan, Space ile taktik mola ver.</p><button class="secondary wide" data-fullscreen>Tam ekranı değiştir</button><p class="guild-disclaimer">Klan oturumu, ana oyun kaydından ayrı bir geliştirme sunucusuna bağlıdır.</p></article><article class="guild-panel"><span class="eyebrow">İSTEĞE BAĞLI · SUPABASE</span><h3>Bulut kayıt yedeği</h3><p>Yerel ilerlemeni bağlı komutan hesabına yedekle veya bulut yedeğini geri getir. Otomatik eşitleme yapılmaz; çevrim içi savaş ödüllerini etkilemez.</p><small>${esc(cloudLabel)}</small>${cloudReady?`<button class="secondary wide" data-cloud-action="status" ${cloudSaveBusy?'disabled':''}>Bulut durumunu kontrol et</button><button class="primary wide" data-cloud-action="upload" ${cloudSaveBusy?'disabled':''}>Bu cihazın kaydını buluta yedekle</button><button class="secondary wide" data-cloud-action="download" ${cloudSaveBusy?'disabled':''}>Buluttan geri yükle</button><button class="text-button wide" data-cloud-action="delete" ${cloudSaveBusy?'disabled':''}>Bulut yedeğini sil</button>`:hosted?'<button class="secondary wide" data-view="guild">Komutan hesabı oluştur</button>':''}<small>Geri yükleme bu cihazdaki ilerlemeyi değiştirir. Önce JSON yedeği indir.</small>${hosted?`<hr><h4>Hesabını başka cihazda aç</h4><p>Bu aktarım anahtarı tüm beta hesabına erişim verir. Kimseye gönderme; yalnızca kendi cihazında kullan.</p>${guildToken?'<button class="secondary wide" data-account-transfer="copy">Gizli hesap aktarım anahtarını kopyala</button>':''}<button class="secondary wide" data-account-transfer="import">Mevcut hesabımı bu cihaza bağla</button>`:''}</article></div>`;
+    <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">OYUN İLERLEMESİ</span><h3>Kayıt yedeği</h3><p>Binan, kaynakların, kahramanların, ekipmanların ve savaş kaydın JSON dosyası olarak saklanır.</p><button class="primary wide" data-export-save>Kayıt dosyasını indir</button><button class="secondary wide" data-import-save>Yedeği geri yükle</button><small>İçe aktarma mevcut ilerlemenin üzerine yazar. Önce bir yedek al.</small></article><article class="guild-panel"><span class="eyebrow">OYUN DENEYİMİ</span><h3>Kontroller</h3><p>Köyü sürükle; +/− ile yakınlaştır. Savaşta hedef seç, 1 / 2 / 3 ile kahraman yeteneklerini kullan, Space ile taktik mola ver.</p><button class="secondary wide" data-fullscreen>Tam ekranı değiştir</button><button class="secondary wide" data-audio-toggle>Ses ve özgün müzik: ${gameAudio.enabled?'Açık · Kapat':'Kapalı · Aç'}</button><small>Sesler yalnızca sen açtığında başlar; köy melodisi ve savaş efektleri orijinaldir.</small><p class="guild-disclaimer">Klan oturumu, ana oyun kaydından ayrı bir geliştirme sunucusuna bağlıdır.</p></article><article class="guild-panel"><span class="eyebrow">İSTEĞE BAĞLI · SUPABASE</span><h3>Bulut kayıt yedeği</h3><p>Yerel ilerlemeni bağlı komutan hesabına yedekle veya bulut yedeğini geri getir. Otomatik eşitleme yapılmaz; çevrim içi savaş ödüllerini etkilemez.</p><small>${esc(cloudLabel)}</small>${cloudReady?`<button class="secondary wide" data-cloud-action="status" ${cloudSaveBusy?'disabled':''}>Bulut durumunu kontrol et</button><button class="primary wide" data-cloud-action="upload" ${cloudSaveBusy?'disabled':''}>Bu cihazın kaydını buluta yedekle</button><button class="secondary wide" data-cloud-action="download" ${cloudSaveBusy?'disabled':''}>Buluttan geri yükle</button><button class="text-button wide" data-cloud-action="delete" ${cloudSaveBusy?'disabled':''}>Bulut yedeğini sil</button>`:hosted?'<button class="secondary wide" data-view="guild">Komutan hesabı oluştur</button>':''}<small>Geri yükleme bu cihazdaki ilerlemeyi değiştirir. Önce JSON yedeği indir.</small>${hosted?`<hr><h4>Hesabını başka cihazda aç</h4><p>Bu aktarım anahtarı tüm beta hesabına erişim verir. Kimseye gönderme; yalnızca kendi cihazında kullan.</p>${guildToken?'<button class="secondary wide" data-account-transfer="copy">Gizli hesap aktarım anahtarını kopyala</button>':''}<button class="secondary wide" data-account-transfer="import">Mevcut hesabımı bu cihaza bağla</button>`:''}</article>
+    <article class="guild-panel"><span class="eyebrow">GÜVENLİ HESAP · SUPABASE AUTH</span><h3>E-posta hesabı ve özel yedek</h3>
+      <p>Farklı cihazdan aynı e-postayla giriş yap. Bu yedek yalnızca hesabına açıktır. Yerel kaynaklar PvP için doğrulanmış kabul edilmez.</p>
+      ${accountSession()?`<strong>${esc(accountSession().user.email||'Doğrulanmış hesap')}</strong>
+      <small>${accountBackupInfo?`Sunucu yedeği: sürüm ${accountBackupInfo.revision}`:'Sunucu yedeğini kontrol et.'}</small>
+      <button class="secondary wide" data-account-action="status" ${accountBusy?'disabled':''}>Hesap yedeğini kontrol et</button>
+      <button class="primary wide" data-account-action="save" ${accountBusy?'disabled':''}>Bu cihazı hesabıma yedekle</button>
+      <button class="secondary wide" data-account-action="restore" ${accountBusy?'disabled':''}>Hesap yedeğini geri yükle</button>
+      <button class="secondary wide" data-account-action="logout" ${accountBusy?'disabled':''}>E-posta hesabından çıkış</button>`:
+      `<form id="starfort-account-form" autocomplete="on">
+        <label>E-posta <input required name="email" type="email" maxlength="180" autocomplete="username" placeholder="eposta@ornek.com"></label>
+        <label>Şifre <input required name="password" type="password" minlength="8" maxlength="100" autocomplete="current-password"></label>
+        <div class="season-titles"><button type="submit" class="primary" name="account-mode" value="login">Giriş yap</button>
+        <button type="submit" class="secondary" name="account-mode" value="signup">Hesap oluştur</button></div></form>`}
+      <small>Yedekler manuel yüklenir; sunucu ekonomisi ve çevrim içi rekabet ayrı doğrulama gerektirir.</small>
+    </article></div>`;
 }
+
+async function accountAction(action){
+ if(accountBusy)return;
+ accountBusy=true;if(activeView==='settings')renderSettings();
+ try {
+   if(action==='logout'){await accountSignOut();accountBackupInfo=null;notify('E-posta hesabından çıkış yapıldı. Yerel oyun korunuyor.');return;}
+   const remote=await accountBackup('get');
+   accountBackupInfo=remote;
+   if(action==='status'){notify(remote?'Sunucu yedeği bulundu.':'Bu hesapta henüz yedek yok.');return;}
+   if(action==='save'){
+     if(remote&&!confirm('Hesaptaki mevcut yedeğin üzerine bu cihazdaki ilerleme yazılacak. Devam edilsin mi?'))return;
+     const clean=importSave(exportSave(state));
+     accountBackupInfo=await accountBackup('save',{state:clean,revision:remote?.revision||0});
+     notify('E-posta hesabına özel yedek başarıyla kaydedildi.');
+   }else if(action==='restore'){
+     if(!remote)throw Error('Henüz bulut yedeğin yok.');
+     const candidate=importSave(JSON.stringify({format:'starfort-save',key:R.STORAGE_KEY,state:remote.state}));
+     if(!confirm('Bu cihazdaki mevcut köy ilerlemesi değişecek. Önce dosya yedeği indirdin mi?'))return;
+     combatRunner.pause();trialState=null;const old=state;state=candidate;
+     if(!persist()){state=old;throw Error('Bu cihazın yerel kaydına yazılamadı.');}
+     location.reload();
+   }
+ }catch(error){notify('Hesap yedeği: '+error.message);}
+ finally{accountBusy=false;if(activeView==='settings')renderSettings();}
+}
+document.addEventListener('submit',async event=>{
+ if(event.target?.id!=='starfort-account-form')return;
+ event.preventDefault();
+ if(accountBusy)return;
+ const fd=new FormData(event.target),email=String(fd.get('email')||'').trim(),password=String(fd.get('password')||'');
+ const mode=event.submitter?.value==='signup'?'signup':'login';
+ if(!email.includes('@')||password.length<8)return notify('E-posta ve en az 8 karakterli şifre yaz.');
+ accountBusy=true;
+ try{
+   if(mode==='signup'){
+     const info=await accountSignUp(email,password);
+     notify(info.needsConfirmation?'E-postanı onayla, sonra giriş yap.':'E-posta hesabı oluşturuldu.');
+   }else{
+     await accountSignIn(email,password);
+     notify('E-posta hesabına giriş yapıldı.');
+   }
+ }catch(error){notify('Hesap: '+error.message);}
+ finally{accountBusy=false;if(activeView==='settings')renderSettings();}
+});
 
 async function transferAccount(action){
   if(action==='copy'){
