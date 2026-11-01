@@ -1,0 +1,331 @@
+/* STARFORT v2.13 reference composition – real DOM, real save data, live controls.
+   The provided fantasy screenshots establish hierarchy, ornament and layout.
+   Keep every interactive control in the original game engine. */
+:root {
+  --sf-ref-navy:#0b1d34;
+  --sf-ref-line:#d8ad66;
+  --sf-ref-gold:#f5cd79;
+  --sf-ref-cream:#fff0ca;
+  --sf-ref-panel:linear-gradient(152deg,rgba(22,44,70,.96),rgba(7,22,41,.96) 80%);
+  --city-hud-top:76px;
+  --city-hud-bottom:76px;
+}
+body{font-synthesis:none}
+.topbar {
+  padding:6px 18px!important;
+  gap:14px!important;
+  background:linear-gradient(180deg,#061424f5,#102742dc)!important;
+  border-bottom:1px solid #e7bb7669!important;
+}
+.brand{min-width:0!important;flex:0 0 auto;gap:7px!important;text-decoration:none}
+.brand>span{display:block!important;font:700 clamp(23px,2.55vw,42px)/.95 Georgia,serif!important;letter-spacing:1.8px!important;color:#ffe7b5!important;text-shadow:0 0 9px #b17e3166,0 2px 2px #000}
+.brand small{display:none!important}
+.brand img{width:clamp(27px,3vw,43px)!important;height:clamp(34px,3.7vw,53px)!important;filter:drop-shadow(0 0 6px #e8ba64a8)}
+.topbar .commander,.topbar .build-badge{display:none!important}
+.resources{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:0!important;align-items:center;
+  flex:1 1 750px!important;margin-left:auto!important;
+  border:1px solid #dfae69d9;border-radius:6px;
+  background:linear-gradient(180deg,#041427f2,#102744eb);
+  box-shadow:inset 0 0 0 2px #d9b16b19,0 5px 20px #0008;
+  padding:2px 4px;min-width:0;
+}
+.resource,.resource:first-child{min-width:0!important;display:flex;gap:8px!important;padding:5px 10px!important;justify-content:center;border:0!important;border-right:1px solid #dbb77a55!important;border-radius:0!important;background:transparent!important}
+.resource:last-child{border:0!important}
+.resource svg{width:clamp(21px,2.4vw,35px)!important;height:clamp(21px,2.4vw,35px)!important;flex:none;color:#f5bf62!important;background:radial-gradient(circle,#aa783c41,#382d3322)!important;filter:drop-shadow(0 0 5px #d4a65783)}
+.resource[data-res=stone] svg{color:#d6e0ee!important}
+.resource[data-res=wood] svg{color:#d8a476!important}
+.resource[data-res=aether] svg{color:#88e3ff!important;filter:drop-shadow(0 0 7px #28aefa)}
+.resource span{display:flex;flex-direction:column;min-width:0;gap:2px}
+.resource small{order:-1;font:600 clamp(9px,1vw,13px) Georgia,serif!important;color:#e9d9bd!important;letter-spacing:.05em}
+.resource b{font:700 clamp(12px,1.65vw,22px)/1 Georgia,serif!important;color:#fff0cb!important}
+.hud-tools{flex:0 0 auto;gap:5px}
+.hud-tools .header-action,.fullscreen-button{border-color:#ad8b5899;background:#0c2135dd;color:#efd6a3}
+.hud-tools .save-indicator{display:none}
+.rail{
+  display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));align-items:stretch;
+  gap:0!important;padding:4px max(6px,env(safe-area-inset-left))!important;
+  background:linear-gradient(#142b42f4,#07152af8)!important;
+  border-top:2px solid #bc985c!important;box-shadow:0 -6px 18px #000a;
+}
+.rail .rail-foot{display:none!important}
+.nav-item{
+  display:flex!important;flex-direction:row!important;gap:clamp(4px,1vw,13px)!important;
+  height:auto!important;width:100%!important;max-width:none!important;min-width:0;
+  flex:none!important;justify-content:center!important;
+  border-right:1px solid #bf9a6175!important;border-radius:2px!important;
+  font:700 clamp(10px,1.35vw,21px) Georgia,serif!important;
+  padding:7px 4px!important;color:#f2dfbf!important;
+}
+.nav-item:last-of-type{border-right:none!important}
+.nav-item svg{width:clamp(22px,2.5vw,37px)!important;height:clamp(22px,2.5vw,37px)!important;stroke-width:1.8;color:#ffcf78!important;filter:drop-shadow(0 1px 3px #000c)}
+.nav-item.active{
+  background:linear-gradient(150deg,#204c80ee,#0b294eeb)!important;
+  box-shadow:inset 0 0 0 2px #e5b76dbb,0 0 13px #e6b05b70!important;
+  color:#ffe5a6!important;
+}
+.nav-item.active:before{top:0!important;bottom:0!important;left:0!important;right:0!important;width:auto!important;height:auto!important;pointer-events:none;background:none!important;border:1px solid #ffda88b0}
+.nav-item:focus-visible{outline:2px solid #fff0b6;outline-offset:-3px}
+.city-viewport{inset:0!important}
+.world:before{height:190px;background:linear-gradient(#0713244d,transparent)}
+.world-heading{top:calc(var(--city-hud-top) + 11px)!important;left:16px!important;right:auto!important}
+.world-heading>div{display:none}
+.world-heading .icon-button{pointer-events:auto;width:35px;height:35px;border:1px solid #e0b96a99}
+.city-controls{top:calc(var(--city-hud-top) + 60px)!important;left:14px!important;right:auto!important;gap:6px}
+.city-controls button{background:linear-gradient(#173353ee,#091a31f0)!important;border-color:#e2b86fa1!important;box-shadow:0 2px 7px #0006}
+.city-label{font:700 clamp(10px,1.15vw,16px) Georgia,serif!important;padding:6px 11px!important;border:1px solid #edc47db5!important;border-radius:1px 7px 1px 7px!important;background:linear-gradient(#102c4bf5,#061a32f5)!important;text-shadow:0 2px 2px #0009;box-shadow:0 0 10px #edb75e3d!important}
+.city-label:hover,.city-label.selected{box-shadow:0 0 15px #f6c268c2!important}
+.daily-reward{top:calc(var(--city-hud-top) + 26px)!important;right:27px!important;bottom:auto!important;left:auto!important;z-index:3!important;background:linear-gradient(#101d32,#112c4b)!important;border:1px solid #d1a964!important;border-radius:7px!important;box-shadow:0 0 15px #d9ab4b3d}
+.daily-chest{color:#ffcb70!important;font-size:24px}
+.city-collect{bottom:calc(var(--city-hud-bottom) + 14px)!important;left:22px!important;max-width:190px!important;border-color:#d7aa68a1!important}
+.next-quest{
+  box-sizing:border-box;
+  display:block!important;position:absolute;
+  width:min(640px,43vw)!important;right:max(20px,env(safe-area-inset-right))!important;left:auto!important;
+  top:auto!important;bottom:calc(var(--city-hud-bottom) + 25px)!important;
+  min-height:290px!important;max-height:calc(100% - var(--city-hud-top) - var(--city-hud-bottom) - 35px);
+  padding:22px 17px 16px!important;overflow:visible!important;
+  border:2px solid #cba05d!important;border-radius:13px 13px 6px 6px!important;
+  background:var(--sf-ref-panel)!important;
+  box-shadow:0 0 0 4px #0b1e32e7,inset 0 0 0 2px #d0a5673a,0 18px 45px #020918cf!important;
+  color:var(--sf-ref-cream)!important;
+}
+.next-quest::before{inset:7px!important;z-index:0;border:1px solid #f3cf8a50!important}
+.quest-crown{
+  position:absolute;top:-27px;left:17%;right:12%;
+  z-index:3;display:flex;align-items:center;justify-content:center;gap:12px;
+  height:48px;padding:4px 18px;
+  border:2px solid #e6bd78;border-radius:20px 4px 20px 4px;
+  background:linear-gradient(180deg,#1b3b5a,#07172a);
+  box-shadow:inset 0 1px #ffe1a25c,0 0 12px #f0b85b60;
+  font:700 clamp(20px,2vw,31px) Georgia,serif;color:#ffe3a2;white-space:nowrap;
+  text-shadow:0 0 8px #eebc5e4d;
+}
+.quest-crown span{font:36px Georgia,serif;color:#ffe7a2;text-shadow:0 0 8px #ffc86a}
+.quest-layout{display:grid;grid-template-columns:minmax(108px,36%) minmax(0,1fr);gap:14px;height:100%;position:relative;z-index:1;align-items:stretch}
+.quest-illustration{
+  position:relative;min-height:230px;border:1px solid #a1b2c5;border-radius:7px;
+  background:linear-gradient(180deg,#0918300d,#07182d8f 92%),url('assets/battlefield.webp') center 40%/cover;
+  box-shadow:inset 0 0 0 4px #0b2236a8;overflow:hidden;
+}
+.quest-illustration span{position:absolute;top:20%;right:16%;color:#e2ecff;font-size:44px;text-shadow:0 0 17px #89d8ff}
+.quest-body{display:flex;flex-direction:column;align-items:stretch;min-width:0;padding:6px 2px 0}
+.quest-body>small{font:600 clamp(10px,1.1vw,15px) Georgia,serif;color:#eddbbd;line-height:1.4}
+.next-quest .quest-body h3{margin:4px 0 7px!important;font:700 clamp(19px,2vw,30px)/1.13 Georgia,serif!important;color:#fff0c7!important;text-shadow:0 3px 9px #000b}
+.quest-body>p{display:block!important;font-size:11px;color:#c6d8e8}
+.next-quest .quest-power{
+  margin:0!important;padding:8px 0!important;border-top:1px solid #c0a06a6b;
+  border-bottom:1px solid #c0a06a6b;display:flex!important;align-items:center;gap:6px;
+  font:700 clamp(11px,1.05vw,15px) Georgia,serif;color:#e6d8be;
+}
+.quest-power strong{color:#ffcb67!important;font-size:clamp(14px,1.45vw,22px)!important}
+.quest-power small{font-size:9px;color:#c1ced9;font-weight:500}
+.quest-reward-title{font:700 12px Georgia,serif;color:#f4e3c5;margin:8px 0 5px}
+.quest-reward-title small{color:#dcb87b}
+.quest-rewards{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px!important;margin:0!important}
+.quest-reward-token{
+  display:flex;min-width:0;flex-direction:column;gap:3px;align-items:center;justify-content:center;
+  height:56px;padding:4px 1px;border:1px solid #b9956f8e;border-radius:7px;background:#0c2039f5;color:#f6ddb1;
+  font:700 clamp(9px,1vw,14px) Georgia,serif;
+}
+.quest-reward-token svg{width:24px;height:24px;color:#f4c46e;filter:drop-shadow(0 0 5px #efbd7199)}
+.quest-reward-token:nth-child(3) svg{color:#d3dce4}.quest-reward-token:nth-child(4) svg{color:#8ad9ff}
+.quest-actions{display:flex!important;flex-direction:column;gap:4px!important;margin-top:auto!important;padding-top:9px;align-items:stretch!important}
+.next-quest .quest-actions .primary{display:flex!important;justify-content:center;align-items:center;gap:14px;min-height:47px!important;width:100%;font:700 clamp(15px,1.7vw,25px) Georgia,serif!important;color:#3a270e;border-radius:5px!important;box-shadow:0 0 0 3px #ffe4ae1e,0 3px 13px #0009}
+.quest-actions .text-button{align-self:center;font:11px Georgia,serif;color:#e8cda3}
+.quest-actions .primary span{font-size:19px}
+
+/* Exact screenshot hierarchy: Roster | Portrait & combat stats | Equipment / bag grid | item detail. */
+.workspace:has(.armory-v212){
+  padding:9px clamp(10px,1.3vw,25px) 12px!important;
+  overflow-x:hidden;overflow-y:auto;
+  background:linear-gradient(100deg,#031329b3,#0a1d34b4 63%,#061425cd),
+  url('assets/city/starfall-valley.webp') center 42%/cover!important;
+}
+.bag-v212-header{height:67px;box-sizing:border-box;display:flex!important;align-items:center!important;justify-content:space-between!important;margin:0 0 7px!important;padding:0 10px!important;border:0!important}
+.bag-v212-header>div{display:flex;flex-direction:column;justify-content:center}
+.bag-v212-header .eyebrow{display:none}
+.workspace .bag-v212-header h2{font:700 clamp(23px,2.4vw,35px) Georgia,serif!important;color:#f8dfac!important;margin:0!important;padding:3px 24px;border:1px solid #dcb56cb3;border-radius:4px 18px 4px 18px;background:linear-gradient(90deg,#092343ed,#152f50ef);box-shadow:0 0 11px #cba15c38;text-shadow:0 0 7px #ffdca74d}
+.bag-v212-header p{display:none}
+.bag-v212-header .secondary{min-height:32px;padding:5px 10px;font-size:11px}
+.armory-v212{
+  display:grid!important;grid-template-columns:minmax(145px,17%) minmax(215px,26%) minmax(335px,35%) minmax(225px,22%)!important;
+  grid-template-rows:minmax(0,1fr);gap:clamp(6px,.8vw,13px)!important;
+  width:100%;max-width:none!important;height:calc(100% - 80px);min-height:520px!important;margin:0!important;align-items:stretch!important;
+}
+.armory-v212>*{min-width:0;max-height:100%;min-height:0}
+.armory-v212 .bag-v212-roster,.armory-v212 .bag-hero-display,.armory-v212 .bag-v212-equipped,.armory-v212>.bag-v212-detail{
+  border:1px solid #e2b66ca8!important;border-radius:6px!important;
+  background:linear-gradient(155deg,#092541e9,#07172bea)!important;
+  box-shadow:inset 0 0 0 2px #e9c17c14,0 5px 22px #0007!important;
+}
+.bag-v212-roster{overflow-y:auto;padding:12px 8px!important;scrollbar-width:thin}
+.bag-v212-roster h3{margin:0 0 13px!important;text-align:left!important;padding:9px 8px;border-bottom:1px solid #cba0697a;color:#fff0c8!important;font:700 23px Georgia,serif!important}
+.bag-v212-roster .armory-heroes{display:flex!important;flex-direction:column!important;gap:9px!important;overflow:visible!important}
+.bag-v212-roster .armory-hero{width:100%!important;max-width:none!important;min-width:0!important;min-height:74px!important;padding:5px!important;background:#112940ee!important;border:1px solid #b6996d8e!important;box-shadow:inset 0 1px #ffffff1a!important}
+.bag-v212-roster .armory-hero.active{border:2px solid #ffce70!important;box-shadow:0 0 14px #f3bc5f77!important;background:linear-gradient(155deg,#48351f,#142e4b)!important}
+.bag-v212-roster .armory-hero>img{width:61px!important;height:62px!important;object-fit:cover!important;border-radius:5px!important}
+.bag-v212-roster .armory-hero b{font:700 clamp(13px,1.2vw,20px) Georgia,serif!important;color:#f8e2bd!important}
+.bag-v212-roster .armory-hero small{font:11px/1.3 Georgia,serif!important;color:#e5d2ae!important}
+.bag-v212-roster .armory-hero.bag-v213-locked{opacity:.53;filter:saturate(.3);cursor:not-allowed}
+.armory-v212 .bag-hero-display{display:flex!important;flex-direction:column;align-items:stretch!important;gap:0!important;padding:0!important;margin:0!important;overflow:hidden}
+.bag-v212-character-art{
+  flex:1 1 auto!important;min-height:0!important;max-height:none!important;position:relative;display:flex;align-items:flex-end!important;overflow:hidden;
+  background:radial-gradient(ellipse at 46% 38%,#7491b94d,transparent 68%),linear-gradient(#1e406340,#081525a3),url('assets/city/starfall-valley.webp') 47% 34%/auto 100%!important;
+}
+.bag-v212-character-art img{width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 11px 12px #000b)}
+.bag-v212-character-name{text-align:left!important;background:linear-gradient(180deg,#152d4d44,#091a30dd)!important;padding:6px 13px 4px!important}
+.bag-v212-character-name .eyebrow{display:none}
+.bag-v212-character-name h3{font:700 clamp(23px,2.4vw,38px) Georgia,serif!important;margin:0!important;color:#ffe6ac}
+.bag-v212-character-name small{font:12px Georgia,serif!important;color:#e4d0ae!important}
+.bag-v212-character-stats{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:0!important;padding:8px 11px!important;background:#081a31f0!important;border-top:1px solid #d4ae66a1}
+.bag-v212-character-stats>div{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:7px 5px;border-bottom:1px solid #d5b06a41;font:clamp(10px,1vw,14px) Georgia,serif;color:#f7e5c8}
+.bag-v212-character-stats b{font:700 clamp(11px,1.15vw,17px) Georgia,serif!important;color:#ffe6ab}
+.bag-v212-character-stats>.bag-v213-power{grid-column:1/-1;padding:10px 5px;border:1px solid #b595648d;background:#102c4966}
+.bag-v213-power b{font-size:clamp(16px,2vw,26px)!important;text-shadow:0 0 7px #e9bf6c82}
+.armory-v212 .bag-v212-right{display:flex!important;flex-direction:column;gap:8px!important;max-height:100%;overflow:hidden}
+.armory-v212 .bag-v212-equipped{flex:none;padding:12px 10px!important}
+.bag-v212-section-heading{justify-content:center!important;margin-bottom:9px!important}
+.bag-v212-section-heading .eyebrow{font:700 clamp(12px,1.2vw,18px) Georgia,serif!important;letter-spacing:.02em;color:#ffe0a1!important}
+.bag-v212-section-heading strong{display:none}
+.bag-v212-slots{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px}
+.bag-v212-slot{gap:3px!important;min-height:165px!important;max-height:178px!important;border:1px solid #cfa665ad!important;background:radial-gradient(circle at 50% 45%,#60528a80,#132840 74%)!important;padding:8px 4px!important}
+.bag-v212-slot small{font:700 clamp(11px,1.2vw,17px) Georgia,serif!important;color:#fce3aa}
+.bag-v212-slot-art{width:100%!important;height:85px!important}
+.bag-v212-slot-art .item-art{width:80px!important;height:82px!important;max-width:94%;filter:drop-shadow(0 0 10px #ecb85c8a)}
+.bag-v212-slot strong{font:700 clamp(10px,1vw,14px) Georgia,serif!important;color:#ffdf9e!important}
+.bag-v212-slot .text-button{min-height:20px!important;font-size:10px!important;padding:0!important}
+.armory-v212 .bag-toolbar{flex:none;display:flex;flex-direction:column;gap:4px;margin:0!important;padding:0 0 7px!important}
+.armory-v212 .bag-toolbar h3{display:none}
+.armory-v212 .bag-filters{display:flex!important;flex-wrap:nowrap;gap:2px!important;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.armory-v212 .bag-filters button{min-height:31px!important;flex:none;padding:4px 8px!important;font:700 clamp(10px,.85vw,13px) Georgia,serif!important;color:#ead6b0;border:1px solid #b99662a0!important;background:#10263f!important}
+.armory-v212 .bag-filters button.selected{color:#fff0bd!important;border-color:#ffda84!important;background:#684e2b!important;box-shadow:0 0 9px #eab95a63!important}
+.armory-v212 .bag-item-grid{
+  flex:1;min-height:0;max-height:none!important;display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:5px!important;
+  padding:4px!important;overflow-y:auto;align-content:start;
+  scrollbar-color:#b79257 #10243b;
+}
+.armory-v212 .bag-v212-item{aspect-ratio:1/1!important;min-width:0;min-height:58px!important;padding:5px 2px!important;gap:1px!important;border-radius:5px!important}
+.armory-v212 .bag-v212-item-art{height:65%!important}
+.armory-v212 .bag-v212-item-art .item-art{height:100%;max-height:70px}
+.armory-v212 .bag-v212-item-name{font-size:9px!important;-webkit-line-clamp:1}
+.armory-v212 .bag-v212-count{font-size:8px!important;padding:1px 2px;max-width:90%;overflow:hidden;text-overflow:ellipsis}
+.armory-v212 .bag-v212-item.selected{border:2px solid #ffcf7c!important;box-shadow:0 0 12px #ffe2a354!important}
+.armory-v212 .bag-v212-item.missing{opacity:.66;filter:saturate(.65)}
+.bag-v213-material-glyph{width:100%;height:65%;display:grid;place-items:center;font:700 clamp(21px,3vw,39px) Georgia,serif;color:#8ce9ff;text-shadow:0 0 10px #4eacfc,0 2px #000}
+.bag-v213-material-glyph.material-gold{color:#ffca66;text-shadow:0 0 8px #eab251}
+.bag-v213-material-glyph.material-wood{color:#deb589;text-shadow:0 0 8px #ac713c}
+.bag-v213-material-glyph.material-stone{color:#d7dfec;text-shadow:0 0 8px #99adcf}
+.armory-v212 .armory-tip{font-size:9px!important;line-height:1.35!important;padding:0 4px!important;color:#cfbe9e!important;margin:0!important}
+.armory-v212>.bag-v212-detail{display:flex;flex-direction:column;padding:13px 12px!important;min-height:0!important;max-height:100%;overflow-y:auto;scrollbar-width:thin}
+.bag-v212-detail-head{flex-direction:column!important;align-items:center!important;text-align:center!important;gap:9px!important;padding-bottom:11px!important;border-bottom:1px solid #d9ae665e!important}
+.bag-v212-detail-art{width:84px!important;height:95px!important;border:2px solid #e4b66e!important;flex:none}
+.bag-v212-detail-art .item-art{height:90px!important;width:83px!important}
+.bag-v212-detail-head small{color:#efd19c!important;font:700 11px Georgia,serif!important}
+.bag-v212-detail-head h3{font:700 clamp(17px,1.85vw,28px)/1.1 Georgia,serif!important;color:#fff0ce!important;margin:5px 0 3px!important}
+.bag-v212-detail-head p{font:italic 11px/1.45 Georgia,serif!important;color:#d8c9ac!important}
+.bag-v212-stat-grid{display:block!important}
+.bag-v212-stat-grid>div{grid-template-columns:1fr auto;gap:2px 8px;padding:9px 2px!important;border-bottom:1px solid #be9b634f!important}
+.bag-v212-stat-grid span{font:600 12px Georgia,serif!important;color:#f6e2ba!important}
+.bag-v212-stat-grid strong{font:700 clamp(12px,1.3vw,19px) Georgia,serif!important;color:#ffe4ad!important}
+.bag-v212-stat-grid small{font-size:9px!important}
+.bag-v212-set{margin:12px 0!important;padding:10px!important;border:1px solid #d0b16280!important;color:#d8e18f!important;background:#152b37cc!important;font:700 13px Georgia,serif!important}
+.bag-v212-set small{font:11px/1.5 Georgia,serif!important}
+.bag-v212-detail-actions{margin-top:auto!important;padding-top:15px;gap:8px!important}
+.bag-v212-detail-actions button{min-height:42px!important;font:700 15px Georgia,serif!important}
+.bag-v212-origin{font:11px/1.5 Georgia,serif!important;color:#e0cfaf!important;margin:9px 0!important}
+.bag-v213-material-total{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #d6b77770;padding:15px 2px}
+.bag-v213-material-total small{font:12px Georgia,serif;color:#d6c5ad}
+.bag-v213-material-total strong{font:700 26px Georgia,serif;color:#ffdd99}
+
+/* Reflow instead of hiding functionality when the device is narrow. */
+@media(max-width:1330px){
+  .armory-v212{grid-template-columns:minmax(115px,17%) minmax(185px,25%) minmax(280px,36%) minmax(185px,22%)!important;gap:6px!important}
+  .bag-v212-roster .armory-hero>img{width:47px!important;height:51px!important}
+  .bag-v212-roster .armory-hero{min-height:58px!important}
+  .bag-v212-slot{min-height:135px!important}
+  .bag-v212-slot-art{height:64px!important}
+  .bag-v212-slot-art .item-art{height:62px!important}
+  .armory-v212 .bag-v212-detail-head h3{font-size:18px!important}
+  .quest-crown{height:42px;top:-23px}
+  .quest-reward-token{height:45px}
+  .quest-illustration{min-height:210px}
+}
+@media(max-width:1000px){
+  .topbar{gap:6px!important;padding:5px 8px!important}
+  .brand>span{font-size:20px!important}
+  .brand img{width:28px!important;height:31px!important}
+  .resource,.resource:first-child{padding:4px 5px!important;gap:4px!important}
+  .resource small{font-size:8px!important}
+  .resource b{font-size:12px!important}
+  .resource svg{width:21px!important;height:21px!important}
+  .hud-tools .header-action{width:25px;height:25px;font-size:12px;padding:1px}
+  .hud-tools .fullscreen-button{width:25px;height:25px}
+  .nav-item{font-size:12px!important;gap:5px!important}
+  .nav-item svg{width:24px!important;height:24px!important}
+  .workspace:has(.armory-v212){padding:7px 12px 14px!important}
+  .armory-v212{grid-template-columns:minmax(120px,23%) minmax(180px,34%) minmax(0,43%)!important;height:auto!important;min-height:0!important}
+  .armory-v212 .bag-v212-roster{grid-column:1;grid-row:1;max-height:540px}
+  .armory-v212 .bag-hero-display{grid-column:2;grid-row:1;min-height:490px}
+  .armory-v212 .bag-v212-right{grid-column:3;grid-row:1;min-height:490px}
+  .armory-v212>.bag-v212-detail{grid-column:1/-1;grid-row:2;max-height:none;min-height:260px!important}
+  .bag-v212-detail-head{flex-direction:row!important;text-align:left!important}
+  .bag-v212-detail-actions{margin-top:12px!important}
+  .quest-crown{font-size:18px;left:7%;right:7%;gap:4px}
+  .next-quest{width:min(430px,48vw)!important;min-height:240px!important;padding:22px 10px 11px!important}
+  .quest-layout{grid-template-columns:30% 1fr;gap:8px}
+  .quest-illustration{min-height:160px}
+  .quest-body h3{font-size:18px!important}
+  .quest-power{font-size:10px!important;gap:4px!important}
+  .quest-power small{display:none}
+  .quest-reward-token{height:43px}
+}
+@media(max-width:700px){
+  :root{--city-hud-top:54px;--city-hud-bottom:52px}
+  .brand>span{display:none!important}
+  .hud-tools .header-action{display:none}
+  .resources{min-width:0}
+  .resource span{gap:0}
+  .resource svg{width:17px!important;height:17px!important;padding:1px!important}
+  .resource small{font-size:7px!important}
+  .resource b{font-size:10px!important}
+  .nav-item{font-size:9px!important;flex-direction:column!important;gap:1px!important;padding:3px 1px!important}
+  .nav-item svg{width:20px!important;height:20px!important}
+  .daily-reward{right:12px!important}
+  .city-controls{left:7px!important}
+  .next-quest{width:min(360px,64vw)!important;bottom:calc(var(--city-hud-bottom) + 9px)!important;max-height:calc(100% - var(--city-hud-top) - var(--city-hud-bottom) - 10px);min-height:0!important;overflow-y:auto!important}
+  .quest-crown{position:relative;top:auto;left:auto;right:auto;height:27px;max-width:100%;font-size:13px;border-width:1px;margin:-9px 0 5px}
+  .quest-crown span{font-size:19px}
+  .quest-layout{grid-template-columns:1fr}
+  .quest-illustration{display:none}
+  .quest-body>small{font-size:9px}
+  .quest-body h3{font-size:17px!important}
+  .quest-reward-token{height:35px}
+  .quest-reward-token svg{height:17px;width:17px}
+  .quest-actions .primary{min-height:33px!important;font-size:13px!important}
+  .quest-actions .text-button{font-size:9px}
+  .workspace .bag-v212-header h2{font-size:21px!important}
+  .bag-v212-header{height:55px}
+  .armory-v212{display:grid!important;grid-template-columns:1fr!important;height:auto!important;gap:10px!important}
+  .armory-v212 .bag-v212-roster{grid-column:1;grid-row:auto;max-height:none;padding:6px!important}
+  .bag-v212-roster h3{display:none}
+  .bag-v212-roster .armory-heroes{display:flex!important;flex-direction:row!important;overflow-x:auto!important}
+  .bag-v212-roster .armory-hero{min-width:125px!important;max-width:150px!important}
+  .armory-v212 .bag-hero-display{grid-column:1;grid-row:auto;min-height:0}
+  .bag-v212-character-art{min-height:220px!important;max-height:285px!important}
+  .bag-v212-character-stats{grid-template-columns:repeat(2,1fr)}
+  .armory-v212 .bag-v212-right{grid-column:1;grid-row:auto;min-height:430px;max-height:none;overflow:visible}
+  .bag-v212-slot{min-height:130px!important}
+  .armory-v212 .bag-item-grid{min-height:220px;max-height:350px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .armory-v212>.bag-v212-detail{grid-column:1;grid-row:auto;min-height:250px!important}
+}
+@media(orientation:landscape) and (max-height:600px){
+  .next-quest{top:auto!important;right:10px!important;bottom:calc(var(--city-hud-bottom) + 7px)!important}
+  .city-collect{max-width:130px!important}
+  .bag-v212-header{height:43px}
+  .armory-v212{min-height:0!important;height:auto!important}
+  .armory-v212 .bag-v212-right{overflow:visible}
+}
+@media(prefers-reduced-motion:reduce){.nav-item,.bag-v212-item,.city-label{transition:none!important}}
