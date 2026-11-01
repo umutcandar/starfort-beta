@@ -246,11 +246,7 @@ function renderJournal() {
 function itemStats(item) {
   return Object.entries(item.stats).map(([key,value])=>({attack:`+${value} saldırı`,hp:`+${value} can`,armor:`%${value} hasar azaltma`,healing:`+${value} şifa`})[key]).join(' · ');
 }
-function itemArt(item) {
-  const color = {common:'#a5c6ce',epic:'#bfa0e6',legendary:'#ebc67d'}[item.rarity];
-  const art = item.slot==='weapon' ? '<path d="M34 6 42 18 25 43 19 38z" fill="#a8b8c8"/><path d="m34 6-9 37 14-26" fill="#e2e4dd"/><path d="m14 36 18 12M22 43l-8 13" stroke="#c6a166" stroke-width="5"/><path d="m11 56 6 4" stroke="#c6a166" stroke-width="4"/>' : item.slot==='armor' ? '<path d="m20 10-10 7 4 17 8-4-3 23q13 9 26 0l-3-23 8 4 4-17-10-7-6 8H26z" fill="#718999" stroke="#d4b57b" stroke-width="2"/><path d="m22 28 10 7 10-7M22 43l10 6 10-6M32 21v34" stroke="#d4b57b" fill="none"/>' : '<path d="M22 8c-12 24 32 24 20 0" fill="none" stroke="#c6a166" stroke-width="3"/><path d="m32 26 15 16-15 20-15-20z" fill="'+color+'" stroke="#ead7a0" stroke-width="2"/><path d="m32 29 6 13-6 16-7-16z" fill="#ecfaff" opacity=".6"/>';
-  return `<svg class="item-art" viewBox="0 0 64 68" aria-hidden="true"><circle cx="32" cy="34" r="28" fill="${color}" opacity=".07"/><circle cx="32" cy="34" r="25" fill="none" stroke="${color}" opacity=".22"/>${art}</svg>`;
-}
+function itemArt(item) { return armoryArt(item); }
 function renderArmory() {
   if(!state.heroes[selectedArmoryHero]) selectedArmoryHero=state.team[0];
   const hero=R.HEROES.find(hero=>hero.id===selectedArmoryHero), stats=R.heroStats(state,hero.id), gear=R.equipmentStats(state,hero.id);
