@@ -13,6 +13,7 @@ import {practiceReward} from './battle-assist.js';
 import {mountTeamArena} from './team-view.js';
 import {ensureTestCommander} from './quick-play.js';
 import {commanderPath} from './commander-path.js';
+import {cloudSaveRequest,cloudBackupSummary} from './cloud-save.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const esc = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -45,6 +46,7 @@ let state;
 try { state = R.restoreState(localStorage.getItem(R.STORAGE_KEY)); } catch { state = R.createState(); }
 let battleSpeed=1, battleFxExpires=0;
 let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
+let cloudSaveInfo=null,cloudSaveBusy=false;
 let guildToken='';try{guildToken=localStorage.getItem(GUILD_TOKEN_KEY)||''}catch{}
 let trainingCleanup = null;
 let activeView = 'keep', selectedBuilding = 'keep', toastTimer, scene, selectedSlot = 0, selectedArmoryHero = 'aldren', trialState = null;
@@ -325,10 +327,43 @@ async function guildAction(name){
   finally{guildBusy=false;if(activeView==='guild')renderGuild();}
 }
 function renderSettings(){
+  const cloudReady=!!guildToken,cloudLabel=!cloudReady?'Önce İttifak bölümünden bu cihazda komutan hesabı oluştur.':cloudSaveInfo?.exists?`Bulut yedeği: ${new Date(cloudSaveInfo.savedAt).toLocaleString('tr-TR')} · Rev. ${cloudSaveInfo.revision}`:cloudSaveInfo?'Henüz bulut yedeği yok.':'Bulut durumu henüz sorgulanmadı.';
   workspaceEl.innerHTML=`<header><div><span class="eyebrow">KOMUTA MERKEZİ</span><h2>Ayarlar ve kayıt güvenliği</h2><p>Starfort ilerlemen bu tarayıcıda kayıtlıdır. Önemli aşamalarda yedek almanı öneririz.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
-    <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">OYUN İLERLEMESİ</span><h3>Kayıt yedeği</h3><p>Binan, kaynakların, kahramanların, ekipmanların ve savaş kaydın JSON dosyası olarak saklanır.</p><button class="primary wide" data-export-save>Kayıt dosyasını indir</button><button class="secondary wide" data-import-save>Yedeği geri yükle</button><small>İçe aktarma mevcut ilerlemenin üzerine yazar. Önce bir yedek al.</small></article><article class="guild-panel"><span class="eyebrow">OYUN DENEYİMİ</span><h3>Kontroller</h3><p>Köyü sürükle; +/− ile yakınlaştır. Savaşta hedef seç, 1 / 2 / 3 ile kahraman yeteneklerini kullan, Space ile taktik mola ver.</p><button class="secondary wide" data-fullscreen>Tam ekranı değiştir</button><p class="guild-disclaimer">Klan oturumu, ana oyun kaydından ayrı bir geliştirme sunucusuna bağlıdır.</p></article></div>`;
+    <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">OYUN İLERLEMESİ</span><h3>Kayıt yedeği</h3><p>Binan, kaynakların, kahramanların, ekipmanların ve savaş kaydın JSON dosyası olarak saklanır.</p><button class="primary wide" data-export-save>Kayıt dosyasını indir</button><button class="secondary wide" data-import-save>Yedeği geri yükle</button><small>İçe aktarma mevcut ilerlemenin üzerine yazar. Önce bir yedek al.</small></article><article class="guild-panel"><span class="eyebrow">OYUN DENEYİMİ</span><h3>Kontroller</h3><p>Köyü sürükle; +/− ile yakınlaştır. Savaşta hedef seç, 1 / 2 / 3 ile kahraman yeteneklerini kullan, Space ile taktik mola ver.</p><button class="secondary wide" data-fullscreen>Tam ekranı değiştir</button><p class="guild-disclaimer">Klan oturumu, ana oyun kaydından ayrı bir geliştirme sunucusuna bağlıdır.</p></article><article class="guild-panel"><span class="eyebrow">İSTEĞE BAĞLI · SUPABASE</span><h3>Bulut kayıt yedeği</h3><p>Yerel ilerlemeni bağlı komutan hesabına yedekle veya bulut yedeğini geri getir. Otomatik eşitleme yapılmaz; çevrim içi savaş ödüllerini etkilemez.</p><small>${esc(cloudLabel)}</small>${cloudReady?`<button class="secondary wide" data-cloud-action="status" ${cloudSaveBusy?'disabled':''}>Bulut durumunu kontrol et</button><button class="primary wide" data-cloud-action="upload" ${cloudSaveBusy?'disabled':''}>Bu cihazın kaydını buluta yedekle</button><button class="secondary wide" data-cloud-action="download" ${cloudSaveBusy?'disabled':''}>Buluttan geri yükle</button><button class="text-button wide" data-cloud-action="delete" ${cloudSaveBusy?'disabled':''}>Bulut yedeğini sil</button>`:'<button class="secondary wide" data-view="guild">Komutan hesabı oluştur</button>'}<small>Geri yükleme bu cihazdaki ilerlemeyi değiştirir. Önce JSON yedeği indir. Komutan oturumunu kaybedersen bulut yedeğine erişim de kaybolabilir.</small></article></div>`;
 }
 
+async function cloudSaveAction(action){
+  if(cloudSaveBusy || !['status','upload','download','delete'].includes(action))return;
+  const token=guildToken;
+  if(!token){notify('Önce İttifak bölümünden komutan hesabı oluştur.');return;}
+  cloudSaveBusy=true;if(activeView==='settings')renderSettings();
+  try{
+    const remote=await cloudSaveRequest('save/get',token);
+    cloudSaveInfo=cloudBackupSummary(remote);
+    if(action==='upload'){
+      if(remote.exists && !confirm('Mevcut bulut yedeğinin üzerine bu cihazın kaydı yazılacak. Devam edilsin mi?'))return;
+      const clean=importSave(exportSave(state));
+      const result=await cloudSaveRequest('save/put',token,{state:clean,expectedRev:cloudSaveInfo.revision});
+      cloudSaveInfo={exists:true,revision:result.revision,savedAt:new Date().toISOString()};
+      notify('Oyun ilerlemenin bulut yedeği oluşturuldu.');
+    } else if(action==='download'){
+      if(!remote.exists)throw new Error('Bu hesapta henüz bulut yedeği yok.');
+      const candidate=importSave(JSON.stringify({format:'starfort-save',key:R.STORAGE_KEY,state:remote.state}));
+      if(!confirm('Bulut kaydı bu cihazdaki mevcut ilerlemenin yerine geçecek. Önce yerel kayıt dosyasını indirdin mi?'))return;
+      combatRunner.pause();trialState=null;
+      const previous=state;state=candidate;
+      if(!persist()){state=previous;throw new Error('Tarayıcı kaydı değiştirilemedi.');}
+      location.reload();return;
+    } else if(action==='delete'){
+      if(!remote.exists)throw new Error('Silinecek bulut yedeği bulunamadı.');
+      if(!confirm('Bulut yedeğini kalıcı olarak silmek istediğine emin misin? Cihazındaki yerel kayıt silinmeyecek.'))return;
+      await cloudSaveRequest('save/delete',token,{expectedRev:cloudSaveInfo.revision});
+      cloudSaveInfo={exists:false,revision:0,savedAt:null};
+      notify('Bulut yedeğin silindi. Yerel kaydın korunuyor.');
+    } else notify(remote.exists?'Bulut yedeği bulundu.':'Bu hesapta henüz bulut yedeği yok.');
+  }catch(error){notify('Bulut kaydı: '+error.message);}
+  finally{cloudSaveBusy=false;if(activeView==='settings')renderSettings();}
+}
 function renderWorkspace() {
   if(trainingCleanup){trainingCleanup();trainingCleanup=null;}
   const open = activeView !== 'keep'; workspaceEl.hidden = !open; inspectorEl.hidden = open; document.querySelector('.app').classList.toggle('panel-open', open); workspaceEl.dataset.view = activeView;
@@ -499,6 +534,7 @@ function dispatch(action) {
   if(button.dataset.copy){navigator.clipboard?.writeText(button.dataset.copy).then(()=>notify('Davet kodu kopyalandı.')).catch(()=>notify('Kodu seçerek kopyalayabilirsin.'));return;}
   if(button.hasAttribute('data-export-save')){const file=new Blob([exportSave(state)],{type:'application/json'});const url=URL.createObjectURL(file);const link=document.createElement('a');link.href=url;link.download='starfort-kayit-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('Kayıt yedeği hazırlandı.');return;}
   if(button.hasAttribute('data-import-save')){$('#import-save').click();return;}
+  if(button.dataset.cloudAction){cloudSaveAction(button.dataset.cloudAction);return;}
   if(button.dataset.battleStance){const changed=R.setBattleStance(trialState||state,button.dataset.battleStance);if(!changed.ok)return notify(changed.error);if(!trialState)persist();renderBattle();return;}
   if(button.hasAttribute('data-city-buildings')) { const open=$('#building-picker').hidden; $('#building-picker').hidden=!open; button.setAttribute('aria-expanded',String(open)); return; }
   if(button.dataset.cityZoom) { scene?.zoomBy(Number(button.dataset.cityZoom)); return; }
