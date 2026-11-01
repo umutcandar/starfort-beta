@@ -87,6 +87,7 @@ export function mountArena(root){
       title=room?.winner===null?'BERABERE':room?.winner===snapshot.you?'ZAFER':'MAĞLUBİYET';
       detail=room?.reason==='disconnect'?'Rakip bağlantıyı kaybetti.':room?.reason==='forfeit'?'Bir oyuncu düellodan ayrıldı.':'Yeni maç için Botla Savaş düğmesine basabilir veya Çık ile gerçek oyuncu arayabilirsin.';
     }
+    if(status==='ended'&&!room?.isPractice&&receiptRecovery.pending)detail+=' · Maç kaydı sunucuya yeniden gönderiliyor.';
     const el=$('#arena-message');el.hidden=status==='active'&&!error;
     el.innerHTML=title?`<b>${esc(title)}</b><p>${esc(detail)}</p>`:'';
     $('#arena-connection').textContent=error?'Bağlantı kesildi':({idle:'Arena hazır',interrupted:'Maç oturumu iptal',waiting:'Eşleşme bekleniyor',active:'Canlı düello sürüyor',ended:'Maç tamamlandı'})[status]||'Hazırlanıyor';
