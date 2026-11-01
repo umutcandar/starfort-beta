@@ -144,6 +144,14 @@ try{
   await sleep(100);
   assert.ok(await evaluate("document.querySelector('#battle-dialog').open"),'Savaşa Başla gerçek savaş modalını açmalı');
   await evaluate("document.querySelector('[data-close-battle]').click()");
+  await evaluate("document.querySelector('.header-action[data-view=settings]').click()");
+  await sleep(110);
+  assert.ok(await evaluate("!!document.querySelector('#starfort-account-form')"),'E-posta hesap formu ayarlardan erişilebilir olmalı');
+  assert.ok(await evaluate("!!document.querySelector('[data-audio-toggle]')"),'Ses aç/kapat kontrolleri görünmeli');
+  await evaluate("document.querySelector('[data-audio-toggle]').click()");
+  assert.ok(await evaluate("document.querySelector('[data-audio-toggle]').textContent.includes('Açık')"),'Ses izne bağlı açılmalı');
+  await evaluate("document.querySelector('[data-audio-toggle]').click()");
+  assert.ok(await evaluate("document.querySelector('[data-audio-toggle]').textContent.includes('Kapalı')"),'Ses kapatılabilmeli');
   console.log('STARFORT gerçek Chromium görsel/etkileşim kontrolleri BAŞARILI');
   console.log(JSON.stringify({desktop:{scenic:wideScenic,bag:wideBag},mobile:{scenic:mobileScenic,bag:mobileBag,scrollDetail}},null,2));
 } finally{
