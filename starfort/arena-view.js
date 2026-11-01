@@ -106,7 +106,7 @@ export function mountArena(root){
   let epoch=0;
   async function poll(){if(destroyed||busy||!token)return;const my=epoch;try{const next=await api('state');if(my!==epoch)return;snapshot=matchContinuity.accept(next);if(Number.isSafeInteger(next.inputSeq))seq=Math.max(seq,next.inputSeq);error='';}catch(e){error=e.message;}if(!destroyed)message();if(!destroyed&&sessionStorage.getItem('starfort:autostart-duel')&&snapshot.status!=='active'&&snapshot.status!=='waiting'){sessionStorage.removeItem('starfort:autostart-duel');playBot();}}
   async function queue(){if(busy||!token||!policy.liveMatchmaking)return;busy=true;epoch++;try{snapshot=matchContinuity.accept(await api('queue',{heroId}));error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
-  async function playBot(){if(busy||!token)return;busy=true;epoch++;try{snapshot=await api('bot',{difficulty:botDifficulty,heroId});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
+  async function playBot(){if(busy||!token)return;busy=true;epoch++;try{snapshot=matchContinuity.accept(await api('bot',{difficulty:botDifficulty,heroId}));error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function leave(){if(busy||!token)return;busy=true;epoch++;try{snapshot=await api('leave',{});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function send(){if(destroyed||busy||snapshot.status!=='active')return;
     const x=(keys.has('d')||keys.has('arrowright')||touch.has('right')?1:0)-(keys.has('a')||keys.has('arrowleft')||touch.has('left')?1:0);
@@ -114,7 +114,7 @@ export function mountArena(root){
     const axis=combineMovement(x,y,joystick.read());
     const body={seq:++seq,x:axis.x,y:axis.y,attack:keys.has('j')||touch.has('attack')||pendingAttack,burst:pendingBurst,dash:pendingDash};
     pendingBurst=false;pendingDash=false;pendingAttack=false;busy=true;
-    try{snapshot=await api('input',body);error='';}catch(e){error=e.message;if(body.burst)pendingBurst=true;if(body.dash)pendingDash=true;if(body.attack)pendingAttack=true;}
+    try{snapshot=matchContinuity.accept(await api('input',body));error='';}catch(e){error=e.message;if(body.burst)pendingBurst=true;if(body.dash)pendingDash=true;if(body.attack)pendingAttack=true;}
     finally{busy=false;if(!destroyed)message();}
   }
   function keydown(e){if(!root.isConnected||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||e.ctrlKey||e.metaKey)return;
