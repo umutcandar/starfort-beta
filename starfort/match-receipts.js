@@ -8,7 +8,7 @@ const MAX_PENDING=16,MAX_AGE_MS=6*24*60*60*1000;
 export function createMatchReceiptRecovery({storage,userId,fetcher=fetch,now=()=>Date.now()}={}){
  const enabled=UUID.test(userId||'')&&storage&&typeof storage.getItem==='function';
  const key='starfort:match-receipts:'+userId;
- let sending=false;
+ let sending=false,nextRetryAt=0;
  function valid(receipt){
    if(!receipt||typeof receipt.p_body!=='string'||receipt.p_body.length>8000
       ||typeof receipt.p_sig!=='string'||!/^[a-f0-9]{64}$/.test(receipt.p_sig))return false;
@@ -44,10 +44,10 @@ export function createMatchReceiptRecovery({storage,userId,fetcher=fetch,now=()=
    return save([...existing,receipt]);
  }
  async function flush(){
-   if(!enabled||sending)return false;
+   if(!enabled||sending||now()<nextRetryAt)return false;
    const pending=read();
    if(!pending.length){save([]);return true;}
-   sending=true;
+   sending=true;nextRetryAt=now()+30000;
    try{
      for(const receipt of pending.slice(0,4)){
        try{
