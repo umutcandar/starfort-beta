@@ -38,7 +38,7 @@ export function armoryMarkup(state,heroId='aldren',filter='all',selectedId=null)
   if(!hero)return '<section class="bag-empty"><h2>Henüz kahraman yok</h2></section>';
   const stats=R.heroStats(state,hero.id),gear=R.equipmentStats(state,hero.id);
   const items=visibleItems(state,filter);
-  const material=(filter==='all'||filter==='materials'||filter==='owned')?MATERIALS.find(m=>selectedId==='material:'+m.id):null;
+  const material=(filter==='all'||filter==='materials'||filter==='owned')?(MATERIALS.find(m=>selectedId==='material:'+m.id)||(filter==='materials'?MATERIALS[0]:null)):null;
   const selected=material?null:(items.find(item=>item.id===selectedId)||items[0]||null);
   const busy=state.battle?.status==='active';
   const equippedItems=Object.entries(R.SLOTS).map(([slot,label])=>{
