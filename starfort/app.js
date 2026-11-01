@@ -173,7 +173,7 @@ function renderCityProduction() {
   renderConstructionBanner();
 }
 function renderConstructionBanner(){
-  const job=R.constructionStatus(state);
+  const job=R.constructionStatus(state,constructionUiNow());
   const banner=$('#construction-status');
   banner.hidden=!job;
   if(!job)return;
@@ -212,7 +212,7 @@ function renderBuildingDialog() {
   const dialog=$('#building-dialog'), previousScroll=dialog.scrollTop;
   const building=R.BUILDINGS.find(item=>item.id===selectedBuilding);
   if(!building)return;
-  $('#building-content').innerHTML=buildingWorkshopMarkup(state,selectedBuilding,{icon:svg,number,now:Date.now()});
+  $('#building-content').innerHTML=buildingWorkshopMarkup(state,selectedBuilding,{icon:svg,number,now:constructionUiNow()});
   dialog.scrollTop=previousScroll;
   for(const canvas of $('#building-content').querySelectorAll('[data-building-preview]')){
     paintBuildingPreview(canvas,building.id,Number(canvas.dataset.buildingPreview)).catch(()=>{
@@ -740,6 +740,15 @@ async function quickPlayBot(mode) {
   }catch(error){notify('Savaş başlatılamadı: '+error.message);}
   finally{quickBotBusy=false;}
 }
+let verifiedClockAnchor=null;
+function constructionUiNow(){
+ return verifiedClockAnchor?verifiedClockAnchor.now+Math.max(0,performance.now()-verifiedClockAnchor.monotonic):Date.now();
+}
+async function verifyConstructionTime(){
+ const now=await trustedConstructionNow();
+ verifiedClockAnchor={now,monotonic:performance.now()};
+ return now;
+}
 let constructionRequestPending=false;
 async function runBuildingAction(mode,id,button){
  if(constructionRequestPending)return;
@@ -751,7 +760,7 @@ async function runBuildingAction(mode,id,button){
    // Time must be verified by Render for every timed construction and claim.
    // Level 1 tutorial remains immediately playable if the service is offline.
    const needsClock=mode==='finish'||state.buildings[id]>=R.CONSTRUCTION_START_LEVEL;
-   const now=needsClock?await trustedConstructionNow():Date.now();
+   const now=needsClock?await verifyConstructionTime():Date.now();
    if(saveGuard.conflicted)return notify('Başka sekmedeki ilerleme nedeniyle inşaat durduruldu.');
    selectedBuilding=id;
    const outcome=mode==='finish'?R.completeConstruction(state,now):
@@ -900,6 +909,8 @@ $('#recenter').innerHTML = svg('keepMenu');
 let buildingBackdropDown = false;
 // Update long-term construction countdowns and claim availability while the panel is open.
 setInterval(()=>{if(state.construction){renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}},30000);
+if(state.construction)void verifyConstructionTime().then(()=>{renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}).catch(()=>{});
+
 $('#building-dialog').addEventListener('pointerdown', event => { buildingBackdropDown = event.target === $('#building-dialog'); });
 $('#building-dialog').addEventListener('click', event => { if (buildingBackdropDown && event.target === $('#building-dialog')) $('#building-dialog').close(); buildingBackdropDown = false; });
 $('#battle-dialog').addEventListener('click', event => { if (event.target === $('#battle-dialog')) closeBattle(); });
