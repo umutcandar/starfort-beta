@@ -4,7 +4,7 @@ import * as R from './rules.js';
 import {labyrinthLayout,labyrinthStatus,createLabyrinth,restoreLabyrinth,MAZE_FLOORS,requiredStoryChapters} from './labyrinth.js';
 const T=Date.UTC(2026,9,31,12);
 const clone=x=>JSON.parse(JSON.stringify(x));
-function fresh(chapters=1){const s=R.createState(T);s.cleared=Array.from({length:chapters},(_,i)=>i+1);return s;}
+function fresh(chapters=1){const s=R.createState(T);s.cleared=Array.from({length:chapters},(_,i)=>i+1);return R.restoreState(s,T);}
 function travel(s,target){
  const view=R.labyrinthLayout(s.labyrinth.floor);
  let route=[target];
@@ -83,7 +83,7 @@ test('guardian requires a connected route, survives save/load and does not grant
  assert.equal(loaded.battle.rewardApplied,true);
  assert.equal(loaded.battle.stars,0);
  assert.deepEqual(loaded.cleared,[1]);
- assert.deepEqual(loaded.campaignStars,{});
+ assert.deepEqual(loaded.campaignStars,{'1':1});
  assert.equal(R.startLabyrinthBattle(loaded).ok,false);
  travel(loaded,24);
  const gain=clone(loaded.res);
