@@ -86,12 +86,12 @@ test('source wires accessible village tabs, collect-and-build, preserves modal, 
  const css=readFileSync(new URL('./building-workshop.css',import.meta.url),'utf8');
  const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
  assert.match(app,/import \{buildingWorkshopMarkup\}/);
- assert.match(app,/upgradeBuildingFromProduction\(state,selectedBuilding/);
+ assert.match(app,/upgradeBuildingFromProduction\(state,id,now/);
  assert.match(app,/button\.dataset\.planBuilding/);
  assert.match(app,/button\.dataset\.collectUpgrade/);
  assert.doesNotMatch(app,/if \(upgraded\.ok\) \$\('#building-dialog'\)\.close/);
  assert.match(css,/@media\(max-width:730px\)/);
  assert.match(css,/@media\(orientation:landscape\)/);
  assert.match(html,/href="building-workshop\.css"/);
- assert.match(html,/v2\.22\.0/);
+ assert.match(html,/v2\.23\.0/);
 });

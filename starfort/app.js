@@ -24,6 +24,7 @@ import {armoryArt} from './armory-art.js';
 import {armoryMarkup} from './armory-v212.js';
 import {createMatchReceiptRecovery} from './match-receipts.js';
 import {buildingWorkshopMarkup} from './building-workshop.js';
+import {trustedConstructionNow} from './construction-clock.js';
 import {labyrinthMarkup} from './labyrinth-view.js';
 import {premiumCatalogMarkup} from './premium-catalog.js';
 import {cloudSaveRequest,cloudBackupSummary} from './cloud-save.js';
@@ -172,7 +173,7 @@ function renderCityProduction() {
   renderConstructionBanner();
 }
 function renderConstructionBanner(){
-  const job=R.constructionStatus(state);
+  const job=R.constructionStatus(state,constructionUiNow());
   const banner=$('#construction-status');
   banner.hidden=!job;
   if(!job)return;
@@ -211,7 +212,7 @@ function renderBuildingDialog() {
   const dialog=$('#building-dialog'), previousScroll=dialog.scrollTop;
   const building=R.BUILDINGS.find(item=>item.id===selectedBuilding);
   if(!building)return;
-  $('#building-content').innerHTML=buildingWorkshopMarkup(state,selectedBuilding,{icon:svg,number,now:Date.now()});
+  $('#building-content').innerHTML=buildingWorkshopMarkup(state,selectedBuilding,{icon:svg,number,now:constructionUiNow()});
   dialog.scrollTop=previousScroll;
   for(const canvas of $('#building-content').querySelectorAll('[data-building-preview]')){
     paintBuildingPreview(canvas,building.id,Number(canvas.dataset.buildingPreview)).catch(()=>{
@@ -739,6 +740,40 @@ async function quickPlayBot(mode) {
   }catch(error){notify('Savaş başlatılamadı: '+error.message);}
   finally{quickBotBusy=false;}
 }
+let verifiedClockAnchor=null;
+function constructionUiNow(){
+ return verifiedClockAnchor?verifiedClockAnchor.now+Math.max(0,performance.now()-verifiedClockAnchor.monotonic):Date.now();
+}
+async function verifyConstructionTime(){
+ const now=await trustedConstructionNow();
+ verifiedClockAnchor={now,monotonic:performance.now()};
+ return now;
+}
+let constructionRequestPending=false;
+async function runBuildingAction(mode,id,button){
+ if(constructionRequestPending)return;
+ if(mode!=='finish'&&!R.BUILDINGS.some(item=>item.id===id))return notify('Bina bulunamadı.');
+ if(saveGuard.conflicted)return notify('Kayıt başka sekmede değişti. Sayfayı yenile.');
+ constructionRequestPending=true;
+ button.disabled=true;
+ try{
+   // Time must be verified by Render for every timed construction and claim.
+   // Level 1 tutorial remains immediately playable if the service is offline.
+   const needsClock=mode==='finish'||state.buildings[id]>=R.CONSTRUCTION_START_LEVEL;
+   const now=needsClock?await verifyConstructionTime():Date.now();
+   if(saveGuard.conflicted)return notify('Başka sekmedeki ilerleme nedeniyle inşaat durduruldu.');
+   selectedBuilding=id;
+   const outcome=mode==='finish'?R.completeConstruction(state,now):
+     mode==='collect'?R.upgradeBuildingFromProduction(state,id,now):
+     R.upgradeBuilding(state,id,now);
+   const name=R.BUILDINGS.find(b=>b.id===id)?.name||'Bina';
+   const message=mode==='finish'?'İnşaat tamamlandı! '+name+' seviye '+outcome.level+' oldu.':
+     outcome.started?name+' inşaatı başladı. Sunucu saati doğrulandı; oyun kapalıyken de ilerler.':
+     name+' · Seviye '+state.buildings[id]+' tamamlandı.';
+   result(outcome,message);
+ }catch(error){notify(error.message||'İnşaat saati doğrulanamadı. Kaynak harcanmadı.');}
+ finally{constructionRequestPending=false;button.disabled=false;if($('#building-dialog').open)renderBuildingDialog();}
+}
 function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
   if(saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.hasAttribute('data-finish-building')||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
@@ -820,26 +855,10 @@ function dispatch(action) {
     return;
   }
   if (button.hasAttribute('data-close-building')) { $('#building-dialog').close(); return; }
-  if (button.dataset.upgradeBuilding) {
-    selectedBuilding = button.dataset.upgradeBuilding;
-    const upgraded = R.upgradeBuilding(state, selectedBuilding, Date.now());
-    // Keep the command center open so the next upgrade is visible immediately.
-    const building = R.BUILDINGS.find(item => item.id === selectedBuilding);
-    const message=upgraded.started?`${building.name} inşaatı başladı. Oyun kapalıyken de süre ilerliyor.`:
-      `${building.name} · Seviye ${state.buildings[selectedBuilding]} tamamlandı.`;
-    result(upgraded,message);
-    return;
-  }
-  if(button.dataset.collectUpgrade){
-    selectedBuilding=button.dataset.collectUpgrade;
-    const upgraded=R.upgradeBuildingFromProduction(state,selectedBuilding,Date.now());
-    const building=R.BUILDINGS.find(item=>item.id===selectedBuilding);
-    result(upgraded,upgraded.started?building.name+' · Kaynaklar toplandı, inşaat başladı.':building.name+' · Üretim toplandı, seviye '+state.buildings[selectedBuilding]+' tamamlandı.');
-    return;
-  }
-  if(button.hasAttribute('data-finish-building')){
-    const outcome=R.completeConstruction(state,Date.now());
-    result(outcome,outcome.ok?'İnşaat tamamlandı! '+R.BUILDINGS.find(b=>b.id===outcome.id).name+' seviye '+outcome.level+' oldu.':null);
+  if(button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.hasAttribute('data-finish-building')){
+    const mode=button.hasAttribute('data-finish-building')?'finish':button.dataset.collectUpgrade?'collect':'upgrade';
+    const id=mode==='finish'?state.construction?.id:button.dataset.collectUpgrade||button.dataset.upgradeBuilding;
+    void runBuildingAction(mode,id,button);
     return;
   }
   if (button.dataset.upgradeHero) { result(R.upgradeHero(state, button.dataset.upgradeHero), 'Kahraman güçlendi.'); return; }
@@ -890,6 +909,8 @@ $('#recenter').innerHTML = svg('keepMenu');
 let buildingBackdropDown = false;
 // Update long-term construction countdowns and claim availability while the panel is open.
 setInterval(()=>{if(state.construction){renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}},30000);
+if(state.construction)void verifyConstructionTime().then(()=>{renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}).catch(()=>{});
+
 $('#building-dialog').addEventListener('pointerdown', event => { buildingBackdropDown = event.target === $('#building-dialog'); });
 $('#building-dialog').addEventListener('click', event => { if (buildingBackdropDown && event.target === $('#building-dialog')) $('#building-dialog').close(); buildingBackdropDown = false; });
 $('#battle-dialog').addEventListener('click', event => { if (event.target === $('#battle-dialog')) closeBattle(); });

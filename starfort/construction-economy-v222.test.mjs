@@ -88,7 +88,7 @@ test('endgame production and costs are finite; all buildings cannot be instantly
  assert.match(html,/Köy gelişimi/);
  assert.match(html,/data-workshop-expedition/);
  assert.match(html,/20/);
- assert.doesNotMatch(html,/data-building-preview="20"/,'only the eight real facade variants may be painted');
+ assert.match(html,/data-building-preview="20"/,'the new 10-20 mastery facades are included in previews');
 });
 test('pending production spends atomically at tier 3; no double payment or instant win',()=>{
  const s=fresh();

@@ -52,7 +52,7 @@ try{
   }
   async function evaluate(js){
     const r=await cdp('Runtime.evaluate',{expression:js,returnByValue:true,awaitPromise:true});
-    if(r.exceptionDetails)throw new Error('Tarayıcı JS hatası: '+r.exceptionDetails.text);
+    if(r.exceptionDetails)throw new Error('Tarayıcı JS hatası: '+(r.exceptionDetails.exception?.description||r.exceptionDetails.text));
     return r.result.value;
   }
   async function ready(){
@@ -207,11 +207,16 @@ try{
     state.cleared=[1,2,3,4,5,6,7,8];
     state.campaignStars={1:3,2:3,3:3,4:3,5:3,6:3,7:3,8:3};
     localStorage.setItem(key,JSON.stringify(state));location.reload();return true})()`);
+  await sleep(450);
   await ready();
   await evaluate("document.querySelector('.nav-item[data-view=keep]').click()");
   await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
   assert.ok(await evaluate("!!document.querySelector('[data-upgrade-building=keep]')"),'8. seviyeden sonraki inşaat başlatılabilmeli');
   await evaluate("document.querySelector('[data-upgrade-building=keep]').click()");
+  for(let retry=0;retry<40;retry++){
+    if(await evaluate("!!JSON.parse(localStorage.getItem('starfort:v1'))?.construction"))break;
+    await sleep(100);
+  }
   const started=await evaluate("(()=>({status:document.querySelector('.ws-status-chip')?.className,notice:document.querySelector('#toast')?.textContent,job:JSON.parse(localStorage.getItem('starfort:v1'))?.construction,level:JSON.parse(localStorage.getItem('starfort:v1'))?.buildings.keep,button:document.querySelector('.ws-upgrade-button')?.outerHTML}))()");
   assert.ok(started.job&&started.status?.includes('building'),'İnşaatı başlatınca seviye anında yükselmemeli: '+JSON.stringify(started));
   assert.equal(await evaluate("document.querySelector('#construction-status').hidden"),false,'Köyde usta çalışması takip edilmeli');
@@ -229,6 +234,29 @@ try{
   assert.ok(await evaluate("!!document.querySelector('.ws-status-chip.building')"),'Yenileme sonrası inşaat kuyruğu kalmalı');
   await evaluate("document.querySelector('[data-plan-building=farm]').click()");
   assert.ok(await evaluate("!!document.querySelector('.ws-status-chip.builder-busy')"),'İkinci binaya ustanın meşgul olduğu bildirilmeli');
+  await evaluate("document.querySelector('[data-plan-building=keep]').click()");
+  const timeSkew=await evaluate("(()=>{const original=Date.now;Date.now=()=>original()+100*86400000;try{return {banner:document.querySelector('#construction-caption')?.textContent,claim:!!document.querySelector('[data-finish-building]'),level:JSON.parse(localStorage.getItem('starfort:v1')).buildings.keep}}finally{Date.now=original}})()");
+  assert.equal(timeSkew.claim,false,'Tarayıcı duvar saatini ileri almak teslim al düğmesini açmamalı');
+  assert.equal(timeSkew.level,8,'Sahte ileri saat binayı tamamlayamamalı');
+  await evaluate("document.querySelector('[data-close-building]').click()");
+  await evaluate("(()=>{const key='starfort:v1',saved=JSON.parse(localStorage.getItem(key));saved.construction=null;saved.buildings.keep=10;localStorage.setItem(key,JSON.stringify(saved));return true})()");
+  await cdp('Page.navigate',{url:origin});
+  await sleep(550);
+  await ready();
+  for(let retry=0;retry<25;retry++){
+    if(await evaluate("!!document.querySelector('#city-labels [data-building=keep]')"))break;
+    await sleep(100);
+  }
+  await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
+  assert.ok(await evaluate("!!document.querySelector('[data-building-preview=\"10\"]')"),'10. seviye mimari önizlemesi gösterilmeli');
+  assert.ok(await evaluate("!!document.querySelector('[data-building-preview=\"11\"]')"),'11. seviye yeni mimari önizlemesi gösterilmeli');
+  assert.ok(await evaluate("document.querySelector('.ws-next-evolution').textContent.includes('Yaldızlı gözetleme feneri')"),'10→11 mimari bileşeni farklı olmalı');
+  await cdp('Emulation.setDeviceMetricsOverride',{width:1536,height:864,deviceScaleFactor:1,mobile:false});
+  await sleep(250);
+  const masteryShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
+  await writeFile('qa-artifacts/starfort-1536x864-level-10-mastery.png',Buffer.from(masteryShot.data,'base64'));
+  await evaluate("document.querySelector('[data-close-building]').click()");
+
   console.log('STARFORT gerçek Chromium görsel/etkileşim kontrolleri BAŞARILI');
   console.log(JSON.stringify({desktop:{scenic:wideScenic,bag:wideBag},mobile:{scenic:mobileScenic,bag:mobileBag,scrollDetail}},null,2));
 } finally{
