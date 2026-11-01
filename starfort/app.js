@@ -55,7 +55,7 @@ let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
 let guildToken='';try{guildToken=localStorage.getItem(GUILD_TOKEN_KEY)||''}catch{}
 let trainingCleanup = null;
-let activeView = 'keep', selectedBuilding = 'keep', toastTimer, scene, selectedSlot = 0, selectedArmoryHero = 'aldren', selectedBagSlot = 'owned', selectedBagItem='iron_sword', trialState = null;
+let activeView = 'keep', selectedBuilding = 'keep', toastTimer, scene, selectedSlot = 0, selectedArmoryHero = 'aldren', selectedBagSlot = 'all', selectedBagItem='iron_sword', trialState = null;
 const cityLabelNodes = new Map();
 const resourcesEl = $('#resources'), navEl = $('#navigation'), inspectorEl = $('#inspector'), workspaceEl = $('#workspace'), questEl = $('#next-quest');
 const combatRunner=createBattleRunner({
@@ -188,25 +188,36 @@ function renderInspector() {
   inspectorEl.innerHTML = `<div class="building-details"><div class="section-head"><small>KÖY YÖNETİMİ</small><span class="level-badge">SEVİYE ${level}</span></div><div class="building-portrait">${svg(building.id)}</div><h2>${building.name}</h2><p class="building-description">${building.description}</p><div class="stat-line"><span>Gelişim</span><b>${level} / ${building.maxLevel}</b></div>${building.production ? `<div class="stat-line"><span>Üretim hızı</span><b>${number(building.production.perMinute * level * (1 + (state.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk</b></div>` : `<div class="stat-line"><span>Köy etkisi</span><b>${building.id === 'keep' ? '+%5 üretim / seviye' : building.id === 'forge' ? '+%5 saldırı / seviye' : '+%4 can / seviye'}</b></div>`}<div class="cost-list">${costHtml(cost)}</div><button class="primary wide" data-upgrade-building="${building.id}" ${blocked ? 'disabled' : ''}>${level >= building.maxLevel ? 'En yüksek seviye' : `Yapıyı geliştir · ${number(cost.gold || 0)} altın`}</button>${buildingProduction(building)}</div><div class="squad-block"><div class="squad-heading"><h3>Kahramanlar</h3><button class="text-button" data-view="heroes">Dizilimi düzenle</button></div><div class="squad">${team.map(hero => `<div class="squad-member">${heroPortrait(hero)}<span>${hero.name}</span><small>Lv.${state.heroes[hero.id].level}</small></div>`).join('')}</div><div class="team-power"><span>Dizilim gücü</span><strong>${number(R.teamPower(state))} ✦</strong></div></div><p class="inspector-note">Yapılar yükseldikçe görünüşleri değişir. Üretim 24 saate kadar birikir; ilk 4 saat tam hızda, sonrası yavaş üretir.</p>`;
 }
 function renderQuest() {
-  const active = state.battle?.status === 'active';
-  const stage = active ? R.STAGES[state.battle.stageId - 1] : R.STAGES[state.cleared.length];
-  if (!stage) {
-    questEl.innerHTML = '<div class="quest-seal">✦</div><div class="quest-copy"><small>KUZEY SINIRI KURTARILDI</small><h3>Hikâyenin sekiz bölümü tamamlandı</h3><p>Yıldızlarını geliştir, usta seferlerini ve yeni maceraları keşfet.</p></div><div class="quest-actions"><button class="primary" data-action="open-expedition">Seferlere dön →</button></div>';
+  const active=state.battle?.status==='active';
+  const stage=active?R.STAGES[state.battle.stageId-1]:R.STAGES[state.cleared.length];
+  if(!stage){
+    questEl.innerHTML=`<div class="quest-crown"><span aria-hidden="true">✦</span>Sıradaki Sefer</div>
+      <div class="quest-layout"><div class="quest-illustration" aria-hidden="true"></div><div class="quest-body"><small>KUZEY SINIRI · ZAFER</small>
+      <h3>Hikâye tamamlandı!</h3><p>Sekiz sefer tamamlandı. Yıldız derecelerini geliştirmeye ve yeni mücadelelere devam et.</p>
+      <div class="quest-actions"><button class="primary" data-action="open-expedition">Seferlere dön ❯</button></div></div></div>`;
     return;
   }
-  const rewardGear=R.itemById(R.FIRST_CLEAR_LOOT[stage.id]);
-  const alreadyWon=state.cleared.includes(stage.id);
   const chapter=CHAPTERS[stage.id-1];
-  const power=R.teamPower(state);
-  questEl.innerHTML = `<div class="quest-seal">✦</div>
-    <div class="quest-copy">
-      <small>${active?'DEVAM EDEN SAVAŞ':'SIRADAKİ SEFER'} · BÖLÜM ${String(stage.id).padStart(2,'0')} / 08</small>
-      <h3>${stage.name}</h3>
-      <p>${chapter.brief.slice(0,190)}${chapter.brief.length>190?'…':''}</p>
-      <div class="quest-power ${power<stage.recommendedPower?'underpowered':''}"><span>⚔ Takım gücü <strong>${number(power)}</strong></span><span>Önerilen <strong>${number(stage.recommendedPower)}</strong></span></div>
-      <div class="quest-rewards"><span class="quest-reward-label">ZAFER ÖDÜLÜ</span><div class="cost-list">${costHtml(stage.reward,true)}</div>${rewardGear&&!alreadyWon?`<small class="quest-gear">✦ ${rewardGear.name}</small>`:''}</div>
-    </div>
-    <div class="quest-actions"><button class="primary" ${active?'data-action="resume-battle"':`data-stage="${stage.id}"`}>${active?'Savaşa dön':'⚔ Savaşa başla'} <span aria-hidden="true">→</span></button><button class="text-button" data-action="open-expedition">Bütün seferleri gör</button></div>`;
+  const power=R.teamPower(state),gear=R.itemById(R.FIRST_CLEAR_LOOT[stage.id]);
+  const rewards=Object.entries(stage.reward).map(([id,amount])=>`<span class="quest-reward-token" title="${resourceName[id]}">${svg(resourceIcon[id])}<b>${number(amount)}</b></span>`).join('');
+  questEl.innerHTML=`<div class="quest-crown"><span aria-hidden="true">✦</span>Sıradaki Sefer</div>
+    <div class="quest-layout">
+      <div class="quest-illustration" aria-hidden="true"><span>✧</span></div>
+      <div class="quest-body">
+        <small>Bölüm ${stage.id} / 8 · ${esc(chapter.name)}</small>
+        <h3>${stage.name}</h3>
+        <div class="quest-power ${power<stage.recommendedPower?'underpowered':''}">
+          <span>⚔ Önerilen Güç <strong>${number(stage.recommendedPower)}</strong></span>
+          <small>Takımın: ${number(power)}</small>
+        </div>
+        <div class="quest-reward-title">Ödüller:${gear&&!state.cleared.includes(stage.id)?` <small>+ ${esc(gear.name)}</small>`:''}</div>
+        <div class="quest-rewards">${rewards}</div>
+        <div class="quest-actions">
+          <button class="primary" ${active?'data-action="resume-battle"':`data-stage="${stage.id}"`}>${active?'⚔ Savaşa Dön':'⚔ Savaşa Başla'} <span aria-hidden="true">❯</span></button>
+          <button class="text-button" data-action="open-expedition">Tüm seferler</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 function renderHeroes() {
