@@ -2,6 +2,7 @@
 export const MAZE_FLOORS=16;
 export const MAZE_WIDTH=5;
 const MAX_RESOURCE=1e9;
+const MILESTONE_GEAR=Object.freeze({4:'ward_mail',8:'star_lens',12:'royal_blade',16:'moonheart'});
 const validCell=id=>Number.isInteger(id)&&id>=0&&id<25;
 const validFloor=floor=>Number.isInteger(floor)&&floor>=1&&floor<=MAZE_FLOORS;
 const clampResources=(state,reward)=>{
@@ -131,10 +132,12 @@ export function completeLabyrinthFloor(state){
   const floor=maze.floor;
   const reward={gold:85+floor*32,stone:28+floor*10,aether:7+floor*3};
   clampResources(state,reward);
+  const loot=MILESTONE_GEAR[floor]||null;
+  if(loot && (state.inventory[loot]||0)<20) state.inventory[loot]=(state.inventory[loot]||0)+1;
   maze.cleared=floor;
   maze.completed=floor===MAZE_FLOORS;
   if(!maze.completed){
     maze.floor=floor+1;maze.cell=0;maze.visited=[0];maze.claimed=[];maze.guardianDefeated=false;
   }
-  return {ok:true,reward,finished:maze.completed,floor};
+  return {ok:true,reward,loot,finished:maze.completed,floor};
 }
