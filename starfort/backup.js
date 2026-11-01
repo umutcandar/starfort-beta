@@ -54,6 +54,6 @@ export function importSave(content){
   for(const id of Object.keys(RESOURCES))if(restored.res[id]!==data.state.res[id])fail();
   for(const b of BUILDINGS)if(restored.buildings[b.id]!==data.state.buildings[b.id])fail();
   for(const [id,hero] of Object.entries(data.state.heroes))
-    if(restored.heroes[id]?.level!==hero.level)fail();
+    if(restored.heroes[id] && restored.heroes[id].level!==hero.level)fail();
   return restored;
 }
