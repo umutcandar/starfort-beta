@@ -95,7 +95,7 @@ function renderResources() {
   resourcesEl.innerHTML = Object.entries(R.RESOURCES).map(([id, item]) => `<div class="resource" data-res="${id}">${svg(resourceIcon[id])}<span><b>${number(state.res[id])}</b><small>${item.name}</small></span></div>`).join('');
 }
 function renderNav() {
-  navEl.innerHTML = navItems.map(([id, icon, label]) => `<button class="nav-item ${activeView === id ? 'active' : ''}" data-view="${id}" aria-label="${label}" aria-current="${activeView === id ? 'page' : 'false'}">${svg(icon)}<span>${label}</span></button>`).join('') + '<div class="rail-foot">✦ &nbsp; BETA · UZUN OYUN TESTİ</div>';
+  navEl.innerHTML = navItems.map(([id, icon, label]) => `<button class="nav-item ${(activeView === id || (activeView === 'campaign' && id === 'expedition')) ? 'active' : ''}" data-view="${id}" aria-label="${label}" aria-current="${(activeView === id || (activeView === 'campaign' && id === 'expedition')) ? 'page' : 'false'}">${svg(icon)}<span>${label}</span></button>`).join('') + '<div class="rail-foot">✦ &nbsp; BETA · UZUN OYUN TESTİ</div>';
 }
 function renderPicker() {
   $('#building-picker').innerHTML = R.BUILDINGS.map(building => `<button class="building-choice ${selectedBuilding === building.id ? 'active' : ''}" data-building="${building.id}" aria-label="${building.name}, seviye ${state.buildings[building.id]}">${svg(building.id)}<span>${building.name.replace('Karaorman ', '').replace('Yıldız ', '').replace('Kor ', '').replace('Aytaşı ', '')}</span></button>`).join('');
@@ -419,8 +419,8 @@ async function cloudSaveAction(action){
 }
 function renderWorkspace() {
   if(trainingCleanup){trainingCleanup();trainingCleanup=null;}
-  const open = activeView !== 'keep'; workspaceEl.hidden = !open; inspectorEl.hidden = open; document.querySelector('.app').classList.toggle('panel-open', open); workspaceEl.dataset.view = activeView;
-  if (activeView === 'heroes') renderHeroes(); else if (activeView === 'expedition') renderExpedition(); else if (activeView === 'journal') renderJournal(); else if (activeView === 'labyrinth') workspaceEl.innerHTML=labyrinthMarkup(state); else if (activeView === 'armory') renderArmory(); else if (activeView === 'shop') renderShop(); else if (activeView === 'guild') renderGuild(); else if (activeView === 'settings') renderSettings(); else if (activeView === 'training') trainingCleanup=mountTraining(workspaceEl); else if(activeView==='arena')trainingCleanup=mountArena(workspaceEl); else if(activeView==='team')trainingCleanup=mountTeamArena(workspaceEl);
+  const open = activeView !== 'keep' && activeView !== 'expedition'; workspaceEl.hidden = !open; inspectorEl.hidden = open; document.querySelector('.app').classList.toggle('panel-open', open); workspaceEl.dataset.view = activeView;
+  if (activeView === 'heroes') renderHeroes(); else if (activeView === 'campaign') renderExpedition(); else if (activeView === 'journal') renderJournal(); else if (activeView === 'labyrinth') workspaceEl.innerHTML=labyrinthMarkup(state); else if (activeView === 'armory') renderArmory(); else if (activeView === 'shop') renderShop(); else if (activeView === 'guild') renderGuild(); else if (activeView === 'settings') renderSettings(); else if (activeView === 'training') trainingCleanup=mountTraining(workspaceEl); else if(activeView==='arena')trainingCleanup=mountArena(workspaceEl); else if(activeView==='team')trainingCleanup=mountTeamArena(workspaceEl);
 }
 function renderBattle(fx=null) {
   const dialog=$('#battle-dialog'), battle=(trialState||state).battle;
@@ -628,7 +628,7 @@ function dispatch(action) {
     result(R.setTeam(state, team), 'Savaş dizilimi güncellendi.'); return;
   }
   if (button.hasAttribute('data-collect')) { const collected = R.collect(state); result(collected, `Üretim toplandı: ${Object.entries(collected.gain).filter(([, n]) => n).map(([id, n]) => `+${number(n)} ${resourceName[id]}`).join(' · ') || 'Henüz biriken kaynak yok.'}`); return; }
-  if (button.dataset.action === 'open-expedition') { activeView = 'expedition'; render(); return; }
+  if (button.dataset.action === 'open-expedition') { activeView = 'campaign'; render(); return; }
   if (button.dataset.action === 'resume-battle') { openBattle(); return; }
   if (button.dataset.stage) { openBattle(button.dataset.stage); return; }
   if (button.dataset.closeView !== undefined) { activeView = 'keep'; render(); return; }
