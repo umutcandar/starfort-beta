@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as R from './rules.js';
 import {exportSave,importSave} from './backup.js';
 import {createSaveGuard} from './save-guard.js';
-import {seasonStatus} from './season-campaign.js';
+import {seasonStatus,seasonEvent} from './season-campaign.js';
 const time=Date.UTC(2026,10,1,12),clone=v=>JSON.parse(JSON.stringify(v));
 test('two tabs cannot overwrite newer progress with an old in-memory castle',()=>{
  const map=new Map(),storage={getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v)};
@@ -48,12 +48,12 @@ test('maxed-out heroes, stars, forge and maze still reach the 29-point season ti
  s.cleared=R.STAGES.map(x=>x.id);s.labyrinth.cleared=16;s.labyrinth.floor=16;
  for(const b of R.BUILDINGS)s.buildings[b.id]=b.maxLevel;
  for(const hero of Object.values(s.heroes))hero.level=20;
- for(let i=0;i<8;i++)R.seasonEvent(s,'win',time);
- for(let i=0;i<8;i++)R.seasonEvent(s,'upgrade',time);
- for(let i=0;i<4;i++)R.seasonEvent(s,'forge',time);
- for(let i=0;i<4;i++)R.seasonEvent(s,'maze',time);
- for(let i=0;i<4;i++)R.seasonEvent(s,'star',time);
- R.seasonEvent(s,'rift',time);
+ for(let i=0;i<8;i++)seasonEvent(s,'win',time);
+ for(let i=0;i<8;i++)seasonEvent(s,'upgrade',time);
+ for(let i=0;i<4;i++)seasonEvent(s,'forge',time);
+ for(let i=0;i<4;i++)seasonEvent(s,'maze',time);
+ for(let i=0;i<4;i++)seasonEvent(s,'star',time);
+ seasonEvent(s,'rift',time);
  assert.equal(seasonStatus(s,time).points,29);
  assert.equal(R.claimSeasonTitle(s,'Yıldız Vekili',time).ok,true);
 });
