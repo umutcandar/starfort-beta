@@ -1,0 +1,173 @@
+/* STARFORT v2.12 approved cinematic navy/gold style; gameplay remains data-driven. */
+:root{--sf12-ink:#0b182b;--sf12-navy:#152c46;--sf12-gold:#efca7a;--sf12-line:#bc965d;--sf12-text:#f8ead0}
+.topbar{background:linear-gradient(180deg,#0b182af5,#142c44ed);border-bottom:1px solid #d4ae699c;box-shadow:0 5px 18px #081220a6}
+.brand>span{color:#ffe9b3;text-shadow:0 1px 10px #d2a05242;font-family:Georgia,serif}
+.resource{border-color:#d1b67a33;background:linear-gradient(160deg,#091729dd,#203855b8);border-radius:6px}
+.resource svg{color:#e3bf73}
+.resource b{color:#ffeaca;font-family:Georgia,serif;font-size:17px}
+.rail{background:linear-gradient(180deg,#14263be9,#071322f2);border-top:1px solid #d9b2719e;box-shadow:0 -3px 18px #090f2299}
+.nav-item{color:#ebdcc3;font:600 12px Georgia,serif;transition:background .16s,color .16s,box-shadow .16s}
+.nav-item.active{background:linear-gradient(155deg,#395777e8,#102843e8);color:#ffdb8c;border:1px solid #d7b06daa;box-shadow:inset 0 0 14px #c9913944,0 0 17px #d3ad5a48}
+.nav-item[data-view=expedition]:not(.active){color:#edd09a}
+.nav-item.active:before{height:2px;left:15px;right:15px;bottom:auto;top:0;width:auto;background:#ffd98f;box-shadow:0 0 8px #e7b65c}
+.nav-item svg{color:#e4bf78}
+.world-heading h1{color:#ffe8b2;text-shadow:0 2px 12px #071625}
+.city-label{border-color:#d0aa71a8;background:linear-gradient(180deg,#203d59f2,#0d1c32f6);border-radius:5px;color:#fff0cf;box-shadow:0 3px 12px #06101c8a}
+.city-label.selected,.city-label:hover{border-color:#ffe2a7;box-shadow:0 0 16px #d5aa6e66}
+.city-controls button{background:#142a43e5;color:#efd6a0;border-color:#bf985d85;border-radius:7px}
+.city-collect{border-radius:8px;background:linear-gradient(120deg,#152d45ed,#0c1a2bea);border-color:#e0ba7585}
+.daily-reward{border-color:#cba05eb3}
+.primary{color:#302313;background:linear-gradient(160deg,#fff0b7,#dfb863 48%,#c39137);border:1px solid #ffe6a3;box-shadow:inset 0 1px #fff4d5a9,0 3px 10px #08102099}
+.secondary{color:#f1d9aa;border:1px solid #bf9e689e;background:#173149}
+.primary:focus-visible,.secondary:focus-visible,.bag-v212-item:focus-visible{outline:2px solid #ffe0a1;outline-offset:3px}
+
+/* Dominant next-story card with a working direct battle action. */
+.next-quest{width:min(430px,calc(100vw - 40px));min-height:235px;bottom:calc(var(--city-hud-bottom) + 22px);right:28px;padding:23px 23px 17px;display:flex;flex-direction:column;gap:10px;align-items:stretch;border-radius:13px;border:1px solid #e3b96baf;background:radial-gradient(circle at 90% 4%,#4a749230,transparent 43%),linear-gradient(145deg,#172d46f5,#09182bf7);box-shadow:0 0 0 3px #17263bc0,inset 0 1px #f5ddab6b,0 17px 45px #05101bcc;color:#f4e5c8;backdrop-filter:blur(7px)}
+.next-quest::before{content:'';position:absolute;inset:7px;border:1px solid #c79d5b40;border-radius:9px;pointer-events:none}
+.next-quest .quest-seal{display:grid!important;position:absolute;top:-18px;left:21px;width:39px;height:40px;transform:none;place-items:center;background:linear-gradient(#ffde9c,#c99948);color:#09203b;border:2px solid #f4db9c;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);box-shadow:0 0 18px #ddb46677;font-size:20px}
+.next-quest .quest-copy{width:100%;z-index:1}
+.next-quest .quest-copy>small{display:block;margin-left:44px;color:#e9c482;font:700 10px/1.4 system-ui;letter-spacing:2px}
+.next-quest .quest-copy h3{margin:12px 0 5px;font:700 clamp(22px,2vw,29px)/1.14 Georgia,serif;color:#fff0c9;text-shadow:0 2px 10px #010917}
+.next-quest .quest-copy p{display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-height:38px;color:#cfdae4;font-size:11px;line-height:1.65}
+.quest-power{display:flex;justify-content:space-between;gap:7px;flex-wrap:wrap;padding:9px 0 8px;margin-top:8px;border-top:1px solid #d4ae6a38;border-bottom:1px solid #d4ae6a38;color:#c6d4df;font-size:11px}
+.quest-power strong{color:#ffe29f;margin-left:4px;font-size:13px}
+.quest-power.underpowered strong:first-child{color:#ffcb88}
+.quest-rewards{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:9px}
+.quest-reward-label{font:700 9px system-ui;letter-spacing:1.1px;color:#e5c88f;white-space:nowrap}
+.quest-rewards .cost-list{margin:0;gap:8px;justify-content:flex-start}
+.quest-rewards .cost{font-size:10px;color:#f7ebd4}
+.quest-rewards .cost svg{color:#ffcf77;width:15px;height:15px}
+.quest-gear{font-size:10px;color:#d4c0ea}
+.quest-actions{display:flex;gap:10px;align-items:center;justify-content:space-between;position:relative;z-index:1;margin-top:auto}
+.next-quest .quest-actions .primary{flex:1;min-height:44px;font:700 15px Georgia,serif;white-space:nowrap;border-radius:6px}
+.quest-actions .text-button{white-space:nowrap;font-size:10px;text-align:center}
+.next-quest .quest-copy h3,.quest-power strong{font-variant-numeric:tabular-nums}
+
+/* Equipment screen: hero roster + cinematic champion + working inventory/detail pane. */
+.workspace:has(.armory-v212){background:linear-gradient(115deg,#061527f6,#0b1d34ed 58%,#08192af6),url('assets/city/starfall-valley.webp') center 39%/cover;scrollbar-color:#ad8c5d transparent}
+.bag-v212-header{margin-bottom:16px!important;border-bottom:1px solid #cfaa6545;padding-bottom:12px}
+.bag-v212-header h2{color:#ffe1a0;text-shadow:0 2px 12px #090f21;font-size:36px!important}
+.armory-v212{display:grid;grid-template-columns:minmax(130px,175px) minmax(230px,.85fr) minmax(385px,1.65fr);align-items:stretch;gap:13px;width:100%;max-width:1700px;margin:0 auto;min-height:570px}
+.bag-v212-roster,.armory-v212 .bag-hero-display,.bag-v212-equipped,.bag-v212-detail{border:1px solid #c39c648a;background:linear-gradient(155deg,#142b45ee,#08182be9);box-shadow:inset 0 1px #f6dc9b2e,0 9px 26px #04101b76;border-radius:10px}
+.bag-v212-roster{padding:15px 9px;min-width:0}
+.bag-v212-roster h3{font:700 21px Georgia,serif;color:#ffe3a9;text-align:center;margin:3px 0 15px}
+.bag-v212-roster .armory-heroes{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.bag-v212-roster .armory-hero{display:flex;align-items:center;gap:8px;text-align:left;width:100%;min-width:0;min-height:63px;padding:5px;background:#172e48;color:#e7dbc6;border:1px solid #8f825f88;border-radius:8px;box-shadow:none}
+.bag-v212-roster .armory-hero.active{border-color:#ffdb88;background:linear-gradient(140deg,#5b472a,#1a3352);box-shadow:0 0 12px #f4b8555c}
+.bag-v212-roster .armory-hero>img{width:49px;height:52px;flex:none;object-fit:cover;object-position:50% 21%;border:1px solid #bf9866;background:#132b46;border-radius:5px}
+.bag-v212-roster .armory-hero>span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.bag-v212-roster .armory-hero b{color:#ffdfa2;font:700 15px Georgia,serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bag-v212-roster .armory-hero small{color:#c3d0db;font-size:9px;line-height:1.25;overflow:hidden;text-overflow:ellipsis}
+.armory-v212 .bag-hero-display{display:flex;flex-direction:column;align-items:stretch;gap:0;margin:0;padding:0;overflow:hidden;min-width:0}
+.bag-v212-character-art{position:relative;flex:1;display:flex;justify-content:center;align-items:flex-end;min-height:285px;max-height:470px;background:radial-gradient(ellipse at 50% 60%,#5b749357,transparent 65%),linear-gradient(#274c6b33,#07192966);overflow:hidden}
+.bag-v212-character-art img{display:block;width:100%;height:100%;max-height:470px;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 9px 18px #020716)}
+.bag-v212-character-name{padding:8px 15px 12px;text-align:center;background:linear-gradient(180deg,#122b469a,#0d1b2c);border-top:1px solid #d1b16b69}
+.bag-v212-character-name h3{font:700 32px Georgia,serif!important;margin:2px 0!important;color:#ffe4a9}
+.bag-v212-character-name small{color:#c6d0e0}
+.bag-v212-character-stats{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:7px 15px 14px;background:#0b1c30a8}
+.bag-v212-character-stats>div{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:7px 4px;border-bottom:1px solid #bfa17438;font-size:10px;color:#c7d6e2}
+.bag-v212-character-stats b{font:700 13px Georgia,serif;color:#ffe5a9}
+.bag-v212-right{display:flex;flex-direction:column;gap:12px;min-width:0}
+.bag-v212-equipped{padding:14px 12px 12px}
+.bag-v212-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+.bag-v212-section-heading strong{font:700 16px Georgia,serif;color:#ffe1a4}
+.bag-v212-slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.bag-v212-slot{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;min-height:137px;padding:9px 5px;border:1px solid #a58d68a0;border-radius:8px;background:radial-gradient(circle at center,#4e51705b,#0d1b31 72%)}
+.bag-v212-slot small{font-size:10px;color:#f0d299}
+.bag-v212-slot-art{display:grid;place-items:center;width:62px;height:68px}
+.bag-v212-slot-art .item-art{width:60px;height:65px;filter:drop-shadow(0 0 10px #c4975288)}
+.bag-v212-slot strong{font:700 12px Georgia,serif;color:#ffe1ac;text-align:center;line-height:1.25}
+.bag-v212-slot .text-button{margin-top:auto;font-size:10px}
+.bag-v212-empty-mark{color:#a5a9bc;font-size:37px}
+.bag-v212-slot-hint{font-size:9px;color:#8a9eb0;margin-top:auto}
+.armory-v212 .bag-toolbar{display:flex;flex-wrap:wrap;gap:7px;margin:0;padding:2px 0 8px;border-bottom-color:#cda56a6b}
+.armory-v212 .bag-toolbar h3{font-size:23px}
+.armory-v212 .bag-filters{gap:5px}
+.armory-v212 .bag-filters button{min-height:31px;padding:5px 9px;font-size:10px;border-radius:6px}
+.bag-v212-collection{display:grid;grid-template-columns:minmax(210px,1fr) minmax(200px,.88fr);gap:11px;min-width:0;align-items:start}
+.armory-v212 .bag-item-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-content:start;max-height:450px;overflow-y:auto;padding:5px 3px 8px;scrollbar-width:thin;scrollbar-color:#c6a268 #0d1b30}
+.bag-v212-item{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;aspect-ratio:1/1;min-width:0;min-height:93px;padding:8px 4px 6px;border:1px solid #8da5b4a6;border-radius:8px;background:radial-gradient(circle at 45% 30%,#6985a244,#0e1d31 72%);color:#f5e0b9}
+.bag-v212-item.epic{border-color:#a981db}
+.bag-v212-item.legendary{border-color:#e3ba65}
+.bag-v212-item.selected{border-width:2px;border-color:#ffdd8e;box-shadow:0 0 0 1px #e3bd69,0 0 16px #dfaf585e}
+.bag-v212-item.missing{filter:saturate(.5);opacity:.65}
+.bag-v212-item:hover:not(:disabled){background:radial-gradient(circle at 45% 30%,#8883ad69,#183453 75%)}
+.bag-v212-item-art{display:grid;place-items:center;height:63%;width:100%}
+.bag-v212-item-art .item-art{height:100%;width:100%;max-height:70px;filter:drop-shadow(0 4px 6px #0008)}
+.bag-v212-item-name{font:700 10px/1.2 Georgia,serif;max-width:100%;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.bag-v212-count,.bag-v212-worn{position:absolute;right:3px;top:3px;padding:1px 4px;border-radius:4px;background:#0c1925e8;font:700 10px system-ui;color:#ffe3a2}
+.bag-v212-worn{right:auto;left:3px;font-size:8px;color:#8be4ba}
+.bag-v212-detail{padding:13px;min-height:285px}
+.bag-v212-detail-head{display:flex;gap:8px;align-items:center;border-bottom:1px solid #b99b685b;padding-bottom:11px;margin-bottom:11px}
+.bag-v212-detail-art{width:73px;height:85px;display:grid;place-items:center;flex:none;background:radial-gradient(circle,#465c7880,#122137);border:1px solid #aa986f;border-radius:7px}
+.bag-v212-detail-art.epic{border-color:#b993e5}
+.bag-v212-detail-art.legendary{border-color:#e5be64}
+.bag-v212-detail-art .item-art{height:75px;width:70px;filter:drop-shadow(0 0 8px #d6b17377)}
+.bag-v212-detail-head small{font-size:9px;color:#f1cf8c}
+.bag-v212-detail-head h3{color:#ffe2a4;font:700 20px/1.12 Georgia,serif;margin:5px 0}
+.bag-v212-detail-head p{font-size:10px;line-height:1.45;color:#c5d1db}
+.bag-v212-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.bag-v212-stat-grid>div{display:grid;grid-template-columns:1fr auto;align-items:center;gap:1px 8px;padding:6px 3px;border-bottom:1px solid #c0a26a2f}
+.bag-v212-stat-grid span{font-size:10px;color:#c6d2dd}
+.bag-v212-stat-grid strong{color:#f8dda4;font:700 15px Georgia,serif}
+.bag-v212-stat-grid small{grid-column:1/-1;color:#a9b9c6;font-size:9px}
+.bag-v212-stat-grid .positive{color:#9fdbb2}
+.bag-v212-stat-grid .negative{color:#f2a99b}
+.bag-v212-set{margin:12px 0 9px;padding:8px 10px;border:1px solid #8c9d4e6b;background:#243a3959;border-radius:7px;color:#dfeaa5;font:700 11px Georgia,serif}
+.bag-v212-set small{display:block;font:400 10px/1.5 system-ui;color:#c6d4d3;margin-top:4px}
+.bag-v212-detail-actions{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap}
+.bag-v212-detail-actions button{flex:1;min-width:82px;min-height:38px;padding:8px 10px}
+.bag-v212-origin{font-size:10px!important;line-height:1.5!important;margin-top:11px!important;color:#b5c6cf!important}
+.bag-v212-empty{padding:16px;color:#d3c8b0;font-size:12px}
+.armory-v212 .armory-tip{font-size:10px;color:#abbecb;padding:4px 0!important;margin:0!important;line-height:1.6}
+@media(max-width:1350px){
+  .armory-v212{grid-template-columns:155px minmax(225px,.85fr) minmax(360px,1.6fr);gap:10px}
+  .bag-v212-collection{grid-template-columns:1fr}
+  .armory-v212 .bag-item-grid{grid-template-columns:repeat(5,minmax(0,1fr));max-height:240px}
+}
+@media(max-width:920px){
+  .armory-v212{grid-template-columns:minmax(220px,.65fr) minmax(320px,1fr)}
+  .bag-v212-roster{grid-column:1/-1;padding:8px 10px}
+  .bag-v212-roster h3{display:none}
+  .bag-v212-roster .armory-heroes{display:flex;flex-direction:row;overflow-x:auto}
+  .bag-v212-roster .armory-hero{min-width:125px;max-width:180px}
+  .bag-v212-character-art{max-height:365px}
+  .next-quest{width:min(395px,calc(100vw - 35px))}
+}
+@media(max-width:660px){
+  .next-quest{left:15px;right:15px;bottom:calc(var(--city-hud-bottom) + 12px);width:auto;min-height:180px;max-height:39vh;padding:18px 16px 13px;gap:6px;overflow:auto}
+  .next-quest .quest-copy h3{font-size:22px;margin:8px 0 3px}
+  .next-quest .quest-copy p{-webkit-line-clamp:1;max-height:24px;font-size:10px}
+  .quest-power{margin-top:5px;padding:5px 0}
+  .quest-rewards{margin-top:5px}
+  .next-quest .quest-actions .primary{min-height:39px;font-size:13px}
+  .quest-actions .text-button{font-size:9px}
+  .city-collect{top:calc(var(--city-hud-top) + 119px);bottom:auto}
+  .armory-v212{display:flex;flex-direction:column;gap:11px}
+  .bag-v212-header h2{font-size:29px!important}
+  .bag-v212-character-art{min-height:245px;max-height:340px}
+  .bag-v212-character-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .bag-v212-character-stats>div{flex-direction:column;justify-content:center;text-align:center;gap:2px;font-size:9px}
+  .bag-v212-slots{gap:6px}
+  .bag-v212-slot{min-height:118px}
+  .armory-v212 .bag-item-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:420px){
+  .armory-v212 .bag-item-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .bag-v212-character-stats{padding:7px}
+  .bag-v212-roster .armory-hero{min-width:115px}
+  .bag-v212-detail-head h3{font-size:18px}
+  .next-quest{max-height:42vh}
+  .quest-reward-label,.quest-gear{display:none}
+}
+@media(orientation:landscape) and (max-height:600px){
+  .next-quest{top:calc(var(--city-hud-top) + 10px);bottom:auto;left:auto;right:62px;min-height:0;width:min(380px,42vw);max-height:calc(100vh - var(--city-hud-top) - var(--city-hud-bottom) - 25px);padding:16px;gap:6px;overflow:auto}
+  .next-quest .quest-copy h3{font-size:19px;margin:5px 0}
+  .next-quest .quest-copy p{display:none!important}
+  .next-quest .quest-power{margin-top:3px;padding:4px 0}
+  .next-quest .quest-actions .primary{min-height:34px;padding:5px;font-size:12px}
+  .quest-rewards{margin-top:4px}
+}
+@media(prefers-reduced-motion:reduce){
+  .nav-item,.bag-v212-item{transition:none}
+}
