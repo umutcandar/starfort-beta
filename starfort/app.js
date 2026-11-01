@@ -148,6 +148,7 @@ function villageView(){
 }
 function acceptVillage(response){
  if(!villageSignedIn()||response.identity!==accountSession().user.id)return false;
+ if(villageOwner===response.identity&&villageSnapshot&&response.snapshot.revision<villageSnapshot.revision)return false;
  villageOwner=response.identity;villageSnapshot=response.snapshot;
  verifiedClockAnchor={now:response.snapshot.serverNow,monotonic:performance.now()};
  render();if($('#building-dialog').open)renderBuildingDialog();
