@@ -10,7 +10,7 @@
 - Her kaynak yalnızca sunucunun `clock_timestamp()` zamanıyla, tam 4 saat + kalan 20 saatte %12 hız ve 24 saat sınırıyla üretilir. Her kaynak 1 milyar ile sınırlıdır.
 - Gerçek oyunla aynı 20 seviye, güçlenen maliyetler ve 2→3'ten başlayan 3–3600 dakikalık tek usta süresi. Topla ve yükselt atomiktir: işlem başarısızsa bakiyeye dokunulmaz. İkinci aktif inşaat reddedilir. İnşaatın bitmesi kayıtlı sunucu saatiyle doğrulanır.
 - Ustalık 3/6/12/18/24 sınırlarına göre binayı kilitler. Kanıtlanmamış yerel sefer yıldızları kullanılmaz. Doğrulanmış sunucu günlük sandığı +1, HMAC doğrulanmış PvP geçmişindeki ilk ve tek galibiyet kaydı +3 ustalık verir. Hileli istemci `room_id` gönderse bile oyuncuya ait `win` geçmişi yoksa ödül yok.
-- İşlemler sunucu transaction'ında satır kilidi (`FOR UPDATE`) ve istemcinin UUID işlem kimliği üzerinden tekrar yürütmeye karşı korunur. Tarayıcı kapansa dahi inşaat ilerler.
+- İşlemler sunucu transaction'ında satır kilidi (`FOR UPDATE`) ve UUID işlem kimliğinin **kalıcı sunucu işlem geçmişinde** (benzersiz `(user_id,request_id)`) tutulmasıyla tekrar yürütmeye karşı korunur. Tarayıcı kapansa dahi inşaat ilerler.
 - Veri tabanında tabloların RLS'si açık; `anon`/authenticated doğrudan SELECT/UPDATE/INSERT yapamaz. `public.sfb_village_api` sadece `authenticated` yetkisiyle, `auth.uid()` üzerinden kendi satırına, `SECURITY DEFINER SET search_path = ''` ile çalışır. `anon` RPC çağrısı yasak.
 
 ## Sınırlar ve izleme
@@ -24,7 +24,7 @@
 - `starfort/sql/starfort-village-authority.sql` canlı Supabase migrasyonunun kaynak kopyasıdır.
 - `village-authority-v224.test.mjs`: istemci API güvenliği, veri şeması, oturum izolasyonu ve SQL sözleşmesi.
 - Mevcut bütün oyun/Chromium/PvP QA testleri koşmalıdır.
-- Canlı Supabase migration `starfort_authoritative_village_20261102` uygulanmış ve RLS/execute yetkileri SQL'den doğrulanmıştır.
+- Canlı Supabase migration `starfort_authoritative_village_20261102` ve `starfort_village_permanent_request_replay_guard` uygulanmış; üç tablonun RLS ve doğrudan SELECT/UPDATE izinlerinin kapalı olduğu SQL'den doğrulanmıştır. İkinci migration kaynak dosyası `starfort/sql/starfort-village-replay-guard.sql`.
 
 ## Bekleyen güvenlik işleri
 - Oyunun tüm kahraman/çanta harcamalarını sunucu kayıtlarına taşımak; sunucu doğrulamalı PvE muharebe sonucu/ekipman ödülleri; Rank/PvP parametrelerini yalnızca sunucu kayıtlarından üretmek; çoklu istek / eşitleme ve offline davranış için end-to-end Auth hesabı kabul testi.
