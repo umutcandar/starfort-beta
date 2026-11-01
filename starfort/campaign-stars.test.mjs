@@ -14,7 +14,7 @@ test('grading handles perfect, damaged and near-defeat teams',()=>{
  assert.equal(gradeCampaignBattle(b),3);
  b.allies[0].hp=30;b.allies[1].hp=70;b.allies[2].hp=75;
  assert.equal(gradeCampaignBattle(b),2);
- b.allies[1].hp=0;assert.equal(gradeCampaignBattle(b),1);
+ b.allies[1].hp=0;b.allies[0].hp=0;assert.equal(gradeCampaignBattle(b),1);
 });
 test('old saves restore a minimum one star and reject injected grades',()=>{
  assert.deepEqual(restoreCampaignStars({'1':9,'2':3,'8':3},[1,2]),{'1':1,'2':3});
