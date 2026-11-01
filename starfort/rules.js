@@ -5,6 +5,7 @@ import { initializeLiveCombat, restoreLiveCombat, advanceLiveCombat, castLiveAbi
 import { createContracts, restoreContracts, recordContract, contractsStatus, claimContractProgress } from './campaign-contracts.js';
 import { weeklyRiftStatus, riftSchedule, restoreRiftRecords, applyRiftModifier, RIFT_MODIFIERS } from './weekly-rift.js';
 import { COSMETIC_CONCEPTS, restoreWishlist, toggleWishlist } from './cosmetic-concepts.js';
+import { createLabyrinth, restoreLabyrinth, labyrinthStatus, finishLabyrinthGuardian, requiredStoryChapters, labyrinthLayout } from './labyrinth.js';
 export { HERO_ABILITIES, abilityState, liveEnemyIntent } from './live-combat.js';
 export { enemyIntent, ENEMY_ROLES } from './encounters.js';
 export { CONTRACTS, BANNER_MILESTONES, contractsStatus } from './campaign-contracts.js';
@@ -12,6 +13,7 @@ export { weeklyRiftStatus, RIFT_MODIFIERS } from './weekly-rift.js';
 export { COSMETIC_CONCEPTS, toggleWishlist } from './cosmetic-concepts.js';
 export { ITEMS, SLOTS, RARITIES, FIRST_CLEAR_LOOT, itemById, forgeItem, equipItem, unequipItem, equipmentStats } from './equipment.js';
 export { campaignStarStatus, STAR_MILESTONES, THREE_STAR_LOOT } from './campaign-stars.js';
+export { labyrinthStatus, labyrinthLayout, moveLabyrinth, completeLabyrinthFloor, MAZE_FLOORS } from './labyrinth.js';
 // Starfort's local, deterministic rules. No DOM, storage or network side effects.
 export const STORAGE_KEY = 'starfort:v1';
 export const RESOURCES = {
@@ -75,7 +77,7 @@ export function createState(now = Date.now()) {
     version: 1, res: { gold: 280, wood: 180, stone: 150, aether: 65 },
     buildings: Object.fromEntries(BUILDINGS.map(item => [item.id, 1])),
     heroes: Object.fromEntries(HEROES.filter(hero => !hero.unlockStage).map(hero => [hero.id, { level: 1 }])),
-    team: ['aldren', 'lyra', 'rovan'], cleared: [], campaignStars: {}, veteranMedals: {}, riftRecords: [], cosmeticWishlist: [], selectedStage: 1,
+    team: ['aldren', 'lyra', 'rovan'], cleared: [], campaignStars: {}, labyrinth:createLabyrinth(), veteranMedals: {}, riftRecords: [], cosmeticWishlist: [], selectedStage: 1,
     lastCollected: safeNow(now), lastDailyReward: null, contracts:createContracts(now), battle: null, ...createGearState(),
   };
 }
@@ -108,6 +110,7 @@ export function restoreState(raw, now = Date.now()) {
     state.cosmeticWishlist=restoreWishlist(saved.cosmeticWishlist);
     for(const stage of STAGES){const tier=saved.veteranMedals?.[stage.id];if(state.cleared.includes(stage.id)&&integer(tier,1,3))state.veteranMedals[stage.id]=tier;}
     state.campaignStars=restoreCampaignStars(saved.campaignStars,state.cleared);
+    state.labyrinth=restoreLabyrinth(saved.labyrinth);
     restoreGear(state,saved);
     state.battle = restoreBattle(state, saved.battle);
   } catch { return createState(time); }
@@ -240,12 +243,28 @@ function newBattle(state, stage, combatVersion=2, veteranTier=0) {
     starCharge: 40, stars:0, starLoot:null, log: [`${stage.name}: Yeminliler savaşa hazır.`], reward, rewardApplied: false, loot: null };
 }
 
+function scaleLabyrinthGuardian(battle,floor){
+  const factor=1+(floor-1)*0.012+(floor%2===0?0.10:0);
+  for(const enemy of battle.enemies){
+    enemy.maxHp=Math.ceil(enemy.maxHp*factor);enemy.hp=enemy.maxHp;
+    enemy.attack=Math.ceil(enemy.attack*(1+(floor-1)*0.008));
+  }
+}
 function restoreBattle(state, saved) {
   if (!saved || !integer(saved.stageId, 1, Math.min(STAGES.length, nextStage(state)))
     || !['active', 'won', 'lost'].includes(saved.status) || !integer(saved.round, 0, 100)) return null;
   // Existing in-progress battles retain the original enemies and attack rules.
   const veteran=integer(saved.veteranTier,1,3)&&state.cleared.includes(saved.stageId)?saved.veteranTier:0;
   const battle = newBattle(state, stageById(saved.stageId), saved.combatVersion===2?2:1, veteran);
+  const mazeFloor=saved.labyrinthFloor;
+  if(Number.isInteger(mazeFloor)&&mazeFloor===state.labyrinth.floor
+    && saved.stageId===requiredStoryChapters(mazeFloor)
+    && state.labyrinth.cell===labyrinthLayout(mazeFloor).guard
+    && (saved.status==='active'||saved.status==='lost'||state.labyrinth.guardianDefeated)) {
+    battle.labyrinthFloor=mazeFloor;
+    scaleLabyrinthGuardian(battle,mazeFloor);
+    battle.reward=zeroResources();
+  } else if(saved.labyrinthFloor!==undefined) return null;
   if(Number.isInteger(saved.riftWeek)&&saved.riftWeek>=0&&saved.riftWeek<=99999
     &&RIFT_MODIFIERS.some(m=>m.id===saved.riftModifier)&&state.cleared.length===8){
     battle.riftWeek=saved.riftWeek;battle.riftModifier=saved.riftModifier;
@@ -270,7 +289,7 @@ function restoreBattle(state, saved) {
   // Loading a completed battle must never grant its reward a second time.
   battle.rewardApplied = saved.status !== 'active';
   battle.loot = saved.status === 'won' && saved.loot === FIRST_CLEAR_LOOT[saved.stageId] ? saved.loot : null;
-  battle.stars = saved.status === 'won' && !battle.veteranTier && !battle.riftModifier && integer(saved.stars,1,3) ? saved.stars : 0;
+  battle.stars = saved.status === 'won' && !battle.labyrinthFloor && !battle.veteranTier && !battle.riftModifier && integer(saved.stars,1,3) ? saved.stars : 0;
   battle.starLoot = battle.stars===3 && typeof saved.starLoot==='string' && state.inventory[saved.starLoot]>0 && ['moon_watch','ember_guard','dawn_relic','star_spear','dawn_guard'].includes(saved.starLoot) ? saved.starLoot : null;
   restoreLiveCombat(battle,saved.live);
   return battle;
@@ -285,6 +304,23 @@ export function startBattle(state, stageId) {
   state.selectedStage = stageId;
   state.battle = newBattle(state, stage);
   return { ok: true };
+}
+
+export function startLabyrinthBattle(state){
+  const location=labyrinthStatus(state);
+  if(!location.canFight)return fail('Kat muhafızının odasına ulaşmalısın.');
+  if(activeBattle(state))return fail('Devam eden bir savaş var.');
+  if(!validTeam(state,state.team))return fail('Üç kahramanlık takımını tamamla.');
+  const stage=stageById(requiredStoryChapters(location.floor));
+  const battle=newBattle(state,stage,2);
+  battle.labyrinthFloor=location.floor;
+  // Each second floor is a tougher guardian, with smooth scaling between chapters.
+  scaleLabyrinthGuardian(battle,location.floor);
+  battle.reward=zeroResources(); // Maze treasures & floor completion are rewarded separately.
+  battle.log=[`Yıldızaltı Labirenti · Kat ${location.floor}: Kapı muhafızı yolunu kesti.`];
+  state.battle=battle;
+  initializeLiveCombat(battle);
+  return {ok:true};
 }
 
 export function startVeteranBattle(state,stageId,tier=1){
@@ -358,6 +394,20 @@ function hit(target, amount) {
 
 function finishBattle(state, events) {
   const battle = state.battle;
+  if(battle.labyrinthFloor){
+    if(battle.enemies.every(unit=>unit.hp<=0)){
+      battle.status='won';
+      if(!battle.rewardApplied){
+        if(finishLabyrinthGuardian(state,battle.labyrinthFloor))
+          events.push('Labirent muhafızı yenildi! Kat çıkışının mührü çözüldü.');
+        battle.rewardApplied=true;
+      }
+    }else if(battle.allies.every(unit=>unit.hp<=0)){
+      battle.status='lost';battle.rewardApplied=true;
+      events.push('Muhafız bu kez seni durdurdu. Labirent ilerlemen korunuyor.');
+    }
+    return battle.status!=='active';
+  }
   if (battle.enemies.every(unit => unit.hp <= 0)) {
     battle.status = 'won';
     if (!battle.rewardApplied) {

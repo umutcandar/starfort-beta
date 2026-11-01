@@ -1,0 +1,54 @@
+/* STARFORT labyrinth: original grid paths and golden-ink underground UI */
+.maze-heading{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:18px}
+.maze-heading h2{font:clamp(26px,3vw,38px) Georgia,serif;color:#f7dea8;margin:7px 0}
+.maze-heading p{color:#b8c8d7;line-height:1.6}
+.maze-overview{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:16px 21px;margin:13px 0 19px;border:1px solid #9c845b;background:linear-gradient(110deg,#142d43,#07192a);border-radius:12px}
+.maze-overview span,.maze-map-head span,.maze-mission>span{font-size:10px;color:#d1b989;letter-spacing:.13em;font-weight:750}
+.maze-overview strong{display:block;color:#f5dba7;font:700 36px Georgia,serif;margin:3px 0}
+.maze-overview strong small{font:16px Georgia,serif;color:#baa884}
+.maze-overview p{margin:3px 0;font-size:12px;color:#a9bfcf}
+.maze-overview-right strong{font:700 18px Georgia,serif}
+.maze-progress{height:8px;overflow:hidden;border-radius:20px;background:#091724;border:1px solid #9c825e66}
+.maze-progress i{display:block;height:100%;background:linear-gradient(90deg,#9f7040,#f3d998)}
+.maze-shell{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(250px,.8fr);gap:17px;align-items:start}
+.maze-left,.maze-side{border:1px solid #8e835f9c;border-radius:15px;background:linear-gradient(155deg,#12283b,#071827 70%);box-shadow:inset 0 1px #e8d7a51f,0 14px 28px #030c1b67;padding:18px}
+.maze-map-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:11px}
+.maze-map-head small{color:#aabecb}
+.maze-board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));aspect-ratio:1;gap:6px;padding:15px;max-width:600px;margin:auto;background:radial-gradient(ellipse at 50% 50%,#233348 0%,#112238 58%,#071422 100%);border:1px solid #9a855f85;border-radius:12px;box-shadow:inset 0 0 58px #010714b8}
+.maze-tile{position:relative;min-width:0;min-height:0;border:1px solid #5f657057;background:linear-gradient(140deg,#142838,#0b1728);color:#d8cca2;border-radius:9px;display:grid;place-items:center;isolation:isolate;overflow:visible}
+.maze-tile:disabled{opacity:1;cursor:default}
+.maze-tile.is-hidden{background:radial-gradient(#101f2b,#08131f);border-color:#33465838}
+.maze-tile.is-visible{border-color:#8c806766}
+.maze-tile.is-visited{background:linear-gradient(140deg,#39463b,#142732);border-color:#a699725c}
+.maze-tile.is-reachable{border-color:#e2bd77;box-shadow:inset 0 0 18px #d9b16a2c,0 0 13px #e5c17a22;cursor:pointer}
+.maze-tile.is-reachable:hover,.maze-tile.is-reachable:focus-visible{border-color:#ffe1a0;background:#465044;outline:2px solid #f6d18e;outline-offset:1px}
+.maze-tile.is-current{background:radial-gradient(#7d6440,#243c45);border:2px solid #ffdb91;box-shadow:inset 0 0 20px #e6bd704e,0 0 19px #efc87976}
+.maze-glyph{position:relative;z-index:2;font:700 clamp(18px,3.4vw,37px) Georgia,serif;text-shadow:0 2px 10px #010814}
+.maze-tile.is-reachable:not(.is-visited) .maze-glyph{color:#f7d795;animation:maze-pulse 2.4s ease-in-out infinite}
+.maze-tile small{position:absolute;bottom:5px;font:700 9px system-ui;letter-spacing:.1em;color:#ffedba;z-index:2}
+.maze-passage{position:absolute;display:block;z-index:1;background:#be9e6e66}
+.maze-passage.maze-n{width:23%;height:50%;left:38%;top:-50%}
+.maze-passage.maze-s{width:23%;height:50%;left:38%;bottom:-50%}
+.maze-passage.maze-e{height:23%;width:50%;top:38%;right:-50%}
+.maze-passage.maze-w{height:23%;width:50%;top:38%;left:-50%}
+.maze-tile.is-hidden .maze-passage{display:none}
+.maze-type-guardian.is-visited{color:#f2ab91}
+.maze-type-exit.is-visited{color:#e2d1ff}
+.maze-type-treasure.is-visited{color:#ecca72}
+.maze-map-legend{display:flex;justify-content:center;gap:15px;flex-wrap:wrap;font-size:10px;color:#bec9cc;margin:15px 0 0}
+.maze-map-legend b{color:#f5d69b}
+.maze-side h3{font:700 26px Georgia,serif;color:#f3d698;margin:8px 0}
+.maze-side p{color:#bdcbd2;font-size:13px;line-height:1.65}
+.maze-mission{margin:17px 0;padding:13px;border:1px solid #8f76545f;background:#0a1a2c;border-radius:9px}
+.maze-mission b{display:block;margin:8px 0 5px;color:#f2d2a0;font-size:14px}
+.maze-mission small,.maze-hint,.maze-terms{display:block;color:#9eb4c1;line-height:1.6;font-size:11px}
+.maze-primary{width:100%;min-height:47px;margin:4px 0 11px}
+.maze-floor-list{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:20px 0}
+.maze-floor-list span{display:grid;place-items:center;height:33px;background:#0a1929;border:1px solid #456074;color:#9bb3c4;border-radius:5px;font-size:12px}
+.maze-floor-list span.is-done{background:#315248;color:#b8f0d6;border-color:#76bca6}
+.maze-floor-list span.is-now{background:#69512e;color:#ffeab3;border-color:#edca83}
+.maze-complete{color:#e4cd92!important;font:700 14px Georgia,serif}
+@keyframes maze-pulse{50%{opacity:.55}}
+@media(max-width:800px){.maze-shell{grid-template-columns:1fr}.maze-board{max-width:520px}.maze-overview{grid-template-columns:1fr 1fr}.maze-heading{flex-wrap:wrap}}
+@media(max-width:520px){.maze-left,.maze-side{padding:11px}.maze-board{gap:4px;padding:8px}.maze-tile{border-radius:5px}.maze-overview{padding:12px;gap:10px}.maze-overview strong{font-size:29px}.maze-heading h2{font-size:26px}.maze-map-legend{gap:9px}.maze-mission{margin:11px 0}}
+@media(prefers-reduced-motion:reduce){.maze-tile.is-reachable .maze-glyph{animation:none}}

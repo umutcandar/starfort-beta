@@ -10,6 +10,9 @@ export const ITEMS = [
   { id:'royal_blade', set:'dawn', name:'Şafak Yaran', slot:'weapon', rarity:'legendary', forge:4, stats:{attack:17}, cost:{gold:650,aether:80}, description:'Krallığın kayıp ustalarının imzasını taşıyan bir şaheser.' },
   { id:'aegis', name:'Son Siper', slot:'armor', rarity:'legendary', forge:4, stats:{hp:110,armor:12}, cost:{gold:700,stone:220}, description:'Hisarın en güçlü savunma zırhı; gelen hasarı azaltır.' },
   { id:'moonheart', name:'Ayın Kalbi', slot:'relic', rarity:'legendary', forge:4, stats:{healing:14,hp:35}, cost:{gold:650,aether:100}, description:'Şifacıların taşıdığı kadim kristal, can ve iyileştirme sağlar.' },
+  // Additional story drops unlock at chapters five and seven. Cannot be forged.
+  { id:'grave_seal', exclusive:true, name:'Mahzen Ruh Mührü', slot:'relic', rarity:'epic', forge:0, stats:{hp:26,healing:8}, cost:{}, description:'Sessiz Mahzen katından çıkan koruyucu ruh mührü.' },
+  { id:'eclipse_edge', exclusive:true, name:'Tutulma Kılıcı', slot:'weapon', rarity:'legendary', forge:0, stats:{attack:15}, cost:{}, description:'Tutulma Kulesi muhafızlarından kalan mühürlü kılıç.' },
   // Unique PvE achievements: first five DIFFERENT 3-star chapter wins.
   { id:'moon_watch', set:'moon', exclusive:true, name:'Ay Siperi', slot:'armor', rarity:'epic', forge:0, stats:{hp:45,armor:6}, cost:{}, description:'İlk kusursuz sefer mührünün kalıcı ödülü. Ay Siperleri setinin parçası.' },
   { id:'ember_guard', set:'ember', exclusive:true, name:'Kor Lejyonu Zırhı', slot:'armor', rarity:'epic', forge:0, stats:{hp:50,armor:5}, cost:{}, description:'İkinci üç yıldız zaferine özel muhafız zırhı.' },
@@ -17,7 +20,7 @@ export const ITEMS = [
   { id:'star_spear', set:'moon', exclusive:true, name:'Ayışığı Mızrağı', slot:'weapon', rarity:'legendary', forge:0, stats:{attack:11}, cost:{}, description:'Dördüncü üç yıldız zaferine özel ay silahı.' },
   { id:'dawn_guard', set:'dawn', exclusive:true, name:'Şafak Muhafızı Levhası', slot:'armor', rarity:'legendary', forge:0, stats:{hp:70,armor:6}, cost:{}, description:'Beşinci üç yıldız zaferine özel kraliyet zırhı.' },
 ];
-export const FIRST_CLEAR_LOOT = { 1:'lunar_charm', 2:'ember_blade', 3:'warden_plate', 4:'star_lens', 6:'royal_blade', 8:'moonheart' };
+export const FIRST_CLEAR_LOOT = { 1:'lunar_charm', 2:'ember_blade', 3:'warden_plate', 4:'star_lens',5:'grave_seal', 6:'royal_blade',7:'eclipse_edge', 8:'moonheart' };
 const fail=error=>({ok:false,error});
 export const itemById=id=>ITEMS.find(item=>item.id===id);
 export function createGearState() { return {inventory:{iron_sword:1,ward_mail:1},loadouts:{}}; }
@@ -55,7 +58,7 @@ export function equipmentStats(state,heroId) {
 export function forgeItem(state,id) {
   const item=itemById(id);
   if(!item) return fail('Bilinmeyen ekipman.');
-  if(item.exclusive) return fail('Bu ekipman üç yıldız sefer ganimetidir, üretilemez.');
+  if(item.exclusive) return fail('Bu ekipman yalnızca sefer ganimetidir, üretilemez.');
   if(state.battle?.status==='active') return fail('Önce devam eden savaşı tamamla.');
   if(state.buildings.forge<item.forge) return fail(`Demirhane seviyesi ${item.forge} gerekli.`);
   if((state.inventory[id]||0)>=20) return fail('Bu ekipmandan en fazla 20 adet tutulabilir.');
