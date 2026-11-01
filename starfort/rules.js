@@ -1,6 +1,7 @@
 import { createGearState, restoreGear, equipmentStats, awardFirstClearItem, FIRST_CLEAR_LOOT, itemById } from './equipment.js';
 import { restoreCampaignStars, recordCampaignStars, campaignStarStatus } from './campaign-stars.js';
 import { encounterEnemies, enemyIntent } from './encounters.js';
+import { stageRequirements } from './stage-gates.js';
 import { initializeLiveCombat, restoreLiveCombat, advanceLiveCombat, castLiveAbility, changeBattleStance } from './live-combat.js';
 import { createContracts, restoreContracts, recordContract, contractsStatus, claimContractProgress } from './campaign-contracts.js';
 import { weeklyRiftStatus, riftSchedule, restoreRiftRecords, applyRiftModifier, RIFT_MODIFIERS } from './weekly-rift.js';
@@ -8,6 +9,7 @@ import { COSMETIC_CONCEPTS, restoreWishlist, toggleWishlist } from './cosmetic-c
 import { createLabyrinth, restoreLabyrinth, labyrinthStatus, finishLabyrinthGuardian, requiredStoryChapters, labyrinthLayout } from './labyrinth.js';
 export { HERO_ABILITIES, abilityState, liveEnemyIntent } from './live-combat.js';
 export { enemyIntent, ENEMY_ROLES } from './encounters.js';
+export { stageRequirements } from './stage-gates.js';
 export { CONTRACTS, BANNER_MILESTONES, contractsStatus } from './campaign-contracts.js';
 export { weeklyRiftStatus, RIFT_MODIFIERS } from './weekly-rift.js';
 export { COSMETIC_CONCEPTS, toggleWishlist } from './cosmetic-concepts.js';
@@ -315,6 +317,8 @@ export function startBattle(state, stageId) {
   if (!stage) return fail('Bilinmeyen bölge.');
   if (activeBattle(state)) return fail('Devam eden bir savaş var.');
   if (stageId > nextStage(state)) return fail('Önce önceki bölgeyi temizle.');
+  const gate=stageRequirements(state,stage,teamPower(state));
+  if(!gate.available)return fail('Sefer kilitli: '+gate.reasons.join(' '));
   if (!validTeam(state, state.team)) return fail('Üç kahramanlık takımını tamamla.');
   state.selectedStage = stageId;
   state.battle = newBattle(state, stage);
