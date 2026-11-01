@@ -6,6 +6,7 @@ create or replace function public.sfb_starfort_progress(
 ) returns jsonb
 language plpgsql security definer set search_path=''
 as $fn$
+#variable_conflict use_variable
 declare
  u uuid:=auth.uid();
  l public.starfort_village_ledger%rowtype;
