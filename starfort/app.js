@@ -790,6 +790,7 @@ function dispatch(action) {
   if(button.dataset.bagSlot){selectedBagSlot=button.dataset.bagSlot;renderArmory();return;}
   if(button.dataset.bagItem){selectedBagItem=button.dataset.bagItem;renderArmory();return;}
   if(button.dataset.armoryHero) { selectedArmoryHero=button.dataset.armoryHero; activeView='armory'; render(); return; }
+  if(button.dataset.autoEquip) { const choice=R.autoEquipHero(state,button.dataset.autoEquip); result(choice,choice.changed?'Rolüne uygun en güçlü boşta ekipmanlar kuşanıldı.':'Kahramanın mevcut donanımı zaten uygun.'); return; }
   if(button.dataset.forge) { result(R.forgeItem(state,button.dataset.forge),'Ekipman üretildi; bir kahramana kuşandırabilirsin.'); return; }
   if(button.dataset.equip) { result(R.equipItem(state,selectedArmoryHero,button.dataset.equip),'Ekipman kuşanıldı. Savaş gücü güncellendi.'); return; }
   if(button.dataset.unequip) { result(R.unequipItem(state,selectedArmoryHero,button.dataset.unequip),'Ekipman çantaya alındı.'); return; }

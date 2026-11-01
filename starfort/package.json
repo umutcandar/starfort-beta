@@ -1,7 +1,7 @@
 {
   "name": "starfort",
   "private": true,
-  "version": "2.18.0",
+  "version": "2.19.0",
   "description": "Starfort v2.14.0: bölüm koşulları, düşman çeşitliliği, sezonlar, hesap yedeği ve ses",
   "type": "module",
   "scripts": {

@@ -108,7 +108,8 @@ export function armoryMarkup(state,heroId='aldren',filter='all',selectedId=null)
         </div>
       </section>
       <div class="bag-v212-right">
-        <section class="bag-v212-equipped"><div class="bag-v212-section-heading"><span class="eyebrow">AKTİF KAHRAMANIN DONANIMI</span><strong>${hero.name}</strong></div><div class="bag-v212-slots">${equippedItems}</div></section>
+        <section class="bag-v212-equipped"><div class="bag-v212-section-heading"><span class="eyebrow">AKTİF KAHRAMANIN DONANIMI</span><strong>${hero.name}</strong></div><div class="bag-v212-slots">${equippedItems}</div>
+          <div class="bag-v212-detail-actions"><button class="secondary" data-auto-equip="${hero.id}" ${busy?'disabled':''} title="Boştaki veya bu kahramana ait ekipmanlardan rolüne uygun en güçlü dizilimi seçer; diğer kahramanların ekipmanlarını değiştirmez.">✦ Rolüne göre otomatik kuşan</button></div></section>
         <div class="bag-toolbar"><h3>Çantam <small>${R.ITEMS.filter(item=>itemCount(state,item)>0).length}/${R.ITEMS.length} ekipman türü</small></h3><div class="bag-filters" aria-label="Çanta filtreleri">${FILTERS.map(([id,name])=>`<button data-bag-slot="${id}" aria-pressed="${filter===id}" class="${filter===id?'selected':''}">${name}</button>`).join('')}</div></div>
         <div class="item-grid bag-item-grid" aria-label="Çanta eşyaları">${cards+materialCards||'<p class="bag-v212-empty">Bu filtrede eşya yok.</p>'}</div>
         <p class="armory-tip">${busy?'Savaş sürerken ekipman değiştirilemez. ':''}Bir eşya iki kahramana takılamaz. Set bonusu ve seçili ekipman karşılaştırmaları sağ panelde görünür.</p>

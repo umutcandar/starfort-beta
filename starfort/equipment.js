@@ -95,6 +95,47 @@ export function unequipItem(state,heroId,slot) {
   if(state.loadouts[heroId]) delete state.loadouts[heroId][slot];
   return {ok:true};
 }
+// Evaluate every available weapon/armor/relic combination, including the exact two-piece
+// set bonuses. Only spare copies or this hero's own gear are eligible.
+const ROLE_GEAR_WEIGHTS=Object.freeze({
+  tank:{attack:1.3,hp:.16,armor:5,healing:.3},
+  healer:{attack:1,hp:.12,armor:2,healing:4.5},
+  mage:{attack:3,hp:.09,armor:2,healing:1.1},
+  ranger:{attack:3.1,hp:.1,armor:2,healing:.3},
+  fighter:{attack:2.7,hp:.15,armor:2.8,healing:.4},
+  assassin:{attack:3.3,hp:.08,armor:1.8,healing:.2},
+});
+export function optimizeHeroEquipment(state,heroId,role) {
+  if(!state.heroes?.[heroId] || !ROLE_GEAR_WEIGHTS[role]) return fail('Kahraman veya rol bulunamadı.');
+  if(state.battle?.status==='active') return fail('Savaş sırasında ekipman değiştirilemez.');
+  const occupied={};
+  for(const [wearer,slots] of Object.entries(state.loadouts||{})) {
+    if(wearer===heroId)continue;
+    for(const id of Object.values(slots||{}))occupied[id]=(occupied[id]||0)+1;
+  }
+  const options=Object.keys(SLOTS).map(slot=>[
+    null,...ITEMS.filter(item=>item.slot===slot && (state.inventory?.[item.id]||0)>(occupied[item.id]||0))
+  ]);
+  const current={...(state.loadouts?.[heroId]||{})};
+  const score=loadout=>{
+    const stats=equipmentStats({loadouts:{[heroId]:loadout}},heroId);
+    return Object.entries(ROLE_GEAR_WEIGHTS[role]).reduce((total,[stat,weight])=>total+stats[stat]*weight,0);
+  };
+  let best=current,bestScore=score(current);
+  for(const weapon of options[0])for(const armor of options[1])for(const relic of options[2]){
+    const candidate={};
+    if(weapon)candidate.weapon=weapon.id;
+    if(armor)candidate.armor=armor.id;
+    if(relic)candidate.relic=relic.id;
+    const value=score(candidate);
+    // Existing equipment wins ties, so clicking twice never reorders equivalent items.
+    if(value>bestScore+1e-6){best=candidate;bestScore=value;}
+  }
+  const changed=Object.keys(SLOTS).some(slot=>(current[slot]||null)!==(best[slot]||null));
+  if(changed)state.loadouts[heroId]=best;
+  return {ok:true,changed,loadout:{...best}};
+}
+
 export function awardFirstClearItem(state,stageId) {
   const id=FIRST_CLEAR_LOOT[stageId];
   if(!id || (state.inventory[id]||0)>=20) return null;

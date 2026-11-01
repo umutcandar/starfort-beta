@@ -43,4 +43,13 @@ test('combat locks item edits but still permits reading the bag',()=>{
  const html=armoryMarkup(state,'aldren','owned','iron_sword');
  assert.match(html,/data-equip="iron_sword" disabled/);
  assert.match(html,/Savaş sürerken ekipman değiştirilemez/);
+ assert.match(html,/data-auto-equip="aldren" disabled/);
+});
+
+test('one-click auto-gear action appears for a hero without stealing other heroes gear',()=>{
+ const state=R.createState();
+ const html=armoryMarkup(state,'aldren','owned','iron_sword');
+ assert.match(html,/data-auto-equip="aldren"/);
+ assert.match(html,/Rolüne göre otomatik kuşan/);
+ assert.match(html,/diğer kahramanların ekipmanlarını değiştirmez/);
 });
