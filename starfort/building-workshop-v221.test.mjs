@@ -93,5 +93,5 @@ test('source wires accessible village tabs, collect-and-build, preserves modal, 
  assert.match(css,/@media\(max-width:730px\)/);
  assert.match(css,/@media\(orientation:landscape\)/);
  assert.match(html,/href="building-workshop\.css"/);
- assert.match(html,/v2\.24\.0/);
+ assert.match(html,/v2\.25\.0/);
 });
