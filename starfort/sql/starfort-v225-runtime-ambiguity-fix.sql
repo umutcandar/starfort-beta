@@ -315,6 +315,9 @@ begin
       end if;
       old_stars:=coalesce((stars->>stage::text)::integer,0);
       if stars_won>old_stars then stars:=jsonb_set(stars,array[stage::text],to_jsonb(stars_won),true); end if;
+      -- Trusted 1–3★ campaign victories unlock the village mastery gates.
+      select coalesce(sum(value::integer),0) into n from jsonb_each_text(stars);
+      l.mastery:=least(24,greatest(l.mastery,n));
       -- Five unique three-star chapters grant one permanent exclusive item each.
       if old_stars<3 and stars_won=3 then
         n:=0;
@@ -371,7 +374,7 @@ begin
  end if;
 
  if p_action<>'get' then
-  update public.starfort_village_ledger set res=resources,revision=l.revision+1,updated_at=stamp where user_id=u;
+  update public.starfort_village_ledger set res=resources,mastery=l.mastery,revision=l.revision+1,updated_at=stamp where user_id=u;
   l.revision:=l.revision+1;
   update public.starfort_player_progress set heroes=heroes,inventory=items,loadouts=gear,
    team=roster,cleared=cleared,stars=stars,veteran=veteran,
