@@ -101,9 +101,10 @@ const combatRunner=createBattleRunner({
 });
 
 function grantReward(r,won,source){
+  // Practice rewards never enter the authoritative account economy.
   state.res.gold=(state.res.gold||0)+r.gold;state.res.aether=(state.res.aether||0)+r.aether;
   persist();try{renderResources();}catch{}
-  notify(`${won?'Zafer':'Savaş bitti'}: +${r.gold} ◈${r.aether?` +${r.aether} ✦`:''}${r.bonus?' · Günün ilk zaferi x2!':''}${source}`);
+  notify(`${won?'Zafer':'Savaş bitti'}: +${r.gold} ◈${r.aether?` +${r.aether} ✦`:''}${r.bonus?' · Günün ilk zaferi x2!':''}${source}${villageSignedIn()?' · Yalnızca deneme kaydı, sunucu kasasına eklenmez.':''}`);
 }
 window.addEventListener('starfort:practice-result',async e=>{
   const {won,difficulty,mode='duel',matchId}=e.detail||{};
@@ -1057,6 +1058,14 @@ $('#recenter').innerHTML = svg('keepMenu');
 let buildingBackdropDown = false;
 // Update long-term construction countdowns and claim availability while the panel is open.
 setInterval(()=>{if(villageView().construction){renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}},30000);
+setInterval(()=>{
+ if(!villageSignedIn()||!accountProgressSnapshot?.mission||activeView!=='campaign')return;
+ const remaining=Math.max(0,3000-(constructionUiNow()-accountProgressSnapshot.mission.lastTurnAt));
+ for(const button of workspaceEl.querySelectorAll('[data-account-turn]'))button.disabled=villageBusy||remaining>0;
+ const hint=workspaceEl.querySelector('[data-server-wait]');
+ if(hint)hint.textContent=remaining?'Yaklaşık '+Math.ceil(remaining/1000)+' sn bekle.':'Komut verebilirsin.';
+},1000);
+
 if(state.construction)void verifyConstructionTime().then(()=>{renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}).catch(()=>{});
 
 $('#building-dialog').addEventListener('pointerdown', event => { buildingBackdropDown = event.target === $('#building-dialog'); });
