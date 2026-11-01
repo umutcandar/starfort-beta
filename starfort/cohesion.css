@@ -1,0 +1,40 @@
+/* STARFORT visual canon: the citadel and its northern campaign are the
+   primary experience. Practice and unreleased modes must never crowd the story. */
+.mode-hub{margin:24px 0 10px;border:1px solid #ab916b8c;border-radius:13px;background:linear-gradient(140deg,#12243ce8,#0a192be8);box-shadow:inset 0 1px #e8d6ab22}
+.mode-hub>summary{list-style:none;cursor:pointer;padding:19px 22px;color:#f1dcb5;display:flex;flex-wrap:wrap;align-items:center;gap:9px;font:700 17px Georgia,serif}
+.mode-hub>summary::-webkit-details-marker{display:none}
+.mode-hub>summary:before{content:'⚔';color:#e9be70}
+.mode-hub>summary:after{content:'＋';margin-left:auto;font:700 22px system-ui;color:#c9b88d}
+.mode-hub[open]>summary:after{content:'−'}
+.mode-hub>summary small{width:100%;color:#b8cbd4;font:400 12px/1.5 system-ui;margin-left:27px}
+.mode-hub:focus-within{border-color:#e6be78}
+.mode-hub-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 18px 18px}
+.mode-hub-grid>.arena-invitation,.mode-hub-grid>.training-invitation{margin:0;min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;padding:17px;gap:12px;border-radius:10px;background:linear-gradient(130deg,#173047,#0c1d32)}
+.mode-hub-grid>.arena-invitation h3,.mode-hub-grid>.training-invitation h3{font-size:21px;margin:5px 0}
+.mode-hub-grid>.arena-invitation p,.mode-hub-grid>.training-invitation p{font-size:12px;line-height:1.6}
+.mode-hub-grid button{min-height:44px;min-width:0}
+.mode-hub-grid .quick-bot-invitation{grid-column:1/-1;display:grid;grid-template-columns:1fr auto auto;align-items:center}
+.mode-hub-grid .quick-bot-invitation button{white-space:nowrap}
+.campaign-priority{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0;color:#f4d79f;border-left:3px solid #dfb676;padding:9px 15px;background:#101f34d9}
+.campaign-priority strong{font:600 15px Georgia,serif}
+.campaign-priority small{color:#c1cbd2;font-size:11px}
+.mode-group-board{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:11px 0}
+.mode-card{border:1px solid #aa956f80;border-radius:12px;padding:14px;background:linear-gradient(142deg,#172c43ee,#0c1c31fa);display:flex;flex-direction:column;gap:10px}
+.mode-card>header{display:block;padding:0;border:0;background:none}
+.mode-card h3{font:700 22px Georgia,serif;color:#f7dca5;margin:0 0 5px}
+.mode-card p{color:#c8d6dc;margin:0;font-size:12px;line-height:1.55}
+.mode-card .mode-actions{display:flex;flex-wrap:wrap;gap:8px}
+.mode-card .mode-actions button{flex:1;min-width:125px;min-height:44px;border-radius:8px}
+.mode-card .mode-actions button:focus-visible,.mode-hub summary:focus-visible{outline:2px solid #f5cc83;outline-offset:3px}
+.mode-card .mode-note{display:block;color:#aebfc9;font-size:11px}
+.mode-card.is-unavailable{border-style:dashed;background:#122236cf}
+.mode-card.is-unavailable button:disabled{opacity:.7;cursor:not-allowed}
+.mode-card .sf-difficulty-picker{white-space:normal}
+.mode-lore{margin:10px 0;padding:10px 16px;border-left:3px solid #e6bb79;background:linear-gradient(90deg,#152c43,#0e1c31);color:#e5d4b4;font-size:12px;line-height:1.6}
+.battle-graphics-control{justify-content:flex-start;flex-wrap:wrap;padding:8px 0}
+.battle-graphics-control>span{color:#bdcbd0;letter-spacing:.08em}
+.battle-graphics-control>small{max-width:250px;letter-spacing:0;font-weight:400;color:#b9c9d0}
+.sf-battle-bar [data-sf-render]{display:none}
+@media(max-width:820px){.mode-hub-grid{grid-template-columns:1fr}.mode-hub-grid .quick-bot-invitation{display:flex;grid-column:auto}.mode-group-board{grid-template-columns:1fr}.mode-card .mode-actions button{min-width:120px}}
+@media(max-width:540px){.mode-hub>summary{padding:16px;font-size:15px}.mode-hub-grid{padding:0 10px 12px}.mode-card{padding:12px}.mode-card h3{font-size:19px}.campaign-priority{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:reduce){.mode-hub,.mode-card{transition:none}}
