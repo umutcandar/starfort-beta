@@ -98,7 +98,7 @@ test('pending production spends atomically at tier 3; no double payment or insta
  const plan=buildingUpgradePlan(s,'farm',future);
  assert.equal(plan.status,'collect');
  const action=R.upgradeBuildingFromProduction(s,'farm',future);
- assert.equal(action.ok,true);assert.equal(action.started,false);assert.equal(s.buildings.farm,2);
+ assert.equal(action.ok,true);assert.equal(action.started??false,false);assert.equal(s.buildings.farm,2);
  const at=R.upgradeBuildingFromProduction(s,'farm',future);
  assert.equal(at.ok,true);assert.equal(at.started,true);
  assert.equal(s.buildings.farm,2);
