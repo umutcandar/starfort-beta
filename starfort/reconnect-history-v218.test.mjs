@@ -36,7 +36,7 @@ test('authenticated duel heartbeat supports 55-second network loss and 60-second
 });
 test('team reconnects with previous command sequence and remains active in grace',()=>{
  let current=Date.now(),svc=createTeamService({now:()=>current});
- const people=Array.from({length:4},(_,i)=>({id:i%2?UUID_B:UUID_A+i,name:'U'+i}));
+ const people=Array.from({length:4},(_,i)=>({id:'123e4567-e89b-12d3-a456-'+String(426614174001+i).padStart(12,'0'),name:'U'+i}));
  for(const p of people)svc.queue(p,{size:2});
  const first=svc.result(people[0]);
  assert.equal(first.status,'active');
