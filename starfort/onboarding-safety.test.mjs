@@ -92,3 +92,26 @@ test('two-device end-to-end: first device uploads, second conflicts, no hidden o
  assert.equal(first.status,'conflict');
  assert.equal(cloud.buildings.keep,5);
 });
+
+test('internet loss retains offline progress and resumes sync without discarding it',async()=>{
+ const s=R.createState(now);let rev=1,offline=false,cloud=structuredClone(s);
+ const sync=createAccountSync({
+   fetchRemote:async()=>({state:structuredClone(cloud),revision:rev}),
+   saveRemote:async(next,expected)=>{
+     if(offline)throw Error('Sunucuya bağlanılamadı.');
+     assert.equal(expected,rev);cloud=structuredClone(next);return {revision:++rev};
+   },
+   readLocal:()=>s,validateLocal:x=>x,
+   schedule:()=>0,cancel:()=>{}
+ });
+ assert.equal(await sync.start(),true);
+ s.buildings.keep=3;offline=true;
+ assert.equal(await sync.flush(),false);
+ assert.equal(sync.status,'offline');
+ assert.equal(s.buildings.keep,3);assert.equal(cloud.buildings.keep,1);
+ offline=false;
+ assert.equal(await sync.refresh(),true);
+ assert.equal(await sync.flush(),true);
+ assert.equal(sync.status,'synced');
+ assert.equal(cloud.buildings.keep,3);
+});
