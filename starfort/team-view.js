@@ -1,6 +1,7 @@
 /** Starfort v1.4 team arena. The browser renders state; all combat rules live on server. */
 import {guildRequest,GUILD_TOKEN_KEY,guildMatchHistory} from './guild-client.js';
 import {createMatchContinuity} from './match-continuity.js';
+import {createMatchReceiptRecovery} from './match-receipts.js';
 import {accountSession} from './account-auth.js';
 import {ARENA_HERO_STYLES} from './arena-heroes.js';
 import * as R from './rules.js';
@@ -28,6 +29,11 @@ export function mountTeamArena(root){
   let botDifficulty=trainingDifficulty(localStorage.getItem('starfort:bot-difficulty'))||'normal';
   let minimapVisible=localStorage.getItem('starfort:minimap-visible')!=='false';
   const matchContinuity=createMatchContinuity(sessionStorage,'starfort:team-last-active');
+  const receiptRecovery=createMatchReceiptRecovery({storage:localStorage,userId:accountSession()?.user?.id});
+  const acceptMatch=next=>{
+    if(receiptRecovery.remember(next)&&receiptRecovery.pending)void receiptRecovery.flush();
+    return matchContinuity.accept(next);
+  };
   let snapshot={status:'idle'},error='',seq=0,busy=false,disposed=false,raf=0,sending=0,checking=0,pendingBurst=false,pendingDash=false,pendingOrder=null,pendingFocus=null,pendingSquad='all',pendingAttack=false;
   const keys=new Set(),touch=new Set();
   const api=(endpoint,data=null)=>guildRequest('team/'+endpoint,token,data);
@@ -111,9 +117,9 @@ export function mountTeamArena(root){
       b.title=maxHp?`Can ${Math.ceil(hp)}/${maxHp}`:'Birlikler henüz savaş alanında değil';
     }
   }
-  async function refresh(){if(disposed||busy||!token)return;try{snapshot=matchContinuity.accept(await api('state'));if(Number.isSafeInteger(snapshot.inputSeq))seq=Math.max(seq,snapshot.inputSeq);error='';}catch(e){error=e.message;}if(!disposed)status();}
-  async function start(size,variant='flags'){if(disposed||busy||!token||!policy.liveMatchmaking)return;busy=true;try{const data=await api('queue',{size,variant,heroId});snapshot=matchContinuity.accept(data);error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
-  async function startBot(size,variant='flags'){if(disposed||busy||!token)return;busy=true;try{snapshot=matchContinuity.accept(await api('bot',{size,variant,difficulty:botDifficulty,heroId}));error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
+  async function refresh(){if(disposed||busy||!token)return;try{snapshot=acceptMatch(await api('state'));if(Number.isSafeInteger(snapshot.inputSeq))seq=Math.max(seq,snapshot.inputSeq);error='';}catch(e){error=e.message;}if(!disposed)status();}
+  async function start(size,variant='flags'){if(disposed||busy||!token||!policy.liveMatchmaking)return;busy=true;try{const data=await api('queue',{size,variant,heroId});snapshot=acceptMatch(data);error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
+  async function startBot(size,variant='flags'){if(disposed||busy||!token)return;busy=true;try{snapshot=acceptMatch(await api('bot',{size,variant,difficulty:botDifficulty,heroId}));error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
   async function startParty(size,variant='flags'){if(disposed||busy||!token||!policy.liveMatchmaking)return;busy=true;try{snapshot=await api('party/queue',{size,variant});error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
   async function leave(){if(disposed||busy||!token)return;busy=true;try{snapshot=await api('leave',{});error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
   async function send(){if(disposed||busy||snapshot.status!=='active')return;
@@ -123,7 +129,7 @@ export function mountTeamArena(root){
     const data={seq:++seq,x:axis.x,y:axis.y,attack:keys.has('j')||touch.has('attack')||pendingAttack,burst:pendingBurst,dash:pendingDash};
     if(pendingOrder){data.order=pendingOrder;data.focus=pendingFocus;data.squad=pendingSquad;}
     pendingAttack=false;pendingBurst=false;pendingDash=false;pendingOrder=null;pendingFocus=null;pendingSquad='all';busy=true;
-    try{snapshot=matchContinuity.accept(await api('input',data));error='';}catch(e){error=e.message;if(data.order){pendingOrder=data.order;pendingFocus=data.focus;pendingSquad=data.squad;}if(data.burst)pendingBurst=true;if(data.dash)pendingDash=true;if(data.attack)pendingAttack=true;}
+    try{snapshot=acceptMatch(await api('input',data));error='';}catch(e){error=e.message;if(data.order){pendingOrder=data.order;pendingFocus=data.focus;pendingSquad=data.squad;}if(data.burst)pendingBurst=true;if(data.dash)pendingDash=true;if(data.attack)pendingAttack=true;}
     finally{busy=false;if(!disposed)status();}
   }
   function selectSquad(value){if(!['all','guard','archer'].includes(value))return;selectedSquad=value;
