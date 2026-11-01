@@ -41,13 +41,24 @@ async function hostedRequest(route,token,data){
   if(op==='input')return unwrap(svc.input(user,data||{}));
   throw new Error('İşlem bulunamadı.');
 }
+const LIVE_SERVER='https://starfort-online-beta.onrender.com';
+async function liveRequest(route,data){
+  const current=await freshAccountSession();
+  const response=await fetch(LIVE_SERVER+'/api/'+route,{
+    method:data===null?'GET':'POST',signal:AbortSignal.timeout(12000),
+    headers:{Authorization:'Bearer '+current.access_token,...(data===null?{}:{'Content-Type':'application/json'})},
+    ...(data===null?{}:{body:JSON.stringify(data)})
+  });
+  const payload=await response.json().catch(()=>({}));
+  if(!response.ok)throw Error(payload.error||'Canlı savaş sunucusu yanıt vermedi.');
+  return payload;
+}
 export async function guildRequest(route,token=null,data=null){
-  if(accountSession() && !/^(arena|team)\//.test(route))
+  if(accountSession()){
+    if(/^(arena|team)\//.test(route))return liveRequest(route,data);
     return rpc(route,token,data);
-  if(hostedMode()){
-    if(!accountSession())throw Error('Önce Ayarlar bölümünden e-posta hesabına giriş yap.');
-    return hostedRequest(route,token,data);
   }
+  if(hostedMode())return hostedRequest(route,token,data);
   let body=data;
   if(route==='register'&&body){
     let stored='';
