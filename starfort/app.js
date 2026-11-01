@@ -738,7 +738,15 @@ function dispatch(action) {
   if (button.dataset.stage) { openBattle(button.dataset.stage); return; }
   if (button.dataset.closeView !== undefined) { activeView = 'keep'; render(); return; }
   if (button.dataset.closeBattle !== undefined) { closeBattle(); render(); return; }
-  if (button.dataset.retryStage) { openBattle(button.dataset.retryStage); return; }
+  if (button.dataset.retryStage) {
+    const stage=Number(button.dataset.retryStage),mode=button.dataset.retryMode;
+    if(mode==='veteran'||mode==='rift'){
+      const started=mode==='rift'?R.startWeeklyRift(state):R.startVeteranBattle(state,stage,Number(button.dataset.retryTier));
+      if(!started.ok)return notify(started.error);
+      openBattle();return;
+    }
+    openBattle(stage);return;
+  }
 }
 
 document.addEventListener('click', dispatch);
