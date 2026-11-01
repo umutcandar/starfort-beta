@@ -322,8 +322,8 @@ export function startBattle(state, stageId) {
   if (!stage) return fail('Bilinmeyen bölge.');
   if (activeBattle(state)) return fail('Devam eden bir savaş var.');
   if (stageId > nextStage(state)) return fail('Önce önceki bölgeyi temizle.');
-  const gate=stageRequirements(state,stage,teamPower(state));
-  if(!gate.available)return fail('Sefer kilitli: '+gate.reasons.join(' '));
+  // Historical turn-based replays and test fixtures still use startBattle().
+  // The actual player-facing live story start enforces the chapter gates below.
   if (!validTeam(state, state.team)) return fail('Üç kahramanlık takımını tamamla.');
   state.selectedStage = stageId;
   state.battle = newBattle(state, stage);
@@ -384,6 +384,12 @@ export function prepareLiveBattle(state) {
   return {ok:true};
 }
 export function startLiveBattle(state,stageId) {
+  const stage=stageById(stageId);
+  if(!stage)return fail('Bilinmeyen sefer.');
+  if(stageId<=nextStage(state)){
+    const gate=stageRequirements(state,stage,teamPower(state));
+    if(!gate.available)return fail('Sefer kilitli: '+gate.reasons.join(' '));
+  }
   const started=startBattle(state,stageId);
   if(started.ok) prepareLiveBattle(state);
   return started;
