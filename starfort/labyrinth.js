@@ -1,5 +1,5 @@
 /** STARFORT original single-player maze. Separate from campaign stars, PvP and currency server. */
-export const MAZE_FLOORS=12;
+export const MAZE_FLOORS=16;
 export const MAZE_WIDTH=5;
 const MAX_RESOURCE=1e9;
 const validCell=id=>Number.isInteger(id)&&id>=0&&id<25;
@@ -74,7 +74,7 @@ export function labyrinthLayout(floor){
     type:id===0?'entrance':id===24?'exit':id===guard?'guardian':
       chests.has(id)?'treasure':springs.has(id)?'fountain':traps.has(id)?'trap':'passage',
   }));
-  return {floor,guard,path,cells,zone:ZONES[Math.floor((floor-1)/3)]};
+  return {floor,guard,path,cells,zone:ZONES[Math.floor((floor-1)/4)]};
 }
 export function labyrinthStatus(state){
   const maze=state.labyrinth||createLabyrinth(),layout=labyrinthLayout(maze.floor);
