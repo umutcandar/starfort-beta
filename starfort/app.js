@@ -188,8 +188,9 @@ function renderNav() {
   navEl.innerHTML = navItems.map(([id, icon, label]) => `<button class="nav-item ${(activeView === id || (activeView === 'campaign' && id === 'expedition')) ? 'active' : ''}" data-view="${id}" aria-label="${label}" aria-current="${(activeView === id || (activeView === 'campaign' && id === 'expedition')) ? 'page' : 'false'}">${svg(icon)}<span>${label}</span></button>`).join('') + '<div class="rail-foot">✦ &nbsp; BETA · UZUN OYUN TESTİ</div>';
 }
 function renderPicker() {
-  $('#building-picker').innerHTML = R.BUILDINGS.map(building => `<button class="building-choice ${selectedBuilding === building.id ? 'active' : ''}" data-building="${building.id}" aria-label="${building.name}, seviye ${state.buildings[building.id]}">${svg(building.id)}<span>${building.name.replace('Karaorman ', '').replace('Yıldız ', '').replace('Kor ', '').replace('Aytaşı ', '')}</span></button>`).join('');
-  $('#keep-caption').textContent = `Kale seviyesi ${state.buildings.keep}`;
+  const v=villageView();
+  $('#building-picker').innerHTML = R.BUILDINGS.map(building => `<button class="building-choice ${selectedBuilding === building.id ? 'active' : ''}" data-building="${building.id}" aria-label="${building.name}, seviye ${v.buildings[building.id]}">${svg(building.id)}<span>${building.name.replace('Karaorman ', '').replace('Yıldız ', '').replace('Kor ', '').replace('Aytaşı ', '')}</span></button>`).join('');
+  $('#keep-caption').textContent = `Kale seviyesi ${v.buildings.keep}`;
   for (const building of R.BUILDINGS) {
     let label = cityLabelNodes.get(building.id);
     if (!label) {
@@ -197,10 +198,10 @@ function renderPicker() {
       label.innerHTML = `<span class="city-label-level"></span><span class="city-label-name"></span>`;
       $('#city-labels').append(label); cityLabelNodes.set(building.id, label);
     }
-    label.querySelector('.city-label-level').textContent = state.buildings[building.id];
+    label.querySelector('.city-label-level').textContent = v.buildings[building.id];
     label.querySelector('.city-label-name').textContent = building.name.replace('Karaorman ', '').replace('Yıldız Rasathanesi', 'Rasathane').replace('Kor ', '').replace('Keresteliği','Kerestelik').replace('Demirhanesi','Demirhane');
     label.classList.toggle('selected', selectedBuilding === building.id);
-    label.setAttribute('aria-label', `${building.name}, seviye ${state.buildings[building.id]}, geliştirmeyi aç`);
+    label.setAttribute('aria-label', `${building.name}, seviye ${v.buildings[building.id]}, geliştirmeyi aç`);
   }
   renderCityProduction();
   const daily=R.dailyRewardState(villageView(),constructionUiNow());$('#daily-status').textContent=villageSignedIn()&&!villageSnapshot?'Sunucuya bağlanılıyor':daily.available?'Sandığı aç':'Yarın tekrar gel';
@@ -514,7 +515,7 @@ async function accountAction(action){
      notify('Onay e-postası yeniden istendi. Gelen kutunu kontrol et.');return;
    }
    if(action==='logout'){
-     accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;
+     accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;render();
      notify('E-posta hesabından çıkış yapıldı. Yerel oyun korundu.');return;
    }
    if(action==='sync'){await accountSync.refresh();return;}
@@ -555,12 +556,12 @@ document.addEventListener('submit',async event=>{
      const info=await accountSignUp(email,password,undefined,authRedirect());
      signupPending=info.needsConfirmation;confirmationEmail=email;
       notify(info.needsConfirmation?'Onay bağlantısı e-postana gönderildi. Onayla ve oyuna dön.':'E-posta hesabı oluşturuldu.');
-     if(accountSession())await accountSync.start();
+     if(accountSession()){await accountSync.start();await refreshVillage();}
    }else{
      await accountSignIn(email,password);
      signupPending=false;confirmationEmail='';
      notify('E-posta hesabına giriş yapıldı.');
-     await accountSync.start();if(activeView==='guild')void refreshGuild();
+     await accountSync.start();await refreshVillage();if(activeView==='guild')void refreshGuild();
    }
  }catch(error){notify('Hesap: '+error.message);}
  finally{accountBusy=false;if(activeView==='settings')renderSettings();}
@@ -792,6 +793,12 @@ async function verifyConstructionTime(){
 }
 let constructionRequestPending=false;
 async function runBuildingAction(mode,id,button){
+ if(villageSignedIn()){
+  const target=mode==='finish'?villageSnapshot?.construction?.id:id;
+  if(mode!=='finish'&&!R.BUILDINGS.some(b=>b.id===target))return notify('Bina bulunamadı.');
+  return serverVillageAction(mode==='finish'?'finish':'upgrade',target);
+ }
+
  if(constructionRequestPending)return;
  if(mode!=='finish'&&!R.BUILDINGS.some(item=>item.id===id))return notify('Bina bulunamadı.');
  if(saveGuard.conflicted)return notify('Kayıt başka sekmede değişti. Sayfayı yenile.');
@@ -826,6 +833,8 @@ function dispatch(action) {
     if(button.dataset.welcome==='account'){activeView='settings';render();}
     return;
   }
+  if(button.hasAttribute('data-village-refresh')){void refreshVillage();return;}
+  if(button.hasAttribute('data-village-match-claim')){void claimServerMatchRewards();return;}
   if(button.dataset.accountAction){accountAction(button.dataset.accountAction);return;}
   if(button.dataset.recoveryKey){
     try{
@@ -848,7 +857,7 @@ function dispatch(action) {
   if(button.hasAttribute('data-training-open')){activeView='training';render();return;}
   if(button.hasAttribute('data-arena-open')){activeView='arena';render();return;}
   if(button.hasAttribute('data-team-open')){activeView='team';render();return;}
-  if(button.hasAttribute('data-daily-reward')){result(R.claimDailyReward(state),'Günlük kaynak sandığın açıldı!');return;}
+  if(button.hasAttribute('data-daily-reward')){if(villageSignedIn())void serverVillageAction('daily');else result(R.claimDailyReward(state),'Yerel günlük ödül alındı. Sunucu köyüne aktarılmaz.');return;}
   if(button.dataset.cosmeticInterest){const vote=R.toggleWishlist(state,button.dataset.cosmeticInterest);result(vote,vote.selected?'Tasarım istek listene eklendi.':'Tasarım istek listenden çıkarıldı.');return;}
   if(button.dataset.seasonTitle){result(R.claimSeasonTitle(state,button.dataset.seasonTitle),'Yeni sezon unvanı koleksiyonuna eklendi.');return;}
   if(button.dataset.claimContract){result(R.claimCampaignContract(state,button.dataset.claimContract),'Görev ödülü alındı; kozmetik unvan ilerlemen güncellendi.');return;}
@@ -898,7 +907,7 @@ function dispatch(action) {
   if (button.hasAttribute('data-close-building')) { $('#building-dialog').close(); return; }
   if(button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.hasAttribute('data-finish-building')){
     const mode=button.hasAttribute('data-finish-building')?'finish':button.dataset.collectUpgrade?'collect':'upgrade';
-    const id=mode==='finish'?state.construction?.id:button.dataset.collectUpgrade||button.dataset.upgradeBuilding;
+    const id=mode==='finish'?villageView().construction?.id:button.dataset.collectUpgrade||button.dataset.upgradeBuilding;
     void runBuildingAction(mode,id,button);
     return;
   }
@@ -910,7 +919,7 @@ function dispatch(action) {
     else team[selectedSlot] = id;
     result(R.setTeam(state, team), 'Savaş dizilimi güncellendi.'); return;
   }
-  if (button.hasAttribute('data-collect')) { const collected = R.collect(state); result(collected, `Üretim toplandı: ${Object.entries(collected.gain).filter(([, n]) => n).map(([id, n]) => `+${number(n)} ${resourceName[id]}`).join(' · ') || 'Henüz biriken kaynak yok.'}`); return; }
+  if(button.hasAttribute('data-collect')){if(villageSignedIn())void serverVillageAction('collect');else {const collected=R.collect(state);result(collected,'Yerel üretim toplandı. Sunucu köyüne aktarılmaz.');}return;}
   if (button.dataset.action === 'open-expedition') { activeView = 'campaign'; render(); return; }
   if (button.dataset.action === 'resume-battle') { openBattle(); return; }
   if (button.dataset.stage) { openBattle(button.dataset.stage); return; }
@@ -949,7 +958,7 @@ document.addEventListener('keydown',event=>{
 $('#recenter').innerHTML = svg('keepMenu');
 let buildingBackdropDown = false;
 // Update long-term construction countdowns and claim availability while the panel is open.
-setInterval(()=>{if(state.construction){renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}},30000);
+setInterval(()=>{if(villageView().construction){renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}},30000);
 if(state.construction)void verifyConstructionTime().then(()=>{renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}).catch(()=>{});
 
 $('#building-dialog').addEventListener('pointerdown', event => { buildingBackdropDown = event.target === $('#building-dialog'); });
@@ -993,12 +1002,12 @@ render();
        if(accountRecovering){notify('Kurtarma bağlantısı onaylandı. Şimdi yeni şifreni yaz.');return;}
        notify('E-posta hesabın doğrulandı. Bulut ilerlemen kontrol ediliyor.');
      }
-     if(accountSession())await accountSync.start();
+     if(accountSession()){await accountSync.start();await refreshVillage();}
      if(!accountSession()&&!localStorage.getItem('starfort:welcome-seen')&&!location.hash)$('#account-welcome')?.showModal();
  }catch(error){notify('Kurtarma: '+error.message);}
 })();
 setInterval(()=>{if(accountSession()&&!document.hidden)void accountSync.refresh();},45000);
-setInterval(() => { const pending = $('#production-gain'); if (pending) pending.innerHTML = costHtml(R.production(state), true); renderCityProduction(); }, 3000);
+setInterval(() => { const pending = $('#production-gain'); if (pending) pending.innerHTML = costHtml(R.production(villageView(),constructionUiNow()), true); renderCityProduction(); }, 3000);
 setInterval(()=>{if(activeView==='guild'&&!guildBusy&&!document.hidden&&guildToken&&document.activeElement?.tagName!=='INPUT')refreshGuild();},7000);
 document.addEventListener('visibilitychange', () => {
  if(document.hidden){gameAudio.suspend();combatRunner.pause();persist();void accountSync.flush();}
