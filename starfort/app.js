@@ -24,7 +24,9 @@ import {armoryArt} from './armory-art.js';
 import {armoryMarkup} from './armory-v212.js';
 import {createMatchReceiptRecovery} from './match-receipts.js';
 import {buildingWorkshopMarkup} from './building-workshop.js';
-import {villageAuthorityRequest,villageServerView} from './village-authority.js';
+import {villageAuthorityRequest,villageServerView,validateVillageSnapshot} from './village-authority.js';
+import {accountProgressRequest,accountServerView} from './account-progression.js';
+import {accountExpeditionMarkup} from './account-expedition.js';
 import {trustedConstructionNow} from './construction-clock.js';
 import {labyrinthMarkup} from './labyrinth-view.js';
 import {premiumCatalogMarkup} from './premium-catalog.js';
@@ -141,10 +143,13 @@ function notify(message) {
 }
 function result(action, success) { if (!action.ok) { notify(action.error); return false; } if (success) notify(success); persist(); render(); return true; }
 let villageSnapshot=null,villageOwner=null,villageBusy=false,villageGeneration=0;
+let accountProgressSnapshot=null,accountProgressOwner=null;
 const villageSignedIn=()=>!!accountSession();
 function villageView(){
  if(!villageSignedIn())return state;
- return villageServerView(state,villageOwner===accountSession()?.user?.id?villageSnapshot:null);
+ const uid=accountSession()?.user?.id;
+ const village=villageServerView(state,villageOwner===uid?villageSnapshot:null);
+ return accountServerView(village,accountProgressOwner===uid?accountProgressSnapshot:null);
 }
 function acceptVillage(response){
  if(!villageSignedIn()||response.identity!==accountSession().user.id)return false;
@@ -154,16 +159,38 @@ function acceptVillage(response){
  render();if($('#building-dialog').open)renderBuildingDialog();
  return true;
 }
+function acceptAccountProgress(response){
+ if(!villageSignedIn()||response.identity!==accountSession()?.user?.id)return false;
+ if(villageOwner===response.identity&&villageSnapshot&&response.data.revision<villageSnapshot.revision)return false;
+ accountProgressOwner=response.identity;accountProgressSnapshot=response.account;
+ return acceptVillage({identity:response.identity,snapshot:validateVillageSnapshot(response.data)});
+}
 async function refreshVillage({preserve=false}={}){
  const uid=accountSession()?.user?.id;
- if(!uid){villageGeneration++;villageOwner=null;villageSnapshot=null;render();return false;}
+ if(!uid){villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;render();return false;}
  const gen=++villageGeneration;
- if(!preserve||villageOwner!==uid){villageOwner=uid;villageSnapshot=null;render();}
+ if(!preserve||villageOwner!==uid){villageOwner=uid;villageSnapshot=null;accountProgressOwner=uid;accountProgressSnapshot=null;render();}
  try{
-  const response=await villageAuthorityRequest('get');
+  const response=await accountProgressRequest('get');
   if(gen!==villageGeneration||accountSession()?.user?.id!==uid)return false;
-  return acceptVillage(response);
- }catch(error){if(gen===villageGeneration){notify('Sunucu köyü: '+error.message);render();}return false;}
+  return acceptAccountProgress(response);
+ }catch(error){if(gen===villageGeneration){notify('Hesap ilerlemesi: '+error.message);render();}return false;}
+}
+async function accountProgressAction(action,target=null,aux=null){
+ if(villageBusy||!villageSignedIn())return;
+ villageBusy=true;
+ try{
+  const owner=accountSession().user.id;
+  const response=await accountProgressRequest(action,{target,aux});
+  if(accountSession()?.user?.id!==owner)return;
+  if(acceptAccountProgress(response)){
+   const report=response.account.lastReport;
+   if(action==='mission_turn'&&!response.account.mission&&report){
+    notify(report.won?'★ Sunucu zaferi! '+report.stars+' yıldız · Kaynaklar ve ganimet kaydedildi.':'Sefer sonuçlandı. Takımını geliştirip yeniden dene.');
+   }else notify(({'hero':'Kahraman eğitildi','forge':'Ekipman üretildi','equip':'Ekipman kuşanıldı','unequip':'Ekipman çıkarıldı','team':'Takım kaydedildi','mission_start':'Sunucu seferi başladı','mission_abandon':'Seferden çekildin','contract':'Doğrulanmış görev ödülü alındı','title':'Unvan açıldı'})[action]||'Savaş komutu sunucuda işlendi.');
+  }
+ }catch(error){notify('Sunucu: '+error.message);await refreshVillage({preserve:true});}
+ finally{villageBusy=false;}
 }
 async function serverVillageAction(action,building=null,roomId=null){
  if(villageBusy)return;
@@ -544,7 +571,7 @@ async function accountAction(action){
      notify('Onay e-postası yeniden istendi. Gelen kutunu kontrol et.');return;
    }
    if(action==='logout'){
-     accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;render();
+     accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;render();
      notify('E-posta hesabından çıkış yapıldı. Yerel oyun korundu.');return;
    }
    if(action==='sync'){await accountSync.refresh();return;}
