@@ -1,7 +1,9 @@
 import * as R from './rules.js';
 import {createGameAudio} from './audio.js';
-import {loadAccountSession,accountSession,accountSignIn,accountSignUp,accountSignOut,accountBackup,accountRequestPasswordReset,accountAcceptRecoveryHash,accountUpdatePassword} from './account-auth.js';
+import {loadAccountSession,accountSession,accountSignIn,accountSignUp,accountSignOut,accountBackup,accountRequestPasswordReset,accountAcceptAuthHash,accountResendConfirmation,accountUpdatePassword} from './account-auth.js';
 import {createAccountSync} from './account-sync.js';
+import {makeRecoveryPoint,recoveryPoints,loadRecoveryPoint} from './recovery-points.js';
+import {progressionSummary} from './save-summary.js';
 import { createScene, paintBuildingPreview } from './illustrated-scene.js';
 import { placeCityLabels } from './city-layout.js';
 import { ROLES, HERO_LORE, CHAPTERS } from './content.js';
@@ -61,11 +63,17 @@ let battleSpeed=1, battleFxExpires=0;
 let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
 let accountBackupInfo=null,accountBusy=false,accountSyncInfo={status:'disconnected'},accountRecovering=false;
+let syncConflictDetails=null,confirmationEmail='',signupPending=false;
+const authRedirect=()=>location.protocol==='https:'?location.origin+location.pathname:'https://umutcandar.github.io/starfort-beta/starfort/';
 const accountSync=createAccountSync({
  fetchRemote:()=>accountBackup('get'),saveRemote:(saved,revision)=>accountBackup('save',{state:saved,revision}),
  readLocal:()=>state,validateLocal:saved=>importSave(exportSave(saved)),
- onStatus:info=>{accountSyncInfo=info;if(activeView==='settings')renderSettings();},
- onConflict:()=>notify('Bulutta farklı kayıt var. Yerel ilerleme korunuyor. Ayarlar bölümünden seçim yap.')
+ onStatus:info=>{accountSyncInfo=info;if(info.status==='synced')syncConflictDetails=null;if(activeView==='settings')renderSettings();},
+ onConflict:details=>{
+   syncConflictDetails=details;
+   notify('Bu cihaz ile bulut kaydı farklı. Hiçbiri silinmedi; Ayarlar bölümünden seçim yap.');
+   if(!$('#battle-dialog').open){activeView='settings';render();}
+ }
 });
 loadAccountSession();
 const gameAudio=createGameAudio();
@@ -398,6 +406,21 @@ async function guildAction(name){
   catch(error){guildError=error.message;notify(error.message);}
   finally{guildBusy=false;if(activeView==='guild')renderGuild();}
 }
+function renderAccountExtras(){
+  const local=progressionSummary(state);
+  let remote=null;
+  try{if(syncConflictDetails?.remote)remote=progressionSummary(syncConflictDetails.remote);}catch{}
+  const label=p=>p?`Kale ${p.keep}, ${p.chapters} bölüm, ${p.heroes} kahraman, ${number(p.gold)} altın`:'Bulut bilgisi henüz alınamadı';
+  const points=recoveryPoints(localStorage);
+  return `<section class="account-extra-grid">
+    ${accountSyncInfo.status==='conflict'?`<article class="guild-panel account-conflict"><h3>İki farklı köy kaydı bulundu</h3><p>İkisini karşılaştır. Seçim yapmadan ilerleme silinmez.</p>
+    <div class="account-compare"><div><small>BU CİHAZ</small><p>${esc(label(local))}</p></div><div><small>BULUT</small><p>${esc(label(remote))}</p></div></div>
+    <p>Önce kayıt dosyanı indir. Ardından hangi köyle devam edeceğini seç.</p></article>`:''}
+    ${signupPending&&!accountSession()?`<article class="guild-panel account-pending"><h3>E-posta onayı bekleniyor</h3><p>${esc(confirmationEmail)} adresine gönderilen bağlantıyı açıp oyuna dön.</p>
+    <button class="secondary wide" data-account-action="resend-confirmation">Onay e-postasını tekrar gönder</button></article>`:''}
+    <article class="guild-panel account-recovery"><h3>Önceki köy kurtarma noktaları</h3><p>Bir yedeği geri yüklemeden önce önceki kaydın son üç kopyası saklanır.</p>
+    ${points.length?points.map((p,i)=>`<button class="secondary wide" data-recovery-key="${esc(p.key)}">${i+1}. Kurtarma kaydı · ${esc(label(progressionSummary(p.state)))}</button>`).join(''):'<small>Henüz kurtarma kopyası yok.</small>'}</article></section>`;
+}
 function renderSettings(){
   const hosted=location.hostname.endsWith('github.io')||new URLSearchParams(location.search).get('hosted')==='1';
   const cloudReady=hosted&&!!guildToken,cloudLabel=!hosted?'Bulut yedeği GitHub Pages çevrim içi beta hesabında kullanılabilir.':!cloudReady?'Önce İttifak bölümünden bu cihazda komutan hesabı oluştur.':cloudSaveInfo?.exists?`Bulut yedeği: ${new Date(cloudSaveInfo.savedAt).toLocaleString('tr-TR')} · Rev. ${cloudSaveInfo.revision}`:cloudSaveInfo?'Henüz bulut yedeği yok.':'Bulut durumu henüz sorgulanmadı.';
@@ -421,6 +444,7 @@ function renderSettings(){
       ${accountRecovering?'<div class="guild-form"><input id="account-new-password" type="password" minlength="8" maxlength="100" autocomplete="new-password" placeholder="Yeni şifren"><button class="primary" data-account-action="password-update">Şifremi güncelle</button></div>':''}
       <small>Otomatik eşitleme yalnızca hesaba giriş yapıldığında çalışır. Bulut çatışmalarını oyuncu çözer.</small>
     </article></div>`;
+  workspaceEl.insertAdjacentHTML('beforeend',renderAccountExtras());
 }
 
 async function accountAction(action){
@@ -437,6 +461,11 @@ async function accountAction(action){
      await accountUpdatePassword($('#account-new-password')?.value);
      accountRecovering=false;notify('Şifre güncellendi.');await accountSync.start();return;
    }
+   if(action==='resend-confirmation'){
+     if(!confirmationEmail)throw Error('Önce e-posta adresinle hesap oluştur.');
+     await accountResendConfirmation(confirmationEmail,authRedirect());
+     notify('Onay e-postası yeniden istendi. Gelen kutunu kontrol et.');return;
+   }
    if(action==='logout'){
      accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;
      notify('E-posta hesabından çıkış yapıldı. Yerel oyun korundu.');return;
@@ -444,17 +473,20 @@ async function accountAction(action){
    if(action==='sync'){await accountSync.refresh();return;}
    if(action==='use-local'){
      if(!confirm('Bu cihazdaki ilerleme bulut kaydının üzerine yazılacak. Diğer cihazdaki ilerlemeyi kaybedebilirsin. Emin misin?'))return;
+     makeRecoveryPoint(localStorage,state);
      await accountSync.useLocal();notify('Bu cihazın kaydı buluta yüklendi.');return;
    }
    const remote=await accountBackup('get');accountBackupInfo=remote;
    if(action==='status'){notify(remote?'Bulut yedeği bulundu.':'Bulut yedeği henüz yok.');return;}
    if(action==='save'){
      if(remote&&!confirm('Bulut yedeğinin üzerine yazılacak. Devam edilsin mi?'))return;
+     makeRecoveryPoint(localStorage,state);
      await accountSync.useLocal();notify('Buluta yedeklendi.');
    }else if(action==='restore'){
      if(!remote)throw Error('Bulut yedeği bulunamadı.');
      const candidate=importSave(JSON.stringify({format:'starfort-save',key:R.STORAGE_KEY,state:remote.state}));
      if(!confirm('Bulut ilerlemesi bu cihazın kaydını değiştirecek. Önce JSON yedeğini indirdin mi?'))return;
+     makeRecoveryPoint(localStorage,state);
      accountSync.stop();combatRunner.pause();trialState=null;const old=state;state=candidate;
      if(!persist()){state=old;throw Error('Tarayıcı kaydı değiştirilemedi.');}
      location.reload();
@@ -473,11 +505,13 @@ document.addEventListener('submit',async event=>{
  accountBusy=true;
  try{
    if(mode==='signup'){
-     const info=await accountSignUp(email,password);
-     notify(info.needsConfirmation?'E-postanı onayla, sonra giriş yap.':'E-posta hesabı oluşturuldu.');
+     const info=await accountSignUp(email,password,undefined,authRedirect());
+     signupPending=info.needsConfirmation;confirmationEmail=email;
+      notify(info.needsConfirmation?'Onay bağlantısı e-postana gönderildi. Onayla ve oyuna dön.':'E-posta hesabı oluşturuldu.');
      if(accountSession())await accountSync.start();
    }else{
      await accountSignIn(email,password);
+     signupPending=false;confirmationEmail='';
      notify('E-posta hesabına giriş yapıldı.');
      await accountSync.start();if(activeView==='guild')void refreshGuild();
    }
@@ -528,6 +562,7 @@ async function cloudSaveAction(action){
       if(!remote.exists)throw new Error('Bu hesapta henüz bulut yedeği yok.');
       const candidate=importSave(JSON.stringify({format:'starfort-save',key:R.STORAGE_KEY,state:remote.state}));
       if(!confirm('Bulut kaydı bu cihazdaki mevcut ilerlemenin yerine geçecek. Önce yerel kayıt dosyasını indirdin mi?'))return;
+      makeRecoveryPoint(localStorage,state);
       combatRunner.pause();trialState=null;
       const previous=state;state=candidate;
       if(!persist()){state=previous;throw new Error('Tarayıcı kaydı değiştirilemedi.');}
@@ -704,7 +739,25 @@ function dispatch(action) {
   if(saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
   if(button.hasAttribute('data-audio-toggle')){const enabled=gameAudio.toggle();notify(enabled?'Ses ve müzik açıldı.':'Ses ve müzik kapatıldı.');if(activeView==='settings')renderSettings();return;}
   gameAudio.cue('click');
+  if(button.dataset.welcome){
+    $('#account-welcome').close();
+    localStorage.setItem('starfort:welcome-seen','1');
+    if(button.dataset.welcome==='account'){activeView='settings';render();}
+    return;
+  }
   if(button.dataset.accountAction){accountAction(button.dataset.accountAction);return;}
+  if(button.dataset.recoveryKey){
+    try{
+      const recovered=loadRecoveryPoint(localStorage,button.dataset.recoveryKey);
+      if(!confirm('Bu kurtarma noktası mevcut köyün üzerine yazılacak. Devam edilsin mi?'))return;
+      makeRecoveryPoint(localStorage,state);
+      accountSync.stop();combatRunner.pause();trialState=null;
+      const old=state;state=recovered;
+      if(!persist()){state=old;throw Error('Bu sekme başka bir kayıtla çakıştı. Sayfayı yenile.');}
+      location.reload();
+    }catch(error){notify('Kurtarma başarısız: '+error.message);}
+    return;
+  }
   if(button.hasAttribute('data-fullscreen')) { toggleFullscreen(); return; }
   if(button.dataset.quickBot){quickPlayBot(button.dataset.quickBot);return;}
   if(button.hasAttribute('data-labyrinth-open')){activeView='labyrinth';render();return;}
@@ -788,6 +841,7 @@ $('#import-save').addEventListener('change',async event=>{
   try{if(file.size>2_000_000)throw new Error('Kayıt dosyası 2 MB sınırını aşıyor.');
     const candidate=importSave(await file.text());
     if(!confirm('Mevcut köy ilerlemesi yedekteki kayıtla değiştirilecek. Devam edilsin mi?'))return;
+    makeRecoveryPoint(localStorage,state);
     combatRunner.pause();trialState=null;const previous=state;state=candidate;
     if(!persist()){state=previous;throw new Error('Tarayıcı kayda izin vermiyor. Mevcut köy değişmedi.');}
     location.reload();
@@ -836,11 +890,15 @@ if (state.battle?.status === 'active') { R.prepareLiveBattle(state); persist(); 
 render();
 (async()=>{
  try{
-   if(await accountAcceptRecoveryHash(location.hash,()=>history.replaceState(null,'',location.pathname+location.search))){
-     accountRecovering=true;activeView='settings';render();notify('Kurtarma bağlantısı onaylandı. Yeni şifreni oluştur.');
-     return;
-   }
-   if(accountSession())await accountSync.start();
+   const callback=await accountAcceptAuthHash(location.hash,()=>history.replaceState(null,'',location.pathname+location.search));
+     if(callback){
+       accountRecovering=callback.type==='recovery';signupPending=false;confirmationEmail='';
+       activeView='settings';render();
+       if(accountRecovering){notify('Kurtarma bağlantısı onaylandı. Şimdi yeni şifreni yaz.');return;}
+       notify('E-posta hesabın doğrulandı. Bulut ilerlemen kontrol ediliyor.');
+     }
+     if(accountSession())await accountSync.start();
+     if(!accountSession()&&!localStorage.getItem('starfort:welcome-seen')&&!location.hash)$('#account-welcome')?.showModal();
  }catch(error){notify('Kurtarma: '+error.message);}
 })();
 setInterval(()=>{if(accountSession()&&!document.hidden)void accountSync.refresh();},45000);

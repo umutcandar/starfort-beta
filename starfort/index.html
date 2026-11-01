@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111918">
   <meta name="description" content="Starfort: yıldızın etrafında kaleni yükselt, kahramanlarını topla ve karanlığa karşı savaş.">
-  <title>Starfort v2.16.0 Beta — Yıldız Köyü</title>
+  <title>Starfort v2.17.0 Beta — Yıldız Köyü</title>
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="preload" as="image" href="assets/city/starfall-valley.webp">
   <link rel="stylesheet" href="style.css">
@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="bag.css">
   <link rel="stylesheet" href="v212-visuals.css">
   <link rel="stylesheet" href="reference-layout.css">
+  <link rel="stylesheet" href="account-onboarding.css">
 <style>
     .build-badge{font:700 10px/1.1 system-ui,sans-serif;letter-spacing:.05em;color:#d6b879;border:1px solid #c9a76d80;border-radius:6px;padding:5px 6px;background:#192739ad;white-space:nowrap;flex:0 0 auto}
     @media(max-width:800px){.build-badge{font-size:9px;padding:4px}}
@@ -36,7 +37,7 @@
   <div class="app">
     <header class="topbar">
       <a class="brand" href="./" aria-label="Starfort ana ekran"><img src="icon.svg" alt=""><span>STARFORT<small>YILDIZ KÖYÜ</small></span></a>
-      <span class="build-badge" title="Kapalı beta için hazırlanmış geliştirme sürümü">v2.16.0 Beta</span><button class="commander" data-view="heroes" aria-label="Kahramanları ve dizilimi aç"><img src="assets/aldren.webp" alt=""><span>Köy Muhafızı<small>Güç <b id="commander-power">—</b></small></span><b id="village-level" title="Kale seviyesi">1</b></button>
+      <span class="build-badge" title="Kapalı beta için hazırlanmış geliştirme sürümü">v2.17.0 Beta</span><button class="commander" data-view="heroes" aria-label="Kahramanları ve dizilimi aç"><img src="assets/aldren.webp" alt=""><span>Köy Muhafızı<small>Güç <b id="commander-power">—</b></small></span><b id="village-level" title="Kale seviyesi">1</b></button>
       <div class="resources" id="resources" aria-label="Kaynaklar"></div>
       <div class="hud-tools"><button class="header-action" data-view="journal" title="Kronik" aria-label="Kronik">📜</button><button class="header-action" data-view="settings" title="Ayarlar ve kayıt yedeği" aria-label="Ayarlar ve kayıt yedeği">⚙</button><span class="save-indicator" id="save-status" title="İlerleme bu cihazda kaydedilir">Yerel kayıt hazır</span><button class="fullscreen-button" data-fullscreen aria-label="Tam ekranı aç" title="Tam ekran">⛶</button></div>
     </header>
@@ -63,6 +64,18 @@
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <input type="file" id="import-save" accept="application/json,.json" hidden aria-label="Kayıt yedeği içe aktar">
+  <dialog id="account-welcome" class="account-welcome" aria-labelledby="welcome-title">
+    <div class="account-welcome-inner">
+      <span class="eyebrow">STARFORT · YENİ KOMUTAN</span>
+      <h2 id="welcome-title">Yıldız Köyü'ne hoş geldin</h2>
+      <p>Köyünü misafir olarak kurabilir veya e-posta hesabıyla ilerlemeni farklı cihazlarda güvenle saklayabilirsin.</p>
+      <div class="account-welcome-actions">
+        <button class="primary" type="button" data-welcome="account">E-posta hesabıyla başla</button>
+        <button class="secondary" type="button" data-welcome="guest">Şimdilik misafir oyna</button>
+      </div>
+      <small>Misafir kaydı yalnızca bu tarayıcıda tutulur. Dilediğin zaman Ayarlar'dan hesap açabilirsin.</small>
+    </div>
+  </dialog>
   <dialog id="building-dialog" aria-labelledby="building-title"><div id="building-content"></div></dialog>
   <dialog id="battle-dialog" aria-labelledby="battle-title"><div id="battle-content"></div></dialog>
   <script>

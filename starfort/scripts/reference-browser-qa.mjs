@@ -70,6 +70,12 @@ try{
   await cdp('Emulation.setDeviceMetricsOverride',{width:1536,height:864,deviceScaleFactor:1,mobile:false});
   await cdp('Page.navigate',{url:origin});
   await ready();
+  await sleep(160);
+  assert.equal(await evaluate("document.querySelector('#account-welcome')?.open"),true,'İlk oyunda misafir ve hesap seçimi gösterilmeli');
+  assert.ok(await evaluate("!!document.querySelector('#account-welcome [data-welcome=account]')"),'Hesapla başla seçeneği olmalı');
+  await evaluate("document.querySelector('#account-welcome [data-welcome=guest]').click()");
+  assert.equal(await evaluate("document.querySelector('#account-welcome').open"),false,'Misafir seçince köy oynanabilir olmalı');
+  assert.equal(await evaluate("localStorage.getItem('starfort:welcome-seen')"),'1','İlk giriş ekranı yalnızca bir defa açılmalı');
   // Do not block the castle view unless the player explicitly requests a quest.
   assert.equal(await evaluate("document.querySelector('#next-quest').hidden"),true,'Köyde sefer kartı ilk açılışta kapalı olmalı');
   assert.equal(await evaluate("document.querySelector('#quest-mini').hidden"),false,'Küçük Sefer düğmesi görünmeli');

@@ -28,8 +28,9 @@ export async function accountSignIn(email,password,fetcher=fetch){
  const result=await request('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})},fetcher);
  return saveSession(result);
 }
-export async function accountSignUp(email,password,fetcher=fetch){
- const result=await request('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})},fetcher);
+export async function accountSignUp(email,password,fetcher=fetch,redirectTo=null){
+ const dest=redirectTo?'?redirect_to='+encodeURIComponent(verifiedRedirect(redirectTo)):'';
+ const result=await request('/auth/v1/signup'+dest,{method:'POST',body:JSON.stringify({email,password})},fetcher);
  if(result.access_token)saveSession(result);
  return {needsConfirmation:!result.access_token};
 }
@@ -72,24 +73,43 @@ export async function accountBackup(action,body={},fetcher=fetch){
  return rows[0];
 }
 
+function verifiedRedirect(url){
+ if(typeof url!=='string'||!/^https:\/\//.test(url))throw Error('Güvenli kurtarma adresi gerekli.');
+ const parsed=new URL(url);
+ // Never allow a recovery token to be routed to a third-party website.
+ if(!['umutcandar.github.io','starfort-online-beta.onrender.com'].includes(parsed.hostname))
+   throw Error('Hesap yönlendirmesi STARFORT adresi olmalı.');
+ return parsed.origin+parsed.pathname;
+}
+export async function accountResendConfirmation(email,redirectTo,fetcher=fetch){
+ if(typeof email!=='string'||!email.includes('@'))throw Error('Geçerli e-posta adresi yaz.');
+ await request('/auth/v1/resend',{method:'POST',body:JSON.stringify({type:'signup',email,options:{emailRedirectTo:verifiedRedirect(redirectTo)}})},fetcher);
+ return {ok:true};
+}
 export async function accountRequestPasswordReset(email,redirectTo,fetcher=fetch){
  if(typeof email!=='string'||!email.includes('@'))throw Error('Geçerli e-posta adresi yaz.');
  // Redirect URLs must be registered under Supabase Auth > URL Configuration.
- if(typeof redirectTo!=='string'||!/^https:\/\//.test(redirectTo))throw Error('Güvenli kurtarma adresi gerekli.');
- await request('/auth/v1/recover?redirect_to='+encodeURIComponent(redirectTo),{method:'POST',body:JSON.stringify({email})},fetcher);
+ const dest=verifiedRedirect(redirectTo);
+ await request('/auth/v1/recover?redirect_to='+encodeURIComponent(dest),{method:'POST',body:JSON.stringify({email})},fetcher);
  return {ok:true};
 }
-export async function accountAcceptRecoveryHash(hash,clearHash=()=>{},fetcher=fetch){
+export async function accountAcceptAuthHash(hash,clearHash=()=>{},fetcher=fetch){
  if(typeof hash!=='string'||hash.length>5000)return false;
  const args=new URLSearchParams(hash.replace(/^#/,''));
- if(args.get('type')!=='recovery')return false;
+ const type=args.get('type');
+ if(args.get('error')||args.get('error_code'))throw Error('E-posta bağlantısının süresi dolmuş veya geçersiz. Yeni bağlantı iste.');
+ if(!['recovery','signup','email','invite','magiclink'].includes(type))return null;
  const token=args.get('access_token'),refresh=args.get('refresh_token');
  if(!token||!refresh)throw Error('Şifre kurtarma bağlantısı geçersiz veya süresi dolmuş.');
  const user=await request('/auth/v1/user',{method:'GET',headers:{Authorization:'Bearer '+token}},fetcher);
  if(typeof user.id!=='string')throw Error('Hesap bilgisi alınamadı.');
  saveSession({access_token:token,refresh_token:refresh,expires_in:Number(args.get('expires_in')||3600),user});
  clearHash();
- return true;
+ return {type,user};
+}
+export async function accountAcceptRecoveryHash(hash,clearHash=()=>{},fetcher=fetch){
+ if(new URLSearchParams(String(hash).replace(/^#/,'')).get('type')!=='recovery')return false;
+ return !!(await accountAcceptAuthHash(hash,clearHash,fetcher));
 }
 export async function accountUpdatePassword(password,fetcher=fetch){
  if(typeof password!=='string'||password.length<8||password.length>100)throw Error('Yeni şifren 8–100 karakter olmalı.');

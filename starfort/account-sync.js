@@ -51,10 +51,16 @@ export function createAccountSync({fetchRemote,saveRemote,readLocal,validateLoca
       return true;
     }catch(error){
       if(gen!==identity)return false;
-      enabled=false;emit('conflict',error.message||'Bulut sürüm çatışması.');
-      onConflict({revision,error});
+      const message=String(error.message||'Bulut eşitlemesi başarısız.');
+      if(/bağlan|network|offline|fetch|timeout|zaman aşım|abort|erişilem/i.test(message)){
+        // The local save remains valid; retry only after the next network check.
+        pending=true;emit('offline',message);
+      }else{
+        enabled=false;emit('conflict',message);
+        onConflict({revision,error});
+      }
       return false;
-    }finally{inFlight=false;if(enabled&&pending)noteSaved();}
+    }finally{inFlight=false;if(enabled&&pending&&status!=='offline')noteSaved();}
   }
   function noteSaved(){
     if(!enabled)return false;
@@ -75,6 +81,7 @@ export function createAccountSync({fetchRemote,saveRemote,readLocal,validateLoca
         return false;
       }
       if(snapshot()!==baseline)noteSaved();
+      else if(status==='offline')emit('synced','Bağlantı geri geldi; kayıt güncel.');
       return true;
     }catch(error){emit('offline',error.message);return false;}
   }
