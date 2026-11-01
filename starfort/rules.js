@@ -556,16 +556,24 @@ export function battleTurn(state, action) {
     for (const enemy of aliveEnemies()) {
       if (!aliveAllies().length) break;
       const intent=enemyIntent({...battle,round:battle.round-1},enemy);
-      if(action==='star' && ['crush','frost','drain','nova'].includes(intent.type)) {
+      if(action==='star' && ['crush','frost','drain','nova','grave','shatter','thorn'].includes(intent.type)) {
         events.push(`${enemy.name}: Yıkım dalgası yıldız çağrısıyla bozuldu!`);
         frame(enemy.id,'interrupt','Yıkım engellendi');
         continue;
       }
       const tank = aliveAllies().find(hero => hero.id === 'aldren') || aliveAllies().find(hero => hero.id === 'aurelion');
-      const targets = intent.type==='strike'?[tank || aliveAllies().sort((a,b)=>a.hp-b.hp)[0]]:aliveAllies();
+      const targets = ['strike','shatter'].includes(intent.type)?[tank || aliveAllies().sort((a,b)=>a.hp-b.hp)[0]]:aliveAllies();
       for(const target of targets) {
         const damage=hit(target,enemy.attack*intent.multiplier*(tank?.id==='aldren'?.85:tank?.id==='aurelion'?.92:1)*(1-target.armor/100)*(action==='guard'?.5:1));
         events.push(`${enemy.name}, ${target.name} için ${damage} hasar verdi.`);
+      }
+      if(intent.type==='thorn'){
+        battle.starCharge=Math.max(0,battle.starCharge-10);
+        events.push('Dikenli pusu yıldız enerjisini 10 azalttı.');
+      }
+      if(intent.type==='grave'){
+        const wounded=aliveEnemies().sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
+        if(wounded){const restore=Math.min(wounded.maxHp-wounded.hp,Math.round(enemy.attack*1.2));wounded.hp+=restore;events.push('Mahzen ayini düşmanlarını iyileştirdi.');}
       }
       if(intent.type==='frost') {
         battle.starCharge=Math.max(0,battle.starCharge-18);
