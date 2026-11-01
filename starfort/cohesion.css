@@ -38,3 +38,6 @@
 @media(max-width:820px){.mode-hub-grid{grid-template-columns:1fr}.mode-hub-grid .quick-bot-invitation{display:flex;grid-column:auto}.mode-group-board{grid-template-columns:1fr}.mode-card .mode-actions button{min-width:120px}}
 @media(max-width:540px){.mode-hub>summary{padding:16px;font-size:15px}.mode-hub-grid{padding:0 10px 12px}.mode-card{padding:12px}.mode-card h3{font-size:19px}.campaign-priority{align-items:flex-start;flex-direction:column}}
 @media(prefers-reduced-motion:reduce){.mode-hub,.mode-card{transition:none}}
+
+/* Active battle should never have the mode picker floating over the battlefield. */
+#workspace.sf-battle-live .mode-group-board,#workspace.sf-battle-live .mode-lore{display:none!important}
