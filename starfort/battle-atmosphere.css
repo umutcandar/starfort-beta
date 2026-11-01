@@ -1,0 +1,19 @@
+/* Eight hand-directed lighting moods on the shared illustrated battlefield.
+   The stage illustration, hero silhouettes and gameplay controls remain intact. */
+.combat-arena{--sf-sky:rgba(212,151,87,.13);--sf-haze:rgba(70,43,24,.15);--sf-accent:#edc17d;background-image:linear-gradient(180deg,var(--sf-sky),transparent 44%,var(--sf-haze)),url('assets/battlefield.webp')}
+.combat-arena:after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 47% 34%,var(--sf-sky),transparent 54%),linear-gradient(0deg,var(--sf-haze),transparent 35%);mix-blend-mode:screen;opacity:.55}
+.scene-ash{--sf-sky:#b9853d33;--sf-haze:#593e2836;--sf-accent:#f0bc72}
+.scene-chapel{--sf-sky:#9791c845;--sf-haze:#30335b4d;--sf-accent:#e4d0f2}
+.scene-forest{--sf-sky:#4b956d45;--sf-haze:#142b254a;--sf-accent:#aed9b1}
+.scene-iron{--sf-sky:#df673f57;--sf-haze:#5a231d64;--sf-accent:#f6b47a}
+.scene-crypt{--sf-sky:#52618045;--sf-haze:#161a304f;--sf-accent:#b0c9d7}
+.scene-frost{--sf-sky:#82cde76b;--sf-haze:#1e456a52;--sf-accent:#b8e9fa}
+.scene-eclipse{--sf-sky:#a166c053;--sf-haze:#34204465;--sf-accent:#e7b8fa}
+.scene-void{--sf-sky:#9e50706e;--sf-haze:#190e254f;--sf-accent:#f7b5d4}
+.battle-biome{position:absolute;top:16px;left:16px;z-index:6;max-width:180px;pointer-events:none;display:flex;flex-direction:column;gap:3px;padding:7px 10px;background:linear-gradient(90deg,#071525d9,#0b1c2b91);border-left:2px solid var(--sf-accent);text-shadow:0 1px 6px #000}
+.battle-biome strong{color:var(--sf-accent);font:700 11px Georgia,serif}
+.battle-biome small{font:9px/1.5 system-ui;color:#deeced;letter-spacing:.04em}
+.combat-arena .arena-rune{color:var(--sf-accent)}
+.combat-arena .round-pill{border-color:var(--sf-accent);box-shadow:0 0 12px #0b1829b8}
+@media(max-width:650px){.battle-biome{top:9px;left:8px;padding:5px 7px;max-width:100px}.battle-biome strong{font-size:9px}.battle-biome small{font-size:8px}.combat-arena .round-pill{top:12px}}
+@media(prefers-reduced-motion:reduce){.combat-arena:after{animation:none}}

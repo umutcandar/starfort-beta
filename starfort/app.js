@@ -13,6 +13,7 @@ import {practiceReward} from './battle-assist.js';
 import {mountTeamArena} from './team-view.js';
 import {ensureTestCommander} from './quick-play.js';
 import {commanderPath} from './commander-path.js';
+import {battleExperience} from './battle-experience.js';
 import {cloudSaveRequest,cloudBackupSummary} from './cloud-save.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -40,6 +41,7 @@ const iconPaths = {
 };
 const svg = (name, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name] || iconPaths.star}</svg>`;
 const resourceIcon = { gold: 'coin', wood: 'wood', stone: 'stone', aether: 'star' };
+const battlePolicy=battleExperience(window.location);
 const resourceName = { gold: 'Altın', wood: 'Kereste', stone: 'Taş', aether: 'Yıldız özü' };
 const navItems = [ ['keep', 'keep', 'Köy'], ['heroes', 'heroes', 'Kahramanlar'], ['expedition', 'expedition', 'Seferler'], ['guild', 'guild', 'İttifak'], ['armory', 'forge', 'Cephanelik'], ['shop', 'shop', 'Mağaza'] ];
 let state;
@@ -210,16 +212,11 @@ function renderContractCards() {
 }
 function renderExpedition() {
   const starStatus=R.campaignStarStatus(state);
+  const completed=state.cleared.length===R.STAGES.length;
   const next = Math.min(state.cleared.length + 1, R.STAGES.length), currentStage = R.STAGES[next-1], chapter = CHAPTERS[next-1];
-  workspaceEl.innerHTML = `<header><div><span class="eyebrow">KUZEY SINIRI · BİRİNCİ BÖLÜM</span><h2>Küllerden doğan yol</h2><p>Köyün ışığını karanlığın unuttuğu topraklara taşı.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
+  workspaceEl.innerHTML = `<header><div><span class="eyebrow">KUZEY SINIRI · ${completed?'HİKÂYE TAMAMLANDI':`SEFER ${String(next).padStart(2,'0')} / 08`}</span><h2>${completed?'Kuzeyin Işığı Yeniden Doğdu':'Kuzeyin Sefer Günlüğü'}</h2><p>${completed?'Sekiz sefer tamamlandı. Yıldızlarını geliştir, usta sınavlarına gir.':'Köyün ışığını karanlığın unuttuğu topraklara taşı. Önce hikâyeni ilerlet.'}</p></div><button class="secondary" data-close-view>Köye dön</button></header>
     <div class="campaign-hero"><div><span class="eyebrow">${String(next).padStart(2,'0')} / 08 · ${chapter.name}</span><h3>${currentStage.name}</h3><p>${chapter.brief}</p><span class="tactic">${chapter.tactic}</span></div></div>
-    ${renderCommanderPath()}
-    <article class="arena-invitation quick-bot-invitation"><div><span class="eyebrow">TEK OYUNCU TESTİ · BİR TIK</span><h3>Hemen savaş dene</h3><p>İlk kez giriyorsan otomatik bir deneme komutanı oluşturulur. Başka oyuncu gerekmiyor. Bu maçlar ödülsüzdür.</p></div><button class="primary" data-quick-bot="duel">⚔ Botla 1v1</button><button class="secondary" data-quick-bot="siege">🏰 Botlarla 5v5 Kuşatma</button></article>
-    <article class="arena-invitation"><div><span class="eyebrow">YENİ · ÇEVRİM İÇİ 1v1</span><h3>Yıldız Düellosu</h3><p>Gerçek oyuncuyla eşleş, kahramanını kontrol et, savaş. Önce İttifak bölümünde hesap oluştur. Derecesiz geliştirme modu.</p></div><button class="primary" data-arena-open>Canlı arenaya gir →</button></article>
-    <article class="arena-invitation team-invitation"><div><span class="eyebrow">YENİ · 2v2 / 5v5 · KLAN TAKIMI</span><h3>İki Sancak Muharebesi</h3><p>Arkadaşlarınla veya klan arkadaşlarınla aynı takımda savaş, askerlerine emir ver, iki hakimiyet noktasını ele geçir. Sunucu tabanlı derecesiz test modu.</p></div><button class="primary" data-team-open>Takım savaşına gir →</button></article>
-    <article class="training-invitation"><div><span class="eyebrow">YENİ · KOMUTAN AKADEMİSİ</span><h3>Kahramanı yönet, orduna emir ver</h3><p>WASD ile hareket et, üç birliğini seç, kale kapısını yıkıp hakimiyet kur. Eğitim ödül veya çevrim içi rekabet sunmaz.</p></div><button class="primary" data-training-open>Kuşatma tatbikatına gir →</button></article>
-    ${renderContractCards()}
-    ${renderWeeklyRift()}
+    <div class="campaign-priority"><strong>✦ ANA HİKÂYE · ${state.cleared.length}/8 BÖLGE</strong><small>Seferi seç, kahramanlarını donat, yıldızlarını tamamla.</small></div>
     <div class="progress-banner"><span>${state.cleared.length} / 8 bölge temizlendi</span><div class="progress-track"><span style="width:${state.cleared.length / 8 * 100}%"></span></div><span>Takım gücü ${number(R.teamPower(state))}</span></div>
     <section class="star-track" aria-label="Sefer yıldız yolu"><strong>★ Yıldız Yolu · ${starStatus.total}/24</strong><small>Her normal sefer 1–3 yıldız kazandırır. Takımın ne kadar sağlıklı bitirirse o kadar fazla yıldız alırsın. İlk beş farklı 3 yıldız zaferi özel ekipman açar. PvP sonuçları bu sayacı etkilemez.</small><div class="star-milestones">${starStatus.milestones.map(m=>`<span class="${m.unlocked?'unlocked':''}">${m.unlocked?'✓':'☆'} ${m.total}: ${esc(m.title)}</span>`).join('')}</div></section>
     <div class="veteran-intro"><b>Usta Seferleri</b><p>Temizlediğin bölgelere üç farklı güçlükte geri dön. Her yeni seviyede daha güçlü düşmanlar ve kozmetik ustalık mühürleri kazan. Ödüller hikâye kaynaklarıdır; çevrim içi PvP gücünü artırmaz.</p></div>
@@ -227,7 +224,17 @@ function renderExpedition() {
       const done = state.cleared.includes(stage.id), locked = stage.id > next, resume = state.battle?.status === 'active' && state.battle.stageId === stage.id;
       const medal=state.veteranMedals?.[stage.id]||0, veteranTier=Math.min(3,medal+1);
       return `<article class="stage-card ${done ? 'done' : stage.id === next ? 'current' : 'locked'}"><div class="stage-number">${done ? '✓' : String(stage.id).padStart(2, '0')}</div><div><span class="eyebrow">${CHAPTERS[stage.id-1].name}</span><h3>${stage.name}</h3><span class="stage-stars" aria-label="${state.campaignStars?.[stage.id]||0} / 3 yıldız">${'★'.repeat(state.campaignStars?.[stage.id]||0)}${'☆'.repeat(3-(state.campaignStars?.[stage.id]||0))}</span><p>${stage.description} · ${stage.enemyCount} düşman · Önerilen güç ${stage.recommendedPower}</p><div class="cost-list">${costHtml(stage.reward, true)}</div>${R.FIRST_CLEAR_LOOT[stage.id]?`<p class="loot-preview">${svg('forge')} İlk zafer: ${R.itemById(R.FIRST_CLEAR_LOOT[stage.id]).name}${done?' · Alındı':''}</p>`:''}</div><button class="${done ? 'secondary' : 'primary'}" ${resume ? 'data-action="resume-battle"' : `data-stage="${stage.id}"`} ${locked || (state.battle?.status === 'active' && !resume) ? 'disabled' : ''}>${resume ? 'Savaşa dön' : done ? 'Yeniden oyna' : locked ? 'Kilitli' : 'Savaşa gir'}</button>${done?`<button class="secondary veteran-start" data-veteran-stage="${stage.id}" data-veteran-tier="${veteranTier}" ${state.battle?.status==='active'?'disabled':''}>✦ Usta Seferi ${veteranTier} ${medal?`· ${medal}/3 mühür`: '· İlk sınav'}</button>`:''}</article>`;
-    }).join('')}</div>`;
+    }).join('')}</div>
+    ${renderCommanderPath()}
+    ${renderContractCards()}
+    ${renderWeeklyRift()}
+    <details class="mode-hub"><summary>Savaş salonu ve antrenmanlar<small>Hikâyeden ayrı, isteğe bağlı düello, takım savaşı ve tatbikat modları</small></summary><div class="mode-hub-grid">
+    <article class="arena-invitation quick-bot-invitation"><div><span class="eyebrow">TEK OYUNCU · HIZLI EĞİTİM</span><h3>Hemen savaş dene</h3><p>İlk kez giriyorsan otomatik bir deneme komutanı oluşturulur. Başka oyuncu gerekmiyor. Bot antrenmanında sınırlı yerel kaynak ödülü kazanılabilir; rekabetçi sıralama etkilenmez.</p></div><button class="primary" data-quick-bot="duel">⚔ Botla 1v1</button><button class="secondary" data-quick-bot="siege">🏰 Botlarla 5v5 Kuşatma</button></article>
+    <article class="arena-invitation"><div><span class="eyebrow">${battlePolicy.liveMatchmaking?'CANLI 1v1':'BOT DÜELLOSU · CANLI PvP ÖZEL SUNUCUDA'}</span><h3>Yıldız Düellosu</h3><p>${battlePolicy.liveMatchmaking?'Gerçek rakibe meydan oku veya botla antrenman yap. Önce İttifak bölümünde hesap oluştur.':'Düello salonunda botla savaş. Gerçek oyuncu eşleşmesi bu GitHub Pages betasında henüz açık değil.'}</p></div><button class="primary" data-arena-open>Düello salonuna git</button></article>
+    <article class="arena-invitation team-invitation"><div><span class="eyebrow">${battlePolicy.liveMatchmaking?'2v2 / 5v5 · KLAN TAKIMI':'2v2 / 5v5 BOT TATBİKATI'}</span><h3>İki Sancak Muharebesi</h3><p>${battlePolicy.liveMatchmaking?'Klan arkadaşlarınla savaş, askerlerine emir ver, sancakları ele geçir. Derecesiz test modu.':'Bot birliklere emir ver, sancakları ele geçir veya kale kuşat. Canlı eşleşme özel sunucuda kullanılabilir.'}</p></div><button class="primary" data-team-open>Sancak meydanına git</button></article>
+    <article class="training-invitation"><div><span class="eyebrow">KOMUTAN AKADEMİSİ</span><h3>Kahramanı yönet, orduna emir ver</h3><p>WASD ile hareket et, üç birliğini seç, kale kapısını yıkıp hakimiyet kur. Eğitim ödül veya çevrim içi rekabet sunmaz.</p></div><button class="primary" data-training-open>Kuşatma tatbikatına gir →</button></article>
+    </div></details>
+`;
 }
 
 function renderJournal() {
@@ -239,11 +246,7 @@ function renderJournal() {
 function itemStats(item) {
   return Object.entries(item.stats).map(([key,value])=>({attack:`+${value} saldırı`,hp:`+${value} can`,armor:`%${value} hasar azaltma`,healing:`+${value} şifa`})[key]).join(' · ');
 }
-function itemArt(item) {
-  const color = {common:'#a5c6ce',epic:'#bfa0e6',legendary:'#ebc67d'}[item.rarity];
-  const art = item.slot==='weapon' ? '<path d="M34 6 42 18 25 43 19 38z" fill="#a8b8c8"/><path d="m34 6-9 37 14-26" fill="#e2e4dd"/><path d="m14 36 18 12M22 43l-8 13" stroke="#c6a166" stroke-width="5"/><path d="m11 56 6 4" stroke="#c6a166" stroke-width="4"/>' : item.slot==='armor' ? '<path d="m20 10-10 7 4 17 8-4-3 23q13 9 26 0l-3-23 8 4 4-17-10-7-6 8H26z" fill="#718999" stroke="#d4b57b" stroke-width="2"/><path d="m22 28 10 7 10-7M22 43l10 6 10-6M32 21v34" stroke="#d4b57b" fill="none"/>' : '<path d="M22 8c-12 24 32 24 20 0" fill="none" stroke="#c6a166" stroke-width="3"/><path d="m32 26 15 16-15 20-15-20z" fill="'+color+'" stroke="#ead7a0" stroke-width="2"/><path d="m32 29 6 13-6 16-7-16z" fill="#ecfaff" opacity=".6"/>';
-  return `<svg class="item-art" viewBox="0 0 64 68" aria-hidden="true"><circle cx="32" cy="34" r="28" fill="${color}" opacity=".07"/><circle cx="32" cy="34" r="25" fill="none" stroke="${color}" opacity=".22"/>${art}</svg>`;
-}
+function itemArt(item) { return armoryArt(item); }
 function renderArmory() {
   if(!state.heroes[selectedArmoryHero]) selectedArmoryHero=state.team[0];
   const hero=R.HEROES.find(hero=>hero.id===selectedArmoryHero), stats=R.heroStats(state,hero.id), gear=R.equipmentStats(state,hero.id);

@@ -1,5 +1,6 @@
 import * as R from './rules.js';
 import { CHAPTERS } from './content.js';
+import {chapterAtmosphere} from './battle-atmosphere.js';
 
 const esc=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]);
 // Atlas windows follow the actual painted silhouettes, including capes and weapons.
@@ -44,6 +45,7 @@ function abilityCard(hero,battle) {
 }
 export function battleMarkup({battle,trial=false,fx=null,speed=1,running=false}) {
   const stage=R.STAGES[battle.stageId-1], done=battle.status!=='active';
+  const atmosphere=chapterAtmosphere(stage.id);
   const target=battle.enemies.find(enemy=>enemy.id===battle.targetId&&enemy.hp>0);
   const threats=done?[]:battle.enemies.filter(enemy=>enemy.hp>0&&R.liveEnemyIntent(battle,enemy).danger);
   const heavy=threats.some(enemy=>battle.live.enemies[enemy.id].casting?.kind==='crush');
@@ -52,8 +54,8 @@ export function battleMarkup({battle,trial=false,fx=null,speed=1,running=false})
   return `<section class="combat-shell ${['star','eclipse','sun','frost'].includes(fx?.kind)?'star-burst':''} ${fx?.kind==='shield'?'guard-burst':''}">
     <header class="combat-heading"><div><span class="eyebrow">BÖLGE ${String(stage.id).padStart(2,'0')} · ${trial?'EĞİTİM DENEMESİ':stage.id===8?'SON KUŞATMA':'YILDIZ SEFERİ'}</span><h2 id="battle-title">${stage.name}</h2></div><div class="combat-tools">${!done?`<button class="combat-pause" data-combat-toggle aria-label="${running?'Savaşı duraklat':'Savaşa devam et'}" title="${running?'Taktik mola':'Devam et'}">${running?'Ⅱ':'▶'}</button>`:''}<button class="combat-speed" data-battle-speed aria-label="Savaş hızı: ${speed} kat">${speed}×</button><button class="combat-dismiss" data-close-battle aria-label="Savaşı kapat ve duraklat">×</button></div></header>
     ${trial?'<p class="combat-trial">Ücretsiz deneme · İlerlemen ve kaynakların değişmez.</p>':''}
-    <div class="combat-arena ${battle.enemies.length>3?'large-encounter':''} ${!running&&!done?'arena-paused':''}" aria-label="Savaş alanı">
-      <div class="arena-vignette"></div><div class="arena-rune" aria-hidden="true">✧</div>
+    <div class="combat-arena scene-${atmosphere.id} ${battle.enemies.length>3?'large-encounter':''} ${!running&&!done?'arena-paused':''}" aria-label="Savaş alanı">
+      <div class="battle-biome"><strong>${esc(atmosphere.name)}</strong><small>${esc(atmosphere.mood)}</small></div><div class="arena-vignette"></div><div class="arena-rune" aria-hidden="true">✧</div>
       <div class="round-pill"><b class="battle-clock">${clock}</b><span>${label}</span></div>
       <div class="formation-side allies">${battle.allies.map((hero,index)=>fighter(hero,index,'ally',battle,fx)).join('')}</div>
       <div class="formation-side hostiles">${battle.enemies.map((enemy,index)=>fighter(enemy,index,'enemy',battle,fx)).join('')}</div>
