@@ -42,7 +42,7 @@ export function buildingUpgradePlan(state,id,now=Date.now()){
  const locked=building.id!=='keep'&&level>=state.buildings.keep+1;
  const battling=state.battle?.status==='active';
  const construction=constructionStatus(state,now),mastery=buildingMasteryGate(state,id);
- const status=maxed?'maxed':
+ const status=state.serverVillage&&!state.serverVillageReady?'offline':maxed?'maxed':
    construction?.id===id?(construction.ready?'claim':'building'):
    construction?'builder-busy':
    battling?'battle':locked?'locked':!mastery.ok?'mastery':direct?'ready':affordable?'collect':'short';
