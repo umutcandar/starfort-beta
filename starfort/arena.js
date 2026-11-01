@@ -79,7 +79,7 @@ export function createArenaService({now=()=>Date.now()}={}){
     if(entry==='waiting'){waitingSeen.set(user.id,now());return {status:'waiting',queuePosition:waiting.indexOf(user.id)+1};}
     const room=rooms.get(entry);
     if(!room){members.delete(user.id);return {status:'idle'};}
-    return {status:room.status==='active'?'active':'ended',room:{id:room.id,status:room.status,isPractice:room.isPractice===true,botDifficulty:room.isPractice?room.botDifficulty||'normal':null,elapsed:room.elapsed,winner:room.winner,reason:room.reason,ticks:room.ticks,players:room.players.map(p=>({id:p.id,name:p.name,isBot:p.isBot===true,side:p.side,x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attackReady:Math.max(0,p.attackAt-room.elapsed),burstReady:Math.max(0,p.burstAt-room.elapsed),dashReady:Math.max(0,p.dashAt-room.elapsed)})),fx:room.fx},you:user.id};
+    return {status:room.status==='active'?'active':'ended',inputSeq:room.players.find(p=>p.id===user.id)?.lastSeq??-1,room:{id:room.id,status:room.status,isPractice:room.isPractice===true,botDifficulty:room.isPractice?room.botDifficulty||'normal':null,elapsed:room.elapsed,winner:room.winner,reason:room.reason,ticks:room.ticks,players:room.players.map(p=>({id:p.id,name:p.name,isBot:p.isBot===true,side:p.side,x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attackReady:Math.max(0,p.attackAt-room.elapsed),burstReady:Math.max(0,p.burstAt-room.elapsed),dashReady:Math.max(0,p.dashAt-room.elapsed)})),fx:room.fx},you:user.id};
   }
   function queue(user){
     if(members.has(user.id))return result(user);
