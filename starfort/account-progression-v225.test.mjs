@@ -112,6 +112,11 @@ test('server migration has a locked canonical ledger, active mission, server-cal
  assert.match(unique,/drop function if exists public\.sfb_account_api\(text,text,text,uuid\)/);
  assert.match(patch,/gear:=jsonb_set\(gear,array\[hero\],coalesce\(gear->hero/);
  assert.match(patch,/counter_value<=fee/);
+ const canonical=readFileSync(new URL('./sql/starfort-v225-mastery-final.sql',import.meta.url),'utf8');
+ assert.match(canonical,/l\.mastery:=least\(24,greatest\(l\.mastery,n\)\)/);
+ assert.match(canonical,/set res=resources,mastery=l\.mastery,revision=l\.revision\+1/);
+ assert.match(canonical,/if p_action='mission_turn' then/);
+
  assert.doesNotMatch(sql,/grant\s+update\s+on\s+public\.starfort_player_progress\s+to\s+authenticated/i);
 });
 test('app routes all account-mode spenders and reward-bearing battles into the unified server account',()=>{
