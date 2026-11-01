@@ -49,7 +49,7 @@ test('collect + upgrade accepts stored production and changes only the intended 
  const state=scene();
  state.res={gold:5,wood:5,stone:0,aether:0};
  state.buildings.keep=2;
- const later=NOW+40*60000;
+ const later=NOW+50*60000;
  const b=buildingUpgradePlan(state,'farm',later);
  assert.equal(b.status,'collect');
  assert.equal(b.level,1);
