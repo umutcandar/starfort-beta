@@ -10,8 +10,6 @@ import {guildRequest,guildOnline,GUILD_TOKEN_KEY} from './guild-client.js';
 import {mountTraining} from './tactics-view.js';
 import {mountArena} from './arena-view.js';
 import {practiceReward} from './battle-assist.js';
-import {mountOnboarding} from './onboarding.js';
-let coach=null;
 import {mountTeamArena} from './team-view.js';
 import {ensureTestCommander} from './quick-play.js';
 import {commanderPath} from './commander-path.js';
@@ -65,7 +63,6 @@ function grantReward(r,won,source){
 }
 window.addEventListener('starfort:practice-result',async e=>{
   const {won,difficulty,mode='duel',matchId}=e.detail||{};
-  try{coach?.fire('practice-result');}catch{}
   const token=guildToken||localStorage.getItem(GUILD_TOKEN_KEY);
   const id=String(matchId||'').replace(/[^a-f0-9]/gi,'').slice(0,32);
   if(token&&id.length>=8){
@@ -519,7 +516,7 @@ function dispatch(action) {
   if (button.dataset.upgradeBuilding) {
     selectedBuilding = button.dataset.upgradeBuilding;
     const upgraded = R.upgradeBuilding(state, selectedBuilding, Date.now());
-    if (upgraded.ok) { $('#building-dialog').close(); try{coach?.fire('upgraded');}catch{} }
+    if (upgraded.ok) $('#building-dialog').close();
     const building = R.BUILDINGS.find(item => item.id === selectedBuilding);
     result(upgraded, `${building.name} · Seviye ${state.buildings[selectedBuilding]} — ${BUILDING_EVOLUTION[selectedBuilding][state.buildings[selectedBuilding]-1]}`);
     return;
@@ -600,4 +597,3 @@ window.addEventListener('pagehide', () => {combatRunner.pause();persist();});
 
 document.addEventListener('fullscreenchange',()=>{const active=!!document.fullscreenElement; $('[data-fullscreen]').setAttribute('aria-label',active?'Tam ekrandan çık':'Tam ekranı aç'); scene?.resize();});
 
-try{coach=mountOnboarding({storage:localStorage,onFight:()=>{if(!localStorage.getItem('starfort:bot-difficulty'))localStorage.setItem('starfort:bot-difficulty','easy');quickPlayBot('duel');},onUpgrade:()=>{activeView='village';render();openBuilding('farm');}});}catch{}

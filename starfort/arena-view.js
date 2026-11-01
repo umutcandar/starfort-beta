@@ -6,8 +6,6 @@ import {getPreferredBattleMode,savePreferredBattleMode} from './battle-render-pr
 import {createBattleMotion,graphicsPreset} from './battle-motion.js';
 import {setCanvasQuality,nextQuality,QUALITY_LABELS} from './graphics-display.js';
 import {mountJoystick,combineMovement} from './mobile-controls.js';
-import {assistMove,hpEvents} from './battle-assist.js';
-import {createJuice} from './battle-juice.js';
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export function mountArena(root){
@@ -19,13 +17,13 @@ export function mountArena(root){
   const keys=new Set(),touch=new Set();let pendingBurst=false,pendingDash=false,pendingAttack=false,uiTime=0,lastStateTime=0;
   const api=(route,data=null)=>guildRequest(`arena/${route}`,token,data);
   root.innerHTML=`<header class="training-title"><div><span class="eyebrow">ÇEVRİM İÇİ ARENA · SİNEMATİK SAVAŞ v2.6.0</span><h2>Yıldız Düellosu</h2><p>Tek başına yapay rakibe karşı antrenman yap veya gerçek oyuncuyla 1v1 düelloya gir.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
-    <div class="sf-portrait-hint" role="note">⚔ <strong>Dikey ya da yatay oyna.</strong> Saldır'a basılı tut: kahramanın rakibe kendisi yürür. Joystick ile kaç, Yıldız Darbesi ve Atılma ile bitir. Bot zaferleri altın + yıldız özü verir; günün ilk zaferi x2.</div>
+    <div class="sf-portrait-hint" role="note">↻ <strong>Yatay oyun önerilir.</strong> Telefonu yana çevir; savaşta soldaki joystick ve sağdaki yetenek tuşlarını kullan.</div>
   <div class="battle-graphics-control"><span>GRAFİK MOTORU</span><select id="arena-render-mode" aria-label="Grafik motoru"><option value="3d">3B prototip (deneysel)</option><option value="2d">Sinematik 2.5B (önerilen)</option></select><small id="arena-render-status">Sinematik 2.5B önerilir; 3B halen deneysel</small><span>GÖRÜNTÜ KALİTESİ</span><select id="arena-graphics" aria-label="Grafik kalitesi"><option value="ultra">Ultra</option><option value="balanced">Dengeli</option><option value="performance">Performans</option></select><a class="sf-3d-lab-link" href="./graphics-3d-preview.html" target="_blank" rel="noopener noreferrer">3B test sahnesi</a></div>
     <div class="arena-head"><div><span class="online-dot"></span><b id="arena-connection">Bağlantı hazırlanıyor</b><small id="arena-match">Gerçek oyuncu veya sunuculu yapay rakip · Derecesiz</small></div><label class="sf-difficulty-picker" for="arena-bot-difficulty">Bot seviyesi <select id="arena-bot-difficulty" aria-label="Bot seviyesi"><option value="easy">Kolay</option><option value="normal">Normal</option><option value="hard">Zor</option></select></label><button class="primary" data-arena-bot>⚔ Botla Savaş (Tek Başına)</button><button class="secondary" data-arena-queue>Gerçek Rakip Ara</button><button class="secondary" data-arena-leave>Çık / Vazgeç</button></div>
     <div class="arena-field"><div class="sf-arena-live-hud" id="arena-live-hud" hidden aria-live="off"><div class="sf-life-card sf-life-ally"><small id="arena-me-name">SEN</small><div class="sf-life-track"><i id="arena-me-life"></i></div><b id="arena-me-hp">—</b></div><div class="sf-combat-timer" id="arena-timer">02:00</div><div class="sf-life-card sf-life-enemy"><small id="arena-enemy-name">RAKİP</small><div class="sf-life-track"><i id="arena-enemy-life"></i></div><b id="arena-enemy-hp">—</b></div></div><canvas id="arena-canvas" width="1000" height="600" aria-label="Düello arenası; klavyede WASD yön, J saldırı, Q büyü, Space atılma"></canvas><div class="sf-battle-bar"><button class="sf-back" data-close-view aria-label="Köye dön">‹ Köy</button><span><strong>STARFORT</strong><small>Yıldız Düellosu</small></span><button data-sf-render aria-label="3B / 2.5B görünüm değiştir">✦ SİNEMATİK</button><button data-sf-graphics aria-label="Grafik kalitesini değiştir">✦ Ultra</button><button data-sf-fullscreen aria-label="Tam ekran yap">⛶</button></div><div class="sf-joystick" aria-label="Kahraman hareket joysticki" role="group"><div class="sf-joystick-rim"></div><div class="sf-joystick-thumb"></div><small>HAREKET</small></div><div class="sf-rotation-tip">↻ En iyi deneyim için telefonu yatay çevir</div><div class="arena-center-message cinematic-intro" id="arena-message"><b>YILDIZ DÜELLOSU</b><p>⚔ Botla Savaş düğmesiyle hemen tek başına dene. Gerçek oyuncu için Rakip Ara'yı kullan.</p></div></div>
     <div class="arena-actions"><button data-arena-attack>Saldır <small>J / dokun</small></button><button data-arena-burst>✦ Yıldız Darbesi <small>Q · 8 sn</small></button><button data-arena-dash>➤ Atılma <small>Space · 5 sn</small></button></div>
     <div class="arena-touch" aria-label="Mobil yön kontrolü"><button data-arena-move="up">▲</button><div><button data-arena-move="left">◀</button><button data-arena-move="down">▼</button><button data-arena-move="right">▶</button></div></div>
-    <p class="arena-hint">WASD / ok tuşları: hareket · J: normal saldırı · Q: alan büyüsü · Space: atılma. Bot maçı yalnızca antrenmandır, gerçek oyuncu değildir; <b>klan savaşı değildir</b>. Bot zaferi yerel kaleye altın + yıldız özü verir (günün ilk zaferi x2); sıralama yoktur.</p>`;
+    <p class="arena-hint">WASD / ok tuşları: hareket · J: normal saldırı · Q: alan büyüsü · Space: atılma. Bot maçı yalnızca antrenmandır, gerçek oyuncu değildir; <b>klan savaşı değildir</b>. Sunucu kapanınca maç sıfırlanır; ödül ve sıralama yoktur.</p>`;
   const $=q=>root.querySelector(q);let canvas=$('canvas');
   let error='';
   $('#arena-graphics').value=graphics;
@@ -50,7 +48,7 @@ export function mountArena(root){
   function resizeCanvas(){renderer.resize(graphics)}
   function updateGraphics(value){graphics=graphicsPreset(value);localStorage.setItem('starfort:graphics',graphics);$('#arena-graphics').value=graphics;$('[data-sf-graphics]').textContent='✦ '+QUALITY_LABELS[graphics];resizeCanvas();}
   const joystick=mountJoystick($('.sf-joystick'));
-  const juice=createJuice($('.arena-field'),()=>canvas);let prevPlayers=null,rewarded=null;
+  let rewarded=null;
   function paint(time=0){
     const room=snapshot.room;
     const visual=room?{
@@ -88,8 +86,7 @@ export function mountArena(root){
     $('[data-arena-bot]').disabled=!token||status==='active'||busy;
     $('[data-arena-leave]').disabled=!token||(status==='idle'&& !error)||busy;
     const me=room?.players.find(p=>p.id===snapshot.you);
-    if(room){for(const ev of hpEvents(prevPlayers,room.players))juice.hit(ev,ev.id===snapshot.you);prevPlayers=room.players.map(p=>({id:p.id,hp:p.hp}));}else prevPlayers=null;
-    if(status==='ended'&&room&&rewarded!==room.id){rewarded=room.id;const won=room.winner===snapshot.you;juice.finish(won);requestAnimationFrame(()=>$('.arena-field')?.scrollIntoView({block:'center'}));if(room.isPractice)window.dispatchEvent(new CustomEvent('starfort:practice-result',{detail:{won,mode:'duel',matchId:room.id,difficulty:room.botDifficulty||botDifficulty}}));}
+    if(status==='ended'&&room&&rewarded!==room.id){rewarded=room.id;if(room.isPractice)window.dispatchEvent(new CustomEvent('starfort:practice-result',{detail:{won:room.winner===snapshot.you,mode:'duel',matchId:room.id,difficulty:room.botDifficulty||botDifficulty}}));}
     $('[data-arena-burst] small').textContent=me&&me.burstReady>0?`${me.burstReady.toFixed(1)} sn`: 'Q · 8 sn';
     $('[data-arena-dash] small').textContent=me&&me.dashReady>0?`${me.dashReady.toFixed(1)} sn`: 'Space · 5 sn';
   }
@@ -102,10 +99,8 @@ export function mountArena(root){
   async function send(){if(destroyed||busy||snapshot.status!=='active')return;
     const x=(keys.has('d')||keys.has('arrowright')||touch.has('right')?1:0)-(keys.has('a')||keys.has('arrowleft')||touch.has('left')?1:0);
     const y=(keys.has('s')||keys.has('arrowdown')||touch.has('down')?1:0)-(keys.has('w')||keys.has('arrowup')||touch.has('up')?1:0);
-    const wantsAttack=keys.has('j')||touch.has('attack')||pendingAttack;
-    const rm=snapshot.room,meP=rm?.players.find(p=>p.id===snapshot.you),foe=rm?.players.find(p=>p.id!==snapshot.you);
-    const axis=assistMove(meP,foe,combineMovement(x,y,joystick.read()),{range:pendingBurst?11:15,wantsAction:wantsAttack||pendingBurst});
-    const body={seq:++seq,x:axis.x,y:axis.y,attack:wantsAttack,burst:pendingBurst,dash:pendingDash};
+    const axis=combineMovement(x,y,joystick.read());
+    const body={seq:++seq,x:axis.x,y:axis.y,attack:keys.has('j')||touch.has('attack')||pendingAttack,burst:pendingBurst,dash:pendingDash};
     pendingBurst=false;pendingDash=false;pendingAttack=false;busy=true;
     try{snapshot=await api('input',body);error='';}catch(e){error=e.message;if(body.burst)pendingBurst=true;if(body.dash)pendingDash=true;if(body.attack)pendingAttack=true;}
     finally{busy=false;if(!destroyed)message();}
@@ -124,5 +119,5 @@ export function mountArena(root){
   window.addEventListener('resize',resizeCanvas);updateGraphics(graphics);
   if(!token){error='Önce İttifak sekmesinden yerel komutan hesabı oluştur.';message();}else poll();
   raf=requestAnimationFrame(draw);gameTimer=setInterval(send,120);queueTimer=setInterval(()=>{if(snapshot.status!=='active' || !busy)poll()},900);
-  return ()=>{destroyed=true;joystick.dispose();juice.dispose();root.classList.remove('sf-battle-live');document.body.classList.remove('sf-combat-running');clearInterval(gameTimer);clearInterval(queueTimer);cancelAnimationFrame(raf);window.removeEventListener('resize',resizeCanvas);motion.reset();renderer.dispose();window.removeEventListener('keydown',keydown);window.removeEventListener('keyup',keyup);window.removeEventListener('blur',blur);root.removeEventListener('click',buttonClick);root.removeEventListener('pointerdown',pointerdown);root.removeEventListener('pointerup',pointerup);root.removeEventListener('pointercancel',pointerup);if(snapshot.status==='waiting'||snapshot.status==='active')api('leave',{}).catch(()=>{});};
+  return ()=>{destroyed=true;joystick.dispose();root.classList.remove('sf-battle-live');document.body.classList.remove('sf-combat-running');clearInterval(gameTimer);clearInterval(queueTimer);cancelAnimationFrame(raf);window.removeEventListener('resize',resizeCanvas);motion.reset();renderer.dispose();window.removeEventListener('keydown',keydown);window.removeEventListener('keyup',keyup);window.removeEventListener('blur',blur);root.removeEventListener('click',buttonClick);root.removeEventListener('pointerdown',pointerdown);root.removeEventListener('pointerup',pointerup);root.removeEventListener('pointercancel',pointerup);if(snapshot.status==='waiting'||snapshot.status==='active')api('leave',{}).catch(()=>{});};
 }

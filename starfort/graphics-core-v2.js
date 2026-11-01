@@ -43,7 +43,7 @@ export function createGraphicsCore(canvas,{quality='ultra',reducedMotion=false}=
     textures.set(id,t);return t;}
   texture('__white');
   function unload(id){const tex=textures.get(id);if(tex){gl.deleteTexture(tex);textures.delete(id);}}
-  function upload(id,img){if(destroyed||!img)return;const t=texture(id);gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);}
+  function upload(id,img){if(destroyed||!img)return;const t=texture(id);gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);}
   function resize(w=canvas.clientWidth||1000,h=canvas.clientHeight||600,dpr=1){const scale=Math.min(2.5,qualityConfig(q).dpr,Math.max(1,dpr));const width=Math.max(1,Math.round(w*scale)),height=Math.max(1,Math.round(h*scale));if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}gl.viewport(0,0,width,height);}
   function begin({quality=q,camera=cam,reducedMotion=red}={}){lastCount=0;draws=[];q=quality;cam=camera;red=reducedMotion;gl.clearColor(.025,.055,.082,1);gl.clear(gl.COLOR_BUFFER_BIT);}
   // World sprites share a camera; screen-space frames are unaffected by movement.

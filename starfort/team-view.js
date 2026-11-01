@@ -8,8 +8,7 @@ import {setCanvasQuality,nextQuality,QUALITY_LABELS} from './graphics-display.js
 import {mountJoystick,combineMovement,battlePoint} from './mobile-controls.js';
 import {drawBattleMinimap} from './battle-minimap.js';
 import {battleObjective} from './battle-director.js';
-import {assistMove,nearestEnemy,hpEvents,rewardMode} from './battle-assist.js';
-import {createJuice} from './battle-juice.js';
+import {rewardMode} from './battle-assist.js';
 const clean=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const orders={follow:'Beni takip et',push:'İlerleyin',hold:'Mevzileri koru',focus:'Hedefe odaklan'};
 export function mountTeamArena(root){
@@ -53,7 +52,7 @@ export function mountTeamArena(root){
   function resizeCanvas(){renderer.resize(graphics)}
   function updateGraphics(value){graphics=graphicsPreset(value);localStorage.setItem('starfort:graphics',graphics);$('#team-graphics').value=graphics;$('[data-sf-graphics]').textContent='✦ '+QUALITY_LABELS[graphics];resizeCanvas();}
   const joystick=mountJoystick($('.sf-joystick'));
-  const juice=createJuice($('.team-field'),()=>canvas);let prevPlayers=null,rewarded=null;
+  let rewarded=null;
   $('#team-render-mode').value=renderMode;$('#team-render-mode').addEventListener('change',e=>switchRenderMode(e.target.value));
   $('#team-render-status').textContent=renderMode==='3d'&&renderer.mode!=='webgl3d'?'3B desteklenmedi; 2.5B yedek kullanılıyor':renderer.mode==='webgl3d'?'Deneysel geometri: düşük detaylı':'Sinematik 2.5B etkin';
   $("#team-graphics").value=graphics;
@@ -69,8 +68,7 @@ export function mountTeamArena(root){
   function status(){const state=snapshot.status,room=snapshot.room;
     const wasLive=root.classList.contains('sf-battle-live');root.classList.toggle('sf-battle-live',state==='active');document.body.classList.toggle('sf-combat-running',state==='active');if(wasLive!==(state==='active'))requestAnimationFrame(resizeCanvas);
     let headline='',detail='';if(error){headline='BAĞLANTI HATASI';detail=error;}else if(state==='idle'){headline='SAVAŞI DENE';detail='Botla hemen 2v2 veya kuşatma başlat; gerçek takım için diğer eşleşme düğmelerini kullan.';}else if(state==='waiting'){headline=`${snapshot.mode} İÇİN OYUNCULAR BEKLENİYOR`;detail=snapshot.party?`${snapshot.waiting}/${snapshot.required} oyuncu · Klan takımı sırada. Tüm üyeler bu ekranı açık tutmalı. Rakip klan da aynı formatı seçmeli.`:`${snapshot.waiting}/${snapshot.required} oyuncu hazır. Diğer oyuncular farklı tarayıcı profillerinden aynı modu seçmeli.`;}else if(state==='ended'){headline=room.winner===null?'BERABERE':room.players.find(p=>p.id===snapshot.you)?.team===room.winner?'ZAFER':'MAĞLUBİYET';detail=room.reason==='disconnect'?'Bağlantı kesilmesi nedeniyle maç sona erdi.':room.reason==='siege-victory'?'Kuşatanlar yıldız çekirdeğini ele geçirdi.':room.reason==='siege-defense'?'Savunmacılar 3 dakika boyunca kaleyi korudu.':'Yeni maça girmek için Çık ardından eşleşme seç.';}
-    if(room){const meNow=room.players.find(p=>p.id===snapshot.you);for(const ev of hpEvents(prevPlayers,room.players)){const p=room.players.find(q=>q.id===ev.id);if(ev.id===snapshot.you||(meNow&&p&&p.team!==meNow.team))juice.hit(ev,ev.id===snapshot.you);}prevPlayers=room.players.map(p=>({id:p.id,hp:p.hp}));}else prevPlayers=null;
-    if(state==='ended'&&room&&rewarded!==room.id){rewarded=room.id;const meEnd=room.players.find(p=>p.id===snapshot.you);const won=room.winner!==null&&meEnd?.team===room.winner;juice.finish(won);if(room.isPractice)window.dispatchEvent(new CustomEvent('starfort:practice-result',{detail:{won,mode:rewardMode(room),matchId:room.id,difficulty:room.botDifficulty||botDifficulty}}));}
+    if(state==='ended'&&room&&rewarded!==room.id){rewarded=room.id;const meEnd=room.players.find(p=>p.id===snapshot.you);if(room.isPractice)window.dispatchEvent(new CustomEvent('starfort:practice-result',{detail:{won:room.winner!==null&&meEnd?.team===room.winner,mode:rewardMode(room),matchId:room.id,difficulty:room.botDifficulty||botDifficulty}}));}
     $('#team-overlay').hidden=state==='active'&&!error;$('#team-overlay').innerHTML=headline?`<b>${clean(headline)}</b><p>${clean(detail)}</p>`:'';
     $('#team-status').textContent=error?'Sunucuya bağlanılamıyor':({idle:'Takım arenası hazır',waiting:'Eşleşme bekleniyor',active:'CANLI MUHAREBE',ended:'Maç tamamlandı'})[state]||'Hazırlanıyor';
     $('#team-detail').textContent=room?`${room.guilds?room.guilds.join(' ⚔ '):clean(room.mode)} · ${room.players.map(p=>p.name).join(' · ')}`:'Sunucu doğrulamalı hareket, hasar ve birlik emirleri';
@@ -85,7 +83,7 @@ export function mountTeamArena(root){
     const seconds=Math.max(0,180-(room?.elapsed||0));$('#team-clock').textContent=`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
     root.querySelectorAll('[data-team-mode],[data-team-party]').forEach(b=>b.disabled=!token||state!=='idle'||busy);
     $('[data-team-leave]').disabled=!token||state==='idle'||busy;
-    root.querySelectorAll('[data-team-bot]').forEach(b=>b.disabled=!token||state==='active'||busy);const me=room?.players.find(p=>p.id===snapshot.you);$('#team-detail').title=room?.isPractice?`Bot zorluğu: ${trainingLabel(room.botDifficulty)} · Derecesiz · ödül sunucuda doğrulanır`:'Gerçek oyunculu takım maçı';
+    root.querySelectorAll('[data-team-bot]').forEach(b=>b.disabled=!token||state==='active'||busy);const me=room?.players.find(p=>p.id===snapshot.you);$('#team-detail').title=room?.isPractice?`Bot zorluğu: ${trainingLabel(room.botDifficulty)} · Derecesiz ve ödülsüz`:'Gerçek oyunculu takım maçı';
     $('[data-team-burst] small').textContent=me?.burstReady>0?me.burstReady.toFixed(1)+' sn':'Q';$('[data-team-dash] small').textContent=me?.dashReady>0?me.dashReady.toFixed(1)+' sn':'Space';
     const groups=room?.squads.filter(s=>s.ownerId===snapshot.you&&(selectedSquad==='all'||s.type===selectedSquad))||[];
     root.querySelectorAll('[data-team-order]').forEach(b=>b.classList.toggle('selected',groups.length>0&&groups.every(s=>s.order===b.dataset.teamOrder)));
@@ -105,9 +103,7 @@ export function mountTeamArena(root){
   async function send(){if(disposed||busy||snapshot.status!=='active')return;
     const x=Number(keys.has('d')||keys.has('arrowright')||touch.has('right'))-Number(keys.has('a')||keys.has('arrowleft')||touch.has('left'));
     const y=Number(keys.has('s')||keys.has('arrowdown')||touch.has('down'))-Number(keys.has('w')||keys.has('arrowup')||touch.has('up'));
-    const wantsAttack=keys.has('j')||touch.has('attack')||pendingAttack;
-    const meP=snapshot.room?.players.find(p=>p.id===snapshot.you),foe=meP&&nearestEnemy(meP,snapshot.room.players.filter(p=>p.hp>0));
-    const axis=assistMove(meP,foe,combineMovement(x,y,joystick.read()),{range:pendingBurst?11:12.5,wantsAction:wantsAttack||pendingBurst});
+    const axis=combineMovement(x,y,joystick.read());
     const data={seq:++seq,x:axis.x,y:axis.y,attack:keys.has('j')||touch.has('attack')||pendingAttack,burst:pendingBurst,dash:pendingDash};
     if(pendingOrder){data.order=pendingOrder;data.focus=pendingFocus;data.squad=pendingSquad;}
     pendingAttack=false;pendingBurst=false;pendingDash=false;pendingOrder=null;pendingFocus=null;pendingSquad='all';busy=true;
@@ -132,5 +128,5 @@ export function mountTeamArena(root){
   window.addEventListener('keydown',keyDown);window.addEventListener('keyup',keyUp);window.addEventListener('blur',blur);root.addEventListener('click',click);root.addEventListener('pointerdown',pointerDown);root.addEventListener('pointerup',pointerUp);root.addEventListener('pointercancel',pointerUp);canvas.addEventListener('click',selectEnemy);
   window.addEventListener('resize',resizeCanvas);updateGraphics(graphics);
   if(!token)error='Önce İttifak sekmesinden yerel komutan hesabı oluştur.';else refresh();status();raf=requestAnimationFrame(draw);sending=setInterval(send,135);checking=setInterval(()=>{if(!busy&&snapshot.status!=='active')refresh()},1000);
-  return ()=>{disposed=true;joystick.dispose();juice.dispose();root.classList.remove('sf-battle-live');document.body.classList.remove('sf-combat-running');clearInterval(sending);clearInterval(checking);cancelAnimationFrame(raf);window.removeEventListener('resize',resizeCanvas);motion.reset();renderer.dispose();window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);window.removeEventListener('blur',blur);root.removeEventListener('click',click);root.removeEventListener('pointerdown',pointerDown);root.removeEventListener('pointerup',pointerUp);root.removeEventListener('pointercancel',pointerUp);canvas.removeEventListener('click',selectEnemy);if(snapshot.status==='active'||snapshot.status==='waiting')api('leave',{}).catch(()=>{});};
+  return ()=>{disposed=true;joystick.dispose();root.classList.remove('sf-battle-live');document.body.classList.remove('sf-combat-running');clearInterval(sending);clearInterval(checking);cancelAnimationFrame(raf);window.removeEventListener('resize',resizeCanvas);motion.reset();renderer.dispose();window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);window.removeEventListener('blur',blur);root.removeEventListener('click',click);root.removeEventListener('pointerdown',pointerDown);root.removeEventListener('pointerup',pointerUp);root.removeEventListener('pointercancel',pointerUp);canvas.removeEventListener('click',selectEnemy);if(snapshot.status==='active'||snapshot.status==='waiting')api('leave',{}).catch(()=>{});};
 }
