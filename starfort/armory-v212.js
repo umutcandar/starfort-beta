@@ -43,9 +43,10 @@ export function armoryMarkup(state,heroId='aldren',filter='all',selectedId=null)
   const busy=state.battle?.status==='active';
   const equippedItems=Object.entries(R.SLOTS).map(([slot,label])=>{
     const item=slotItem(state,hero.id,slot);
+    const ghost=R.itemById(({weapon:'starbreaker',armor:'ashes_plate',relic:'guardian_seal'})[slot]);
     return `<div class="bag-v212-slot ${item?'filled':'empty'}">
       <small>${label}</small>
-      <div class="bag-v212-slot-art">${item?itemImage(item):'<span class="bag-v212-empty-mark">＋</span>'}</div>
+      <div class="bag-v212-slot-art">${item?itemImage(item):`<span class="bag-v213-ghost-art" title="Örnek görünüm · kuşanılmadı">${itemImage(ghost)}</span>`}</div>
       <strong>${item?item.name:'Boş slot'}</strong>
       ${item?`<button class="text-button" data-unequip="${slot}" ${busy?'disabled':''}>Çıkar</button>`:'<span class="bag-v212-slot-hint">Eşya seç</span>'}
     </div>`;
