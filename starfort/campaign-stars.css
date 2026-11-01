@@ -1,0 +1,9 @@
+/* Additive campaign achievements: original city and battle layout stay untouched. */
+.star-track{padding:14px 17px;margin:12px 0;border:1px solid #b89a6559;border-radius:12px;background:#162333be;color:#ead8a4}
+.star-track strong{font-size:1rem}.star-track small{display:block;color:#c4c8ca;margin-top:6px}
+.star-milestones{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.star-milestones span{font-size:.78rem;border:1px solid #c4a26977;border-radius:8px;padding:5px 7px;opacity:.6}
+.star-milestones span.unlocked{opacity:1;background:#8f672437}
+.stage-stars{display:block;color:#dfb45e;letter-spacing:2px;font-weight:800;margin:5px 0}
+.star-loot-tag{display:block;color:#e7bd7f;font-size:.8rem;margin:3px 0}
+.star-result{font-size:1.5rem;letter-spacing:6px;color:#e5bd70;margin:4px 0 7px}
