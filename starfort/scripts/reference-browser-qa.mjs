@@ -52,7 +52,7 @@ try{
   }
   async function evaluate(js){
     const r=await cdp('Runtime.evaluate',{expression:js,returnByValue:true,awaitPromise:true});
-    if(r.exceptionDetails)throw new Error('Tarayıcı JS hatası: '+r.exceptionDetails.text);
+    if(r.exceptionDetails)throw new Error('Tarayıcı JS hatası: '+(r.exceptionDetails.exception?.description||r.exceptionDetails.text));
     return r.result.value;
   }
   async function ready(){
