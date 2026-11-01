@@ -793,6 +793,11 @@ function dispatch(action) {
     activeView = button.dataset.view; render(); if(activeView==='guild')refreshGuild(); return;
   }
   if (button.dataset.building) { openBuilding(button.dataset.building); return; }
+  if(button.hasAttribute('data-workshop-expedition')){
+    $('#building-dialog').close();
+    activeView='campaign';questPanelExpanded=true;render();
+    return;
+  }
   if(button.dataset.planBuilding||button.hasAttribute('data-workshop-keep')){
     const id=button.hasAttribute('data-workshop-keep')?'keep':button.dataset.planBuilding;
     if(R.BUILDINGS.some(b=>b.id===id)){
