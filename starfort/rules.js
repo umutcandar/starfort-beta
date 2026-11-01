@@ -71,6 +71,13 @@ const canPay = (state, cost) => Object.entries(cost).every(([id, amount]) => sta
 const pay = (state, cost) => { for (const [id, amount] of Object.entries(cost)) state.res[id] -= amount; };
 const award = (state, gain) => { for (const [id, amount] of Object.entries(gain)) state.res[id] = Math.min(MAX_RESOURCE, state.res[id] + amount); };
 const nextStage = state => state.cleared.length + 1;
+export const REPLAY_REWARD_RATE = 0.40;
+// Previously completed story chapters grant 40% of the ordinary resources.
+// Each type is rounded individually, never a floating-point save value.
+export function replayReward(stageId) {
+  const stage=stageById(stageId);
+  return stage?Object.fromEntries(Object.entries(stage.reward).map(([id,amount])=>[id,Math.round(amount*REPLAY_REWARD_RATE)])):null;
+}
 
 export function createState(now = Date.now()) {
   return {
@@ -236,8 +243,9 @@ function newBattle(state, stage, combatVersion=2, veteranTier=0) {
     const hp=Math.round(enemy.maxHp*(1+difficulty*.5));
     return {...enemy,hp,maxHp:hp,attack:Math.round(enemy.attack*(1+difficulty*.35))};
   });
-  const reward=Object.fromEntries(Object.entries(stage.reward).map(([id,amount])=>[id,Math.round(amount*(1+difficulty*.16))]));
-  return { stageId: stage.id, round: 0, status: 'active', combatVersion, veteranTier:difficulty, targetId:null,
+  const replay=difficulty===0 && state.cleared.includes(stage.id);
+  const reward=Object.fromEntries(Object.entries(stage.reward).map(([id,amount])=>[id,replay?Math.round(amount*REPLAY_REWARD_RATE):Math.round(amount*(1+difficulty*.16))]));
+  return { stageId: stage.id, round: 0, status: 'active', combatVersion, veteranTier:difficulty, replay, targetId:null,
     allies: state.team.map(id => heroStats(state, id)),
     enemies,
     starCharge: 40, stars:0, starLoot:null, log: [`${stage.name}: Yeminliler savaşa hazır.`], reward, rewardApplied: false, loot: null };
@@ -256,6 +264,13 @@ function restoreBattle(state, saved) {
   // Existing in-progress battles retain the original enemies and attack rules.
   const veteran=integer(saved.veteranTier,1,3)&&state.cleared.includes(saved.stageId)?saved.veteranTier:0;
   const battle = newBattle(state, stageById(saved.stageId), saved.combatVersion===2?2:1, veteran);
+  // A won first-clear battle reloads after its stage entered cleared[].
+  // Preserve the original payout when restoring, and let pre-update active
+  // saves finish under the old full reward instead of silently nerfing them.
+  if(!veteran) {
+    battle.replay=saved.replay===true;
+    battle.reward=battle.replay?replayReward(saved.stageId):{...stageById(saved.stageId).reward};
+  }
   const mazeFloor=saved.labyrinthFloor;
   if(Number.isInteger(mazeFloor)&&mazeFloor===state.labyrinth.floor
     && saved.stageId===requiredStoryChapters(mazeFloor)
