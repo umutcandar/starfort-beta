@@ -1,6 +1,6 @@
 /**
  * Shared public-beta presentation policy.
- * GitHub Pages can run local bots and Supabase guilds, but not real-time queues.
+ * GitHub Pages uses authenticated Render live queues and Supabase guilds.
  * The low-detail 3D prototype stays in a separately requested graphics lab.
  */
 export function battleExperience(locationLike={},storageMode=null,pointerCoarse=false){
