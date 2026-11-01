@@ -18,3 +18,13 @@ jobs:
       - name: Syntax and gameplay tests
         working-directory: starfort
         run: npm run qa:all
+      - name: Reference layout browser check (Chromium)
+        working-directory: starfort
+        run: npm run qa:visual
+      - name: Upload layout screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: starfort-layout-screenshots
+          if-no-files-found: ignore
+          path: starfort/qa-artifacts/*.png
