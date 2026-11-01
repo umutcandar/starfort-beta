@@ -115,7 +115,7 @@ try{
   const mobileDetail=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
   await writeFile('qa-artifacts/starfort-667x375-bag-detail.png',Buffer.from(mobileDetail.data,'base64'));
   // A new player can equip the owned starter sword and take it off.
-  const equipClicked=await evaluate("(()=>{const b=document.querySelector('.bag-v212-detail-actions [data-equip=iron_sword]');if(!b||b.disabled)return false;b.click();return true})()");
+  const equipClicked=await evaluate("(()=>{document.querySelector('[data-bag-item=iron_sword]')?.click();const b=document.querySelector('.bag-v212-detail-actions [data-equip=iron_sword]');if(!b||b.disabled)return false;b.click();return true})()");
   assert.ok(equipClicked,'İlk başlangıç kılıcı kuşanılabilmeli');
   await sleep(80);
   assert.ok(await evaluate("!!document.querySelector('.bag-v212-detail-actions [data-unequip=weapon]')"),'Kuşanılan kılıç çıkarılabilmeli');
