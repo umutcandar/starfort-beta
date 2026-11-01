@@ -148,7 +148,7 @@ export function restoreState(raw, now = Date.now()) {
 export const DAILY_REWARD = Object.freeze({gold:120,wood:90,stone:70,aether:10});
 export function dailyRewardState(state,now=Date.now()){
   const date=new Date(safeNow(now));
-  const day=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  const day=state.serverVillage?date.toISOString().slice(0,10):`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
   // Client-only daily rewards are for the offline campaign; they are not competitive currency.
   return {available:!state.lastDailyReward||state.lastDailyReward<day,day,reward:DAILY_REWARD};
 }
