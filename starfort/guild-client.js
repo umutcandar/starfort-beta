@@ -45,7 +45,7 @@ const LIVE_SERVER='https://starfort-online-beta.onrender.com';
 async function liveRequest(route,data){
   const current=await freshAccountSession();
   const response=await fetch(LIVE_SERVER+'/api/'+route,{
-    method:data===null?'GET':'POST',signal:AbortSignal.timeout(12000),
+    method:data===null?'GET':'POST',signal:AbortSignal.timeout(35000),
     headers:{Authorization:'Bearer '+current.access_token,...(data===null?{}:{'Content-Type':'application/json'})},
     ...(data===null?{}:{body:JSON.stringify(data)})
   });
