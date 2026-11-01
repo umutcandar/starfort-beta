@@ -75,6 +75,7 @@ try{
   assert.equal(scenic.questButton,true,'Sefer kartından savaş başlatılabilmeli');
   assert.ok(scenic.quest.x>scenic.viewport.w/2,'Sefer kartı sağda olmalı');
   assert.ok(scenic.quest.bottom<scenic.nav.y+3,'Sefer kartı alt menünün üstünde kalmalı');
+  const wideScenic=scenic;
   await evaluate("document.querySelector('.nav-item[data-view=armory]').click()");
   await sleep(400);
   let bag=await evaluate(layoutExpression());
@@ -84,6 +85,7 @@ try{
   assert.ok(bag.nav.y>bag.detail.y,'Alt menü ekrandaki içerikten sonra olmalı');
   assert.ok(bag.bagItems>=19,'Ekipman ve malzeme ızgarası doldurulmalı');
   assert.ok(bag.hasDetailAction,'Eşya panelinde işlevsel işlem olmalı');
+  const wideBag=bag;
   await mkdir('qa-artifacts',{recursive:true});
   const shot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
   await writeFile('qa-artifacts/starfort-1536x864-bag.png',Buffer.from(shot.data,'base64'));
@@ -96,6 +98,7 @@ try{
   scenic=await evaluate(layoutExpression());
   assert.equal(scenic.questButton,true,'Telefon yatay sefer kartı oynanabilir kalmalı');
   assert.ok(scenic.quest.bottom<=scenic.nav.y+3,'Telefon sefer kartı menüyü örtmemeli');
+  const mobileScenic=scenic;
   await evaluate("document.querySelector('.nav-item[data-view=armory]').click()");
   await sleep(220);
   bag=await evaluate(layoutExpression());
@@ -104,8 +107,33 @@ try{
   assert.ok(bag.nav.y>=300,'Telefon yatay menü görünür kalmalı');
   const mobile=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
   await writeFile('qa-artifacts/starfort-667x375-bag.png',Buffer.from(mobile.data,'base64'));
+  const mobileBag=bag;
+  await evaluate("document.querySelector('#workspace').scrollTop=document.querySelector('#workspace').scrollHeight");
+  await sleep(150);
+  const scrollDetail=await evaluate("(()=>{const r=document.querySelector('.armory-v212>.bag-v212-detail').getBoundingClientRect();const nav=document.querySelector('.rail').getBoundingClientRect();return {top:r.top,bottom:r.bottom,navTop:nav.top}})()");
+  assert.ok(scrollDetail.top<scrollDetail.navTop,'Telefon çanta ayrıntısı kaydırarak görülebilmeli');
+  const mobileDetail=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
+  await writeFile('qa-artifacts/starfort-667x375-bag-detail.png',Buffer.from(mobileDetail.data,'base64'));
+  // A new player can equip the owned starter sword and take it off.
+  const equipClicked=await evaluate("(()=>{const b=document.querySelector('.bag-v212-detail-actions [data-equip=iron_sword]');if(!b||b.disabled)return false;b.click();return true})()");
+  assert.ok(equipClicked,'İlk başlangıç kılıcı kuşanılabilmeli');
+  await sleep(80);
+  assert.ok(await evaluate("!!document.querySelector('.bag-v212-detail-actions [data-unequip=weapon]')"),'Kuşanılan kılıç çıkarılabilmeli');
+  await evaluate("document.querySelector('.bag-v212-detail-actions [data-unequip=weapon]').click()");
+  await sleep(80);
+  assert.ok(await evaluate("!!document.querySelector('.bag-v212-detail-actions [data-equip=iron_sword]')"),'Kılıç çantaya geri dönmeli');
+  // The scenic expedition card must launch the real live combat modal.
+  await evaluate("document.querySelector('.nav-item[data-view=expedition]').click()");
+  const campLink=await evaluate("(()=>{const el=document.querySelector('[data-action=open-expedition]');el?.click();return !!el})()");
+  assert.ok(campLink,'Tüm seferleri aç bağlantısı bulunmalı');
+  assert.equal(await evaluate("document.querySelectorAll('.stage-card').length"),8,'Sekiz hikâye bölümü ulaşılabilir olmalı');
+  await evaluate("document.querySelector('.nav-item[data-view=expedition]').click()");
+  await evaluate("document.querySelector('.quest-actions [data-stage]').click()");
+  await sleep(100);
+  assert.ok(await evaluate("document.querySelector('#battle-dialog').open"),'Savaşa Başla gerçek savaş modalını açmalı');
+  await evaluate("document.querySelector('[data-close-battle]').click()");
   console.log('STARFORT gerçek Chromium görsel/etkileşim kontrolleri BAŞARILI');
-  console.log(JSON.stringify({wide:{scenic,bag},mobile:{bag}},null,2));
+  console.log(JSON.stringify({desktop:{scenic:wideScenic,bag:wideBag},mobile:{scenic:mobileScenic,bag:mobileBag,scrollDetail}},null,2));
 } finally{
   if(ws && ws.readyState===1)ws.close();
   if(!closed){chrome.kill('SIGTERM');closed=true;}
