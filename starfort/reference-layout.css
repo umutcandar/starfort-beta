@@ -338,7 +338,7 @@ body{font-synthesis:none}
 .bag-v213-ghost-art{display:grid;place-items:center;opacity:.38;filter:grayscale(.65) saturate(.7)}
 .bag-v213-ghost-art .item-art{width:min(80px,90%)!important;height:75px!important}
 @media(orientation:landscape) and (max-width:700px){
-  .armory-v212{grid-template-columns:minmax(0,34%) minmax(0,66%)!important;gap:6px!important;align-items:start}
+  .armory-v212{grid-template-columns:minmax(0,34fr) minmax(0,66fr)!important;gap:6px!important;align-items:start}
   .armory-v212 .bag-v212-roster{grid-column:1/-1;grid-row:1;max-height:86px;overflow:hidden;padding:5px!important}
   .bag-v212-roster .armory-heroes{overflow-x:auto!important;gap:5px!important}
   .bag-v212-roster .armory-hero{min-height:57px!important;min-width:110px!important;max-width:115px!important;gap:3px!important}
