@@ -15,6 +15,7 @@ import {ensureTestCommander} from './quick-play.js';
 import {commanderPath} from './commander-path.js';
 import {battleExperience} from './battle-experience.js';
 import {armoryArt} from './armory-art.js';
+import {armoryMarkup} from './armory-v212.js';
 import {labyrinthMarkup} from './labyrinth-view.js';
 import {premiumCatalogMarkup} from './premium-catalog.js';
 import {cloudSaveRequest,cloudBackupSummary} from './cloud-save.js';
@@ -46,7 +47,7 @@ const svg = (name, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="n
 const resourceIcon = { gold: 'coin', wood: 'wood', stone: 'stone', aether: 'star' };
 const battlePolicy=battleExperience(window.location);
 const resourceName = { gold: 'Altın', wood: 'Kereste', stone: 'Taş', aether: 'Yıldız özü' };
-const navItems = [ ['keep', 'keep', 'Köy'], ['heroes', 'heroes', 'Kahramanlar'], ['expedition', 'expedition', 'Seferler'], ['guild', 'guild', 'İttifak'], ['armory', 'armor', 'Çanta'], ['shop', 'shop', 'Mağaza'] ];
+const navItems = [ ['keep', 'keep', 'Köy'], ['expedition', 'expedition', 'Seferler'], ['heroes', 'heroes', 'Kahramanlar'], ['armory', 'armor', 'Çanta'], ['guild', 'guild', 'İttifak'], ['shop', 'shop', 'Mağaza'] ];
 let state;
 try { state = R.restoreState(localStorage.getItem(R.STORAGE_KEY)); } catch { state = R.createState(); }
 let battleSpeed=1, battleFxExpires=0;
@@ -54,7 +55,7 @@ let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
 let guildToken='';try{guildToken=localStorage.getItem(GUILD_TOKEN_KEY)||''}catch{}
 let trainingCleanup = null;
-let activeView = 'keep', selectedBuilding = 'keep', toastTimer, scene, selectedSlot = 0, selectedArmoryHero = 'aldren', selectedBagSlot = 'owned', trialState = null;
+let activeView = 'keep', selectedBuilding = 'keep', toastTimer, scene, selectedSlot = 0, selectedArmoryHero = 'aldren', selectedBagSlot = 'owned', selectedBagItem='iron_sword', trialState = null;
 const cityLabelNodes = new Map();
 const resourcesEl = $('#resources'), navEl = $('#navigation'), inspectorEl = $('#inspector'), workspaceEl = $('#workspace'), questEl = $('#next-quest');
 const combatRunner=createBattleRunner({
@@ -189,9 +190,25 @@ function renderInspector() {
 function renderQuest() {
   const active = state.battle?.status === 'active';
   const stage = active ? R.STAGES[state.battle.stageId - 1] : R.STAGES[state.cleared.length];
-  if (!stage) { questEl.innerHTML = '<div class="quest-seal">✦</div><div class="quest-copy"><small>KUZEY SINIRI KURTARILDI</small><h3>Yeni hedefler açıldı</h3><p>Usta Seferleri, haftalık Yıldız Yarığı ve Komutan Yolu seni bekliyor.</p></div><button class="primary" data-action="open-expedition">Seferler</button>'; return; }
-  questEl.innerHTML = `<div class="quest-seal">${svg('expedition')}</div><div class="quest-copy"><small>${active ? 'DEVAM EDEN SAVAŞ' : 'SIRADAKİ SEFER'}</small><h3>${stage.name}</h3><p>${active ? 'Savaş sürüyor; kahramanlarını yönet.' : `${stage.description} · Önerilen güç ${stage.recommendedPower}`}</p></div><button class="primary" data-action="${active ? 'resume-battle' : 'open-expedition'}">${active ? 'Savaşa dön' : 'Seferi aç'} ${svg('expedition')}</button>`;
+  if (!stage) {
+    questEl.innerHTML = '<div class="quest-seal">✦</div><div class="quest-copy"><small>KUZEY SINIRI KURTARILDI</small><h3>Hikâyenin sekiz bölümü tamamlandı</h3><p>Yıldızlarını geliştir, usta seferlerini ve yeni maceraları keşfet.</p></div><div class="quest-actions"><button class="primary" data-action="open-expedition">Seferlere dön →</button></div>';
+    return;
+  }
+  const rewardGear=R.itemById(R.FIRST_CLEAR_LOOT[stage.id]);
+  const alreadyWon=state.cleared.includes(stage.id);
+  const chapter=CHAPTERS[stage.id-1];
+  const power=R.teamPower(state);
+  questEl.innerHTML = `<div class="quest-seal">✦</div>
+    <div class="quest-copy">
+      <small>${active?'DEVAM EDEN SAVAŞ':'SIRADAKİ SEFER'} · BÖLÜM ${String(stage.id).padStart(2,'0')} / 08</small>
+      <h3>${stage.name}</h3>
+      <p>${chapter.brief.slice(0,190)}${chapter.brief.length>190?'…':''}</p>
+      <div class="quest-power ${power<stage.recommendedPower?'underpowered':''}"><span>⚔ Takım gücü <strong>${number(power)}</strong></span><span>Önerilen <strong>${number(stage.recommendedPower)}</strong></span></div>
+      <div class="quest-rewards"><span class="quest-reward-label">ZAFER ÖDÜLÜ</span><div class="cost-list">${costHtml(stage.reward,true)}</div>${rewardGear&&!alreadyWon?`<small class="quest-gear">✦ ${rewardGear.name}</small>`:''}</div>
+    </div>
+    <div class="quest-actions"><button class="primary" ${active?'data-action="resume-battle"':`data-stage="${stage.id}"`}>${active?'Savaşa dön':'⚔ Savaşa başla'} <span aria-hidden="true">→</span></button><button class="text-button" data-action="open-expedition">Bütün seferleri gör</button></div>`;
 }
+
 function renderHeroes() {
   const chosen = state.team.map(id => R.HEROES.find(hero => hero.id === id));
   workspaceEl.innerHTML = `<header><div><span class="eyebrow">KÜL GECESİNDEN SAĞ KALANLAR</span><h2>Kahramanlar</h2><p>Bir kalkan. Bir kıvılcım. Birlikte tutulan bir yemin.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
@@ -253,20 +270,9 @@ function itemStats(item) {
 function itemArt(item) { return armoryArt(item); }
 function renderArmory() {
   if(!state.heroes[selectedArmoryHero]) selectedArmoryHero=state.team[0];
-  const hero=R.HEROES.find(hero=>hero.id===selectedArmoryHero), stats=R.heroStats(state,hero.id), gear=R.equipmentStats(state,hero.id);
-  workspaceEl.innerHTML=`<header><div><span class="eyebrow">YILDIZ KALESİ · KAHRAMAN TEÇHİZATI</span><h2>Çanta ve Donanım</h2><p>Bölümlerden kazandığın silahları, zırhları ve tılsımları kahramanlarına kuşandır.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
-    <section class="bag-hero-display"><div class="bag-hero-art">${heroPortrait(hero)}</div><div><span class="eyebrow">AKTİF KAHRAMAN</span><h3>${hero.name}</h3><p>${hero.title} · ⚔ ${stats.attack} saldırı · ♡ ${stats.maxHp} can</p><small>Donanım gücü: %${gear.armor} zırh · +${gear.healing} şifa</small></div></section>
-    <div class="armory-heroes" aria-label="Ekipman kahramanı">${R.HEROES.filter(hero=>state.heroes[hero.id]).map(hero=>`<button class="armory-hero ${selectedArmoryHero===hero.id?'active':''}" data-armory-hero="${hero.id}" aria-pressed="${selectedArmoryHero===hero.id}">${heroPortrait(hero)}<span>${hero.name}</span></button>`).join('')}</div>
-    <section class="loadout-summary"><div><span class="eyebrow">${hero.title}</span><h3>${hero.name}</h3><p>⚔ ${stats.attack} saldırı · ♡ ${stats.maxHp} can · %${gear.armor} zırh · +${gear.healing} şifa</p></div><div class="loadout-slots">${Object.entries(R.SLOTS).map(([slot,label])=>{const item=R.itemById(state.loadouts[hero.id]?.[slot]);return `<div class="loadout-slot"><small>${label}</small>${item?`${itemArt(item)}<strong>${item.name}</strong><button class="text-button" data-unequip="${slot}" ${state.battle?.status==='active'?'disabled':''}>Çıkar</button>`:'<span class="empty-slot">+</span><strong>Boş konum</strong>'}</div>`;}).join('')}</div></section>
-    <p class="armory-tip">${state.battle?.status==='active'?'Ekipman değiştirmek ve üretmek için devam eden savaşı tamamla. ':''}Her hikâye bölümünün ilk zaferinde ekipman kazanırsın. Aynı setten iki parçayı aynı kahramana kuşandırınca set bonusu açılır. Şifa bonusu yalnızca iyileştirme yeteneği olan kahramanlarda etkilidir. Aynı eşyanın bir kopyası tek kahramana takılabilir.</p>
-    <div class="bag-toolbar"><h3>Çantam <small>${R.ITEMS.filter(item=>state.inventory[item.id]>0).length}/${R.ITEMS.length} eşya türü</small></h3><div class="bag-filters" aria-label="Çanta filtreleri">${[['owned','Çantamdakiler'],['all','Tüm eşyalar'],['forge','Üretim'],...Object.entries(R.SLOTS)].map(([id,name])=>`<button data-bag-slot="${id}" aria-pressed="${selectedBagSlot===id}" class="${selectedBagSlot===id?'selected':''}">${name}</button>`).join('')}</div></div>
-    <div class="item-grid bag-item-grid">${R.ITEMS.filter(item=>selectedBagSlot==='all'||(selectedBagSlot==='owned'&&state.inventory[item.id]>0)||(selectedBagSlot==='forge'&&!item.exclusive)||item.slot===selectedBagSlot).sort((a,b)=>Number(!!state.inventory[b.id])-Number(!!state.inventory[a.id]) || ({legendary:0,epic:1,common:2}[a.rarity])-({legendary:0,epic:1,common:2}[b.rarity])).map(item=>{
-      const count=state.inventory[item.id]||0, equipped=state.loadouts[hero.id]?.[item.slot]===item.id;
-      const used=Object.values(state.loadouts).filter(slots=>slots[item.slot]===item.id).length, free=count-used;
-      const busy=state.battle?.status==='active', canForge=!item.exclusive&&!busy&&state.buildings.forge>=item.forge&&count<20&&Object.entries(item.cost).every(([id,cost])=>state.res[id]>=cost);
-      return `<article class="item-card ${item.rarity} ${count?'bag-owned':'bag-locked'}"><div class="item-card-top"><span>${R.RARITIES[item.rarity]} · ${R.SLOTS[item.slot]}</span><small>${count?`${count} adet · ${free} boşta`:'Henüz bulunmadı'}</small></div>${itemArt(item)}<h3>${item.name}</h3><p class="item-bonus">${itemStats(item)}</p>${item.set?`<small class="star-loot-tag">✦ Set: ${{moon:'Ay Siperleri',ember:'Kor Lejyonu',dawn:'Şafak Muhafızları'}[item.set]} · 2 parça bonusu</small>`:''}<p>${item.description}</p><button class="${equipped?'secondary':'primary'} wide" data-equip="${item.id}" ${equipped||free<=0||busy?'disabled':''}>${equipped?'Kuşanıldı':free>0?`${hero.name} · Kuşan`:'Boşta eşya yok'}</button>${selectedBagSlot==='forge'? `<div class="cost-list">${costHtml(item.cost)}</div><button class="secondary wide" data-forge="${item.id}" ${canForge?'':'disabled'}>${state.buildings.forge<item.forge?`Demirhane seviyesi ${item.forge} gerekli`:'Kaynaklarla üret'}</button>` : `<small class="bag-origin">${item.exclusive?'Sefer ganimeti · üretilemez':'Demirhaneden üretebilir veya seferden kazanabilirsin.'}</small>`}</article>`;
-    }).join('')}</div>`;
+  workspaceEl.innerHTML=armoryMarkup(state,selectedArmoryHero,selectedBagSlot,selectedBagItem);
 }
+
 function renderShop() {
   workspaceEl.innerHTML=`<header><div><span class="eyebrow">YILDIZ PAZARI</span><h2>Efsanevi yeminler</h2><p>Özel kahramanların yeteneklerini eğitim savaşında keşfet.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
     <div class="shop-status"><strong>Mağaza önizlemesi · ödeme kapalı</strong><span>Gerçek para satışı henüz açık değil. Eğitim denemeleri ücretsizdir. Özel PvE ekipmanları ayrıca tasarlanıyor; PvP'de ücretli güç avantajı planlanmıyor.${state.battle?.status==='active'?' Önce devam eden seferini tamamla.':''}</span></div>
@@ -585,6 +591,7 @@ function dispatch(action) {
   if(button.dataset.ability) { castHeroSkill(button.dataset.ability);return; }
   if(button.dataset.target) { const selected=R.selectTarget(trialState||state,button.dataset.target); if(selected.ok) { if(!trialState)persist(); renderBattle(); } return; }
   if(button.dataset.bagSlot){selectedBagSlot=button.dataset.bagSlot;renderArmory();return;}
+  if(button.dataset.bagItem){selectedBagItem=button.dataset.bagItem;renderArmory();return;}
   if(button.dataset.armoryHero) { selectedArmoryHero=button.dataset.armoryHero; activeView='armory'; render(); return; }
   if(button.dataset.forge) { result(R.forgeItem(state,button.dataset.forge),'Ekipman üretildi; bir kahramana kuşandırabilirsin.'); return; }
   if(button.dataset.equip) { result(R.equipItem(state,selectedArmoryHero,button.dataset.equip),'Ekipman kuşanıldı. Savaş gücü güncellendi.'); return; }
