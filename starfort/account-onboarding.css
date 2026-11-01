@@ -12,3 +12,9 @@
 .account-pending{border-left:3px solid #e0ad67;padding:9px;background:#392e1e80}
 .account-recovery button{margin:5px 0}
 @media(max-width:480px),(max-height:460px){.account-welcome-inner{padding:12px 16px}.account-welcome h2{font-size:22px;margin:7px 0}.account-welcome p{font-size:12px;line-height:1.4}.account-welcome-actions{margin:10px 0;gap:6px}.account-welcome-actions button{min-height:37px;font-size:13px}.account-compare{grid-template-columns:1fr}}
+
+.account-extra-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:12px;margin:14px 0}
+.account-extra-grid .guild-panel{min-width:0;padding:16px}
+.account-recovery .secondary{margin:5px 0;white-space:normal;text-align:left;font-size:12px}
+.account-extra-grid .guild-panel>p{line-height:1.5}
+@media(orientation:landscape) and (max-height:490px){.account-extra-grid{grid-template-columns:1fr 1fr}}
