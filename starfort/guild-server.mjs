@@ -135,12 +135,13 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
     try{route=new URL(req.url,'http://localhost').pathname;}
     catch{return json(res,400,{error:'Geçersiz adres.'});}
     // Health and static assets never depend on guild disk writes.
-    if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-test',version:'2.8.1-weekly-raid',online:true,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']})
+    if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-live-arena',version:'2.16.0-auth-multiplayer',online:true,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']})
     if(!route.startsWith('/api/')){void serveStatic(req,res,route);return;}
     function enqueue(data,authenticatedArenaUser=null){
       lock=lock.then(async()=>{
         try {
-          if(rotateGuildRaids(db,Date.now()))await saveDb(db);
+          if(process.env.STARFORT_AUTH_REQUIRED==='1'&&!/^\/api\/(arena|team)\//.test(route))return json(res,410,{error:'Lonca verileri Supabase e-posta hesabına taşındı. Bu Node uç noktası kapalı.'});
+          if(process.env.STARFORT_AUTH_REQUIRED!=='1' && rotateGuildRaids(db,Date.now()))await saveDb(db);
           if(route==='/api/register'&&req.method==='POST'){
             const gate=inviteAllowed(req,data.testCode);
             if(!gate.ok)return json(res,gate.status,{error:gate.message,code:gate.code||'INVITE_LIMIT'});
@@ -174,7 +175,7 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
           if(route==='/api/team/leave'&&req.method==='POST')return json(res,200,teams.leave(user));
           if(route==='/api/team/input'&&req.method==='POST'){const [status,dataOut]=teams.input(user,data);return json(res,status,dataOut);}
           if(route==='/api/arena/state'&&req.method==='GET')return json(res,200,arena.result(user));
-          if(route==='/api/arena/queue'&&req.method==='POST')return json(res,200,arena.queue(user));
+          if(route==='/api/arena/queue'&&req.method==='POST')return json(res,200,arena.queue(user,data));
           if(route==='/api/arena/bot'&&req.method==='POST'){if(!trainingDifficulty(data.difficulty??'normal'))return json(res,400,{error:'Geçersiz bot zorluk seviyesi.'});return json(res,200,arena.queueBot(user,data));}
           if(route==='/api/arena/leave'&&req.method==='POST')return json(res,200,arena.leave(user));
           if(route==='/api/arena/input'&&req.method==='POST'){const [status,dataOut]=arena.input(user,data);return json(res,status,dataOut);}
