@@ -20,23 +20,23 @@ function eligible(stageId){
 test('story chapters 3-8 have power, forge, equipped and maze gates',()=>{
  const s=R.createState(NOW);s.cleared=[1,2];
  const original=copy(s);
- const result=R.startLiveBattle(s,3);
+ const result=R.startLiveBattle(s,3,{enforceGates:true});
  assert.equal(result.ok,false);
  assert.match(result.error,/Demirhane|labirent|gücü/);
  assert.deepEqual(s,original,'a blocked battle must never mutate local saves');
  const ready=eligible(3);
  assert.equal(R.stageRequirements(ready,R.STAGES[2],R.teamPower(ready)).available,true);
- assert.equal(R.startLiveBattle(ready,3).ok,true);
+ assert.equal(R.startLiveBattle(ready,3,{enforceGates:true}).ok,true);
  for(let i=3;i<=8;i++){
    const state=eligible(i), gate=R.stageRequirements(state,R.STAGES[i-1],R.teamPower(state));
    assert.ok(gate.requirements.length>=4);
    assert.ok(gate.available,JSON.stringify(gate.reasons));
-   assert.equal(R.startLiveBattle(state,i).ok,true);
+   assert.equal(R.startLiveBattle(state,i,{enforceGates:true}).ok,true);
  }
 });
 test('completed story stages stay replayable even if new gates were introduced',()=>{
  const s=R.createState(NOW);s.cleared=[1,2,3,4];s.labyrinth.cleared=0;
- assert.equal(R.startLiveBattle(s,4).ok,true);
+ assert.equal(R.startLiveBattle(s,4,{enforceGates:true}).ok,true);
 });
 test('stage 6 frost and stage 7 siphon and three final boss phases have distinct intents',()=>{
  const frozen={stageId:6,combatVersion:2,round:1};
