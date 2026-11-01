@@ -204,6 +204,24 @@ export function upgradeBuilding(state, id, now = state.lastCollected) {
   return { ok: true };
 }
 
+/** Atomic alternative: include already-earned idle resources in a single upgrade.
+ * A failed attempt leaves resources, lastCollected and the building unchanged.
+ * Never creates additional resources or bypasses keep/active-combat restrictions.
+ */
+export function upgradeBuildingFromProduction(state,id,now=Date.now()){
+  const building=buildingById(id);
+  if(!building)return fail('Bilinmeyen yapı.');
+  if(activeBattle(state))return fail('Önce devam eden savaşı tamamla.');
+  if(state.buildings[id]>=building.maxLevel)return fail('Yapı en yüksek seviyede.');
+  if(id!=='keep'&&state.buildings[id]>=state.buildings.keep+1)return fail('Önce Yıldız Kalesi’ni yükselt.');
+  if(!timestamp(now)||now<state.lastCollected)return fail('Geçersiz geliştirme zamanı.');
+  const cost=upgradeCost(state,id),gain=production(state,now);
+  if(!Object.entries(cost).every(([resource,amount])=>state.res[resource]+Math.min(gain[resource],MAX_RESOURCE-state.res[resource])>=amount))
+    return fail('Toplanabilir üretimle birlikte bile yeterli kaynak yok.');
+  collect(state,now);pay(state,cost);state.buildings[id]++;
+  return {ok:true};
+}
+
 export function heroCost(state, id) {
   if (!heroById(id) || !state.heroes[id]) return null;
   const level = state.heroes[id].level;

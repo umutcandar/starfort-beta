@@ -23,6 +23,7 @@ import {battleExperience} from './battle-experience.js';
 import {armoryArt} from './armory-art.js';
 import {armoryMarkup} from './armory-v212.js';
 import {createMatchReceiptRecovery} from './match-receipts.js';
+import {buildingWorkshopMarkup} from './building-workshop.js';
 import {labyrinthMarkup} from './labyrinth-view.js';
 import {premiumCatalogMarkup} from './premium-catalog.js';
 import {cloudSaveRequest,cloudBackupSummary} from './cloud-save.js';
@@ -192,32 +193,16 @@ function heroPortrait(hero) {
   return `<img class="character-art" src="assets/${hero.id}.webp" alt="${hero.name}, ${hero.title}" width="1024" height="1536" decoding="async">`;
 }
 
-function buildingBenefit(building, level) {
-  if (building.production) return `${number(building.production.perMinute * level * (1 + (state.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk`;
-  if (building.id === 'keep') return `+%${Math.round((level - 1) * 5)} üretim`;
-  return building.id === 'forge' ? `+%${(level - 1) * 5} takım saldırısı` : `+%${(level - 1) * 4} takım canı`;
-}
 function renderBuildingDialog() {
-  const building = R.BUILDINGS.find(item => item.id === selectedBuilding);
-  const level = state.buildings[building.id], maxed = level >= building.maxLevel;
-  const cost = R.upgradeCost(state, building.id);
-  const missing = Object.entries(cost).filter(([id, amount]) => state.res[id] < amount);
-  const reason = maxed ? 'Bu yapı en yüksek seviyeye ulaştı.'
-    : state.battle?.status === 'active' ? 'Geliştirmek için devam eden savaşı tamamla.'
-    : building.id !== 'keep' && level >= state.buildings.keep + 1 ? `Önce Yıldız Kalesi’ni ${state.buildings.keep + 1}. seviyeye geliştir.`
-    : missing.length ? `Eksik kaynak: ${missing.map(([id, amount]) => `${number(amount - state.res[id])} ${resourceName[id]}`).join(', ')}.` : '';
-  $('#building-content').innerHTML = `<header class="building-dialog-head"><div class="building-dialog-icon">${svg(building.id)}</div><div><span class="eyebrow">SEVİYE ${level} / ${building.maxLevel}</span><h2 id="building-title">${building.name}</h2></div><button class="icon-button" data-close-building aria-label="Bina penceresini kapat">×</button></header>
-    <div class="building-art-comparison" aria-label="Bina görünümü"><figure><canvas data-building-preview="${level}" role="img" aria-label="${building.name}, mevcut seviye ${level}"></canvas><figcaption>MEVCUT · SEVİYE ${level}</figcaption></figure>${maxed ? '' : `<figure class="next"><canvas data-building-preview="${level+1}" role="img" aria-label="${building.name}, seviye ${level+1} önizlemesi"></canvas><figcaption>GELİŞTİRİNCE · SEVİYE ${level+1}</figcaption></figure>`}</div>
-    <div class="building-dialog-body"><p class="building-dialog-description">${building.description}</p>
-    <div class="building-levels" aria-label="Bina seviyesi ${level}">${Array.from({length:building.maxLevel},(_,i)=>`<span class="${i < level ? 'built' : ''}">${i+1}</span>`).join('')}</div>
-    <div class="building-benefit"><span>${buildingBenefit(building,level)}</span>${maxed ? '' : `<span class="benefit-arrow">→</span><strong>${buildingBenefit(building,level+1)}</strong>`}</div>
-    <div class="evolution-note"><span>${svg('keepMenu')}</span><div><small>${maxed ? 'TAMAMLANAN YAPI' : 'SONRAKİ GÖRÜNÜM'}</small><strong>${BUILDING_EVOLUTION[building.id][maxed ? level-1 : level]}</strong><p>${maxed ? 'Tüm mimari geliştirmeler tamamlandı.' : 'Geliştirdiğinde bu bölüm binaya eklenir.'}</p></div></div>
-    ${maxed ? '' : `<div class="upgrade-costs">${Object.entries(cost).map(([id,amount])=>`<div class="${state.res[id] < amount ? 'short' : ''}">${svg(resourceIcon[id])}<span><b>${number(amount)}</b><small>${resourceName[id]}</small></span></div>`).join('')}</div>`}
-    <p class="upgrade-reason" role="status">${reason || 'Kaynaklar hazır. Geliştirme anında tamamlanır.'}</p>
-    <button class="primary wide" data-upgrade-building="${building.id}" ${reason ? 'disabled' : ''}>${maxed ? 'En yüksek seviye' : `Seviye ${level+1} · Geliştir`}</button>
-    ${missing.length && !maxed ? '<button class="secondary wide collect-in-dialog" data-collect>Biriken üretimi topla</button>' : ''}</div>`;
-  for(const canvas of $('#building-content').querySelectorAll('[data-building-preview]')) {
-    paintBuildingPreview(canvas,building.id,Number(canvas.dataset.buildingPreview)).catch(()=>{if(canvas.isConnected)canvas.replaceWith(document.createTextNode('Görünüm yüklenemedi.'));});
+  const dialog=$('#building-dialog'), previousScroll=dialog.scrollTop;
+  const building=R.BUILDINGS.find(item=>item.id===selectedBuilding);
+  if(!building)return;
+  $('#building-content').innerHTML=buildingWorkshopMarkup(state,selectedBuilding,{icon:svg,number,now:Date.now()});
+  dialog.scrollTop=previousScroll;
+  for(const canvas of $('#building-content').querySelectorAll('[data-building-preview]')){
+    paintBuildingPreview(canvas,building.id,Number(canvas.dataset.buildingPreview)).catch(()=>{
+      if(canvas.isConnected)canvas.replaceWith(document.createTextNode('Görünüm yüklenemedi.'));
+    });
   }
 }
 function openBuilding(id) {
@@ -742,7 +727,7 @@ async function quickPlayBot(mode) {
 }
 function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
-  if(saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
+  if(saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
   if(button.hasAttribute('data-audio-toggle')){const enabled=gameAudio.toggle();notify(enabled?'Ses ve müzik açıldı.':'Ses ve müzik kapatıldı.');if(activeView==='settings')renderSettings();return;}
   gameAudio.cue('click');
   if(button.dataset.welcome){
@@ -808,13 +793,27 @@ function dispatch(action) {
     activeView = button.dataset.view; render(); if(activeView==='guild')refreshGuild(); return;
   }
   if (button.dataset.building) { openBuilding(button.dataset.building); return; }
+  if(button.dataset.planBuilding||button.hasAttribute('data-workshop-keep')){
+    const id=button.hasAttribute('data-workshop-keep')?'keep':button.dataset.planBuilding;
+    if(R.BUILDINGS.some(b=>b.id===id)){
+      selectedBuilding=id;renderPicker();renderBuildingDialog();scene?.focus(id);
+    }
+    return;
+  }
   if (button.hasAttribute('data-close-building')) { $('#building-dialog').close(); return; }
   if (button.dataset.upgradeBuilding) {
     selectedBuilding = button.dataset.upgradeBuilding;
     const upgraded = R.upgradeBuilding(state, selectedBuilding, Date.now());
-    if (upgraded.ok) $('#building-dialog').close();
+    // Keep the command center open so the next upgrade is visible immediately.
     const building = R.BUILDINGS.find(item => item.id === selectedBuilding);
     result(upgraded, `${building.name} · Seviye ${state.buildings[selectedBuilding]} — ${BUILDING_EVOLUTION[selectedBuilding][state.buildings[selectedBuilding]-1]}`);
+    return;
+  }
+  if(button.dataset.collectUpgrade){
+    selectedBuilding=button.dataset.collectUpgrade;
+    const upgraded=R.upgradeBuildingFromProduction(state,selectedBuilding,Date.now());
+    const building=R.BUILDINGS.find(item=>item.id===selectedBuilding);
+    result(upgraded,building.name+' · Üretim toplandı, seviye '+state.buildings[selectedBuilding]+' tamamlandı.');
     return;
   }
   if (button.dataset.upgradeHero) { result(R.upgradeHero(state, button.dataset.upgradeHero), 'Kahraman güçlendi.'); return; }
