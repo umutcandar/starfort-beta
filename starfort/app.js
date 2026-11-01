@@ -9,6 +9,7 @@ import {exportSave,importSave} from './backup.js';
 import {guildRequest,guildOnline,GUILD_TOKEN_KEY} from './guild-client.js';
 import {mountTraining} from './tactics-view.js';
 import {mountArena} from './arena-view.js';
+import {practiceReward} from './battle-assist.js';
 import {mountTeamArena} from './team-view.js';
 import {ensureTestCommander} from './quick-play.js';
 import {commanderPath} from './commander-path.js';
@@ -55,6 +56,14 @@ const combatRunner=createBattleRunner({
   onPause:()=>{if(!trialState)persist(); if($('#battle-dialog').open)renderBattle();},
 });
 
+window.addEventListener('starfort:practice-result',e=>{
+  const {won,difficulty}=e.detail||{};const day=new Date().toISOString().slice(0,10);
+  const first=won&&localStorage.getItem('starfort:practice-win-day')!==day;if(first)localStorage.setItem('starfort:practice-win-day',day);
+  const r=practiceReward(difficulty,won,first);
+  state.res.gold=(state.res.gold||0)+r.gold;state.res.aether=(state.res.aether||0)+r.aether;
+  persist();try{renderResources();}catch{}
+  notify(`${won?'Zafer':'Antrenman bitti'}: +${r.gold} ◈${r.aether?` +${r.aether} ✦`:''}${r.bonus?' · Günün ilk zaferi x2!':''}`);
+});
 function persist() {
   try { localStorage.setItem(R.STORAGE_KEY, JSON.stringify(state)); $('#save-status').textContent = 'Yerel kayıt hazır'; return true; }
   catch { $('#save-status').textContent = 'Kayıt başarısız'; return false; }
@@ -455,6 +464,7 @@ async function quickPlayBot(mode) {
     const token=await ensureTestCommander({storage:localStorage,request:guildRequest});
     guildToken=token;
     activeView=mode==='duel'?'arena':'team';
+    if(mode==='duel')sessionStorage.setItem('starfort:autostart-duel','1');
     render();
     const control=workspaceEl.querySelector(mode==='duel'?'[data-arena-bot]':'[data-team-bot][data-team-variant="siege"]');
     if(!control)throw new Error('Bot savaşını başlatma düğmesi bulunamadı.');

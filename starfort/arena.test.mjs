@@ -16,10 +16,10 @@ test('authoritative movement caps speed, clamps bounds and ignores oversized dt'
 });
 test('server computes damage and ability cooldown independently of fake client HP',()=>{
   const room=newRoom(...users);const [a,b]=room.players;a.x=40;b.x=45;
-  a.input={x:0,y:0,attack:true};stepRoom(room,.05);assert.equal(b.hp,127);
-  stepRoom(room,.05);assert.equal(b.hp,127);
-  a.pendingBurst=true;stepRoom(room,.05);assert.equal(b.hp,99);
-  a.pendingBurst=true;stepRoom(room,.05);assert.equal(b.hp,99);
+  a.input={x:0,y:0,attack:true};stepRoom(room,.05);assert.equal(b.hp,ARENA.maxHp-ARENA.attackDamage);
+  stepRoom(room,.05);assert.equal(b.hp,ARENA.maxHp-ARENA.attackDamage);
+  a.pendingBurst=true;stepRoom(room,.05);assert.equal(b.hp,ARENA.maxHp-ARENA.attackDamage-ARENA.burstDamage);
+  a.pendingBurst=true;stepRoom(room,.05);assert.equal(b.hp,ARENA.maxHp-ARENA.attackDamage-ARENA.burstDamage);
 });
 test('equal damage at timeout causes draw',()=>{
   const room=newRoom(...users);room.elapsed=ARENA.duration-.03;stepRoom(room,.05);assert.equal(room.status,'ended');assert.equal(room.winner,null);

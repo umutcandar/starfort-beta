@@ -1,7 +1,7 @@
 /** Starfort v1.2 local 1v1 duel sandbox. Server owns all HP, movement and cooldowns. */
 import {randomBytes} from './rand-id.js';
 import {trainingDifficulty} from './training-difficulty.js';
-export const ARENA={width:100,height:60,speed:17,maxHp:140,duration:120,attackRange:15,attackDamage:13,attackCooldown:.7,burstRange:11,burstDamage:28,burstCooldown:8,dashCooldown:5};
+export const ARENA={width:100,height:60,speed:17,maxHp:300,duration:120,attackRange:15,attackDamage:13,attackCooldown:.7,burstRange:11,burstDamage:28,burstCooldown:8,dashCooldown:5};
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const player=(user,side)=>({id:user.id,name:user.name,side,x:side?85:15,y:30,hp:ARENA.maxHp,maxHp:ARENA.maxHp,attackAt:0,burstAt:0,dashAt:0,lastSeen:Date.now(),input:{x:0,y:0,attack:false},pendingBurst:false,pendingDash:false,lastSeq:-1});
