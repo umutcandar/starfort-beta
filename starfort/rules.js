@@ -1,4 +1,5 @@
-import { createGearState, restoreGear, equipmentStats, awardFirstClearItem, FIRST_CLEAR_LOOT } from './equipment.js';
+import { createGearState, restoreGear, equipmentStats, awardFirstClearItem, FIRST_CLEAR_LOOT, itemById } from './equipment.js';
+import { restoreCampaignStars, recordCampaignStars, campaignStarStatus } from './campaign-stars.js';
 import { encounterEnemies, enemyIntent } from './encounters.js';
 import { initializeLiveCombat, restoreLiveCombat, advanceLiveCombat, castLiveAbility, changeBattleStance } from './live-combat.js';
 import { createContracts, restoreContracts, recordContract, contractsStatus, claimContractProgress } from './campaign-contracts.js';
@@ -10,6 +11,7 @@ export { CONTRACTS, BANNER_MILESTONES, contractsStatus } from './campaign-contra
 export { weeklyRiftStatus, RIFT_MODIFIERS } from './weekly-rift.js';
 export { COSMETIC_CONCEPTS, toggleWishlist } from './cosmetic-concepts.js';
 export { ITEMS, SLOTS, RARITIES, FIRST_CLEAR_LOOT, itemById, forgeItem, equipItem, unequipItem, equipmentStats } from './equipment.js';
+export { campaignStarStatus, STAR_MILESTONES, THREE_STAR_LOOT } from './campaign-stars.js';
 // Starfort's local, deterministic rules. No DOM, storage or network side effects.
 export const STORAGE_KEY = 'starfort:v1';
 export const RESOURCES = {
@@ -73,7 +75,7 @@ export function createState(now = Date.now()) {
     version: 1, res: { gold: 280, wood: 180, stone: 150, aether: 65 },
     buildings: Object.fromEntries(BUILDINGS.map(item => [item.id, 1])),
     heroes: Object.fromEntries(HEROES.filter(hero => !hero.unlockStage).map(hero => [hero.id, { level: 1 }])),
-    team: ['aldren', 'lyra', 'rovan'], cleared: [], veteranMedals: {}, riftRecords: [], cosmeticWishlist: [], selectedStage: 1,
+    team: ['aldren', 'lyra', 'rovan'], cleared: [], campaignStars: {}, veteranMedals: {}, riftRecords: [], cosmeticWishlist: [], selectedStage: 1,
     lastCollected: safeNow(now), lastDailyReward: null, contracts:createContracts(now), battle: null, ...createGearState(),
   };
 }
@@ -105,6 +107,7 @@ export function restoreState(raw, now = Date.now()) {
     state.riftRecords=restoreRiftRecords(saved.riftRecords);
     state.cosmeticWishlist=restoreWishlist(saved.cosmeticWishlist);
     for(const stage of STAGES){const tier=saved.veteranMedals?.[stage.id];if(state.cleared.includes(stage.id)&&integer(tier,1,3))state.veteranMedals[stage.id]=tier;}
+    state.campaignStars=restoreCampaignStars(saved.campaignStars,state.cleared);
     restoreGear(state,saved);
     state.battle = restoreBattle(state, saved.battle);
   } catch { return createState(time); }
@@ -234,7 +237,7 @@ function newBattle(state, stage, combatVersion=2, veteranTier=0) {
   return { stageId: stage.id, round: 0, status: 'active', combatVersion, veteranTier:difficulty, targetId:null,
     allies: state.team.map(id => heroStats(state, id)),
     enemies,
-    starCharge: 40, log: [`${stage.name}: Yeminliler savaşa hazır.`], reward, rewardApplied: false, loot: null };
+    starCharge: 40, stars:0, starLoot:null, log: [`${stage.name}: Yeminliler savaşa hazır.`], reward, rewardApplied: false, loot: null };
 }
 
 function restoreBattle(state, saved) {
@@ -267,6 +270,8 @@ function restoreBattle(state, saved) {
   // Loading a completed battle must never grant its reward a second time.
   battle.rewardApplied = saved.status !== 'active';
   battle.loot = saved.status === 'won' && saved.loot === FIRST_CLEAR_LOOT[saved.stageId] ? saved.loot : null;
+  battle.stars = saved.status === 'won' && !battle.veteranTier && !battle.riftModifier && integer(saved.stars,1,3) ? saved.stars : 0;
+  battle.starLoot = battle.stars===3 && typeof saved.starLoot==='string' && state.inventory[saved.starLoot]>0 && ['moon_watch','ember_guard','dawn_relic','star_spear','dawn_guard'].includes(saved.starLoot) ? saved.starLoot : null;
   restoreLiveCombat(battle,saved.live);
   return battle;
 }
@@ -372,6 +377,13 @@ function finishBattle(state, events) {
         battle.loot = loot?.id || null;
         if(loot) events.push(`${loot.name} kazanıldı. Cephanelikten bir kahramana takabilirsin.`);
       }
+      // A chapter's best star rating is recorded only once per improvement.
+      // PvP, weekly rifts and veteran reruns never generate these rewards.
+      const graded=recordCampaignStars(state,battle);
+      battle.stars=graded.stars;
+      battle.starLoot=graded.loot;
+      if(graded.improved && graded.stars)events.push(`Sefer derecesi: ${'★'.repeat(graded.stars)}${'☆'.repeat(3-graded.stars)}.`);
+      if(graded.loot)events.push(`${itemById(graded.loot).name} üç yıldız zaferiyle kazanıldı.`);
       for (const hero of HEROES.filter(item => unlocked(state, item) && !state.heroes[item.id])) {
         state.heroes[hero.id] = { level: 1 };
         events.push(`${hero.name}, kalenin yeminlilerine katıldı.`);
