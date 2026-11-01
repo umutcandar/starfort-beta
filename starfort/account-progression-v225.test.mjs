@@ -94,6 +94,7 @@ test('authenticated expedition renders server-only eight chapters, turn controls
 test('server migration has a locked canonical ledger, active mission, server-calculated actions and no client-trusted rewards',()=>{
  const sql=readFileSync(new URL('./sql/starfort-v225-account-progression.sql',import.meta.url),'utf8');
  const patch=readFileSync(new URL('./sql/starfort-v225-account-safety-patch.sql',import.meta.url),'utf8');
+ const unique=readFileSync(new URL('./sql/starfort-v225-unique-progress-api.sql',import.meta.url),'utf8');
  assert.match(sql,/alter table public\.starfort_player_progress enable row level security/);
  assert.match(sql,/revoke all on public\.starfort_player_progress from public,anon,authenticated/);
  assert.match(sql,/language plpgsql security definer set search_path=''/);
@@ -107,7 +108,8 @@ test('server migration has a locked canonical ledger, active mission, server-cal
  assert.match(sql,/if ms-last_action<3000/);
  assert.match(sql,/if ehp=0 or php=0 or turns>=14/);
  assert.match(sql,/stage:=p_target::integer/);
- assert.match(sql,/grant execute on function public\.sfb_starfort_progress/);
+ assert.match(unique,/grant execute on function public\.sfb_starfort_progress/);
+ assert.match(unique,/drop function if exists public\.sfb_account_api\(text,text,text,uuid\)/);
  assert.match(patch,/gear:=jsonb_set\(gear,array\[hero\],coalesce\(gear->hero/);
  assert.match(patch,/counter_value<=fee/);
  assert.doesNotMatch(sql,/grant\s+update\s+on\s+public\.starfort_player_progress\s+to\s+authenticated/i);
