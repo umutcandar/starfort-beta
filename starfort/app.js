@@ -727,7 +727,7 @@ async function quickPlayBot(mode) {
 }
 function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
-  if(saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
+  if(saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.hasAttribute('data-finish-building')||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
   if(button.hasAttribute('data-audio-toggle')){const enabled=gameAudio.toggle();notify(enabled?'Ses ve müzik açıldı.':'Ses ve müzik kapatıldı.');if(activeView==='settings')renderSettings();return;}
   gameAudio.cue('click');
   if(button.dataset.welcome){
@@ -806,14 +806,21 @@ function dispatch(action) {
     const upgraded = R.upgradeBuilding(state, selectedBuilding, Date.now());
     // Keep the command center open so the next upgrade is visible immediately.
     const building = R.BUILDINGS.find(item => item.id === selectedBuilding);
-    result(upgraded, `${building.name} · Seviye ${state.buildings[selectedBuilding]} — ${BUILDING_EVOLUTION[selectedBuilding][state.buildings[selectedBuilding]-1]}`);
+    const message=upgraded.started?`${building.name} inşaatı başladı. Oyun kapalıyken de süre ilerliyor.`:
+      `${building.name} · Seviye ${state.buildings[selectedBuilding]} tamamlandı.`;
+    result(upgraded,message);
     return;
   }
   if(button.dataset.collectUpgrade){
     selectedBuilding=button.dataset.collectUpgrade;
     const upgraded=R.upgradeBuildingFromProduction(state,selectedBuilding,Date.now());
     const building=R.BUILDINGS.find(item=>item.id===selectedBuilding);
-    result(upgraded,building.name+' · Üretim toplandı, seviye '+state.buildings[selectedBuilding]+' tamamlandı.');
+    result(upgraded,upgraded.started?building.name+' · Kaynaklar toplandı, inşaat başladı.':building.name+' · Üretim toplandı, seviye '+state.buildings[selectedBuilding]+' tamamlandı.');
+    return;
+  }
+  if(button.hasAttribute('data-finish-building')){
+    const outcome=R.completeConstruction(state,Date.now());
+    result(outcome,outcome.ok?'İnşaat tamamlandı! '+R.BUILDINGS.find(b=>b.id===outcome.id).name+' seviye '+outcome.level+' oldu.':null);
     return;
   }
   if (button.dataset.upgradeHero) { result(R.upgradeHero(state, button.dataset.upgradeHero), 'Kahraman güçlendi.'); return; }
@@ -862,6 +869,8 @@ document.addEventListener('keydown',event=>{
 });
 $('#recenter').innerHTML = svg('keepMenu');
 let buildingBackdropDown = false;
+// Update long-term construction countdowns and claim availability while the panel is open.
+setInterval(()=>{if($('#building-dialog').open&&state.construction)renderBuildingDialog()},30000);
 $('#building-dialog').addEventListener('pointerdown', event => { buildingBackdropDown = event.target === $('#building-dialog'); });
 $('#building-dialog').addEventListener('click', event => { if (buildingBackdropDown && event.target === $('#building-dialog')) $('#building-dialog').close(); buildingBackdropDown = false; });
 $('#battle-dialog').addEventListener('click', event => { if (event.target === $('#battle-dialog')) closeBattle(); });
