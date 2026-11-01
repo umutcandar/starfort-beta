@@ -137,7 +137,6 @@ export function completeLabyrinthFloor(state){
   const loot=MILESTONE_GEAR[floor]||null;
   if(loot && (state.inventory[loot]||0)<20) state.inventory[loot]=(state.inventory[loot]||0)+1;
   maze.cleared=floor;
-  seasonEvent(state,'maze');
   maze.completed=floor===MAZE_FLOORS;
   if(!maze.completed){
     maze.floor=floor+1;maze.cell=0;maze.visited=[0];maze.claimed=[];maze.guardianDefeated=false;

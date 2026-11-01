@@ -8,6 +8,7 @@ import { ART_EVOLUTION as BUILDING_EVOLUTION } from './city-art-layout.js';
 import { battleMarkup } from './battle-view.js';
 import { createBattleRunner } from './battle-runner.js';
 import {exportSave,importSave} from './backup.js';
+import {createSaveGuard} from './save-guard.js';
 import {guildRequest,guildOnline,GUILD_TOKEN_KEY} from './guild-client.js';
 import {mountTraining} from './tactics-view.js';
 import {mountArena} from './arena-view.js';
@@ -50,8 +51,11 @@ const resourceIcon = { gold: 'coin', wood: 'wood', stone: 'stone', aether: 'star
 const battlePolicy=battleExperience(window.location);
 const resourceName = { gold: 'Altın', wood: 'Kereste', stone: 'Taş', aether: 'Yıldız özü' };
 const navItems = [ ['keep', 'keep', 'Köy'], ['expedition', 'expedition', 'Seferler'], ['heroes', 'heroes', 'Kahramanlar'], ['armory', 'armor', 'Çanta'], ['guild', 'guild', 'İttifak'], ['shop', 'shop', 'Mağaza'] ];
-let state;
-try { state = R.restoreState(localStorage.getItem(R.STORAGE_KEY)); } catch { state = R.createState(); }
+let state, saveInitialRaw=null;
+try {saveInitialRaw=localStorage.getItem(R.STORAGE_KEY);state=R.restoreState(saveInitialRaw);}
+catch {state=R.createState();}
+const saveGuard=createSaveGuard(localStorage,R.STORAGE_KEY,saveInitialRaw);
+
 let battleSpeed=1, battleFxExpires=0;
 let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
@@ -88,9 +92,25 @@ window.addEventListener('starfort:practice-result',async e=>{
   grantReward(practiceReward(difficulty,won,first,mode),won,' (çevrimdışı, yerel kayıt)');
 });
 function persist() {
-  try { localStorage.setItem(R.STORAGE_KEY, JSON.stringify(state)); $('#save-status').textContent = 'Yerel kayıt hazır'; return true; }
-  catch { $('#save-status').textContent = 'Kayıt başarısız'; return false; }
+  try {
+    if(!saveGuard.write(state)){
+      $('#save-status').textContent='Başka sekme ilerledi · Yenile';
+      $('#save-status').title='Bu sekme eski kayıtla açıldı. Yeni ilerlemeyi korumak için oyunu yenile.';
+      combatRunner.pause();
+      return false;
+    }
+    $('#save-status').textContent='Yerel kayıt hazır';return true;
+  }catch{$('#save-status').textContent='Kayıt başarısız';return false;}
 }
+window.addEventListener('storage',event=>{
+  if(event.key!==R.STORAGE_KEY)return;
+  if(!saveGuard.observe(event.newValue)){
+    combatRunner.pause();
+    $('#save-status').textContent='Diğer sekme kaydetti · Yenile';
+    notify('Başka sekmedeki yeni ilerleme korunuyor. Bu sekmeyi yenileyerek güncel oyuna dön.');
+  }
+});
+
 function notify(message) {
   const el = $('#toast'); el.textContent = message; el.classList.add('show'); clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
@@ -589,7 +609,7 @@ function updateLiveHud() {
   }
 }
 function tickCombat(deltaMs) {
-  const combatState=trialState||state, result=R.advanceCombat(combatState,deltaMs);
+  const combatState=trialState||state, result=R.advanceCombat(combatState,deltaMs,Date.now());
   if(!result.ok){combatRunner.pause();return;}
   if(result.events.length) {
     if(!trialState)persist();
@@ -601,7 +621,7 @@ function tickCombat(deltaMs) {
   updateLiveHud();
 }
 function castHeroSkill(heroId) {
-  const used=R.useHeroAbility(trialState||state,heroId);
+  const used=R.useHeroAbility(trialState||state,heroId,Date.now());
   if(!used.ok)return notify(used.error);
   if(!trialState)persist();
   if((trialState||state).battle.status!=='active'){combatRunner.pause();render();}
@@ -648,6 +668,7 @@ async function quickPlayBot(mode) {
 }
 function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
+  if(saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
   if(button.hasAttribute('data-audio-toggle')){const enabled=gameAudio.toggle();notify(enabled?'Ses ve müzik açıldı.':'Ses ve müzik kapatıldı.');if(activeView==='settings')renderSettings();return;}
   gameAudio.cue('click');
   if(button.dataset.accountAction){accountAction(button.dataset.accountAction);return;}
@@ -717,7 +738,15 @@ function dispatch(action) {
   if (button.dataset.stage) { openBattle(button.dataset.stage); return; }
   if (button.dataset.closeView !== undefined) { activeView = 'keep'; render(); return; }
   if (button.dataset.closeBattle !== undefined) { closeBattle(); render(); return; }
-  if (button.dataset.retryStage) { openBattle(button.dataset.retryStage); return; }
+  if (button.dataset.retryStage) {
+    const stage=Number(button.dataset.retryStage),mode=button.dataset.retryMode;
+    if(mode==='veteran'||mode==='rift'){
+      const started=mode==='rift'?R.startWeeklyRift(state):R.startVeteranBattle(state,stage,Number(button.dataset.retryTier));
+      if(!started.ok)return notify(started.error);
+      openBattle();return;
+    }
+    openBattle(stage);return;
+  }
 }
 
 document.addEventListener('click', dispatch);
@@ -756,7 +785,7 @@ try {
     const obstacles=['.topbar','.rail','#recenter','.city-collect','.next-quest','#daily-reward','.city-controls','.world-heading>div'].map(selector=>{
       const rect=$(selector).getBoundingClientRect();return {x:rect.x-origin.x+rect.width/2,y:rect.y-origin.y,width:rect.width,height:rect.height};
     });
-    const placements=placeCityLabels(points.map(p=>({...p,width:cityLabelNodes.get(p.id)?.offsetWidth||120,height:cityLabelNodes.get(p.id)?.offsetHeight||28})),width,height,obstacles);
+    const placements=placeCityLabels(points.map(p=>({...p,width:cityLabelNodes.get(p.id)?.offsetWidth||120,height:cityLabelNodes.get(p.id)?.offsetHeight||28})),width,height,obstacles,questEl.hidden?Infinity:54);
     const visible=new Set(placements.map(p=>p.id));
     for(const [id,label] of cityLabelNodes)label.hidden=!visible.has(id);
     for(const p of placements) {

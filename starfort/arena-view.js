@@ -94,7 +94,7 @@ export function mountArena(root){
   }
   function draw(time){paint(time);raf=requestAnimationFrame(draw);}
   let epoch=0;
-  async function poll(){if(destroyed||busy||!token)return;const my=epoch;try{const next=await api('state');if(my!==epoch)return;snapshot=next;error='';}catch(e){error=e.message;}if(!destroyed)message();if(!destroyed&&sessionStorage.getItem('starfort:autostart-duel')&&snapshot.status!=='active'&&snapshot.status!=='waiting'){sessionStorage.removeItem('starfort:autostart-duel');playBot();}}
+  async function poll(){if(destroyed||busy||!token)return;const my=epoch;try{const next=await api('state');if(my!==epoch)return;snapshot=next;if(Number.isSafeInteger(next.inputSeq))seq=Math.max(seq,next.inputSeq);error='';}catch(e){error=e.message;}if(!destroyed)message();if(!destroyed&&sessionStorage.getItem('starfort:autostart-duel')&&snapshot.status!=='active'&&snapshot.status!=='waiting'){sessionStorage.removeItem('starfort:autostart-duel');playBot();}}
   async function queue(){if(busy||!token||!policy.liveMatchmaking)return;busy=true;epoch++;try{snapshot=await api('queue',{});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function playBot(){if(busy||!token)return;busy=true;epoch++;try{snapshot=await api('bot',{difficulty:botDifficulty});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function leave(){if(busy||!token)return;busy=true;epoch++;try{snapshot=await api('leave',{});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}

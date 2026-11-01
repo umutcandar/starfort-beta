@@ -107,14 +107,30 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
   }
   // One process serializes all state writes: no double spending/contributions between requests.
   let lock=Promise.resolve();
+  // Read incomplete POST bodies outside the state write queue: a client can
+  // no longer block the health endpoint or other connected players by stalling.
+  async function serveStatic(req,res,route){
+    try {
+        if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Desteklenmeyen yöntem.'});
+        let relative=decodeURIComponent(route.replace(/^\/starfort\/?/,'/')).replace(/^\/+/, '');
+        if(!relative||relative.endsWith('/'))relative+='index.html';
+        if(relative.split('/').some(segment=>segment==='..'||segment.startsWith('.'))||relative.includes('\\'))return json(res,403,{error:'Erişim engellendi.'});
+        const file=path.resolve(DIR,relative);if(!file.startsWith(DIR+path.sep))return json(res,403,{error:'Erişim engellendi.'});
+        try{const data=await readFile(file);res.writeHead(200,{'Content-Type':TYPES[path.extname(file)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:data);}
+        catch(error){json(res,error.code==='ENOENT'?404:500,{error:'Dosya bulunamadı.'})}
+    }catch(error){if(!res.headersSent)json(res,400,{error:'Geçersiz dosya yolu.'});}
+  }
   const server=http.createServer((req,res)=>{
-    lock=lock.then(async()=>{
-      try {
-        const url=new URL(req.url,'http://localhost');const route=url.pathname;
-        if(route.startsWith('/api/')){
+    let route;
+    try{route=new URL(req.url,'http://localhost').pathname;}
+    catch{return json(res,400,{error:'Geçersiz adres.'});}
+    // Health and static assets never depend on guild disk writes.
+    if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-test',version:'2.8.1-weekly-raid',online:true,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']})
+    if(!route.startsWith('/api/')){void serveStatic(req,res,route);return;}
+    function enqueue(data){
+      lock=lock.then(async()=>{
+        try {
           if(rotateGuildRaids(db,Date.now()))await saveDb(db);
-          if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-test',version:'2.8.1-weekly-raid',online:true,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']});
-          const data=req.method==='POST'?await bodyOf(req):{};
           if(route==='/api/register'&&req.method==='POST'){
             const gate=inviteAllowed(req,data.testCode);
             if(!gate.ok)return json(res,gate.status,{error:gate.message,code:gate.code||'INVITE_LIMIT'});
@@ -159,16 +175,13 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
             await saveDb(db);
           }
           return json(res,status,result);
-        }
-        if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Desteklenmeyen yöntem.'});
-        let relative=decodeURIComponent(route.replace(/^\/starfort\/?/,'/')).replace(/^\/+/, '');
-        if(!relative||relative.endsWith('/'))relative+='index.html';
-        if(relative.split('/').some(segment=>segment==='..'||segment.startsWith('.'))||relative.includes('\\'))return json(res,403,{error:'Erişim engellendi.'});
-        const file=path.resolve(DIR,relative);if(!file.startsWith(DIR+path.sep))return json(res,403,{error:'Erişim engellendi.'});
-        try{const data=await readFile(file);res.writeHead(200,{'Content-Type':TYPES[path.extname(file)]||'application/octet-stream','X-Content-Type-Options':'nosniff','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:data);}
-        catch(error){json(res,error.code==='ENOENT'?404:500,{error:'Dosya bulunamadı.'})}
-      }catch(error){json(res,error.message==='İstek çok büyük.'?413:400,{error:error.message||'Sunucu hatası.'})}
-    }).catch(error=>{if(!res.headersSent)json(res,500,{error:'Sunucu işlemi başarısız.'});console.error(error);});
+        }catch(error){if(!res.headersSent)json(res,400,{error:error.message||'Sunucu hatası.'});}
+      }).catch(error=>{if(!res.headersSent)json(res,500,{error:'Sunucu işlemi başarısız.'});console.error(error);});
+    }
+    if(req.method==='POST')bodyOf(req).then(enqueue).catch(error=>{
+      if(!res.headersSent)json(res,error.message==='İstek çok büyük.'?413:400,{error:error.message||'Geçersiz istek.'});
+    });
+    else enqueue({});
   });
   server.once('close',()=>clearInterval(arenaTimer));
   try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,resolve)});}catch(error){clearInterval(arenaTimer);throw error;}

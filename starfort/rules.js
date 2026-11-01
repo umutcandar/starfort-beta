@@ -196,7 +196,6 @@ export function upgradeBuilding(state, id, now = state.lastCollected) {
   collect(state, now);
   pay(state, cost);
   state.buildings[id]++;
-  seasonEvent(state,'upgrade');
   return { ok: true };
 }
 
@@ -214,7 +213,6 @@ export function upgradeHero(state, id) {
   if (!canPay(state, cost)) return fail('Yeterli kaynak yok.');
   pay(state, cost);
   state.heroes[id].level++;
-  seasonEvent(state,'upgrade');
   return { ok: true };
 }
 
@@ -396,25 +394,27 @@ export function startLiveBattle(state,stageId,{enforceGates=false}={}) {
   if(started.ok) prepareLiveBattle(state);
   return started;
 }
-function settleLiveResult(state,result) {
+function settleLiveResult(state,result,now=null) {
   if(!result.ok) return result;
   const messages=[];
-  finishBattle(state,messages);
+  finishBattle(state,messages,now);
   state.battle.log=[...state.battle.log,...messages].slice(-30);
   return result;
 }
-export function advanceCombat(state,deltaMs) {
+export function advanceCombat(state,deltaMs,now=null) {
   if(!activeBattle(state)) return fail('Devam eden savaş yok.');
-  return settleLiveResult(state,advanceLiveCombat(state.battle,deltaMs));
+  return settleLiveResult(state,advanceLiveCombat(state.battle,deltaMs),now);
 }
 export function setBattleStance(state,stance){
   if(!activeBattle(state))return fail('Devam eden savaş yok.');
-  return changeBattleStance(state.battle,stance);
+  const action=changeBattleStance(state.battle,stance);
+  if(action.ok&&action.events?.length)seasonEvent(state,'star');
+  return action;
 }
-export function useHeroAbility(state,heroId) {
+export function useHeroAbility(state,heroId,now=null) {
   if(!activeBattle(state)) return fail('Devam eden savaş yok.');
-  const outcome=settleLiveResult(state,castLiveAbility(state.battle,heroId));
-  if(outcome.ok)recordContract(state,'ability');
+  const outcome=settleLiveResult(state,castLiveAbility(state.battle,heroId),now);
+  if(outcome.ok){recordContract(state,'ability',now);seasonEvent(state,'upgrade');}
   return outcome;
 }
 
@@ -424,7 +424,7 @@ function hit(target, amount) {
   return damage;
 }
 
-function finishBattle(state, events) {
+function finishBattle(state, events,now=null) {
   const battle = state.battle;
   if(battle.labyrinthFloor){
     if(battle.enemies.every(unit=>unit.hp<=0)){
@@ -444,8 +444,12 @@ function finishBattle(state, events) {
     battle.status = 'won';
     if (!battle.rewardApplied) {
       award(state, battle.reward);
-      recordContract(state,'win');
-      if(!battle.veteranTier && !battle.riftModifier)seasonEvent(state,'win');
+      recordContract(state,'win',now);
+      if(!battle.veteranTier && !battle.riftModifier){
+        seasonEvent(state,'win');
+        if(battle.replay)seasonEvent(state,'forge');
+      }
+      if(battle.veteranTier&&!battle.riftModifier)seasonEvent(state,'maze');
       if(battle.riftModifier)seasonEvent(state,'rift');
       if(Number.isInteger(battle.riftWeek)&&battle.riftModifier&&!state.riftRecords.some(x=>x.week===battle.riftWeek)){
         state.riftRecords=restoreRiftRecords([...state.riftRecords,{week:battle.riftWeek,stageId:battle.stageId,modifier:battle.riftModifier}]);
@@ -466,7 +470,7 @@ function finishBattle(state, events) {
       const graded=recordCampaignStars(state,battle);
       battle.stars=graded.stars;
       battle.starLoot=graded.loot;
-      if(graded.improved && graded.stars)seasonEvent(state,'star');
+
       if(graded.improved && graded.stars)events.push(`Sefer derecesi: ${'★'.repeat(graded.stars)}${'☆'.repeat(3-graded.stars)}.`);
       if(graded.loot)events.push(`${itemById(graded.loot).name} üç yıldız zaferiyle kazanıldı.`);
       for (const hero of HEROES.filter(item => unlocked(state, item) && !state.heroes[item.id])) {

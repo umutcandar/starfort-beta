@@ -101,7 +101,7 @@ export function mountTeamArena(root){
       b.title=maxHp?`Can ${Math.ceil(hp)}/${maxHp}`:'Birlikler henüz savaş alanında değil';
     }
   }
-  async function refresh(){if(disposed||busy||!token)return;try{snapshot=await api('state');error='';}catch(e){error=e.message;}if(!disposed)status();}
+  async function refresh(){if(disposed||busy||!token)return;try{snapshot=await api('state');if(Number.isSafeInteger(snapshot.inputSeq))seq=Math.max(seq,snapshot.inputSeq);error='';}catch(e){error=e.message;}if(!disposed)status();}
   async function start(size,variant='flags'){if(disposed||busy||!token||!policy.liveMatchmaking)return;busy=true;try{const data=await api('queue',{size,variant});snapshot=data;error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
   async function startBot(size,variant='flags'){if(disposed||busy||!token)return;busy=true;try{snapshot=await api('bot',{size,variant,difficulty:botDifficulty});error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
   async function startParty(size,variant='flags'){if(disposed||busy||!token||!policy.liveMatchmaking)return;busy=true;try{snapshot=await api('party/queue',{size,variant});error='';}catch(e){error=e.message;}finally{busy=false;if(!disposed)status();}}
