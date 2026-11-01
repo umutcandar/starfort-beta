@@ -833,9 +833,22 @@ try {
 $('#recenter').addEventListener('click', () => { activeView = 'keep'; questPanelExpanded=false; scene?.overview(); render(); });
 if (state.battle?.status === 'active') { R.prepareLiveBattle(state); persist(); renderBattle(); }
 render();
+(async()=>{
+ try{
+   if(await accountAcceptRecoveryHash(location.hash,()=>history.replaceState(null,'',location.pathname+location.search))){
+     accountRecovering=true;activeView='settings';render();notify('Kurtarma bağlantısı onaylandı. Yeni şifreni oluştur.');
+     return;
+   }
+   if(accountSession())await accountSync.start();
+ }catch(error){notify('Kurtarma: '+error.message);}
+})();
+setInterval(()=>{if(accountSession()&&!document.hidden)void accountSync.refresh();},45000);
 setInterval(() => { const pending = $('#production-gain'); if (pending) pending.innerHTML = costHtml(R.production(state), true); renderCityProduction(); }, 3000);
 setInterval(()=>{if(activeView==='guild'&&!guildBusy&&!document.hidden&&guildToken&&document.activeElement?.tagName!=='INPUT')refreshGuild();},7000);
-document.addEventListener('visibilitychange', () => { if(document.hidden){gameAudio.suspend();combatRunner.pause();persist();}else gameAudio.resume(); });
+document.addEventListener('visibilitychange', () => {
+ if(document.hidden){gameAudio.suspend();combatRunner.pause();persist();void accountSync.flush();}
+ else{gameAudio.resume();if(accountSession())void accountSync.refresh();}
+});
 window.addEventListener('pagehide', () => {combatRunner.pause();persist();});
 
 document.addEventListener('fullscreenchange',()=>{const active=!!document.fullscreenElement; $('[data-fullscreen]').setAttribute('aria-label',active?'Tam ekrandan çık':'Tam ekranı aç'); scene?.resize();});
