@@ -248,9 +248,11 @@ try{
     await sleep(100);
   }
   await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
-  assert.ok(await evaluate("!!document.querySelector('[data-building-preview=10]')"),'10. seviye mimari önizlemesi gösterilmeli');
-  assert.ok(await evaluate("!!document.querySelector('[data-building-preview=11]')"),'11. seviye yeni mimari önizlemesi gösterilmeli');
+  assert.ok(await evaluate("!!document.querySelector('[data-building-preview="10"]')"),'10. seviye mimari önizlemesi gösterilmeli');
+  assert.ok(await evaluate("!!document.querySelector('[data-building-preview="11"]')"),'11. seviye yeni mimari önizlemesi gösterilmeli');
   assert.ok(await evaluate("document.querySelector('.ws-next-evolution').textContent.includes('Yaldızlı gözetleme feneri')"),'10→11 mimari bileşeni farklı olmalı');
+  await cdp('Emulation.setDeviceMetricsOverride',{width:1536,height:864,deviceScaleFactor:1,mobile:false});
+  await sleep(250);
   const masteryShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
   await writeFile('qa-artifacts/starfort-1536x864-level-10-mastery.png',Buffer.from(masteryShot.data,'base64'));
   await evaluate("document.querySelector('[data-close-building]').click()");
