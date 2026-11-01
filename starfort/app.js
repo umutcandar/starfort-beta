@@ -785,7 +785,7 @@ try {
     const obstacles=['.topbar','.rail','#recenter','.city-collect','.next-quest','#daily-reward','.city-controls','.world-heading>div'].map(selector=>{
       const rect=$(selector).getBoundingClientRect();return {x:rect.x-origin.x+rect.width/2,y:rect.y-origin.y,width:rect.width,height:rect.height};
     });
-    const placements=placeCityLabels(points.map(p=>({...p,width:cityLabelNodes.get(p.id)?.offsetWidth||120,height:cityLabelNodes.get(p.id)?.offsetHeight||28})),width,height,obstacles);
+    const placements=placeCityLabels(points.map(p=>({...p,width:cityLabelNodes.get(p.id)?.offsetWidth||120,height:cityLabelNodes.get(p.id)?.offsetHeight||28})),width,height,obstacles,questEl.hidden?Infinity:54);
     const visible=new Set(placements.map(p=>p.id));
     for(const [id,label] of cityLabelNodes)label.hidden=!visible.has(id);
     for(const p of placements) {
