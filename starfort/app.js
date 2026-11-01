@@ -16,6 +16,7 @@ import {commanderPath} from './commander-path.js';
 import {battleExperience} from './battle-experience.js';
 import {armoryArt} from './armory-art.js';
 import {labyrinthMarkup} from './labyrinth-view.js';
+import {premiumCatalogMarkup} from './premium-catalog.js';
 import {cloudSaveRequest,cloudBackupSummary} from './cloud-save.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -45,7 +46,7 @@ const svg = (name, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="n
 const resourceIcon = { gold: 'coin', wood: 'wood', stone: 'stone', aether: 'star' };
 const battlePolicy=battleExperience(window.location);
 const resourceName = { gold: 'Altın', wood: 'Kereste', stone: 'Taş', aether: 'Yıldız özü' };
-const navItems = [ ['keep', 'keep', 'Köy'], ['heroes', 'heroes', 'Kahramanlar'], ['expedition', 'expedition', 'Seferler'], ['guild', 'guild', 'İttifak'], ['armory', 'forge', 'Çanta'], ['shop', 'shop', 'Mağaza'] ];
+const navItems = [ ['keep', 'keep', 'Köy'], ['heroes', 'heroes', 'Kahramanlar'], ['expedition', 'expedition', 'Seferler'], ['guild', 'guild', 'İttifak'], ['armory', 'armor', 'Çanta'], ['shop', 'shop', 'Mağaza'] ];
 let state;
 try { state = R.restoreState(localStorage.getItem(R.STORAGE_KEY)); } catch { state = R.createState(); }
 let battleSpeed=1, battleFxExpires=0;
@@ -226,7 +227,7 @@ function renderExpedition() {
     <div class="stage-list">${R.STAGES.map(stage => {
       const done = state.cleared.includes(stage.id), locked = stage.id > next, resume = state.battle?.status === 'active' && state.battle.stageId === stage.id;
       const medal=state.veteranMedals?.[stage.id]||0, veteranTier=Math.min(3,medal+1);
-      return `<article class="stage-card ${done ? 'done' : stage.id === next ? 'current' : 'locked'}"><div class="stage-number">${done ? '✓' : String(stage.id).padStart(2, '0')}</div><div><span class="eyebrow">${CHAPTERS[stage.id-1].name}</span><h3>${stage.name}</h3><span class="stage-stars" aria-label="${state.campaignStars?.[stage.id]||0} / 3 yıldız">${'★'.repeat(state.campaignStars?.[stage.id]||0)}${'☆'.repeat(3-(state.campaignStars?.[stage.id]||0))}</span><p>${stage.description} · ${stage.enemyCount} düşman · Önerilen güç ${stage.recommendedPower}</p><div class="cost-list">${costHtml(stage.reward, true)}</div>${R.FIRST_CLEAR_LOOT[stage.id]?`<p class="loot-preview">${svg('forge')} İlk zafer: ${R.itemById(R.FIRST_CLEAR_LOOT[stage.id]).name}${done?' · Alındı':''}</p>`:''}</div><button class="${done ? 'secondary' : 'primary'}" ${resume ? 'data-action="resume-battle"' : `data-stage="${stage.id}"`} ${locked || (state.battle?.status === 'active' && !resume) ? 'disabled' : ''}>${resume ? 'Savaşa dön' : done ? 'Yeniden oyna' : locked ? 'Kilitli' : 'Savaşa gir'}</button>${done?`<button class="secondary veteran-start" data-veteran-stage="${stage.id}" data-veteran-tier="${veteranTier}" ${state.battle?.status==='active'?'disabled':''}>✦ Usta Seferi ${veteranTier} ${medal?`· ${medal}/3 mühür`: '· İlk sınav'}</button>`:''}</article>`;
+      return `<article class="stage-card ${done ? 'done' : stage.id === next ? 'current' : 'locked'}"><div class="stage-number">${done ? '✓' : String(stage.id).padStart(2, '0')}</div><div><span class="eyebrow">${CHAPTERS[stage.id-1].name} · ${stage.id<=2?'KOLAY':stage.id<=4?'NORMAL':stage.id<=6?'ZOR':'EFSANEVİ'}</span><h3>${stage.name}</h3><span class="stage-stars" aria-label="${state.campaignStars?.[stage.id]||0} / 3 yıldız">${'★'.repeat(state.campaignStars?.[stage.id]||0)}${'☆'.repeat(3-(state.campaignStars?.[stage.id]||0))}</span><p>${stage.description} · ${stage.enemyCount} düşman · Önerilen güç ${stage.recommendedPower}</p><div class="cost-list">${costHtml(stage.reward, true)}</div>${R.FIRST_CLEAR_LOOT[stage.id]?`<p class="loot-preview">${svg('forge')} İlk zafer: ${R.itemById(R.FIRST_CLEAR_LOOT[stage.id]).name}${done?' · Alındı':''}</p>`:''}</div><button class="${done ? 'secondary' : 'primary'}" ${resume ? 'data-action="resume-battle"' : `data-stage="${stage.id}"`} ${locked || (state.battle?.status === 'active' && !resume) ? 'disabled' : ''}>${resume ? 'Savaşa dön' : done ? 'Yeniden oyna' : locked ? 'Kilitli' : 'Savaşa gir'}</button>${done?`<button class="secondary veteran-start" data-veteran-stage="${stage.id}" data-veteran-tier="${veteranTier}" ${state.battle?.status==='active'?'disabled':''}>✦ Usta Seferi ${veteranTier} ${medal?`· ${medal}/3 mühür`: '· İlk sınav'}</button>`:''}</article>`;
     }).join('')}</div>
     ${renderCommanderPath()}
     ${renderContractCards()}
@@ -268,10 +269,11 @@ function renderArmory() {
 }
 function renderShop() {
   workspaceEl.innerHTML=`<header><div><span class="eyebrow">YILDIZ PAZARI</span><h2>Efsanevi yeminler</h2><p>Özel kahramanların yeteneklerini eğitim savaşında keşfet.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
-    <div class="shop-status"><strong>Mağaza önizlemesi · ödeme kapalı</strong><span>Gerçek para satışı henüz açık değil. Eğitim denemeleri ücretsizdir; PvP'de ücretli güç avantajı planlanmıyor.${state.battle?.status==='active'?' Önce devam eden seferini tamamla.':''}</span></div>
+    <div class="shop-status"><strong>Mağaza önizlemesi · ödeme kapalı</strong><span>Gerçek para satışı henüz açık değil. Eğitim denemeleri ücretsizdir. Özel PvE ekipmanları ayrıca tasarlanıyor; PvP'de ücretli güç avantajı planlanmıyor.${state.battle?.status==='active'?' Önce devam eden seferini tamamla.':''}</span></div>
+    ${premiumCatalogMarkup()}
     <section class="cosmetic-concepts"><div><span class="eyebrow">KOZMETİK TASARIM ANKETİ · GERÇEK SATIŞ YOK</span><h3>Hangi görünümleri oyunda istersin?</h3><p>Beğendiklerini işaretle. Bu seçim yalnızca cihazındaki kayıt dosyasında tutulur; ödeme, satın alma veya sunucuya veri gönderme değildir.</p></div><div class="concept-grid">${R.COSMETIC_CONCEPTS.map(c=>`<article class="concept-card"><span class="eyebrow">${c.category}</span><h4>${c.name}</h4><p>${c.detail}</p><button class="${state.cosmeticWishlist.includes(c.id)?'primary':'secondary'}" data-cosmetic-interest="${c.id}" aria-pressed="${state.cosmeticWishlist.includes(c.id)}">${state.cosmeticWishlist.includes(c.id)?'✓ İstek listemde':'İsterim'}</button></article>`).join('')}</div><small>Bir tasarımı beğenmek, ona para ödeyeceğin anlamına gelmez. Gerçek oyuncu anketi ve ödeme altyapısı ayrıca geliştirilecek.</small></section>
     <div class="premium-grid">${R.SPECIAL_HEROES.map(hero=>`<article class="premium-card"><div class="premium-portrait">${heroPortrait(hero)}<span class="premium-seal">EFSANEVİ</span><div class="portrait-title"><small>${hero.title}</small><h3>${hero.name}</h3></div></div><div class="premium-copy"><span class="eyebrow">${ROLES[hero.role]} · ÖZEL KAHRAMAN</span><h3>${hero.name}</h3><p>${hero.description}</p><p class="skill">${R.HERO_ABILITIES[hero.id].name}: ${R.HERO_ABILITIES[hero.id].description}</p><div class="hero-stats"><span>Seviye 1 · ⚔ ${hero.attack} saldırı</span><span>♡ ${hero.hp} can</span></div><p class="trial-note">Denemede takımının ortalama seviyesine uyarlanır.</p><button class="primary wide" data-trial="${hero.id}" ${state.battle?.status==='active'?'disabled':''}>Eğitim savaşında dene</button><button class="secondary wide" disabled>Satış henüz açık değil</button></div></article>`).join('')}</div>
-    <div class="shop-armory"><div><span class="eyebrow">KÖY USTALARININ ESERLERİ</span><h3>Gücünü kendin döv</h3><p>16 silah, zırh ve tılsım (5 özel üç yıldız ganimeti). Seferlerden kazan veya oyun içi kaynaklarla üret.</p></div><button class="secondary" data-view="armory">Çantaya git →</button></div>`;
+    <div class="shop-armory"><div><span class="eyebrow">KÖY USTALARININ ESERLERİ</span><h3>Gücünü çantanda biriktir</h3><p>16 silah, zırh ve tılsım (5 özel üç yıldız ganimeti). Seferlerden kazan veya oyun içi kaynaklarla üret.</p></div><button class="secondary" data-view="armory">Çantaya git →</button></div>`;
 }
 
 function renderGuild(){
