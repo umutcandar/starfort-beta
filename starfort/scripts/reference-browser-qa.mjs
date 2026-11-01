@@ -257,6 +257,27 @@ try{
   await writeFile('qa-artifacts/starfort-1536x864-level-10-mastery.png',Buffer.from(masteryShot.data,'base64'));
   await evaluate("document.querySelector('[data-close-building]').click()");
 
+  // Authenticated browser smoke: the server account must override a cheated local save.
+  await cdp('Page.addScriptToEvaluateOnNewDocument',{source:"(()=>{\n sessionStorage.setItem('starfort:account-session',JSON.stringify({access_token:'test',refresh_token:'test',user:{id:'11111111-1111-4111-8111-111111111111',email:'test@example.invalid'},expires_at:Math.ceil(Date.now()/1000)+3600}));\n const orig=fetch.bind(globalThis);\n const data={ok:true,source:'server',serverNow:Date.now(),lastCollected:Date.now(),revision:1,lastDailyReward:null,mastery:0,construction:null,res:{gold:280,wood:180,stone:150,aether:65},buildings:{keep:1,farm:1,lumber:1,quarry:1,forge:1,tavern:1,observatory:1},heroes:{aldren:1,lyra:1,rovan:1},inventory:{iron_sword:1,ward_mail:1},loadouts:{},team:['aldren','lyra','rovan'],cleared:[],campaignStars:{},veteranMedals:{},mazeFloor:0,riftWeek:null,mission:null,lastReport:null,counters:{win:0,hero:0,forge:0,maze:0,rift:0,veteran:0},contractClaims:{},titles:[]};\n globalThis.fetch=(url,opts={})=>{\n  const u=String(url);\n  if(u.includes('/rest/v1/starfort_account_backups'))return Promise.resolve(new Response(JSON.stringify(opts.method==='GET'?[]:[{revision:1}]),{status:200}));\n  if(u.includes('/rest/v1/rpc/sfb_starfort_progress')){\n   const body=JSON.parse(opts.body||'{}'),type=body.p_action;\n   if(type==='hero'){data.heroes.aldren++;data.res.gold-=60;data.res.wood-=15;data.res.aether-=6;data.revision++;}\n   if(type==='mission_start'){data.mission={mode:'story',stage:Number(body.p_target),tier:0,floor:0,startedAt:Date.now(),lastTurnAt:Date.now()-4000,turn:0,power:267,enemyHp:155,enemyMaxHp:155,playerHp:288,playerMaxHp:288,lastAction:'Başladı'};data.revision++;}\n   data.serverNow=Date.now();\n   return Promise.resolve(new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json'}}));\n  }\n  return orig(url,opts);\n };\n})();"});
+  await cdp('Page.navigate',{url:origin});
+  await sleep(550);
+  await ready();
+  for(let i=0;i<25;i++){if(await evaluate("document.querySelector('[data-res=gold] b')?.textContent==='280'"))break;await sleep(100);}
+  assert.equal(await evaluate("document.querySelector('[data-res=gold] b')?.textContent"),'280','Server wallet must replace local currency in signed-in mode');
+  await evaluate("document.querySelector('.nav-item[data-view=heroes]').click()");
+  assert.ok(await evaluate("document.querySelector('.hero-card .hero-level')?.textContent.includes('SEV. 1')"),'Server hero levels must override local saves');
+  await evaluate("document.querySelector('[data-upgrade-hero=aldren]').click()");
+  for(let i=0;i<20;i++){if(await evaluate("document.querySelector('.hero-card .hero-level')?.textContent.includes('SEV. 2')"))break;await sleep(100);}
+  assert.ok(await evaluate("document.querySelector('.hero-card .hero-level')?.textContent.includes('SEV. 2')"),'Authenticated hero upgrade must use server result');
+  await evaluate("document.querySelector('.nav-item[data-view=expedition]').click()");
+  await evaluate("document.querySelector('[data-action=open-expedition]').click()");
+  assert.equal(await evaluate("document.querySelectorAll('[data-account-stage]').length"),8,'Eight official server missions must render');
+  assert.equal(await evaluate("document.querySelectorAll('.server-stage-card [data-stage]').length"),0,'Signed-in battle must not use a client-trusted victory');
+  await evaluate("document.querySelector('[data-account-stage]').click()");
+  for(let i=0;i<20;i++){if(await evaluate("!!document.querySelector('.server-mission')"))break;await sleep(100);}
+  assert.ok(await evaluate("!!document.querySelector('.server-mission [data-account-turn=skill]')"),'Server combat must expose real turn commands');
+  const authScreenshot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
+  await writeFile('qa-artifacts/starfort-1536x864-server-account-campaign.png',Buffer.from(authScreenshot.data,'base64'));
   console.log('STARFORT gerçek Chromium görsel/etkileşim kontrolleri BAŞARILI');
   console.log(JSON.stringify({desktop:{scenic:wideScenic,bag:wideBag},mobile:{scenic:mobileScenic,bag:mobileBag,scrollDetail}},null,2));
 } finally{

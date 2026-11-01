@@ -24,7 +24,9 @@ import {armoryArt} from './armory-art.js';
 import {armoryMarkup} from './armory-v212.js';
 import {createMatchReceiptRecovery} from './match-receipts.js';
 import {buildingWorkshopMarkup} from './building-workshop.js';
-import {villageAuthorityRequest,villageServerView} from './village-authority.js';
+import {villageAuthorityRequest,villageServerView,validateVillageSnapshot} from './village-authority.js';
+import {accountProgressRequest,accountServerView} from './account-progression.js';
+import {accountExpeditionMarkup} from './account-expedition.js';
 import {trustedConstructionNow} from './construction-clock.js';
 import {labyrinthMarkup} from './labyrinth-view.js';
 import {premiumCatalogMarkup} from './premium-catalog.js';
@@ -99,9 +101,10 @@ const combatRunner=createBattleRunner({
 });
 
 function grantReward(r,won,source){
+  // Practice rewards never enter the authoritative account economy.
   state.res.gold=(state.res.gold||0)+r.gold;state.res.aether=(state.res.aether||0)+r.aether;
   persist();try{renderResources();}catch{}
-  notify(`${won?'Zafer':'Savaş bitti'}: +${r.gold} ◈${r.aether?` +${r.aether} ✦`:''}${r.bonus?' · Günün ilk zaferi x2!':''}${source}`);
+  notify(`${won?'Zafer':'Savaş bitti'}: +${r.gold} ◈${r.aether?` +${r.aether} ✦`:''}${r.bonus?' · Günün ilk zaferi x2!':''}${source}${villageSignedIn()?' · Yalnızca deneme kaydı, sunucu kasasına eklenmez.':''}`);
 }
 window.addEventListener('starfort:practice-result',async e=>{
   const {won,difficulty,mode='duel',matchId}=e.detail||{};
@@ -141,10 +144,13 @@ function notify(message) {
 }
 function result(action, success) { if (!action.ok) { notify(action.error); return false; } if (success) notify(success); persist(); render(); return true; }
 let villageSnapshot=null,villageOwner=null,villageBusy=false,villageGeneration=0;
+let accountProgressSnapshot=null,accountProgressOwner=null;
 const villageSignedIn=()=>!!accountSession();
 function villageView(){
  if(!villageSignedIn())return state;
- return villageServerView(state,villageOwner===accountSession()?.user?.id?villageSnapshot:null);
+ const uid=accountSession()?.user?.id;
+ const village=villageServerView(state,villageOwner===uid?villageSnapshot:null);
+ return accountServerView(village,accountProgressOwner===uid?accountProgressSnapshot:null);
 }
 function acceptVillage(response){
  if(!villageSignedIn()||response.identity!==accountSession().user.id)return false;
@@ -154,16 +160,38 @@ function acceptVillage(response){
  render();if($('#building-dialog').open)renderBuildingDialog();
  return true;
 }
+function acceptAccountProgress(response){
+ if(!villageSignedIn()||response.identity!==accountSession()?.user?.id)return false;
+ if(villageOwner===response.identity&&villageSnapshot&&response.data.revision<villageSnapshot.revision)return false;
+ accountProgressOwner=response.identity;accountProgressSnapshot=response.account;
+ return acceptVillage({identity:response.identity,snapshot:validateVillageSnapshot(response.data)});
+}
 async function refreshVillage({preserve=false}={}){
  const uid=accountSession()?.user?.id;
- if(!uid){villageGeneration++;villageOwner=null;villageSnapshot=null;render();return false;}
+ if(!uid){villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;render();return false;}
  const gen=++villageGeneration;
- if(!preserve||villageOwner!==uid){villageOwner=uid;villageSnapshot=null;render();}
+ if(!preserve||villageOwner!==uid){villageOwner=uid;villageSnapshot=null;accountProgressOwner=uid;accountProgressSnapshot=null;render();}
  try{
-  const response=await villageAuthorityRequest('get');
+  const response=await accountProgressRequest('get');
   if(gen!==villageGeneration||accountSession()?.user?.id!==uid)return false;
-  return acceptVillage(response);
- }catch(error){if(gen===villageGeneration){notify('Sunucu köyü: '+error.message);render();}return false;}
+  return acceptAccountProgress(response);
+ }catch(error){if(gen===villageGeneration){notify('Hesap ilerlemesi: '+error.message);render();}return false;}
+}
+async function accountProgressAction(action,target=null,aux=null){
+ if(villageBusy||!villageSignedIn())return;
+ villageBusy=true;
+ try{
+  const owner=accountSession().user.id;
+  const response=await accountProgressRequest(action,{target,aux});
+  if(accountSession()?.user?.id!==owner)return;
+  if(acceptAccountProgress(response)){
+   const report=response.account.lastReport;
+   if(action==='mission_turn'&&!response.account.mission&&report){
+    notify(report.won?'★ Sunucu zaferi! '+report.stars+' yıldız · Kaynaklar ve ganimet kaydedildi.':'Sefer sonuçlandı. Takımını geliştirip yeniden dene.');
+   }else notify(({'hero':'Kahraman eğitildi','forge':'Ekipman üretildi','equip':'Ekipman kuşanıldı','unequip':'Ekipman çıkarıldı','team':'Takım kaydedildi','mission_start':'Sunucu seferi başladı','mission_abandon':'Seferden çekildin','contract':'Doğrulanmış görev ödülü alındı','title':'Unvan açıldı'})[action]||'Savaş komutu sunucuda işlendi.');
+  }
+ }catch(error){notify('Sunucu: '+error.message);await refreshVillage({preserve:true});}
+ finally{villageBusy=false;}
 }
 async function serverVillageAction(action,building=null,roomId=null){
  if(villageBusy)return;
@@ -199,7 +227,7 @@ async function claimServerMatchRewards(){
 }
 function renderResources() {
  const view=villageView();
- $('#commander-power').textContent=number(R.teamPower(state)); $('#village-level').textContent=view.buildings.keep;
+ $('#commander-power').textContent=number(R.teamPower(villageView())); $('#village-level').textContent=view.buildings.keep;
  resourcesEl.innerHTML=Object.entries(R.RESOURCES).map(([id,item])=>`<div class="resource" data-res="${id}">${svg(resourceIcon[id])}<span><b>${villageSignedIn()&&!villageSnapshot?'…':number(view.res[id])}</b><small>${item.name}${villageSignedIn()?' · Sunucu':''}</small></span></div>`).join('');
 }
 function renderNav() {
@@ -256,14 +284,15 @@ function buildingProduction() {
 }
 
 function heroCard(hero) {
-  const unlocked = !!state.heroes[hero.id], inTeam = state.team.includes(hero.id), level = state.heroes[hero.id]?.level || 1;
-  const cost = R.heroCost(state, hero.id), canUpgrade = unlocked && level < 20 && state.battle?.status !== 'active' && Object.entries(cost).every(([id, amount]) => state.res[id] >= amount);
-  const attack = unlocked ? R.heroStats(state,hero.id).attack : hero.attack;
-  const hp = unlocked ? R.heroStats(state,hero.id).maxHp : hero.hp;
+  const v=villageView();
+  const unlocked = !!v.heroes[hero.id], inTeam = v.team.includes(hero.id), level = v.heroes[hero.id]?.level || 1;
+  const cost = R.heroCost(v, hero.id), canUpgrade = unlocked && level < 20 && (villageSignedIn()?!v.serverMission:v.battle?.status !== 'active') && Object.entries(cost).every(([id, amount]) => v.res[id] >= amount);
+  const attack = unlocked ? R.heroStats(v,hero.id).attack : hero.attack;
+  const hp = unlocked ? R.heroStats(v,hero.id).maxHp : hero.hp;
   return `<article class="hero-card ${inTeam ? 'selected' : ''} ${unlocked ? '' : 'locked'}" style="--hero:${hero.color}">
     <div class="hero-portrait">${heroPortrait(hero)}<span class="role-tag">${ROLES[hero.role]}</span><span class="hero-level">${unlocked ? 'SEV. '+level : 'KİLİTLİ'}</span><div class="portrait-title"><small>${hero.title}</small><h3>${hero.name}</h3></div></div>
     <div class="hero-card-content"><p>${HERO_LORE[hero.id]}</p><div class="hero-stats"><span>⚔ ${attack} saldırı</span><span>♡ ${hp} can</span></div><div class="skill">${R.HERO_ABILITIES[hero.id].name}: ${R.HERO_ABILITIES[hero.id].description}</div>
-    ${unlocked ? `<button class="${inTeam ? 'secondary' : 'primary'}" data-team="${hero.id}" ${state.battle?.status === 'active' ? 'disabled' : ''}>${state.team[selectedSlot] === hero.id ? 'Bu konumda' : `${selectedSlot + 1}. konuma ${inTeam ? 'taşı' : 'al'}`}</button><div class="cost-list">${costHtml(cost,false,'practice')}</div><button class="secondary" data-upgrade-hero="${hero.id}" ${canUpgrade ? '' : 'disabled'}>${level >= 20 ? 'En yüksek seviye' : 'Kahramanı geliştir'}</button><button class="text-button wide" data-armory-hero="${hero.id}">Ekipmanlarını düzenle</button>` : `<div class="unlock-note">${svg('expedition')} ${R.STAGES[hero.unlockStage - 1].name} zaferiyle katılır</div>`}</div></article>`;
+    ${unlocked ? `<button class="${inTeam ? 'secondary' : 'primary'}" data-team="${hero.id}" ${(villageSignedIn()?!!v.serverMission:v.battle?.status === 'active') ? 'disabled' : ''}>${v.team[selectedSlot] === hero.id ? 'Bu konumda' : `${selectedSlot + 1}. konuma ${inTeam ? 'taşı' : 'al'}`}</button><div class="cost-list">${costHtml(cost)}</div><button class="secondary" data-upgrade-hero="${hero.id}" ${canUpgrade ? '' : 'disabled'}>${level >= 20 ? 'En yüksek seviye' : 'Kahramanı geliştir'}</button><button class="text-button wide" data-armory-hero="${hero.id}">Ekipmanlarını düzenle</button>` : `<div class="unlock-note">${svg('expedition')} ${R.STAGES[hero.unlockStage - 1].name} zaferiyle katılır</div>`}</div></article>`;
 }
 
 function heroPortrait(hero) {
@@ -293,10 +322,18 @@ function openBuilding(id) {
 function renderInspector() {
   const v=villageView(),building = R.BUILDINGS.find(item => item.id === selectedBuilding) || R.BUILDINGS[0], level = v.buildings[building.id], cost = R.upgradeCost(v, building.id);
   const blocked = (v.serverVillage&&!v.serverVillageReady)||level>=building.maxLevel||(building.id!=='keep'&&level>=v.buildings.keep+1)||Object.entries(cost).some(([id,amount])=>v.res[id]<amount)||state.battle?.status==='active';
-  const team = state.team.map(id => R.HEROES.find(hero => hero.id === id));
-  inspectorEl.innerHTML = `<div class="building-details"><div class="section-head"><small>${villageSignedIn()?'SUNUCU KÖYÜ':'YEREL KÖY YÖNETİMİ'}</small><span class="level-badge">SEVİYE ${level}</span></div><div class="building-portrait">${svg(building.id)}</div><h2>${building.name}</h2><p class="building-description">${building.description}</p><div class="stat-line"><span>Gelişim</span><b>${level} / ${building.maxLevel}</b></div>${building.production ? `<div class="stat-line"><span>Üretim hızı</span><b>${number(building.production.perMinute * level * (1 + (v.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk</b></div>` : `<div class="stat-line"><span>Köy etkisi</span><b>${building.id === 'keep' ? '+%5 üretim / seviye' : building.id === 'forge' ? '+%5 saldırı / seviye' : '+%4 can / seviye'}</b></div>`}<div class="cost-list">${costHtml(cost)}</div><button class="primary wide" data-upgrade-building="${building.id}" ${blocked ? 'disabled' : ''}>${level >= building.maxLevel ? 'En yüksek seviye' : `Yapıyı geliştir · ${number(cost.gold || 0)} altın`}</button>${buildingProduction(building)}</div><div class="squad-block"><div class="squad-heading"><h3>Kahramanlar</h3><button class="text-button" data-view="heroes">Dizilimi düzenle</button></div><div class="squad">${team.map(hero => `<div class="squad-member">${heroPortrait(hero)}<span>${hero.name}</span><small>Lv.${state.heroes[hero.id].level}</small></div>`).join('')}</div><div class="team-power"><span>Dizilim gücü</span><strong>${number(R.teamPower(state))} ✦</strong></div></div><p class="inspector-note">Yapılar yükseldikçe görünüşleri değişir. Üretim 24 saate kadar birikir; ilk 4 saat tam hızda, sonrası yavaş üretir.</p>`;
+  const team = v.team.map(id => R.HEROES.find(hero => hero.id === id));
+  inspectorEl.innerHTML = `<div class="building-details"><div class="section-head"><small>${villageSignedIn()?'SUNUCU KÖYÜ':'YEREL KÖY YÖNETİMİ'}</small><span class="level-badge">SEVİYE ${level}</span></div><div class="building-portrait">${svg(building.id)}</div><h2>${building.name}</h2><p class="building-description">${building.description}</p><div class="stat-line"><span>Gelişim</span><b>${level} / ${building.maxLevel}</b></div>${building.production ? `<div class="stat-line"><span>Üretim hızı</span><b>${number(building.production.perMinute * level * (1 + (v.buildings.keep - 1) * .05))} ${resourceName[building.production.resource]} / dk</b></div>` : `<div class="stat-line"><span>Köy etkisi</span><b>${building.id === 'keep' ? '+%5 üretim / seviye' : building.id === 'forge' ? '+%5 saldırı / seviye' : '+%4 can / seviye'}</b></div>`}<div class="cost-list">${costHtml(cost)}</div><button class="primary wide" data-upgrade-building="${building.id}" ${blocked ? 'disabled' : ''}>${level >= building.maxLevel ? 'En yüksek seviye' : `Yapıyı geliştir · ${number(cost.gold || 0)} altın`}</button>${buildingProduction(building)}</div><div class="squad-block"><div class="squad-heading"><h3>Kahramanlar</h3><button class="text-button" data-view="heroes">Dizilimi düzenle</button></div><div class="squad">${team.map(hero => `<div class="squad-member">${heroPortrait(hero)}<span>${hero.name}</span><small>Lv.${v.heroes[hero.id].level}</small></div>`).join('')}</div><div class="team-power"><span>Dizilim gücü</span><strong>${number(R.teamPower(v))} ✦</strong></div></div><p class="inspector-note">Yapılar yükseldikçe görünüşleri değişir. Üretim 24 saate kadar birikir; ilk 4 saat tam hızda, sonrası yavaş üretir.</p>`;
 }
 function renderQuest() {
+  if(villageSignedIn()){
+   const v=villageView(),idx=accountProgressSnapshot?Math.min(7,v.cleared.length):0,stage=R.STAGES[idx];
+   const text=accountProgressSnapshot?stage.name:'Hesap ilerlemesi yükleniyor';
+   questEl.hidden=activeView!=='expedition'||!questPanelExpanded;
+   $('#quest-mini').hidden=activeView==='expedition'&&questPanelExpanded;
+   questEl.innerHTML=`<button class="quest-dismiss" data-quest-close aria-label="Kapat">×</button><div class="quest-crown">✦ SUNUCU SEFERİ</div><div class="quest-layout"><div class="quest-body"><h3>${text}</h3><p>Sunucuda doğrulanan seferler, ganimetler ve yıldızlar.</p><button class="primary" data-action="open-expedition">Resmî seferlere git</button></div></div>`;
+   return;
+  }
   // A compact Sefer shortcut keeps the village panorama unobstructed.
   const expanded=activeView==='expedition' && questPanelExpanded;
   questEl.hidden=!expanded;
@@ -336,11 +373,13 @@ function renderQuest() {
 }
 
 function renderHeroes() {
-  const chosen = state.team.map(id => R.HEROES.find(hero => hero.id === id));
+  const v=villageView();
+  if(villageSignedIn()&&!accountProgressSnapshot){workspaceEl.innerHTML='<section class="guild-panel"><h2>Sunucu kahramanları doğrulanıyor</h2><button class="secondary" data-village-refresh>Yeniden bağlan</button></section>';return;}
+  const chosen = v.team.map(id => R.HEROES.find(hero => hero.id === id));
   workspaceEl.innerHTML = `<header><div><span class="eyebrow">KÜL GECESİNDEN SAĞ KALANLAR</span><h2>Kahramanlar</h2><p>Bir kalkan. Bir kıvılcım. Birlikte tutulan bir yemin.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
-    <div class="team-editor"><div><span class="eyebrow">SAVAŞ DİZİLİMİ</span><p>Konumu seç, ardından kahramanı yerleştir.</p></div><strong>${number(R.teamPower(state))}<small>TAKIM GÜCÜ</small></strong></div>
+    <div class="team-editor"><div><span class="eyebrow">SAVAŞ DİZİLİMİ</span><p>Konumu seç, ardından kahramanı yerleştir.</p></div><strong>${number(R.teamPower(v))}<small>TAKIM GÜCÜ</small></strong></div>
     <div class="formation">${chosen.map((hero, index) => `<button class="formation-slot ${selectedSlot === index ? 'active' : ''}" data-select-slot="${index}" aria-pressed="${selectedSlot === index}">${heroPortrait(hero)}<span><small>${String(index+1).padStart(2,'0')} · ${ROLES[hero.role]}</small><b>${hero.name}</b></span><span class="slot-marker">${selectedSlot === index ? '✦' : '+'}</span></button>`).join('')}</div>
-    ${state.battle?.status === 'active' ? '<p class="inline-note">Dizilimi değiştirmek için devam eden savaşı tamamla.</p>' : ''}<div class="hero-grid">${R.HEROES.map(heroCard).join('')}</div>`;
+    ${v.battle?.status === 'active' ? '<p class="inline-note">Dizilimi değiştirmek için devam eden savaşı tamamla.</p>' : ''}<div class="hero-grid">${R.HEROES.map(heroCard).join('')}</div>`;
 }
 
 function renderCommanderPath(){
@@ -357,6 +396,7 @@ function renderContractCards() {
   return `<section class="campaign-contracts" aria-label="Günlük komutan görevleri"><div class="contract-heading"><div><span class="eyebrow">GÜNLÜK KOMUTAN GÖREVLERİ · İSTEĞE BAĞLI</span><h3>Bugün kalende iz bırak</h3><p>Her gün yeni küçük hedefler. Seri kaybı veya ödeme zorunluluğu yok; ödüller yalnızca hikâye ilerlemesini destekler.</p></div><div class="banner-track"><b>✦ ${status.totalClaims} mühür</b><small>${next ? `Sonraki kozmetik unvan: ${next.name} (${next.count} mühür)` : 'Tüm unvanlar açıldı'}</small></div></div><div class="contract-grid">${status.contracts.map(c=>`<article class="contract-card"><span class="eyebrow">${c.progress} / ${c.target}</span><h4>${c.title}</h4><p>${c.detail}</p><div class="contract-progress"><i style="width:${c.progress/c.target*100}%"></i></div><small>Ödül: ${Object.entries(c.reward).map(([id,n])=>`${number(n)} ${resourceName[id]}`).join(' · ')}</small><button class="${c.progress>=c.target&&!c.claimed?'primary':'secondary'}" data-claim-contract="${c.id}" ${c.claimed||c.progress<c.target?'disabled':''}>${c.claimed?'Alındı':c.progress>=c.target?'Ödülü al':'Devam ediyor'}</button></article>`).join('')}</div><p class="contract-cosmetic">${status.earned.length?'Açılan kozmetik unvanlar: '+status.earned.join(' · '):'İlk unvan için 3 görev mühürü topla.'} · Unvanlar kozmetiktir, savaş gücünü artırmaz.</p></section>`;
 }
 function renderExpedition() {
+  if(villageSignedIn()){workspaceEl.innerHTML=accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow());return;}
   const starStatus=R.campaignStarStatus(state),season=R.seasonStatus(state);
   const completed=state.cleared.length===R.STAGES.length;
   const next = Math.min(state.cleared.length + 1, R.STAGES.length), currentStage = R.STAGES[next-1], chapter = CHAPTERS[next-1];
@@ -386,9 +426,10 @@ function renderExpedition() {
 }
 
 function renderJournal() {
+ const v=villageView();
   workspaceEl.innerHTML = `<header><div><span class="eyebrow">KÖY ARŞİVİ</span><h2>Kül Gecesi kronikleri</h2><p>Kazandığın her sefer, kaybolmuş dünyanın bir parçasını geri getirir.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
   <div class="journal-prologue"><span class="eyebrow">BAŞLANGIÇ</span><h3>Gökyüzü kırıldığında</h3><p>Yıldızlar düştüğünde krallar surlarını yükseltti. Sabah olmadı. Şimdi vadinin ortasında tek bir köy parlıyor. İçindeki çekirdek, karanlığı uzakta tutuyor; her gece biraz daha zorlanarak.</p><p>Senin yeminin, bu ışığın sönmesine izin vermemek.</p></div>
-  <div class="journal-grid">${CHAPTERS.map((chapter,index) => `<article class="journal-card ${state.cleared.includes(index+1) ? 'done' : ''}"><span class="eyebrow">${String(index+1).padStart(2,'0')} · ${R.STAGES[index].name}</span><h3>${chapter.name}</h3><p>${state.cleared.includes(index+1) ? chapter.victory : 'Bu kayıt, bölge kurtarıldığında günlüğe eklenecek.'}</p><span class="level-badge">${state.cleared.includes(index+1) ? 'KAYDA GEÇTİ' : 'KEŞFEDİLMEDİ'}</span></article>`).join('')}</div>`;
+  <div class="journal-grid">${CHAPTERS.map((chapter,index) => `<article class="journal-card ${v.cleared.includes(index+1) ? 'done' : ''}"><span class="eyebrow">${String(index+1).padStart(2,'0')} · ${R.STAGES[index].name}</span><h3>${chapter.name}</h3><p>${v.cleared.includes(index+1) ? chapter.victory : 'Bu kayıt, bölge kurtarıldığında günlüğe eklenecek.'}</p><span class="level-badge">${v.cleared.includes(index+1) ? 'KAYDA GEÇTİ' : 'KEŞFEDİLMEDİ'}</span></article>`).join('')}</div>`;
 }
 
 function itemStats(item) {
@@ -396,8 +437,10 @@ function itemStats(item) {
 }
 function itemArt(item) { return armoryArt(item); }
 function renderArmory() {
-  if(!state.heroes[selectedArmoryHero]) selectedArmoryHero=state.team[0];
-  workspaceEl.innerHTML=armoryMarkup(state,selectedArmoryHero,selectedBagSlot,selectedBagItem);
+ const v=villageView();
+ if(villageSignedIn()&&!accountProgressSnapshot){workspaceEl.innerHTML='<section class="guild-panel"><h2>Sunucu envanteri doğrulanıyor</h2><button class="secondary" data-village-refresh>Yeniden bağlan</button></section>';return;}
+  if(!v.heroes[selectedArmoryHero]) selectedArmoryHero=v.team[0];
+  workspaceEl.innerHTML=armoryMarkup(v,selectedArmoryHero,selectedBagSlot,selectedBagItem);
 }
 
 function renderShop() {
@@ -492,10 +535,10 @@ function renderAccountExtras(){
 function renderSettings(){
   const hosted=location.hostname.endsWith('github.io')||new URLSearchParams(location.search).get('hosted')==='1';
   const cloudReady=hosted&&!!guildToken,cloudLabel=!hosted?'Bulut yedeği GitHub Pages çevrim içi beta hesabında kullanılabilir.':!cloudReady?'Önce İttifak bölümünden bu cihazda komutan hesabı oluştur.':cloudSaveInfo?.exists?`Bulut yedeği: ${new Date(cloudSaveInfo.savedAt).toLocaleString('tr-TR')} · Rev. ${cloudSaveInfo.revision}`:cloudSaveInfo?'Henüz bulut yedeği yok.':'Bulut durumu henüz sorgulanmadı.';
-  workspaceEl.innerHTML=`<header><div><span class="eyebrow">KOMUTA MERKEZİ</span><h2>Ayarlar ve kayıt güvenliği</h2><p>Köyün yerel kayıtla korunur; e-posta hesabındaysan bulut eşitlemesi de çalışır.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
-    <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">OYUN İLERLEMESİ</span><h3>Kayıt yedeği</h3><p>Binan, kaynakların, kahramanların, ekipmanların ve savaş kaydın JSON dosyası olarak saklanır.</p><button class="primary wide" data-export-save>Kayıt dosyasını indir</button><button class="secondary wide" data-import-save>Yedeği geri yükle</button><small>İçe aktarma mevcut ilerlemenin üzerine yazar. Önce bir yedek al.</small></article><article class="guild-panel"><span class="eyebrow">OYUN DENEYİMİ</span><h3>Kontroller</h3><p>Köyü sürükle; +/− ile yakınlaştır. Savaşta hedef seç, 1 / 2 / 3 ile kahraman yeteneklerini kullan, Space ile taktik mola ver.</p><button class="secondary wide" data-fullscreen>Tam ekranı değiştir</button><button class="secondary wide" data-audio-toggle>Ses ve özgün müzik: ${gameAudio.enabled?'Açık · Kapat':'Kapalı · Aç'}</button><small>Sesler yalnızca sen açtığında başlar; köy melodisi ve savaş efektleri orijinaldir.</small><p class="guild-disclaimer">Klan oturumu, ana oyun kaydından ayrı bir geliştirme sunucusuna bağlıdır.</p></article>
+  workspaceEl.innerHTML=`<header><div><span class="eyebrow">KOMUTA MERKEZİ</span><h2>Ayarlar ve kayıt güvenliği</h2><p>${villageSignedIn()?'Resmî köy, kahramanlar ve savaş ödülleri sunucuda; yerel deneme ayrı korunuyor.':'Yerel deneme kaydın cihazında korunur. Hesap açarsan gerçek ekonomi sunucuda tutulur.'}</p></div><button class="secondary" data-close-view>Köye dön</button></header>
+    <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">OYUN İLERLEMESİ</span><h3>Kayıt yedeği</h3><p>Bu JSON dosyası yalnızca cihazındaki deneme kaydını içerir. Gerçek sunucu kaynaklarını, kahramanlarını veya ödüllerini değiştirmez.</p><button class="primary wide" data-export-save>Kayıt dosyasını indir</button><button class="secondary wide" data-import-save>Yedeği geri yükle</button><small>İçe aktarma mevcut ilerlemenin üzerine yazar. Önce bir yedek al.</small></article><article class="guild-panel"><span class="eyebrow">OYUN DENEYİMİ</span><h3>Kontroller</h3><p>Köyü sürükle; +/− ile yakınlaştır. Savaşta hedef seç, 1 / 2 / 3 ile kahraman yeteneklerini kullan, Space ile taktik mola ver.</p><button class="secondary wide" data-fullscreen>Tam ekranı değiştir</button><button class="secondary wide" data-audio-toggle>Ses ve özgün müzik: ${gameAudio.enabled?'Açık · Kapat':'Kapalı · Aç'}</button><small>Sesler yalnızca sen açtığında başlar; köy melodisi ve savaş efektleri orijinaldir.</small><p class="guild-disclaimer">Klan oturumu, ana oyun kaydından ayrı bir geliştirme sunucusuna bağlıdır.</p></article>
     <article class="guild-panel"><span class="eyebrow">GÜVENLİ HESAP · SUPABASE AUTH</span><h3>E-posta hesabı ve özel yedek</h3>
-      <p>Tek e-posta hesabıyla farklı cihazlarda oynayabilirsin. Kayıtlar otomatik eşitlenir; çakışmada hiçbir kayıt sessizce silinmez. PvP ekonomisi ayrı sunucu doğrulaması gerektirir.</p>
+      <p>Tek e-posta hesabıyla sunucu köyünü, kahramanlarını, demirhaneni ve doğrulanmış sefer ödüllerini farklı cihazlarda oynarsın. Yerel deneme kaydı ayrıca korunur; sunucu bakiyesine aktarılmaz.</p>
       ${accountSession()?`<strong>${esc(accountSession().user.email||'Doğrulanmış hesap')}</strong>
       <small aria-live="polite">Eşitleme: ${esc(({synced:'Güncel',checking:'Kontrol ediliyor',uploading:'Yükleniyor',conflict:'Kayıt çatışması',offline:'Çevrimdışı',disconnected:'Kapalı',error:'Kayıt hatası'})[accountSyncInfo.status]||accountSyncInfo.status)} · Bulut sürümü ${accountSync.revision??'—'}</small>
       ${accountSyncInfo.status==='conflict'?'<p class="guild-error">Diğer cihazın kaydı farklı. Birini seçmeden üstüne yazmayacağım.</p><button class="primary wide" data-account-action="use-local">Bu cihazın kaydını kullan</button><button class="secondary wide" data-account-action="restore">Bulut kaydını kullan</button>':''}
@@ -515,7 +558,7 @@ function renderSettings(){
   workspaceEl.insertAdjacentHTML('beforeend',renderAccountExtras());
   workspaceEl.insertAdjacentHTML('beforeend',`<article class="guild-panel village-account-panel"><span class="eyebrow">KRALLIK EKONOMİSİ · ${villageSignedIn()?'SUNUCU':'YEREL DENEME'}</span>
    <h3>${villageSignedIn()?'Korunan sunucu köyü':'Sunucu ekonomisine geçiş'}</h3>
-   <p>${villageSignedIn()?'Bina seviyeleri, inşaat ve kaynaklar Supabase üzerinde tutulur. Yerel JSON kayıtları bu bakiyeye dönüştürülemez.':'Giriş yaptığında sunucuda yeni ve bağımsız bir krallık açılır. Eski yerel kayıtların silinmez, ancak doğrulanmamış kazanımlar sunucuya taşınmaz.'}</p>
+   <p>${villageSignedIn()?'Köy, kahramanlar, envanter, gerçek sefer ilerlemesi, inşaat ve kaynaklar Supabase üzerinde tutulur. Yerel JSON kayıtları bu bakiyeye dönüştürülemez.':'Giriş yaptığında sunucuda yeni ve bağımsız bir krallık açılır. Eski yerel kayıtların silinmez, ancak doğrulanmamış kazanımlar sunucuya taşınmaz.'}</p>
    ${villageSignedIn()?`<strong>${villageSnapshot?'Sunucu revizyonu '+villageSnapshot.revision+' · Ustalık '+villageSnapshot.mastery+'/24':'Sunucuya bağlanılıyor'}</strong>
     <button class="secondary wide" data-village-refresh>Sunucu köyünü yenile</button>
     <button class="primary wide" data-village-match-claim>Doğrulanmış zafer ödüllerini al</button>
@@ -544,7 +587,7 @@ async function accountAction(action){
      notify('Onay e-postası yeniden istendi. Gelen kutunu kontrol et.');return;
    }
    if(action==='logout'){
-     accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;render();
+     accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;render();
      notify('E-posta hesabından çıkış yapıldı. Yerel oyun korundu.');return;
    }
    if(action==='sync'){await accountSync.refresh();return;}
@@ -657,7 +700,7 @@ async function cloudSaveAction(action){
 function renderWorkspace() {
   if(trainingCleanup){trainingCleanup();trainingCleanup=null;}
   const open = activeView !== 'keep' && activeView !== 'expedition'; workspaceEl.hidden = !open; inspectorEl.hidden = open; document.querySelector('.app').classList.toggle('panel-open', open); workspaceEl.dataset.view = activeView;
-  if (activeView === 'heroes') renderHeroes(); else if (activeView === 'campaign') renderExpedition(); else if (activeView === 'journal') renderJournal(); else if (activeView === 'labyrinth') workspaceEl.innerHTML=labyrinthMarkup(state); else if (activeView === 'armory') renderArmory(); else if (activeView === 'shop') renderShop(); else if (activeView === 'guild') renderGuild(); else if (activeView === 'settings') renderSettings(); else if (activeView === 'training') trainingCleanup=mountTraining(workspaceEl); else if(activeView==='arena')trainingCleanup=mountArena(workspaceEl); else if(activeView==='team')trainingCleanup=mountTeamArena(workspaceEl);
+  if (activeView === 'heroes') renderHeroes(); else if (activeView === 'campaign') renderExpedition(); else if (activeView === 'journal') renderJournal(); else if (activeView === 'labyrinth') {if(villageSignedIn())renderExpedition();else workspaceEl.innerHTML=labyrinthMarkup(state);} else if (activeView === 'armory') renderArmory(); else if (activeView === 'shop') renderShop(); else if (activeView === 'guild') renderGuild(); else if (activeView === 'settings') renderSettings(); else if (activeView === 'training') trainingCleanup=mountTraining(workspaceEl); else if(activeView==='arena')trainingCleanup=mountArena(workspaceEl); else if(activeView==='team')trainingCleanup=mountTeamArena(workspaceEl);
 }
 function renderBattle(fx=null) {
   const dialog=$('#battle-dialog'), battle=(trialState||state).battle;
@@ -851,9 +894,25 @@ async function runBuildingAction(mode,id,button){
  }catch(error){notify(error.message||'İnşaat saati doğrulanamadı. Kaynak harcanmadı.');}
  finally{constructionRequestPending=false;button.disabled=false;if($('#building-dialog').open)renderBuildingDialog();}
 }
+async function accountAutoEquip(heroId){
+ if(villageBusy||!accountProgressSnapshot)return;
+ const candidate=villageView();
+ const draft=structuredClone({heroes:candidate.heroes,inventory:candidate.inventory,loadouts:candidate.loadouts,battle:null});
+ const optimized=R.autoEquipHero(draft,heroId);
+ if(!optimized.ok)return notify(optimized.error);
+ const original=accountProgressSnapshot.loadouts[heroId]||{},desired=draft.loadouts[heroId]||{};
+ const changes=['weapon','armor','relic'].filter(slot=>original[slot]!==desired[slot]);
+ if(!changes.length)return notify('Mevcut donanım rolüne uygun.');
+ for(const slot of changes){
+  if(original[slot])await accountProgressAction('unequip',heroId,slot);
+ }
+ for(const slot of changes){
+  if(desired[slot])await accountProgressAction('equip',heroId,desired[slot]);
+ }
+}
 function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
-  if(saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.hasAttribute('data-finish-building')||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
+  if(!villageSignedIn()&&saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.hasAttribute('data-finish-building')||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
   if(button.hasAttribute('data-audio-toggle')){const enabled=gameAudio.toggle();notify(enabled?'Ses ve müzik açıldı.':'Ses ve müzik kapatıldı.');if(activeView==='settings')renderSettings();return;}
   gameAudio.cue('click');
   if(button.dataset.welcome){
@@ -864,6 +923,15 @@ function dispatch(action) {
   }
   if(button.hasAttribute('data-village-refresh')){void refreshVillage();return;}
   if(button.hasAttribute('data-village-match-claim')){void claimServerMatchRewards();return;}
+  if(button.dataset.accountStage||button.dataset.accountVeteran||button.dataset.accountTurn||button.dataset.accountContract||button.dataset.accountTitle||button.hasAttribute('data-account-maze')||button.hasAttribute('data-account-rift')||button.hasAttribute('data-account-abandon')){
+    if(!villageSignedIn())return notify('Önce hesabına giriş yap.');
+    const action=button.dataset.accountTurn?'mission_turn':
+      button.hasAttribute('data-account-abandon')?'mission_abandon':
+      button.dataset.accountContract?'contract':button.dataset.accountTitle?'title':'mission_start';
+    const target=button.dataset.accountStage||button.dataset.accountContract||button.dataset.accountTitle||
+      (button.dataset.accountVeteran?'veteran:'+button.dataset.accountVeteran:button.hasAttribute('data-account-maze')?'maze:'+((accountProgressSnapshot?.mazeFloor||0)+1):button.hasAttribute('data-account-rift')?'rift':null);
+    void accountProgressAction(action,target,button.dataset.accountTurn||null);return;
+  }
   if(button.dataset.accountAction){accountAction(button.dataset.accountAction);return;}
   if(button.dataset.recoveryKey){
     try{
@@ -879,19 +947,19 @@ function dispatch(action) {
   }
   if(button.hasAttribute('data-fullscreen')) { toggleFullscreen(); return; }
   if(button.dataset.quickBot){quickPlayBot(button.dataset.quickBot);return;}
-  if(button.hasAttribute('data-labyrinth-open')){activeView='labyrinth';render();return;}
-  if(button.dataset.labyrinthMove!==undefined){const step=R.moveLabyrinth(state,Number(button.dataset.labyrinthMove));result(step,step.event||'Yeni koridor keşfedildi.');return;}
-  if(button.hasAttribute('data-labyrinth-fight')){const step=R.startLabyrinthBattle(state);if(!step.ok)return notify(step.error);openBattle();return;}
-  if(button.hasAttribute('data-labyrinth-complete')){const step=R.completeLabyrinthFloor(state);result(step,step.ok?`Kat ${step.floor} tamamlandı! +${step.reward.gold} altın, +${step.reward.aether} yıldız özü.`:null);return;}
+  if(button.hasAttribute('data-labyrinth-open')){activeView=villageSignedIn()?'campaign':'labyrinth';render();return;}
+  if(button.dataset.labyrinthMove!==undefined){if(villageSignedIn()){activeView='campaign';render();return;}const step=R.moveLabyrinth(state,Number(button.dataset.labyrinthMove));result(step,step.event||'Yeni koridor keşfedildi.');return;}
+  if(button.hasAttribute('data-labyrinth-fight')){if(villageSignedIn()){void accountProgressAction('mission_start','maze:'+((accountProgressSnapshot?.mazeFloor||0)+1));return;}const step=R.startLabyrinthBattle(state);if(!step.ok)return notify(step.error);openBattle();return;}
+  if(button.hasAttribute('data-labyrinth-complete')){if(villageSignedIn())return notify('Sunucu labirentinde ödül savaş sonucuyla otomatik kaydedilir.');const step=R.completeLabyrinthFloor(state);result(step,step.ok?`Kat ${step.floor} tamamlandı! +${step.reward.gold} altın, +${step.reward.aether} yıldız özü.`:null);return;}
   if(button.hasAttribute('data-training-open')){activeView='training';render();return;}
   if(button.hasAttribute('data-arena-open')){activeView='arena';render();return;}
   if(button.hasAttribute('data-team-open')){activeView='team';render();return;}
   if(button.hasAttribute('data-daily-reward')){if(villageSignedIn())void serverVillageAction('daily');else result(R.claimDailyReward(state),'Yerel günlük ödül alındı. Sunucu köyüne aktarılmaz.');return;}
   if(button.dataset.cosmeticInterest){const vote=R.toggleWishlist(state,button.dataset.cosmeticInterest);result(vote,vote.selected?'Tasarım istek listene eklendi.':'Tasarım istek listenden çıkarıldı.');return;}
-  if(button.dataset.seasonTitle){result(R.claimSeasonTitle(state,button.dataset.seasonTitle),'Yeni sezon unvanı koleksiyonuna eklendi.');return;}
-  if(button.dataset.claimContract){result(R.claimCampaignContract(state,button.dataset.claimContract),'Görev ödülü alındı; kozmetik unvan ilerlemen güncellendi.');return;}
-  if(button.hasAttribute('data-start-rift')){const outcome=R.startWeeklyRift(state);if(!outcome.ok)return notify(outcome.error);openBattle();return;}
-  if(button.dataset.veteranStage){const outcome=R.startVeteranBattle(state,Number(button.dataset.veteranStage),Number(button.dataset.veteranTier));if(!outcome.ok)return notify(outcome.error);openBattle();return;}
+  if(button.dataset.seasonTitle){if(villageSignedIn())return notify('Sunucu unvanları Seferler bölümündeki doğrulanmış görevlerden alınır.');result(R.claimSeasonTitle(state,button.dataset.seasonTitle),'Yeni sezon unvanı koleksiyonuna eklendi.');return;}
+  if(button.dataset.claimContract){if(villageSignedIn())return notify('Sunucu görev ödülleri Seferler bölümünden alınır.');result(R.claimCampaignContract(state,button.dataset.claimContract),'Görev ödülü alındı; kozmetik unvan ilerlemen güncellendi.');return;}
+  if(button.hasAttribute('data-start-rift')){if(villageSignedIn()){void accountProgressAction('mission_start','rift');activeView='campaign';return;}const outcome=R.startWeeklyRift(state);if(!outcome.ok)return notify(outcome.error);openBattle();return;}
+  if(button.dataset.veteranStage){if(villageSignedIn()){void accountProgressAction('mission_start','veteran:'+button.dataset.veteranStage+':'+button.dataset.veteranTier);activeView='campaign';return;}const outcome=R.startVeteranBattle(state,Number(button.dataset.veteranStage),Number(button.dataset.veteranTier));if(!outcome.ok)return notify(outcome.error);openBattle();return;}
   if(button.dataset.guildAction){guildAction(button.dataset.guildAction);return;}
   if(button.dataset.copy){navigator.clipboard?.writeText(button.dataset.copy).then(()=>notify('Davet kodu kopyalandı.')).catch(()=>notify('Kodu seçerek kopyalayabilirsin.'));return;}
   if(button.hasAttribute('data-export-save')){const file=new Blob([exportSave(state)],{type:'application/json'});const url=URL.createObjectURL(file);const link=document.createElement('a');link.href=url;link.download='starfort-kayit-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('Kayıt yedeği hazırlandı.');return;}
@@ -909,10 +977,10 @@ function dispatch(action) {
   if(button.dataset.bagSlot){selectedBagSlot=button.dataset.bagSlot;renderArmory();return;}
   if(button.dataset.bagItem){selectedBagItem=button.dataset.bagItem;renderArmory();return;}
   if(button.dataset.armoryHero) { selectedArmoryHero=button.dataset.armoryHero; activeView='armory'; render(); return; }
-  if(button.dataset.autoEquip) { const choice=R.autoEquipHero(state,button.dataset.autoEquip); result(choice,choice.changed?'Rolüne uygun en güçlü boşta ekipmanlar kuşanıldı.':'Kahramanın mevcut donanımı zaten uygun.'); return; }
-  if(button.dataset.forge) { result(R.forgeItem(state,button.dataset.forge),'Ekipman üretildi; bir kahramana kuşandırabilirsin.'); return; }
-  if(button.dataset.equip) { result(R.equipItem(state,selectedArmoryHero,button.dataset.equip),'Ekipman kuşanıldı. Savaş gücü güncellendi.'); return; }
-  if(button.dataset.unequip) { result(R.unequipItem(state,selectedArmoryHero,button.dataset.unequip),'Ekipman çantaya alındı.'); return; }
+  if(button.dataset.autoEquip) {if(villageSignedIn()){void accountAutoEquip(button.dataset.autoEquip);return;} const choice=R.autoEquipHero(state,button.dataset.autoEquip); result(choice,choice.changed?'Rolüne uygun en güçlü boşta ekipmanlar kuşanıldı.':'Kahramanın mevcut donanımı zaten uygun.'); return; }
+  if(button.dataset.forge) {if(villageSignedIn()){void accountProgressAction('forge',button.dataset.forge);return;} result(R.forgeItem(state,button.dataset.forge),'Ekipman üretildi; bir kahramana kuşandırabilirsin.'); return; }
+  if(button.dataset.equip) {if(villageSignedIn()){void accountProgressAction('equip',selectedArmoryHero,button.dataset.equip);return;} result(R.equipItem(state,selectedArmoryHero,button.dataset.equip),'Ekipman kuşanıldı. Savaş gücü güncellendi.'); return; }
+  if(button.dataset.unequip) {if(villageSignedIn()){void accountProgressAction('unequip',selectedArmoryHero,button.dataset.unequip);return;} result(R.unequipItem(state,selectedArmoryHero,button.dataset.unequip),'Ekipman çantaya alındı.'); return; }
   if(button.dataset.trial) { if(state.battle?.status==='active') return notify('Önce devam eden savaşı tamamla.'); trialState=R.createHeroTrial(state,button.dataset.trial); renderBattle(); combatRunner.resume(); renderBattle(); return; }
   if(button.hasAttribute('data-quest-toggle')) { activeView='expedition'; questPanelExpanded=true; render(); return; }
   if(button.hasAttribute('data-quest-close')) { questPanelExpanded=false; render(); return; }
@@ -940,18 +1008,20 @@ function dispatch(action) {
     void runBuildingAction(mode,id,button);
     return;
   }
-  if (button.dataset.upgradeHero) { result(R.upgradeHero(state, button.dataset.upgradeHero), 'Kahraman güçlendi.'); return; }
+  if (button.dataset.upgradeHero) {if(villageSignedIn()){void accountProgressAction('hero',button.dataset.upgradeHero);return;} result(R.upgradeHero(state, button.dataset.upgradeHero), 'Kahraman güçlendi.'); return; }
   if (button.dataset.selectSlot !== undefined) { selectedSlot = Number(button.dataset.selectSlot); renderHeroes(); return; }
-  if (button.dataset.team) {
-    const id = button.dataset.team, team = [...state.team], previousIndex = team.indexOf(id);
-    if (previousIndex >= 0) [team[selectedSlot], team[previousIndex]] = [team[previousIndex], team[selectedSlot]];
-    else team[selectedSlot] = id;
-    result(R.setTeam(state, team), 'Savaş dizilimi güncellendi.'); return;
+  if(button.dataset.team){
+    const id=button.dataset.team,current=villageView(),team=[...current.team],previous=team.indexOf(id);
+    if(previous>=0)[team[selectedSlot],team[previous]]=[team[previous],team[selectedSlot]];
+    else team[selectedSlot]=id;
+    if(villageSignedIn())void accountProgressAction('team',team.join(','));
+    else result(R.setTeam(state,team),'Savaş dizilimi güncellendi.');
+    return;
   }
   if(button.hasAttribute('data-collect')){if(villageSignedIn())void serverVillageAction('collect');else {const collected=R.collect(state);result(collected,'Yerel üretim toplandı. Sunucu köyüne aktarılmaz.');}return;}
   if (button.dataset.action === 'open-expedition') { activeView = 'campaign'; render(); return; }
-  if (button.dataset.action === 'resume-battle') { openBattle(); return; }
-  if (button.dataset.stage) { openBattle(button.dataset.stage); return; }
+  if (button.dataset.action === 'resume-battle') {if(villageSignedIn()){activeView='campaign';render();return;}openBattle(); return; }
+  if (button.dataset.stage) {if(villageSignedIn()){activeView='campaign';void accountProgressAction('mission_start',button.dataset.stage);render();return;} openBattle(button.dataset.stage); return; }
   if (button.dataset.closeView !== undefined) { activeView = 'keep'; render(); return; }
   if (button.dataset.closeBattle !== undefined) { closeBattle(); render(); return; }
   if (button.dataset.retryStage) {
@@ -988,6 +1058,14 @@ $('#recenter').innerHTML = svg('keepMenu');
 let buildingBackdropDown = false;
 // Update long-term construction countdowns and claim availability while the panel is open.
 setInterval(()=>{if(villageView().construction){renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}},30000);
+setInterval(()=>{
+ if(!villageSignedIn()||!accountProgressSnapshot?.mission||activeView!=='campaign')return;
+ const remaining=Math.max(0,3000-(constructionUiNow()-accountProgressSnapshot.mission.lastTurnAt));
+ for(const button of workspaceEl.querySelectorAll('[data-account-turn]'))button.disabled=villageBusy||remaining>0;
+ const hint=workspaceEl.querySelector('[data-server-wait]');
+ if(hint)hint.textContent=remaining?'Yaklaşık '+Math.ceil(remaining/1000)+' sn bekle.':'Komut verebilirsin.';
+},1000);
+
 if(state.construction)void verifyConstructionTime().then(()=>{renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}).catch(()=>{});
 
 $('#building-dialog').addEventListener('pointerdown', event => { buildingBackdropDown = event.target === $('#building-dialog'); });

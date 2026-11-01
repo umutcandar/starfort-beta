@@ -157,7 +157,7 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
     // input is accepted by this route; never grants currency or building levels.
     if(route==='/api/clock'&&req.method==='GET')return json(res,200,{ok:true,source:'starfort-server',now:Date.now()});
     // Health and static assets never depend on guild disk writes.
-    if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-live-arena',version:'2.24.0-village',serverEpoch,online:true,historyReady:matchLedger.status.enabled,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']})
+    if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-live-arena',version:'2.25.0-unified',serverEpoch,online:true,historyReady:matchLedger.status.enabled,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']})
     if(!route.startsWith('/api/')){void serveStatic(req,res,route);return;}
     function enqueue(data,authenticatedArenaUser=null){
       lock=lock.then(async()=>{

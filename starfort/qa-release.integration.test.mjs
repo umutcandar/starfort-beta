@@ -17,7 +17,7 @@ test('release serves actual entry files and executes registration, guild and sol
    assert.ok((await response.arrayBuffer()).byteLength>100,asset);
   }
   assert.equal((await fetch(base+'/starfort/.local-data/guilds.json')).status,403);
-  assert.equal((await req('/api/status'))[1].version,'2.24.0-village');
+  assert.equal((await req('/api/status'))[1].version,'2.25.0-unified');
    const before=Date.now(),[code,clock]=await req('/api/clock');
    assert.equal(code,200);assert.equal(clock.ok,true);assert.equal(clock.source,'starfort-server');
    assert.ok(clock.now>=before&&clock.now<=Date.now()+1000,'clock uses actual server time');

@@ -1,0 +1,47 @@
+/* Authenticated long-game progression — a single server-owned campaign experience. */
+.server-expedition{display:grid;gap:18px;max-width:1220px;margin:auto;padding:3px 0 24px;color:#e9ebdf}
+.server-progress-header{display:flex;gap:14px;align-items:center;justify-content:space-between;border-bottom:1px solid #d7b57a65;padding-bottom:16px}
+.server-progress-header h2{font:700 clamp(25px,2.8vw,40px)/1.1 Georgia,serif;color:#fff1cd;margin:7px 0}
+.server-progress-header p{font-size:12px;color:#b9cfda;line-height:1.55;max-width:720px}
+.server-progress-header .eyebrow,.server-mission .eyebrow{color:#f2ca84;font-size:10px;letter-spacing:2px}
+.server-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.server-summary>div{display:grid;gap:6px;min-width:0;padding:14px 10px;background:linear-gradient(135deg,#253b4d,#132235);border:1px solid #a5895680;border-radius:9px;text-align:center}
+.server-summary b{font:700 24px Georgia,serif;color:#ffe1a2}
+.server-summary small{font-size:10px;color:#acc6ce}
+.server-chapters,.server-modes>article,.server-contracts,.server-titles{padding:18px;border:1px solid #66818a70;border-radius:10px;background:linear-gradient(145deg,#1e3042,#142338)}
+.server-chapters>h3,.server-modes h3,.server-contracts h3,.server-titles h3{font:700 20px Georgia,serif;color:#fee5b7;margin:0 0 12px}
+.server-stage-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.server-stage-card{display:flex;justify-content:space-between;align-items:center;gap:11px;border:1px solid #5471888f;border-radius:8px;padding:13px 12px;background:#12253b;text-align:left}
+.server-stage-card.complete{border-color:#719e878f;background:#19312e}
+.server-stage-card h3{font:700 18px/1.25 Georgia,serif;color:#f4e6c5;margin:5px 0}
+.server-stage-card p{font-size:10px;color:#b4c8d5;margin:5px 0}
+.server-stage-card small{font-size:9px;color:#b3c9d1;line-height:1.4}
+.server-stage-card .server-star-row{display:block;color:#efca85;letter-spacing:3px;font-size:15px}
+.server-stage-card button{min-width:110px;min-height:40px;max-width:140px;font-size:10px}
+.server-mission{position:relative;border:1px solid #e3be7999;border-radius:12px;padding:21px;background:radial-gradient(ellipse at 80% 0%,#c68f4d3a,transparent 55%),linear-gradient(145deg,#233c4c,#101e2e);box-shadow:0 15px 36px #0a16253e}
+.server-mission-header h3{font:700 26px Georgia,serif;color:#ffe1ad;margin:7px 0}
+.server-mission-header p{font-size:12px;color:#d1dfdf;margin:0 0 20px}
+.server-health{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.server-health>div{display:grid;grid-template-columns:1fr auto;gap:8px}
+.server-health strong{font-size:13px;color:#e5ebe6}.server-health span{font-size:12px;font-variant-numeric:tabular-nums;color:#c3d4d5}
+.server-health progress{grid-column:1/-1;width:100%;height:16px;accent-color:#90cbab;overflow:hidden}
+.server-health>div+div progress{accent-color:#d9867c}
+.server-combat-hint{margin:17px 0 10px;font-size:11px;color:#d6c8a9}
+.server-moves,.server-mode-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.server-moves button{min-height:41px;font-size:12px}
+.server-mission-result{border:1px solid #75ba977d;border-radius:9px;padding:14px;background:#1d40318a}
+.server-mission-result.loss{border-color:#ab7b7180;background:#3f292880}
+.server-mission-result strong{font:700 21px Georgia,serif;color:#f7dba3}
+.server-mission-result p{margin:7px 0;font-size:12px;color:#d9e6dd}
+.server-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.server-modes>article{display:flex;flex-direction:column;gap:10px;padding:15px}
+.server-modes p,.server-contracts p,.server-titles p{font-size:11px;line-height:1.55;color:#bbcdd4;margin:0}
+.server-modes button,.server-contracts button,.server-titles button{font-size:10px;min-height:34px}
+.server-progress-counters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin:14px 0}
+.server-progress-counters span{display:flex;align-items:center;flex-direction:column;gap:3px;border:1px solid #496c77;border-radius:7px;padding:8px}
+.server-progress-counters b{font:700 20px Georgia,serif;color:#f0cb8e}
+.server-progress-counters small{font-size:9px;color:#bbccd0}
+.server-expedition-note{font-size:10px;color:#a9becb;line-height:1.6;padding:0 5px}
+@media(max-width:850px){.server-modes{grid-template-columns:1fr}.server-stage-grid{grid-template-columns:1fr}.server-stage-card{min-height:90px}}
+@media(max-width:510px){.server-expedition{gap:10px}.server-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.server-progress-header{flex-direction:column;align-items:flex-start}.server-chapters,.server-modes>article,.server-contracts,.server-titles{padding:11px}.server-stage-card{padding:10px;flex-wrap:wrap}.server-stage-card button{width:100%;max-width:none}.server-health{grid-template-columns:1fr}.server-moves button{flex:1 1 35%}.server-progress-counters{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.server-expedition *{scroll-behavior:auto}}
