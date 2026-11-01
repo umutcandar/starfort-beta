@@ -55,7 +55,7 @@ let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
 let guildToken='';try{guildToken=localStorage.getItem(GUILD_TOKEN_KEY)||''}catch{}
 let trainingCleanup = null;
-let activeView = 'keep', selectedBuilding = 'keep', toastTimer, scene, selectedSlot = 0, selectedArmoryHero = 'aldren', selectedBagSlot = 'all', selectedBagItem='iron_sword', trialState = null;
+let activeView = 'keep', selectedBuilding = 'keep', toastTimer, scene, selectedSlot = 0, selectedArmoryHero = 'aldren', selectedBagSlot = 'all', selectedBagItem='starbreaker', trialState = null;
 const cityLabelNodes = new Map();
 const resourcesEl = $('#resources'), navEl = $('#navigation'), inspectorEl = $('#inspector'), workspaceEl = $('#workspace'), questEl = $('#next-quest');
 const combatRunner=createBattleRunner({
