@@ -86,3 +86,18 @@ export async function guildRequest(route,token=null,data=null){
   return result;
 }
 export const guildOnline=()=>guildRequest('status');
+
+/** Read-only RLS-protected history. Player cannot insert or alter results. */
+export async function guildMatchHistory(limit=10){
+ const active=await freshAccountSession();
+ const max=Math.min(20,Math.max(1,Math.trunc(limit)||10));
+ const url=SUPABASE_URL+'/rest/v1/starfort_match_history?select=room_id,mode,outcome,reason,hero_id,ended_at&order=ended_at.desc&limit='+max;
+ let response;
+ try{
+   response=await fetch(url,{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+active.access_token},signal:AbortSignal.timeout(9000)});
+ }catch{throw Error('Maç geçmişi için bağlantı kurulamadı.');}
+ if(!response.ok)throw Error('Maç geçmişi alınamadı.');
+ const rows=await response.json();
+ if(!Array.isArray(rows))throw Error('Maç geçmişi yanıtı geçersiz.');
+ return rows;
+}
