@@ -372,3 +372,34 @@ body{font-synthesis:none}
   .armory-v212 .armory-tip{display:none}
   .armory-v212>.bag-v212-detail{grid-column:1/-1;grid-row:3;min-height:280px!important;max-height:none!important}
 }
+
+/* The panoramic village is the default: quest details appear only on demand. */
+#next-quest[hidden],#quest-mini[hidden]{display:none!important}
+.quest-mini{
+  position:absolute;z-index:3;
+  right:max(24px,env(safe-area-inset-right));
+  bottom:calc(var(--city-hud-bottom) + 22px);
+  min-width:128px;min-height:49px;padding:9px 14px;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  border:1px solid #e6bc72;border-radius:9px;
+  background:linear-gradient(155deg,#173f64f2,#081c34f4);
+  color:#ffe8b8;font:700 17px Georgia,serif;
+  box-shadow:inset 0 0 0 2px #ffe9bc16,0 4px 16px #071327b3,0 0 12px #daa55456;
+  cursor:pointer;transition:box-shadow .16s,border-color .16s;
+}
+.quest-mini:hover{border-color:#ffe2a4;box-shadow:0 0 20px #e6b45a8c}
+.quest-mini:focus-visible,.quest-dismiss:focus-visible{outline:3px solid #ffe8a4;outline-offset:3px}
+.quest-dismiss{
+  position:absolute;z-index:8;right:8px;top:8px;
+  display:grid;place-items:center;
+  min-width:32px;min-height:32px;padding:0;
+  background:#081b31e8;border:1px solid #d0ae75;border-radius:6px;
+  color:#ffe7bb;font:700 27px/1 Georgia,serif;
+  cursor:pointer;
+}
+.quest-dismiss:hover{background:#315576;color:#fff6dd}
+@media(max-width:700px){
+  .quest-mini{right:max(10px,env(safe-area-inset-right));bottom:calc(var(--city-hud-bottom) + 10px);min-width:104px;min-height:39px;padding:5px 9px;font-size:14px}
+  .quest-dismiss{right:5px;top:5px;min-height:28px;min-width:28px;font-size:21px}
+}
+@media(prefers-reduced-motion:reduce){.quest-mini{transition:none}}
