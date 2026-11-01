@@ -124,9 +124,9 @@ test('app routes all account-mode spenders and reward-bearing battles into the u
  assert.match(app,/accountProgressAction\('unequip'/);
  assert.match(app,/accountProgressAction\('team'/);
  assert.match(app,/accountProgressAction\('mission_start'/);
- assert.match(app,/accountProgressAction\('mission_turn'/);
- assert.match(app,/accountProgressAction\('contract'/);
- assert.match(app,/accountProgressAction\('title'/);
+ assert.match(app,/button\.dataset\.accountTurn\?'mission_turn'/);
+ assert.match(app,/button\.dataset\.accountContract\?'contract'/);
+ assert.match(app,/button\.dataset\.accountTitle\?'title'/);
  assert.match(app,/accountExpeditionMarkup\(villageView\(\),accountProgressSnapshot/);
  assert.match(html,/v2\.25\.0/);
  assert.match(css,/@media\(max-width:510px\)/);
