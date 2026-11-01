@@ -18,7 +18,7 @@ export const SEASON_TITLES=Object.freeze([
 ]);
 const cap=n=>Number.isInteger(n)&&n>=0?n:0;
 export function seasonId(now=Date.now()){return 1+Math.floor(Math.max(0,now-ORIGIN)/PERIOD);}
-export function newSeason(now=Date.now()){return {id:seasonId(now),progress:{},claimed:[],legacy:[]};}
+export function newSeason(now=Date.now()){return {id:seasonId(now),progress:Object.fromEntries(SEASON_GOALS.map(g=>[g.id,0])),claimed:[],legacy:[]};}
 export function restoreSeason(raw,now=Date.now()) {
   const fresh=newSeason(now);
   if(!raw || typeof raw!=='object')return fresh;
