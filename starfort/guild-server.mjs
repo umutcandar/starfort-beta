@@ -6,6 +6,7 @@ import {createArenaService} from './arena.js';
 import {trainingDifficulty} from './training-difficulty.js';
 import {newWeeklyRaid,rotateGuildRaids} from './guild-weekly-raid.js';
 import {createTeamService} from './team-arena.js';
+import {verifiedArenaUser} from './arena-auth.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -121,13 +122,22 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
     }catch(error){if(!res.headersSent)json(res,400,{error:'Geçersiz dosya yolu.'});}
   }
   const server=http.createServer((req,res)=>{
+    // Only the first-party GitHub Pages and Render site may use this API cross-origin.
+    const origin=req.headers.origin;
+    if(origin && ['https://umutcandar.github.io','https://starfort-online-beta.onrender.com'].includes(origin)){
+      res.setHeader('Access-Control-Allow-Origin',origin);
+      res.setHeader('Vary','Origin');
+      res.setHeader('Access-Control-Allow-Headers','Authorization, Content-Type');
+      res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');
+    }
+    if(req.method==='OPTIONS')return res.writeHead(204).end();
     let route;
     try{route=new URL(req.url,'http://localhost').pathname;}
     catch{return json(res,400,{error:'Geçersiz adres.'});}
     // Health and static assets never depend on guild disk writes.
     if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-test',version:'2.8.1-weekly-raid',online:true,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']})
     if(!route.startsWith('/api/')){void serveStatic(req,res,route);return;}
-    function enqueue(data){
+    function enqueue(data,authenticatedArenaUser=null){
       lock=lock.then(async()=>{
         try {
           if(rotateGuildRaids(db,Date.now()))await saveDb(db);
@@ -139,7 +149,8 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
             const token=randomBytes(32).toString('hex');const user={id:randomBytes(12).toString('hex'),name,tokenHash:hash(token),joinedAt:Date.now()};
             db.users.push(user);await saveDb(db);return json(res,201,{token,...oneGuild(db,user)});
           }
-          const user=findUser(db,req);if(!user)return json(res,401,{error:'Bu cihazda oturum yok. Oyuncu adı oluşturmalısın.'});
+          const user=authenticatedArenaUser||findUser(db,req);
+          if(!user)return json(res,401,{error:'E-posta oturumu gerekli.'});
           if(route==='/api/me'&&req.method==='GET')return json(res,200,oneGuild(db,user));
           if(route==='/api/team/state'&&req.method==='GET')return json(res,200,teams.result(user));
           if(route==='/api/team/queue'&&req.method==='POST'){const [status,dataOut]=teams.queue(user,data);return json(res,status,dataOut);}
@@ -178,10 +189,20 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
         }catch(error){if(!res.headersSent)json(res,400,{error:error.message||'Sunucu hatası.'});}
       }).catch(error=>{if(!res.headersSent)json(res,500,{error:'Sunucu işlemi başarısız.'});console.error(error);});
     }
-    if(req.method==='POST')bodyOf(req).then(enqueue).catch(error=>{
+    // Parse request and validate identity before entering serialized match actions.
+    const live=/^\/api\/(arena|team)\//.test(route);
+    async function dispatch(data){
+      let player=null;
+      if(live && process.env.STARFORT_AUTH_REQUIRED==='1'){
+        try{player=await verifiedArenaUser(req.headers.authorization);}
+        catch(error){return json(res,401,{error:error.message});}
+      }
+      enqueue(data,player);
+    }
+    if(req.method==='POST')bodyOf(req).then(dispatch).catch(error=>{
       if(!res.headersSent)json(res,error.message==='İstek çok büyük.'?413:400,{error:error.message||'Geçersiz istek.'});
     });
-    else enqueue({});
+    else void dispatch({});
   });
   server.once('close',()=>clearInterval(arenaTimer));
   try{await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,resolve)});}catch(error){clearInterval(arenaTimer);throw error;}
