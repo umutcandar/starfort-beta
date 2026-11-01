@@ -548,7 +548,7 @@ export function battleTurn(state, action) {
     for (const enemy of aliveEnemies()) {
       if (!aliveAllies().length) break;
       const intent=enemyIntent({...battle,round:battle.round-1},enemy);
-      if(action==='star' && intent.type==='crush') {
+      if(action==='star' && ['crush','frost','drain','nova'].includes(intent.type)) {
         events.push(`${enemy.name}: Yıkım dalgası yıldız çağrısıyla bozuldu!`);
         frame(enemy.id,'interrupt','Yıkım engellendi');
         continue;
@@ -558,6 +558,15 @@ export function battleTurn(state, action) {
       for(const target of targets) {
         const damage=hit(target,enemy.attack*intent.multiplier*(tank?.id==='aldren'?.85:tank?.id==='aurelion'?.92:1)*(1-target.armor/100)*(action==='guard'?.5:1));
         events.push(`${enemy.name}, ${target.name} için ${damage} hasar verdi.`);
+      }
+      if(intent.type==='frost') {
+        battle.starCharge=Math.max(0,battle.starCharge-18);
+        events.push('Ayaz zinciri yıldız enerjisini 18 azalttı.');
+      }
+      if(intent.type==='drain') {
+        const regained=Math.min(enemy.maxHp-enemy.hp,Math.round(enemy.attack*.65*targets.length));
+        enemy.hp+=regained;
+        events.push(`${enemy.name} ${regained} can soğurdu.`);
       }
       frame(enemy.id,intent.type,intent.label);
 
