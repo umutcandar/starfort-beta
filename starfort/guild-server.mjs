@@ -95,6 +95,16 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
   const teams=createTeamService();
   const serverEpoch=randomBytes(12).toString('hex');
   const matchLedger=createMatchLedger();
+  // Attach receipts only to authenticated members' completed match snapshots.
+  // Render's in-memory queue may disappear on restart, but a browser can safely
+  // forward this HMAC-verified receipt to the existing idempotent Supabase RPC.
+  function liveJson(res,status,data,kind){
+    const roomId=data?.status==='ended'?data.room?.id:null;
+    const room=roomId?(kind==='duel'?arena.rooms:teams.rooms).get(roomId):null;
+    const receipt=room?matchLedger.receiptFor(room,kind):null;
+    return json(res,status,receipt?{...data,matchReceipt:receipt}:data);
+  }
+
   const arenaTimer=setInterval(()=>{
     arena.tick(.05);teams.tick(.05);
     for(const room of arena.rooms.values())if(room.status==='ended')matchLedger.enqueue(room,'duel');
@@ -144,7 +154,7 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
     try{route=new URL(req.url,'http://localhost').pathname;}
     catch{return json(res,400,{error:'Geçersiz adres.'});}
     // Health and static assets never depend on guild disk writes.
-    if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-live-arena',version:'2.18.0-reconnect',serverEpoch,online:true,historyReady:matchLedger.status.enabled,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']})
+    if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-live-arena',version:'2.20.0-receipts',serverEpoch,online:true,historyReady:matchLedger.status.enabled,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']})
     if(!route.startsWith('/api/')){void serveStatic(req,res,route);return;}
     function enqueue(data,authenticatedArenaUser=null){
       lock=lock.then(async()=>{
@@ -162,9 +172,9 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
           const user=authenticatedArenaUser||findUser(db,req);
           if(!user)return json(res,401,{error:'E-posta oturumu gerekli.'});
           if(route==='/api/me'&&req.method==='GET')return json(res,200,oneGuild(db,user));
-          if(route==='/api/team/state'&&req.method==='GET')return json(res,200,{...teams.result(user),serverEpoch});
-          if(route==='/api/team/queue'&&req.method==='POST'){const [status,dataOut]=teams.queue(user,data);return json(res,status,{...dataOut,serverEpoch});}
-          if(route==='/api/team/bot'&&req.method==='POST'){const [status,dataOut]=teams.queueBot(user,data);return json(res,status,{...dataOut,serverEpoch});}
+          if(route==='/api/team/state'&&req.method==='GET')return liveJson(res,200,{...teams.result(user),serverEpoch},'team');
+          if(route==='/api/team/queue'&&req.method==='POST'){const [status,dataOut]=teams.queue(user,data);return liveJson(res,status,{...dataOut,serverEpoch},route.startsWith('/api/arena/')?'duel':'team');}
+          if(route==='/api/team/bot'&&req.method==='POST'){const [status,dataOut]=teams.queueBot(user,data);return liveJson(res,status,{...dataOut,serverEpoch},route.startsWith('/api/arena/')?'duel':'team');}
           if(route==='/api/team/party/queue'&&req.method==='POST'){
             const guild=userGuild(db,user);
             if(!guild)return json(res,409,{error:'Önce bir klana katıl.'});
@@ -181,13 +191,13 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
             const [status,response]=teams.queueParty(members,size,guild.id,guild.name,variant);
             return json(res,status,response);
           }
-          if(route==='/api/team/leave'&&req.method==='POST')return json(res,200,teams.leave(user));
-          if(route==='/api/team/input'&&req.method==='POST'){const [status,dataOut]=teams.input(user,data);return json(res,status,{...dataOut,serverEpoch});}
-          if(route==='/api/arena/state'&&req.method==='GET')return json(res,200,{...arena.result(user),serverEpoch});
-          if(route==='/api/arena/queue'&&req.method==='POST')return json(res,200,{...arena.queue(user,data),serverEpoch});
+          if(route==='/api/team/leave'&&req.method==='POST')return liveJson(res,200,teams.leave(user),'team');
+          if(route==='/api/team/input'&&req.method==='POST'){const [status,dataOut]=teams.input(user,data);return liveJson(res,status,{...dataOut,serverEpoch},route.startsWith('/api/arena/')?'duel':'team');}
+          if(route==='/api/arena/state'&&req.method==='GET')return liveJson(res,200,{...arena.result(user),serverEpoch},'duel');
+          if(route==='/api/arena/queue'&&req.method==='POST')return liveJson(res,200,{...arena.queue(user,data),serverEpoch},'duel');
           if(route==='/api/arena/bot'&&req.method==='POST'){if(!trainingDifficulty(data.difficulty??'normal'))return json(res,400,{error:'Geçersiz bot zorluk seviyesi.'});return json(res,200,{...arena.queueBot(user,data),serverEpoch});}
-          if(route==='/api/arena/leave'&&req.method==='POST')return json(res,200,arena.leave(user));
-          if(route==='/api/arena/input'&&req.method==='POST'){const [status,dataOut]=arena.input(user,data);return json(res,status,{...dataOut,serverEpoch});}
+          if(route==='/api/arena/leave'&&req.method==='POST')return liveJson(res,200,arena.leave(user),'duel');
+          if(route==='/api/arena/input'&&req.method==='POST'){const [status,dataOut]=arena.input(user,data);return liveJson(res,status,{...dataOut,serverEpoch},route.startsWith('/api/arena/')?'duel':'team');}
           if(req.method!=='POST')return json(res,405,{error:'Bu yöntem desteklenmiyor.'});
           const [status,result]=action(db,user,route,data);
           if(status===200){

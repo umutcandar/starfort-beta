@@ -1,6 +1,7 @@
 /** 1v1 online duel UX. The server is authoritative; the canvas only renders snapshots. */
 import {guildRequest,GUILD_TOKEN_KEY,guildMatchHistory} from './guild-client.js';
 import {createMatchContinuity} from './match-continuity.js';
+import {createMatchReceiptRecovery} from './match-receipts.js';
 import {accountSession} from './account-auth.js';
 import {ARENA_HERO_STYLES} from './arena-heroes.js';
 import * as R from './rules.js';
@@ -23,6 +24,11 @@ export function mountArena(root){
   let renderMode=policy.renderMode;
   let botDifficulty=trainingDifficulty(localStorage.getItem('starfort:bot-difficulty'))||'normal';
   const matchContinuity=createMatchContinuity(sessionStorage,'starfort:arena-last-active');
+  const receiptRecovery=createMatchReceiptRecovery({storage:localStorage,userId:accountSession()?.user?.id});
+  const acceptMatch=next=>{
+    if(receiptRecovery.remember(next)&&receiptRecovery.pending)void receiptRecovery.flush();
+    return matchContinuity.accept(next);
+  };
   let snapshot={status:'idle'},destroyed=false,raf=0,gameTimer=0,queueTimer=0,busy=false,seq=0;
   const keys=new Set(),touch=new Set();let pendingBurst=false,pendingDash=false,pendingAttack=false,uiTime=0,lastStateTime=0;
   const api=(route,data=null)=>guildRequest(`arena/${route}`,token,data);
@@ -81,6 +87,7 @@ export function mountArena(root){
       title=room?.winner===null?'BERABERE':room?.winner===snapshot.you?'ZAFER':'MAĞLUBİYET';
       detail=room?.reason==='disconnect'?'Rakip bağlantıyı kaybetti.':room?.reason==='forfeit'?'Bir oyuncu düellodan ayrıldı.':'Yeni maç için Botla Savaş düğmesine basabilir veya Çık ile gerçek oyuncu arayabilirsin.';
     }
+    if(status==='ended'&&!room?.isPractice&&receiptRecovery.pending)detail+=' · Maç kaydı sunucuya yeniden gönderiliyor.';
     const el=$('#arena-message');el.hidden=status==='active'&&!error;
     el.innerHTML=title?`<b>${esc(title)}</b><p>${esc(detail)}</p>`:'';
     $('#arena-connection').textContent=error?'Bağlantı kesildi':({idle:'Arena hazır',interrupted:'Maç oturumu iptal',waiting:'Eşleşme bekleniyor',active:'Canlı düello sürüyor',ended:'Maç tamamlandı'})[status]||'Hazırlanıyor';
@@ -104,9 +111,9 @@ export function mountArena(root){
   }
   function draw(time){paint(time);raf=requestAnimationFrame(draw);}
   let epoch=0;
-  async function poll(){if(destroyed||busy||!token)return;const my=epoch;try{const next=await api('state');if(my!==epoch)return;snapshot=matchContinuity.accept(next);if(Number.isSafeInteger(next.inputSeq))seq=Math.max(seq,next.inputSeq);error='';}catch(e){error=e.message;}if(!destroyed)message();if(!destroyed&&sessionStorage.getItem('starfort:autostart-duel')&&snapshot.status!=='active'&&snapshot.status!=='waiting'){sessionStorage.removeItem('starfort:autostart-duel');playBot();}}
-  async function queue(){if(busy||!token||!policy.liveMatchmaking)return;busy=true;epoch++;try{snapshot=matchContinuity.accept(await api('queue',{heroId}));error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
-  async function playBot(){if(busy||!token)return;busy=true;epoch++;try{snapshot=matchContinuity.accept(await api('bot',{difficulty:botDifficulty,heroId}));error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
+  async function poll(){if(destroyed||busy||!token)return;const my=epoch;try{const next=await api('state');if(my!==epoch)return;snapshot=acceptMatch(next);if(Number.isSafeInteger(next.inputSeq))seq=Math.max(seq,next.inputSeq);error='';}catch(e){error=e.message;}if(!destroyed)message();if(!destroyed&&sessionStorage.getItem('starfort:autostart-duel')&&snapshot.status!=='active'&&snapshot.status!=='waiting'){sessionStorage.removeItem('starfort:autostart-duel');playBot();}}
+  async function queue(){if(busy||!token||!policy.liveMatchmaking)return;busy=true;epoch++;try{snapshot=acceptMatch(await api('queue',{heroId}));error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
+  async function playBot(){if(busy||!token)return;busy=true;epoch++;try{snapshot=acceptMatch(await api('bot',{difficulty:botDifficulty,heroId}));error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function leave(){if(busy||!token)return;busy=true;epoch++;try{snapshot=await api('leave',{});error='';}catch(e){error=e.message;}finally{busy=false;if(!destroyed)message();}}
   async function send(){if(destroyed||busy||snapshot.status!=='active')return;
     const x=(keys.has('d')||keys.has('arrowright')||touch.has('right')?1:0)-(keys.has('a')||keys.has('arrowleft')||touch.has('left')?1:0);
@@ -114,7 +121,7 @@ export function mountArena(root){
     const axis=combineMovement(x,y,joystick.read());
     const body={seq:++seq,x:axis.x,y:axis.y,attack:keys.has('j')||touch.has('attack')||pendingAttack,burst:pendingBurst,dash:pendingDash};
     pendingBurst=false;pendingDash=false;pendingAttack=false;busy=true;
-    try{snapshot=matchContinuity.accept(await api('input',body));error='';}catch(e){error=e.message;if(body.burst)pendingBurst=true;if(body.dash)pendingDash=true;if(body.attack)pendingAttack=true;}
+    try{snapshot=acceptMatch(await api('input',body));error='';}catch(e){error=e.message;if(body.burst)pendingBurst=true;if(body.dash)pendingDash=true;if(body.attack)pendingAttack=true;}
     finally{busy=false;if(!destroyed)message();}
   }
   function keydown(e){if(!root.isConnected||['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||e.ctrlKey||e.metaKey)return;
@@ -144,6 +151,6 @@ export function mountArena(root){
   root.addEventListener('click',buttonClick);root.addEventListener('pointerdown',pointerdown);root.addEventListener('pointerup',pointerup);root.addEventListener('pointercancel',pointerup);
   window.addEventListener('resize',resizeCanvas);updateGraphics(graphics);
   if(!token){error='Önce İttifak sekmesinden yerel komutan hesabı oluştur.';message();}else poll();
-  raf=requestAnimationFrame(draw);gameTimer=setInterval(send,120);queueTimer=setInterval(()=>{if(snapshot.status!=='active' || !busy)poll()},900);
+  raf=requestAnimationFrame(draw);gameTimer=setInterval(send,120);queueTimer=setInterval(()=>{if(snapshot.status!=='active' || !busy)poll();if(receiptRecovery.pending)void receiptRecovery.flush()},900);
   return ()=>{destroyed=true;joystick.dispose();root.classList.remove('sf-battle-live');document.body.classList.remove('sf-combat-running');clearInterval(gameTimer);clearInterval(queueTimer);cancelAnimationFrame(raf);window.removeEventListener('resize',resizeCanvas);motion.reset();renderer.dispose();window.removeEventListener('keydown',keydown);window.removeEventListener('keyup',keyup);window.removeEventListener('blur',blur);root.removeEventListener('click',buttonClick);root.removeEventListener('pointerdown',pointerdown);root.removeEventListener('pointerup',pointerup);root.removeEventListener('pointercancel',pointerup);if(snapshot.status==='waiting'||snapshot.status==='active')api('leave',{}).catch(()=>{});};
 }

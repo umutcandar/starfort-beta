@@ -22,6 +22,7 @@ import {commanderPath} from './commander-path.js';
 import {battleExperience} from './battle-experience.js';
 import {armoryArt} from './armory-art.js';
 import {armoryMarkup} from './armory-v212.js';
+import {createMatchReceiptRecovery} from './match-receipts.js';
 import {labyrinthMarkup} from './labyrinth-view.js';
 import {premiumCatalogMarkup} from './premium-catalog.js';
 import {cloudSaveRequest,cloudBackupSummary} from './cloud-save.js';
@@ -76,6 +77,11 @@ const accountSync=createAccountSync({
  }
 });
 loadAccountSession();
+const pendingMatchRecovery=createMatchReceiptRecovery({storage:localStorage,userId:accountSession()?.user?.id});
+if(pendingMatchRecovery.pending){
+  void pendingMatchRecovery.flush();
+  window.addEventListener('online',()=>void pendingMatchRecovery.flush());
+}
 const gameAudio=createGameAudio();
 let guildToken='';try{guildToken=localStorage.getItem(GUILD_TOKEN_KEY)||''}catch{}
 let trainingCleanup = null;
