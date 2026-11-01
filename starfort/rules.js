@@ -236,7 +236,9 @@ export function buildingMasteryGate(state,id){
  // The long-term tiers demand replayable 1–3 star expedition mastery,
  // not only waiting for the construction clock.
  const required=level>=18?24:level>=14?18:level>=10?12:level>=7?6:level>=4?3:0;
- const total=campaignStarStatus(state).total;
+ // In account mode, only server-issued daily mastery and signed victories count.
+ // Unverified local campaign stars must never unlock competitive construction.
+ const total=Number.isInteger(state.serverMastery)?state.serverMastery:campaignStarStatus(state).total;
  return {required,total,ok:total>=required};
 }
 function upgradePrerequisite(state,id){
