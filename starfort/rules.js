@@ -2,6 +2,7 @@ import { createGearState, restoreGear, equipmentStats, awardFirstClearItem, FIRS
 import { restoreCampaignStars, recordCampaignStars, campaignStarStatus } from './campaign-stars.js';
 import { encounterEnemies, enemyIntent } from './encounters.js';
 import { stageRequirements } from './stage-gates.js';
+import {newSeason,restoreSeason,seasonEvent} from './season-campaign.js';
 import { initializeLiveCombat, restoreLiveCombat, advanceLiveCombat, castLiveAbility, changeBattleStance } from './live-combat.js';
 import { createContracts, restoreContracts, recordContract, contractsStatus, claimContractProgress } from './campaign-contracts.js';
 import { weeklyRiftStatus, riftSchedule, restoreRiftRecords, applyRiftModifier, RIFT_MODIFIERS } from './weekly-rift.js';
@@ -10,6 +11,7 @@ import { createLabyrinth, restoreLabyrinth, labyrinthStatus, finishLabyrinthGuar
 export { HERO_ABILITIES, abilityState, liveEnemyIntent } from './live-combat.js';
 export { enemyIntent, ENEMY_ROLES } from './encounters.js';
 export { stageRequirements } from './stage-gates.js';
+export {seasonStatus,claimSeasonTitle,SEASON_GOALS,SEASON_TITLES} from './season-campaign.js';
 export { CONTRACTS, BANNER_MILESTONES, contractsStatus } from './campaign-contracts.js';
 export { weeklyRiftStatus, RIFT_MODIFIERS } from './weekly-rift.js';
 export { COSMETIC_CONCEPTS, toggleWishlist } from './cosmetic-concepts.js';
@@ -87,7 +89,7 @@ export function createState(now = Date.now()) {
     buildings: Object.fromEntries(BUILDINGS.map(item => [item.id, 1])),
     heroes: Object.fromEntries(HEROES.filter(hero => !hero.unlockStage).map(hero => [hero.id, { level: 1 }])),
     team: ['aldren', 'lyra', 'rovan'], cleared: [], campaignStars: {}, labyrinth:createLabyrinth(), veteranMedals: {}, riftRecords: [], cosmeticWishlist: [], selectedStage: 1,
-    lastCollected: safeNow(now), lastDailyReward: null, contracts:createContracts(now), battle: null, ...createGearState(),
+    lastCollected: safeNow(now), lastDailyReward: null, contracts:createContracts(now), season:newSeason(now), battle: null, ...createGearState(),
   };
 }
 
@@ -115,6 +117,7 @@ export function restoreState(raw, now = Date.now()) {
     if (timestamp(saved.lastCollected)) state.lastCollected = Math.min(time, saved.lastCollected);
     if(typeof saved.lastDailyReward==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(saved.lastDailyReward))state.lastDailyReward=saved.lastDailyReward;
     state.contracts=restoreContracts(saved.contracts,time);
+    state.season=restoreSeason(saved.season,time);
     state.riftRecords=restoreRiftRecords(saved.riftRecords);
     state.cosmeticWishlist=restoreWishlist(saved.cosmeticWishlist);
     for(const stage of STAGES){const tier=saved.veteranMedals?.[stage.id];if(state.cleared.includes(stage.id)&&integer(tier,1,3))state.veteranMedals[stage.id]=tier;}
@@ -193,6 +196,7 @@ export function upgradeBuilding(state, id, now = state.lastCollected) {
   collect(state, now);
   pay(state, cost);
   state.buildings[id]++;
+  seasonEvent(state,'upgrade');
   return { ok: true };
 }
 
@@ -210,6 +214,7 @@ export function upgradeHero(state, id) {
   if (!canPay(state, cost)) return fail('Yeterli kaynak yok.');
   pay(state, cost);
   state.heroes[id].level++;
+  seasonEvent(state,'upgrade');
   return { ok: true };
 }
 
@@ -432,6 +437,8 @@ function finishBattle(state, events) {
     if (!battle.rewardApplied) {
       award(state, battle.reward);
       recordContract(state,'win');
+      if(!battle.veteranTier && !battle.riftModifier)seasonEvent(state,'win');
+      if(battle.riftModifier)seasonEvent(state,'rift');
       if(Number.isInteger(battle.riftWeek)&&battle.riftModifier&&!state.riftRecords.some(x=>x.week===battle.riftWeek)){
         state.riftRecords=restoreRiftRecords([...state.riftRecords,{week:battle.riftWeek,stageId:battle.stageId,modifier:battle.riftModifier}]);
         events.push('Haftalık Yarık tamamlandı: kozmetik sınır mührü kazanıldı.');
@@ -451,6 +458,7 @@ function finishBattle(state, events) {
       const graded=recordCampaignStars(state,battle);
       battle.stars=graded.stars;
       battle.starLoot=graded.loot;
+      if(graded.improved && graded.stars)seasonEvent(state,'star');
       if(graded.improved && graded.stars)events.push(`Sefer derecesi: ${'★'.repeat(graded.stars)}${'☆'.repeat(3-graded.stars)}.`);
       if(graded.loot)events.push(`${itemById(graded.loot).name} üç yıldız zaferiyle kazanıldı.`);
       for (const hero of HEROES.filter(item => unlocked(state, item) && !state.heroes[item.id])) {
