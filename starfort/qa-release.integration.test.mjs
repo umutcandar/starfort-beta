@@ -17,7 +17,7 @@ test('release serves actual entry files and executes registration, guild and sol
    assert.ok((await response.arrayBuffer()).byteLength>100,asset);
   }
   assert.equal((await fetch(base+'/starfort/.local-data/guilds.json')).status,403);
-  assert.equal((await req('/api/status'))[1].version,'2.8.1-weekly-raid');
+  assert.equal((await req('/api/status'))[1].version,'2.16.0-auth-multiplayer');
   assert.equal((await req('/api/team/bot',null,{size:5,variant:'siege'}))[0],401);
   const [ra,alice]=await req('/api/register',null,{name:'QA Leader'});
   const [rb,bob]=await req('/api/register',null,{name:'QA Member'});
