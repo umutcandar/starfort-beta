@@ -20,7 +20,14 @@ jobs:
         run: npm run qa:all
       - name: Reference layout browser check (Chromium)
         working-directory: starfort
-        run: npm run qa:visual
+        # GitHub runner Chrome occasionally aborts before opening DevTools.
+        # Rerun once in an isolated fresh browser profile; fail if both attempts fail.
+        run: |
+          npm run qa:visual || {
+            echo "Chromium first launch failed; retrying once with a fresh profile."
+            sleep 4
+            npm run qa:visual
+          }
       - name: Upload layout screenshots
         if: always()
         uses: actions/upload-artifact@v4
