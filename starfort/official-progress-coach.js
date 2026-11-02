@@ -2,6 +2,7 @@
  * Authenticated progress is never inferred from the guest/local browser save. */
 import {STAGES,teamPower} from './rules.js';
 import {SECOND_ACT} from './second-act.js';
+import {officialServerTeamPower} from './official-server-team-power.js';
 export const OFFICIAL_STAGE_THRESHOLDS=Object.freeze([250,310,380,450,540,650,780,920]);
 export function isoWeek(now=Date.now()){
  const d=new Date(now);if(!Number.isFinite(d.getTime()))return null;
@@ -50,7 +51,7 @@ export function officialNextGoal(view,account,now=Date.now()){
  if(Array.isArray(account.act2Cleared)&&account.act2Cleared.length<8){
   const chapter=SECOND_ACT[account.act2Cleared.length];
   const threshold=chapter.recommendedPower*.7;
-  if(teamPower(view)<threshold)return {id:'act2-training',title:chapter.name+' için takımı geliştir',detail:'İkinci perde için en az '+Math.ceil(threshold)+' takım gücü gerekiyor. Önerilen: '+chapter.recommendedPower+'.',action:'heroes',label:'Kahramanları güçlendir'};
+  if(officialServerTeamPower(view,account)<threshold)return {id:'act2-training',title:chapter.name+' için takımı geliştir',detail:'İkinci perde için en az '+Math.ceil(threshold)+' takım gücü gerekiyor. Önerilen: '+chapter.recommendedPower+'.',action:'heroes',label:'Kahramanları güçlendir'};
   return {id:'act2',title:'İkinci perde: '+chapter.name,detail:'Yeni hikâye '+(account.act2Cleared.length+1)+'/8. Üç operasyonu tamamlayarak sıradaki bölgeyi aç.',action:'expedition',label:'Yeni bölgeye git'};
  }
  if(account.mazeFloor<16)return {id:'maze',title:`Yıldızaltı Labirenti · Kat ${account.mazeFloor+1}`,detail:'16 kalıcı katı bitir; her katın savaş sonucu sunucuda kayıtlıdır.',action:'expedition',label:'Labirente git'};
