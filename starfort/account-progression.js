@@ -4,7 +4,7 @@ import {HEROES,ITEMS} from './rules.js';
 const HERO_IDS=new Set(HEROES.map(h=>h.id)),ITEM_IDS=new Map(ITEMS.map(x=>[x.id,x]));
 const COUNTERS=['win','hero','forge','maze','rift','veteran'];
 const MOVES=['strike','guard','skill'];
-export const ACCOUNT_ACTIONS=['get','hero','forge','equip','unequip','team','enhance','mission_start','mission_turn','mission_abandon','contract','title','boss_claim'];
+export const ACCOUNT_ACTIONS=['get','hero','forge','equip','unequip','team','enhance','mission_start','mission_turn','mission_abandon','contract','chronicle_claim','title','boss_claim'];
 const safeNumber=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
 const object=x=>x&&typeof x==='object'&&!Array.isArray(x);
 export function validateAccountSnapshot(data){
