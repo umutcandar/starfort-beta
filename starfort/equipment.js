@@ -52,12 +52,23 @@ export function restoreGear(state,saved) {
     (state.loadouts[heroId] ||= {})[slot]=id; used[id]=(used[id]||0)+1;
   }
 }
+/** Each gear ID is mastered account-wide; 5 tiers with quadratic, server-matched costs. */
+export function gearMasteryCost(item,level){
+ if(!item||!Number.isInteger(level)||level<0||level>=5)return null;
+ const multiplier={common:1,epic:2,legendary:3}[item.rarity];
+ if(!multiplier)return null;
+ const next=level+1;
+ return {gold:120*next*next*multiplier,stone:40*next*multiplier,aether:8*next*next*multiplier};
+}
 export function equipmentStats(state,heroId) {
   const stats={attack:0,hp:0,armor:0,healing:0}, sets={};
   for(const id of Object.values(state.loadouts?.[heroId]||{})) {
     const item=itemById(id);
     if(item){
       for(const [key,value] of Object.entries(item.stats)) stats[key]+=value;
+      const mastery=Math.min(5,Math.max(0,Number(state.itemUpgrades?.[id]||0)));
+      if(Number.isInteger(mastery)){stats.attack+=3*mastery;stats.hp+=8*mastery;}
+
       if(item.set)sets[item.set]=(sets[item.set]||0)+1;
     }
   }
