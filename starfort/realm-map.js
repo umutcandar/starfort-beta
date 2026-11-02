@@ -36,7 +36,7 @@ export function realmMapMarkup(account,options={}){
    </div>
    <div class="realm-map-details"><div><span class="eyebrow">BÖLGE ${String(focus.chapter).padStart(2,'0')} · ${escaped(focus.zone)}</span><strong>${escaped(focus.name)}</strong><small>${escaped(focus.lore)}</small></div>
    <div class="realm-map-rating"><span class="server-star-row">${'★'.repeat(focus.stars)}${'☆'.repeat(3-focus.stars)}</span><small>Usta mührü: ${focus.medal}/3</small></div>
-   <div class="realm-map-actions"><button class="primary" data-account-stage="${focus.chapter}" ${!focus.unlocked||active?'disabled':''}>${focus.cleared?'Yeniden savaş':'Bölgeye saldır'}</button>${focus.cleared?`<button class="secondary" data-account-veteran="${focus.chapter}:${Math.min(3,focus.medal+1)}" ${active?'disabled':''}>Usta ${Math.min(3,focus.medal+1)} savaşı</button>`:''}</div>
+   <div class="realm-map-actions"><button class="primary" data-realm-mission="${focus.chapter}" ${!focus.unlocked||active?'disabled':''}>${focus.cleared?'Yeniden savaş':'Bölgeye saldır'}</button>${focus.cleared?`<button class="secondary" data-account-veteran="${focus.chapter}:${Math.min(3,focus.medal+1)}" ${active?'disabled':''}>Usta ${Math.min(3,focus.medal+1)} savaşı</button>`:''}</div>
    </div>
   </div>`;
 }
