@@ -18,3 +18,25 @@
 .account-recovery .secondary{margin:5px 0;white-space:normal;text-align:left;font-size:12px}
 .account-extra-grid .guild-panel>p{line-height:1.5}
 @media(orientation:landscape) and (max-height:490px){.account-extra-grid{grid-template-columns:1fr 1fr}}
+
+/* v2.32 authenticated-only entry. Never expose the game behind the login wall. */
+body.account-locked{overflow:hidden}
+body.account-locked>.app{visibility:hidden;pointer-events:none;user-select:none}
+body:not(.account-locked)>.account-gate{display:none}
+.account-gate{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:18px;overflow-y:auto;color:#fff0ce;background:radial-gradient(ellipse at 20% 25%,#264357,#0b1425 58%,#060a13);font:14px/1.5 system-ui,sans-serif}
+.account-gate-panel{width:min(100%,490px);padding:clamp(20px,4vw,36px);border:1px solid #af9260;border-radius:20px;background:linear-gradient(155deg,#253c4c,#111b2c);box-shadow:0 25px 90px #0009}
+.account-gate-mark{font:48px Georgia,serif;color:#f1d296;text-align:center;line-height:1}
+.account-gate-panel .eyebrow{display:block;text-align:center;color:#e3bb83;letter-spacing:.13em;font-size:11px}
+.account-gate-panel h1{font:700 clamp(25px,4vw,36px)/1.2 Georgia,serif;text-align:center;margin:13px 0;color:#ffe4ab}
+.account-gate-panel>p{color:#d5dfe3;text-align:center;font-size:13px;line-height:1.7}
+.account-gate form{display:grid;gap:12px;margin:22px 0}
+.account-gate form label{display:grid;gap:6px;color:#f4dca9;font-weight:700;font-size:12px}
+.account-gate form input{font:15px system-ui,sans-serif;color:#fff;background:#07121e;border:1px solid #71828c;border-radius:9px;min-height:48px;width:100%;padding:11px}
+.account-gate form input:focus{outline:2px solid #f2c785;outline-offset:2px}
+.account-gate-actions{display:grid;gap:10px;margin-top:8px}
+.account-gate-actions button{min-height:48px;font-size:14px;font-weight:700}
+.account-gate-help{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.account-gate-help .text-button{color:#f3d2a0}
+.account-gate-panel>small{display:block;text-align:center;color:#afc3cf;font-size:11px;margin-top:16px}
+#account-gate-status{min-height:2.5em;font-size:12px}
+@media(max-width:480px){.account-gate{place-items:start center;padding:18px 10px}.account-gate-panel{padding:19px}}
