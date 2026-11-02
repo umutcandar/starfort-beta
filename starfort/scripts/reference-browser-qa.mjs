@@ -112,12 +112,12 @@ try{
  await ready();
  assert.equal(await evaluate("window.__starfortQaMock===true"),true,'Synthetic service mock did not load');
  assert.equal(await evaluate("document.querySelector('.app').inert"),true,'Unsigned mock browser unexpectedly unlocked');
- await evaluate(\`(()=>{
+ await evaluate(`(()=>{
   const f=document.querySelector('#starfort-gate-form');
   f.querySelector('[name=email]').value='qa@starfort.test';
   f.querySelector('[name=password]').value='StarfortTest!528468';
   f.requestSubmit(f.querySelector('[value=login]'));
- })()\`);
+ })()`);
  let accountUnlocked=false;
  for(let i=0;i<100;i++){
   if(await evaluate("!document.body.classList.contains('account-locked')&&!document.querySelector('.app').inert")){accountUnlocked=true;break;}
@@ -142,12 +142,12 @@ try{
  await evaluate("sessionStorage.clear()");
  await cdp('Page.navigate',{url:origin});
  await ready();
- await evaluate(\`(()=>{
+ await evaluate(`(()=>{
   const f=document.querySelector('#starfort-gate-form');
   f.querySelector('[name=email]').value='qa@starfort.test';
   f.querySelector('[name=password]').value='StarfortTest!528468';
   f.requestSubmit(f.querySelector('[value=signup]'));
- })()\`);
+ })()`);
  let signupPending=false;
  for(let i=0;i<100;i++){
   signupPending=await evaluate("!document.querySelector('[data-gate-resend]').hidden");
