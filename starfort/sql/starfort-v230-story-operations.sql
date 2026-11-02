@@ -394,15 +394,15 @@ begin
   battle:=jsonb_set(battle,'{lastTurnAt}',to_jsonb(ms));
   battle:=jsonb_set(battle,'{lastAction}',to_jsonb(case when n=1 then 'Dalga '||(battle->>'wave')||' başladı' else ability end));
   -- Repeatable four-turn enemy behavior remains server-authoritative across reloads.
-  battle:=jsonb_set(battle,'{enemyIntent}',to_jsonb(case when n=1 then 'strike' else case turns%4
-    when 1 then 'crush' when 2 then 'shield' when 3 then 'drain' else 'strike' end end));
-  if ehp=0 or php=0 or turns>=case when battle->>'mode'='story' and coalesce((battle->>'waves')::integer,1)>1 then 36 else 14 end then
+  battle:=jsonb_set(battle,'{enemyIntent}',to_jsonb(case when n=1 then 'strike' else (case turns%4
+    when 1 then 'crush' when 2 then 'shield' when 3 then 'drain' else 'strike' end) end));
+  if ehp=0 or php=0 or turns >= (case when battle->>'mode'='story' and coalesce((battle->>'waves')::integer,1)>1 then 36 else 14 end) then
    stage:=(battle->>'stage')::integer;
    mode:=battle->>'mode';
    tier:=(battle->>'tier')::integer;
    floor_no:=(battle->>'floor')::integer;
    if ehp=0 then
-    stars_won:=case when php>=((battle->>'playerMaxHp')::integer*.7) and turns<=case when mode='story' and coalesce((battle->>'waves')::integer,1)>1 then 18 else 5 end then 3
+    stars_won:=case when php>=((battle->>'playerMaxHp')::integer*.7) and turns <= (case when mode='story' and coalesce((battle->>'waves')::integer,1)>1 then 18 else 5 end) then 3
       when php>=((battle->>'playerMaxHp')::integer*.3) then 2 else 1 end;
     reward:=case stage
       when 1 then '{"gold":120,"wood":60,"stone":35,"aether":12}'::jsonb
