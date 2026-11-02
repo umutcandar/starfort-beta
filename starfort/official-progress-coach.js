@@ -3,6 +3,7 @@
 import {STAGES,teamPower} from './rules.js';
 import {SECOND_ACT} from './second-act.js';
 import {officialServerTeamPower} from './official-server-team-power.js';
+import {chronicleState} from './commander-chronicle.js';
 export const OFFICIAL_STAGE_THRESHOLDS=Object.freeze([250,310,380,450,540,650,780,920]);
 export function isoWeek(now=Date.now()){
  const d=new Date(now);if(!Number.isFinite(d.getTime()))return null;
@@ -60,6 +61,15 @@ export function officialNextGoal(view,account,now=Date.now()){
  const veteran=Object.values(account.veteranMedals||{}).reduce((sum,n)=>sum+n,0);
  if(veteran<24)return {id:'veteran',title:'Usta seferlerini tamamla',detail:`Ustalık mührün ${veteran}/24. Bütün sekiz bölgenin üç zorluk kademesini aş.`,action:'expedition',label:'Usta seferlerini aç'};
  if(account.riftWeek!==isoWeek(now))return {id:'rift',title:'Haftalık Yıldız Yarığı seni bekliyor',detail:'Bu haftanın tek resmî yarık mührünü kazan.',action:'expedition',label:'Haftalık yarığı aç'};
+ const chronicle=chronicleState(account);
+ if(chronicle.next){
+  if(chronicle.eligible)return {id:'chronicle-claim',title:'Komutan Kroniği · '+chronicle.next.name,
+   detail:chronicle.next.wins+' doğrulanmış zaferle yeni rütbe kazandın. '+chronicle.next.gold+' altın ve '+chronicle.next.aether+' yıldız özü sandığını aç.',
+   action:'expedition',label:'Rütbe sandığını aç'};
+  return {id:'chronicle-train',title:'Kronik rütbesi · '+chronicle.next.name,
+   detail:'Yeni rütbeye '+chronicle.remaining+' zafer kaldı. Tamamlanan seferleri yeniden oynayarak kalıcı rütbeleri yükselt.',
+   action:'expedition',label:'Zafer yolunu aç'};
+ }
  if(view?.construction)return {id:'build',title:'Köy ustası çalışıyor',detail:'İnşaatının durumunu ve tamamlandığında kazandığın bina bonusunu kontrol et.',action:'keep',label:'Köye git'};
  return {id:'long-game',title:'Kuzeyin koruyucusu',detail:'Ekipmanlarını +5 ustalığa taşı, köyünü seviye 20’ye geliştir ve haftalık dünya patronuna katkı yap.',action:'armory',label:'Ekipmanı güçlendir'};
 }
