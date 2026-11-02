@@ -94,5 +94,5 @@ test('production wires the exact WebGL renderer already used by arena and team m
  assert.match(app,/official3D\.pause\(\)/);
  assert.match(app,/official3D\.destroy\(\)/);
  assert.match(index,/official-3d-v228\.css/);
- assert.match(index,/v2\.28\.0/);
+ assert.match(index,/v2\.29\.0/);
 });
