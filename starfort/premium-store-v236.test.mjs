@@ -19,7 +19,7 @@ test('premium snapshot refuses forged balances, unknown cosmetics and unsigned r
  const bad=[
   {source:'browser'},{paymentsEnabled:true},{crystals:-1},{crystals:1.5},{crystals:1e15},
   {revision:0},{vipUntil:'tomorrow'},{owned:['__proto__']},{owned:['castle-aurora','castle-aurora']},
-  {equipped:{banner:'banner-royal'}},{equipped:{__proto__:'x'}},
+  {equipped:{banner:'banner-royal'}},{equipped:JSON.parse('{"__proto__":"x"}')},
   {season:{...today,wins:-1}},{season:{...today,freeClaims:['2','2']}},
   {season:{...today,month:'future'}},{season:{...today,premium:true}},
   {season:{...today,thresholds:[0,0,0,0]}}
@@ -88,7 +88,7 @@ test('SQL grants no anonymous spending or user-paid fulfillment; no payment prov
  assert.match(sql,/revoke all on public\.starfort_premium_events from public,anon,authenticated/);
  assert.match(sql,/revoke all on function public\.sfb_premium_fulfill\(uuid,text,text,text\) from public,anon,authenticated/);
  assert.match(sql,/grant execute on function public\.sfb_premium_fulfill\(uuid,text,text,text\) to service_role/);
- assert.match(sql,/paymentsEnabled','false'/);
+ assert.match(sql,/paymentsEnabled',false/);
  assert.match(sql,/if w\.crystals<price then raise exception/);
  assert.match(sql,/if progress<threshold then raise exception/);
  assert.match(sql,/select response into prev from public\.starfort_premium_requests/);
