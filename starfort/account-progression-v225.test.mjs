@@ -135,6 +135,6 @@ test('app routes all account-mode spenders and reward-bearing battles into the u
  assert.match(app,/button\.dataset\.accountContract\?'contract'/);
  assert.match(app,/button\.dataset\.accountTitle\?'title'/);
  assert.match(app,/accountExpeditionMarkup\(villageView\(\),accountProgressSnapshot/);
- assert.match(html,/v2\.33\.0/);
+ assert.match(html,/v2\.34\.0/);
  assert.match(css,/@media\(max-width:510px\)/);
 });
