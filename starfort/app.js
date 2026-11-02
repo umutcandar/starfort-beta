@@ -27,6 +27,7 @@ import {buildingWorkshopMarkup} from './building-workshop.js';
 import {villageAuthorityRequest,villageServerView,validateVillageSnapshot} from './village-authority.js';
 import {accountProgressRequest,accountServerView} from './account-progression.js';
 import {accountExpeditionMarkup} from './account-expedition.js';
+import {calendarRequest,rewardCalendarMarkup} from './reward-calendar.js';
 import {trustedConstructionNow} from './construction-clock.js';
 import {labyrinthMarkup} from './labyrinth-view.js';
 import {premiumCatalogMarkup} from './premium-catalog.js';
@@ -145,12 +146,34 @@ function notify(message) {
 function result(action, success) { if (!action.ok) { notify(action.error); return false; } if (success) notify(success); persist(); render(); return true; }
 let villageSnapshot=null,villageOwner=null,villageBusy=false,villageGeneration=0;
 let accountProgressSnapshot=null,accountProgressOwner=null,selectedRealm=null;
+let dailySnapshot=null,dailyOwner=null,dailyBusy=false;
 const villageSignedIn=()=>!!accountSession();
 function villageView(){
  if(!villageSignedIn())return state;
  const uid=accountSession()?.user?.id;
  const village=villageServerView(state,villageOwner===uid?villageSnapshot:null);
  return accountServerView(village,accountProgressOwner===uid?accountProgressSnapshot:null);
+}
+function renderDailyDialog(){
+ const dialog=$('#reward-dialog');
+ if(!dialog?.open)return;
+ const online=villageSignedIn(),owner=accountSession()?.user?.id;
+ const calendar=online?(dailyOwner===owner?dailySnapshot:null):R.dailyRewardState(state,Date.now());
+ $('#reward-content').innerHTML=rewardCalendarMarkup(calendar,{online,loading:online&&!calendar});
+ const claim=dialog.querySelector('[data-reward-claim]');
+ if(claim)claim.disabled=claim.disabled||dailyBusy||villageBusy;
+}
+async function claimServerDaily(){
+ if(dailyBusy||villageBusy)return;
+ dailyBusy=true;renderDailyDialog();
+ try{
+  const owner=accountSession()?.user?.id,result=await calendarRequest('claim');
+  if(owner!==accountSession()?.user?.id||result.identity!==owner)return;
+  dailySnapshot=result.calendar;dailyOwner=owner;
+  notify('✦ '+result.claim.day+'. gün sandığı alındı!'+(result.claim.item?' Özel eşya envanterine eklendi.':''));
+  await refreshVillage({preserve:true});
+ }catch(error){notify('Ödül: '+error.message);}
+ finally{dailyBusy=false;renderDailyDialog();renderPicker();}
 }
 function acceptVillage(response){
  if(!villageSignedIn()||response.identity!==accountSession().user.id)return false;
@@ -168,13 +191,20 @@ function acceptAccountProgress(response){
 }
 async function refreshVillage({preserve=false}={}){
  const uid=accountSession()?.user?.id;
- if(!uid){villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;render();return false;}
+ if(!uid){villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();return false;}
  const gen=++villageGeneration;
- if(!preserve||villageOwner!==uid){villageOwner=uid;villageSnapshot=null;accountProgressOwner=uid;accountProgressSnapshot=null;render();}
+ if(!preserve||villageOwner!==uid){villageOwner=uid;villageSnapshot=null;accountProgressOwner=uid;accountProgressSnapshot=null;dailyOwner=uid;dailySnapshot=null;render();}
  try{
   const response=await accountProgressRequest('get');
   if(gen!==villageGeneration||accountSession()?.user?.id!==uid)return false;
-  return acceptAccountProgress(response);
+  const ok=acceptAccountProgress(response);
+  try{
+   const next=await calendarRequest('get');
+   if(gen===villageGeneration&&accountSession()?.user?.id===uid&&next.identity===uid){
+    dailyOwner=uid;dailySnapshot=next.calendar;renderPicker();renderDailyDialog();
+   }
+  }catch(error){if(gen===villageGeneration&&$('#reward-dialog')?.open)notify('Ödül takvimi: '+error.message);}
+  return ok;
  }catch(error){if(gen===villageGeneration){notify('Hesap ilerlemesi: '+error.message);render();}return false;}
 }
 async function accountProgressAction(action,target=null,aux=null){
@@ -250,8 +280,10 @@ function renderPicker() {
     label.setAttribute('aria-label', `${building.name}, seviye ${v.buildings[building.id]}, geliştirmeyi aç`);
   }
   renderCityProduction();
-  const daily=R.dailyRewardState(villageView(),constructionUiNow());$('#daily-status').textContent=villageSignedIn()&&!villageSnapshot?'Sunucuya bağlanılıyor':daily.available?'Sandığı aç':'Yarın tekrar gel';
-  $('#daily-reward').classList.toggle('ready',daily.available&&(!villageSignedIn()||!!villageSnapshot));$('#daily-reward').disabled=!daily.available||state.battle?.status==='active'||(villageSignedIn()&&!villageSnapshot);
+  const online=villageSignedIn(),cal=online?(dailyOwner===accountSession()?.user?.id?dailySnapshot:null):R.dailyRewardState(state,Date.now());
+  $('#daily-status').textContent=!cal?'28 Günlük Takvim':cal.available?cal.nextDay+'. Gün · Sandık Hazır':cal.displayDay+'. Gün · Alındı';
+  $('#daily-reward').classList.toggle('ready',!!cal?.available);
+  $('#daily-reward').disabled=false;
 }
 function renderCityProduction() {
   const gain = R.production(villageView(),constructionUiNow());
@@ -587,7 +619,7 @@ async function accountAction(action){
      notify('Onay e-postası yeniden istendi. Gelen kutunu kontrol et.');return;
    }
    if(action==='logout'){
-     accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;render();
+     accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();
      notify('E-posta hesabından çıkış yapıldı. Yerel oyun korundu.');return;
    }
    if(action==='sync'){await accountSync.refresh();return;}
@@ -821,6 +853,7 @@ function render() {
   renderResources(); renderNav(); renderPicker(); renderInspector(); renderQuest(); renderWorkspace();
   scene?.update(villageView());
   if ($('#building-dialog').open) renderBuildingDialog();
+  if ($('#reward-dialog').open)renderDailyDialog();
 }
 function openBattle(stageId) {
   if (stageId !== undefined) {
@@ -921,6 +954,13 @@ function dispatch(action) {
     if(button.dataset.welcome==='account'){activeView='settings';render();}
     return;
   }
+  if(button.hasAttribute('data-reward-close')){$('#reward-dialog').close();return;}
+  if(button.hasAttribute('data-reward-retry')){if(villageSignedIn())void refreshVillage({preserve:true});else renderDailyDialog();return;}
+  if(button.hasAttribute('data-reward-claim')){
+   if(villageSignedIn())void claimServerDaily();
+   else{const granted=R.claimDailyReward(state,Date.now());if(result(granted,granted.ok?'✦ '+granted.day+'. gün sandığını açtın!':''))renderDailyDialog();}
+   return;
+  }
   if(button.hasAttribute('data-village-refresh')){void refreshVillage();return;}
   if(button.hasAttribute('data-village-match-claim')){void claimServerMatchRewards();return;}
   if(button.dataset.realmSelect){
@@ -965,7 +1005,7 @@ function dispatch(action) {
   if(button.hasAttribute('data-training-open')){activeView='training';render();return;}
   if(button.hasAttribute('data-arena-open')){activeView='arena';render();return;}
   if(button.hasAttribute('data-team-open')){activeView='team';render();return;}
-  if(button.hasAttribute('data-daily-reward')){if(villageSignedIn())void serverVillageAction('daily');else result(R.claimDailyReward(state),'Yerel günlük ödül alındı. Sunucu köyüne aktarılmaz.');return;}
+  if(button.hasAttribute('data-daily-reward')){$('#reward-dialog').showModal();renderDailyDialog();return;}
   if(button.dataset.cosmeticInterest){const vote=R.toggleWishlist(state,button.dataset.cosmeticInterest);result(vote,vote.selected?'Tasarım istek listene eklendi.':'Tasarım istek listenden çıkarıldı.');return;}
   if(button.dataset.seasonTitle){if(villageSignedIn())return notify('Sunucu unvanları Seferler bölümündeki doğrulanmış görevlerden alınır.');result(R.claimSeasonTitle(state,button.dataset.seasonTitle),'Yeni sezon unvanı koleksiyonuna eklendi.');return;}
   if(button.dataset.claimContract){if(villageSignedIn())return notify('Sunucu görev ödülleri Seferler bölümünden alınır.');result(R.claimCampaignContract(state,button.dataset.claimContract),'Görev ödülü alındı; kozmetik unvan ilerlemen güncellendi.');return;}
@@ -1083,6 +1123,7 @@ setInterval(()=>{
 
 if(state.construction)void verifyConstructionTime().then(()=>{renderConstructionBanner();if($('#building-dialog').open)renderBuildingDialog()}).catch(()=>{});
 
+$('#reward-dialog').addEventListener('click',event=>{if(event.target===$('#reward-dialog'))$('#reward-dialog').close();});
 $('#building-dialog').addEventListener('pointerdown', event => { buildingBackdropDown = event.target === $('#building-dialog'); });
 $('#building-dialog').addEventListener('click', event => { if (buildingBackdropDown && event.target === $('#building-dialog')) $('#building-dialog').close(); buildingBackdropDown = false; });
 $('#battle-dialog').addEventListener('click', event => { if (event.target === $('#battle-dialog')) closeBattle(); });
