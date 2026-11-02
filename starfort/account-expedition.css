@@ -84,3 +84,9 @@
 .second-act-steps small{font-size:10px;color:#bac4d0;line-height:1.4}
 .second-act-card>button{align-self:flex-start;margin-top:auto}
 @media(max-width:800px){.second-act-grid{grid-template-columns:1fr}.second-act{padding:12px}}
+
+/* v2.32 server telegraphed Act II boss phase HUD */
+.second-act-boss-phase{display:flex;flex-direction:column;gap:5px;border:1px solid #af7460;border-left:4px solid #e2a876;border-radius:9px;padding:11px 13px;background:linear-gradient(100deg,rgba(100,47,54,.39),rgba(40,42,68,.4))}
+.second-act-boss-phase .eyebrow{color:#ffc89a;font-size:10px}
+.second-act-boss-phase strong{font:700 17px Georgia,serif;color:#ffe0b0}
+.second-act-boss-phase small{font:12px/1.5 system-ui,sans-serif;color:#f0e5de}
