@@ -143,5 +143,5 @@ test('server enhancements, map selection and community boss are wired to real ac
  assert.match(app,/accountProgressAction\('mission_start','boss'/);
  assert.match(armory,/data-account-enhance=/);
  assert.match(html,/world-combat-v226\.css/);
- assert.match(html,/v2\.33\.0/);
+ assert.match(html,/v2\.34\.0/);
 });
