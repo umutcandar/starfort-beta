@@ -34,3 +34,17 @@ test('wave boundary damage is nonnegative and server-owned battle identity persi
  assert.equal(officialBattleDelta(start,next).waveAdvanced,true);
  assert.equal(officialBattleRoom(['aldren','lyra','rovan'],start).id,officialBattleRoom(['aldren','lyra','rovan'],next).id);
 });
+
+test('account accepts authoritative 36-turn wave saves but rejects impossible progress',async()=>{
+ const {validateAccountSnapshot}=await import('./account-progression.js');
+ const {BUILDINGS}=await import('./rules.js');
+ const base={ok:true,source:'server',heroes:{aldren:1,lyra:1,rovan:1},inventory:{iron_sword:1},loadouts:{},team:['aldren','lyra','rovan'],cleared:[],campaignStars:{},mazeFloor:0,
+  counters:{win:0,hero:0,forge:0,maze:0,rift:0,veteran:0},contractClaims:{},titles:[],itemUpgrades:{},bossWeek:null,worldBoss:null};
+ const mission={mode:'story',stage:1,tier:0,startedAt:1762100000000,lastTurnAt:1762100005000,turn:25,wave:3,waves:3,waveTurn:10,
+  enemyIntent:'shield',enemyHp:100,enemyMaxHp:200,playerHp:160,playerMaxHp:300,cooldowns:{lyra:28}};
+ assert.equal(validateAccountSnapshot({...base,mission}).mission.wave,3);
+ assert.throws(()=>validateAccountSnapshot({...base,mission:{...mission,wave:4}}));
+ assert.throws(()=>validateAccountSnapshot({...base,mission:{...mission,waves:3,turn:37}}));
+ assert.throws(()=>validateAccountSnapshot({...base,mission:{...mission,mode:'veteran'}}));
+ assert.throws(()=>validateAccountSnapshot({...base,mission:{...mission,waveTurn:26}}));
+});

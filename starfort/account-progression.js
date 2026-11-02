@@ -38,9 +38,15 @@ export function validateAccountSnapshot(data){
  if(data.bossWeek!==null&&data.bossWeek!==undefined&&(typeof data.bossWeek!=='string'||data.bossWeek.length>12))throw Error('Patron haftası geçersiz.');
 
  const m=data.mission;
- if(m!==null&&(!object(m)|| (m.enemyIntent!==undefined&&!['strike','crush','shield','drain'].includes(m.enemyIntent))||!['story','veteran','rift','maze','boss'].includes(m.mode)||!safeNumber(m.stage,1,8)||
- !safeNumber(m.turn,0,14)||!safeNumber(m.enemyHp,0,100000)||!safeNumber(m.playerHp,0,100000)||
- !safeNumber(m.lastTurnAt,1e12,2e13)|| (m.cooldowns!==undefined&&(!object(m.cooldowns)||!Object.entries(m.cooldowns).every(([id,next])=>HERO_IDS.has(id)&&safeNumber(next,1,20))))))throw Error('Sunucu sefer kaydı bozuk.');
+ // Three-wave stories have a longer server turn budget. Preserve legacy single-wave saves.
+ const multiWave=object(m)&&m.mode==='story'&&m.waves===3;
+ const waveValid=!object(m)||(m.waves===undefined&&m.wave===undefined&&m.waveTurn===undefined)||
+  (safeNumber(m.waves,1,3)&& (m.waves===1||m.mode==='story'&&m.waves===3)&&
+   safeNumber(m.wave,1,m.waves)&&safeNumber(m.waveTurn,0,multiWave?36:14)&&
+   m.waveTurn<=m.turn);
+ if(m!==null&&(!object(m)||!waveValid|| (m.enemyIntent!==undefined&&!['strike','crush','shield','drain'].includes(m.enemyIntent))||!['story','veteran','rift','maze','boss'].includes(m.mode)||!safeNumber(m.stage,1,8)||
+ !safeNumber(m.turn,0,multiWave?36:14)||!safeNumber(m.enemyHp,0,100000)||!safeNumber(m.playerHp,0,100000)||
+ !safeNumber(m.lastTurnAt,1e12,2e13)|| (m.cooldowns!==undefined&&(!object(m.cooldowns)||!Object.entries(m.cooldowns).every(([id,next])=>HERO_IDS.has(id)&&safeNumber(next,1,multiWave?40:20))))))throw Error('Sunucu sefer kaydı bozuk.');
  return {heroes:{...heroes},inventory:{...inventory},loadouts:structuredClone(loadouts),team:[...team],
   cleared:[...cleared],campaignStars:{...stars},veteranMedals:{...(data.veteranMedals||{})},
   mazeFloor:data.mazeFloor,riftWeek:data.riftWeek,mission:m?{...m}:null,lastReport:data.lastReport?{...data.lastReport}:null,

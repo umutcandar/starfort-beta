@@ -30,7 +30,7 @@ export function specialEnemyAttack(battle,enemy,count) {
   if(battle.stageId===2 && enemy.role==='caster' && count%3===0)
     return {type:'grave',label:'Kırık Çan ayini',detail:'Rahip düşmanını iyileştirmeden önce büyüsünü kes.',danger:true,multiplier:.5};
   if(battle.stageId===4 && enemy.role==='boss'){
-    const ratio=enemy.hp/Math.max(1,enemy.maxHp);
+    const ratio=Number.isFinite(enemy.hp)&&Number.isFinite(enemy.maxHp)&&enemy.maxHp>0?enemy.hp/enemy.maxHp:1;
     if(ratio<=.35 && count%2===0)
       return {type:'shatter',label:'Celladın son yemini · III',detail:'Son safha: siperleri kıran ağır darbe. Hedefi sersemlet.',danger:true,multiplier:1.8};
     if(ratio<=.7 && count%3===0)
