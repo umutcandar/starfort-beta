@@ -134,15 +134,17 @@ function syncAccountGate(){
   if(app){app.inert=locked;app.setAttribute('aria-hidden',String(locked));}
   const gate=$('#account-gate');
   if(gate)gate.hidden=!locked;
-  const form=$('#starfort-gate-form'),help=$('.account-gate-help'),server=$('.account-gate-server');
+  const form=$('#starfort-gate-form'),help=$('.account-gate-help'),server=$('.account-gate-server'),recovery=$('.account-gate-recovery');
   if(form)form.hidden=signed;
   if(help)help.hidden=signed;
-  if(server)server.hidden=!signed;
+  if(server)server.hidden=!signed||accountRecovering;
+  if(recovery)recovery.hidden=!signed||!accountRecovering;
   const resend=$('[data-gate-resend]');
   if(resend)resend.hidden=!signupPending;
   if(locked){
     const status=$('#account-gate-status');
-    if(signed&&status&&!status.dataset.error)status.textContent='Sunucu köyü, kahramanlar ve kaynaklar doğrulanıyor. Bağlantı kesildiyse yeniden dene.';
+    if(signed&&status&&accountRecovering)status.textContent='E-posta kurtarma bağlantısı doğrulandı. Aşağıya yeni şifreni yaz.';
+    else if(signed&&status&&!status.dataset.error)status.textContent='Sunucu köyü, kahramanlar ve kaynaklar doğrulanıyor. Bağlantı kesildiyse yeniden dene.';
     combatRunner.pause();
     official3D.sync(null);
     for(const selector of ['#reward-dialog','#building-dialog','#battle-dialog']){
@@ -910,6 +912,7 @@ async function accountAutoEquip(heroId){
 function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
   if(button.hasAttribute('data-gate-reset')){void accountAction('reset-request');return;}
+  if(button.hasAttribute('data-gate-password-update')){void accountAction('password-update');return;}
   if(button.hasAttribute('data-gate-resend')){void accountAction('resend-confirmation');return;}
   if(button.hasAttribute('data-gate-refresh')){void refreshVillage({preserve:false});return;}
   if(button.hasAttribute('data-gate-logout')){void accountAction('logout');return;}
