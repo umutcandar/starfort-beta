@@ -71,3 +71,41 @@
 .official-hero-ability small{font-size:10px;color:#c0d5d8;line-height:1.3}
 .official-hero-ability:disabled{opacity:.46;cursor:not-allowed}
 @media(max-width:550px){.official-hero-ability-strip{gap:5px}.official-hero-ability{flex-direction:column;text-align:center;padding:6px 3px}.official-hero-ability img{width:38px;height:43px}.official-hero-ability b{font-size:10px}.official-hero-ability small{font-size:8px}}
+
+/* v2.34 cinematic Act II encounters. CSS-only visual feedback; all combat is server-owned. */
+.act-two-scene{--act2-flare:#fca96d;--act2-haze:rgba(177,78,61,.22);--act2-beam:rgba(253,195,133,.35)}
+.act-two-scene.theme-ember{--act2-flare:#ffa866;--act2-haze:#bd3d2850;--act2-beam:#ffc16c57}
+.act-two-scene.theme-glass{--act2-flare:#8bdef1;--act2-haze:#4290b951;--act2-beam:#a5f5fd61}
+.act-two-scene.theme-meteor{--act2-flare:#d9b183;--act2-haze:#90736758;--act2-beam:#fff0bd63}
+.act-two-scene.theme-thorn{--act2-flare:#c88faa;--act2-haze:#77466f5c;--act2-beam:#fa9bba54}
+.act-two-scene.theme-ash{--act2-flare:#ffb77d;--act2-haze:#dc553b59;--act2-beam:#fec49a66}
+.act-two-scene.theme-night{--act2-flare:#a6b7f5;--act2-haze:#6c4eae65;--act2-beam:#b3a2fa48}
+.act-two-scene.theme-storm{--act2-flare:#bee8ff;--act2-haze:#466dba63;--act2-beam:#e2f5ff72}
+.act-two-scene.theme-void{--act2-flare:#dbb2ff;--act2-haze:#6d4db866;--act2-beam:#dcbdff5c}
+.act-two-scene:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 78% 40%,var(--act2-haze),transparent 64%),linear-gradient(180deg,#0c10282b,#03101861);z-index:1}
+.act-two-scene .official-arena-light{background:radial-gradient(ellipse,var(--act2-beam),transparent 70%)}
+.act2-environment{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2;opacity:.72}
+.act2-environment i{position:absolute;display:block;width:5px;height:5px;border-radius:50%;background:var(--act2-flare);filter:blur(.5px);box-shadow:0 0 11px 3px var(--act2-flare);animation:act2-particle 4.1s linear infinite}
+.act2-environment i:nth-child(1){left:19%;top:94%;animation-delay:-.2s}
+.act2-environment i:nth-child(2){left:40%;top:91%;animation-delay:-1.6s;animation-duration:5.7s}
+.act2-environment i:nth-child(3){left:67%;top:88%;animation-delay:-2.3s;animation-duration:4.8s}
+.act2-environment i:nth-child(4){left:83%;top:91%;animation-delay:-3.8s;animation-duration:6s}
+.act-two-scene.theme-glass .act2-environment i,.act-two-scene.theme-meteor .act2-environment i{border-radius:2px;transform:rotate(45deg)}
+.act-two-scene.theme-storm .act2-environment i{width:2px;height:19px;border-radius:1px;filter:none}
+.act-two-scene.theme-night .act2-environment i,.act-two-scene.theme-void .act2-environment i{animation-direction:reverse}
+.act2-ability-aura{position:absolute;right:10%;top:21%;width:27%;height:61%;z-index:2;pointer-events:none;opacity:.22;transform:scale(.83)}
+.act2-ability-aura:before,.act2-ability-aura:after{content:"";position:absolute;inset:0;border:2px solid var(--act2-flare);border-radius:50%;box-shadow:0 0 22px 2px var(--act2-beam),inset 0 0 28px var(--act2-haze);transform:rotate(-24deg) scaleX(.53)}
+.act2-ability-aura:after{transform:rotate(29deg) scaleX(.6);opacity:.65}
+.act2-ability-aura span{position:absolute;top:22%;left:40%;font-size:28px;filter:drop-shadow(0 0 10px var(--act2-flare))}
+.act2-ability-aura.active{opacity:.95;animation:act2-aura-pulse 1.55s ease-in-out infinite}
+.act2-ability-banner{position:absolute;z-index:6;top:71px;left:50%;transform:translateX(-50%);max-width:90%;color:#fff3d3;font:800 10px/1.3 system-ui,sans-serif;letter-spacing:.05em;text-align:center;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;border:1px solid var(--act2-flare);border-radius:25px;background:#1b2239df;padding:6px 12px;box-shadow:0 0 18px var(--act2-haze);animation:act2-banner 2.4s ease-in-out infinite}
+.act-two-scene.boss-ability-live .official-side.hostiles .fighter-1 .battle-sprite{filter:drop-shadow(0 0 10px var(--act2-flare));animation-duration:1.9s}
+.act-two-scene.ability-chain-lightning .act2-ability-aura:before{border-style:dashed}
+.act-two-scene.ability-mirror-reversal .act2-ability-aura:before,.act-two-scene.ability-night-veil .act2-ability-aura:before{border-width:4px;filter:blur(1px)}
+.act-two-scene.ability-blood-thorns .act2-ability-aura:before{border-radius:25%;transform:rotate(48deg) scale(.76)}
+.act-two-scene.ability-void-devour .act2-ability-aura{filter:hue-rotate(28deg)}
+@keyframes act2-particle{0%{opacity:0;translate:0 0;scale:.4}18%{opacity:1}72%{opacity:.75}100%{opacity:0;translate:-22px -230px;scale:1.55}}
+@keyframes act2-aura-pulse{0%,100%{opacity:.55;scale:.91}50%{opacity:1;scale:1.13}}
+@keyframes act2-banner{0%,100%{box-shadow:0 0 7px var(--act2-haze)}50%{box-shadow:0 0 23px var(--act2-flare)}}
+@media(max-width:550px){.act2-ability-aura{top:25%;right:6%;width:38%;height:51%}.act2-ability-aura span{font-size:19px}.act2-ability-banner{font-size:8px;top:64px;padding:5px 7px}}
+@media(prefers-reduced-motion:reduce){.act2-environment i,.act2-ability-aura.active,.act2-ability-banner{animation:none!important}.act2-environment{opacity:.3}}
