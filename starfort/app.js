@@ -143,9 +143,9 @@ window.addEventListener('storage',event=>{
 });
 
 function notify(message) {
-  if(!villageSignedIn()){
+  if(document.body.classList.contains('account-locked')){
     const gateStatus=$('#account-gate-status');
-    if(gateStatus)gateStatus.textContent=message;
+    if(gateStatus){gateStatus.textContent=message;gateStatus.dataset.error='1';}
   }
   const el = $('#toast'); el.textContent = message; el.classList.add('show'); clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
@@ -157,16 +157,25 @@ const official3D=createOfficialBattleDirector({store:localStorage,motionPreferen
 let lastCombatDelta=null;
 let dailySnapshot=null,dailyOwner=null,dailyBusy=false;
 const villageSignedIn=()=>!!accountSession();
+// Session token alone is not proof that the player's authoritative village has loaded.
+const accountReady=()=>villageSignedIn()&&villageOwner===accountSession().user.id&&
+  accountProgressOwner===accountSession().user.id&&!!villageSnapshot&&!!accountProgressSnapshot;
 function syncAccountGate(){
-  const locked=!villageSignedIn();
+  const signed=villageSignedIn(),locked=!accountReady();
   document.body.classList.toggle('account-locked',locked);
   const app=document.querySelector('.app');
   if(app){app.inert=locked;app.setAttribute('aria-hidden',String(locked));}
   const gate=$('#account-gate');
   if(gate)gate.hidden=!locked;
+  const form=$('#starfort-gate-form'),help=$('.account-gate-help'),server=$('.account-gate-server');
+  if(form)form.hidden=signed;
+  if(help)help.hidden=signed;
+  if(server)server.hidden=!signed;
   const resend=$('[data-gate-resend]');
   if(resend)resend.hidden=!signupPending;
   if(locked){
+    const status=$('#account-gate-status');
+    if(signed&&status&&!status.dataset.error)status.textContent='Sunucu köyü, kahramanlar ve kaynaklar doğrulanıyor. Bağlantı kesildiyse yeniden dene.';
     combatRunner.pause();
     official3D.sync(null);
     for(const selector of ['#reward-dialog','#building-dialog','#battle-dialog']){
@@ -236,7 +245,7 @@ async function refreshVillage({preserve=false}={}){
  }catch(error){if(gen===villageGeneration){notify('Hesap ilerlemesi: '+error.message);render();}return false;}
 }
 async function accountProgressAction(action,target=null,aux=null){
- if(villageBusy||!villageSignedIn())return;
+ if(villageBusy||!accountReady())return;
  villageBusy=true;
  try{
   const owner=accountSession().user.id;
@@ -253,7 +262,7 @@ async function accountProgressAction(action,target=null,aux=null){
 }
 async function serverVillageAction(action,building=null,roomId=null){
  if(villageBusy)return;
- if(!villageSignedIn())return;
+ if(!accountReady())return;
  villageBusy=true;
  try{
   const uid=accountSession().user.id;
@@ -372,7 +381,7 @@ function renderBuildingDialog() {
   }
 }
 function openBuilding(id) {
-  if(!villageSignedIn())return syncAccountGate();
+  if(!accountReady())return syncAccountGate();
   if (!R.BUILDINGS.some(building => building.id === id)) return;
   $('#building-picker').hidden=true; $('[data-city-buildings]').setAttribute('aria-expanded','false');
   selectedBuilding = id; activeView = 'keep'; render(); scene?.focus(id);
@@ -732,6 +741,7 @@ async function cloudSaveAction(action){
   finally{cloudSaveBusy=false;if(activeView==='settings')renderSettings();}
 }
 function renderWorkspace() {
+  activeView=normalizeOnlineView(activeView);
   if(activeView!=='campaign'&&!(villageSignedIn()&&activeView==='labyrinth'))official3D.sync(null);
   if(trainingCleanup){trainingCleanup();trainingCleanup=null;}
   const open = activeView !== 'keep' && activeView !== 'expedition'; workspaceEl.hidden = !open; inspectorEl.hidden = open; document.querySelector('.app').classList.toggle('panel-open', open); workspaceEl.dataset.view = activeView;
@@ -853,7 +863,7 @@ function castHeroSkill(heroId) {
 
 function render() {
   syncAccountGate();
-  if(!villageSignedIn())return;
+  if(!accountReady())return;
   gameAudio.setScene($('#battle-dialog').open||(villageSignedIn()&&accountProgressSnapshot?.mission&&activeView==='campaign')?'combat':'village');
   renderResources(); renderNav(); renderPicker(); renderInspector(); renderQuest(); renderWorkspace();
   scene?.update(villageView());
@@ -861,7 +871,7 @@ function render() {
   if ($('#reward-dialog').open)renderDailyDialog();
 }
 function openBattle(stageId){
-  if(!villageSignedIn())return notify('Önce e-posta hesabına giriş yap.');
+  if(!accountReady())return syncAccountGate();
   activeView='campaign';render();
   if(stageId!==undefined)void accountProgressAction('mission_start',String(stageId));
 }
@@ -949,7 +959,9 @@ function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
   if(button.hasAttribute('data-gate-reset')){void accountAction('reset-request');return;}
   if(button.hasAttribute('data-gate-resend')){void accountAction('resend-confirmation');return;}
-  if(!villageSignedIn()){syncAccountGate();return notify('Oynamak için e-posta hesabına giriş yap.');}
+  if(button.hasAttribute('data-gate-refresh')){void refreshVillage({preserve:false});return;}
+  if(button.hasAttribute('data-gate-logout')){void accountAction('logout');return;}
+  if(!accountReady()){syncAccountGate();return notify('Sunucu hesabın doğrulanmadan oyun açılmaz.');}
   if(ACCOUNT_ONLY&&isLegacyOnlyAction(button))return notify('Misafir ve yerel deneme özellikleri kaldırıldı. Resmî seferleri kullan.');
 
   if(!villageSignedIn()&&saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.hasAttribute('data-finish-building')||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
