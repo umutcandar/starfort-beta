@@ -1,5 +1,6 @@
 import {STAGES,ITEMS,HEROES,teamPower} from './rules.js';
 import {secondActMarkup} from './second-act-view.js';
+import {chronicleMarkup} from './commander-chronicle.js';
 import {secondActMission} from './second-act.js';
 import {actTwoBossStatus} from './act-two-boss.js';
 import {STORY_OPERATIONS,operationStatus} from './story-operations.js';
@@ -58,6 +59,7 @@ export function accountExpeditionMarkup(game,account,now=Date.now(),selectedReal
 
   <section class="server-chapters"><h3>8 Bölge · 24 Hikâye Görevi</h3><p class="operation-guide">Her bölgede üç aşamalı operasyonu tamamla. Takımın canı ve yetenekleri dalgalar arasında korunur; sefer ödülü yalnızca son görevden sonra kazanılır.</p><div class="server-stage-grid">${rows}</div></section>
   ${secondActMarkup(game,account,mission)}
+  ${chronicleMarkup(account)}
   <section class="server-modes"><article><h3>✦ Usta Seferleri</h3><p>Eski bölümleri artan güçlükte yeniden tamamla; mühürler kalıcıdır.</p><div class="server-mode-actions">${STAGES.filter(x=>cleared.has(x.id)).map(x=>`<button class="secondary" data-account-veteran="${x.id}:${Math.min(3,(account.veteranMedals[x.id]||0)+1)}" ${mission?'disabled':''}>${esc(x.name)} · Kademe ${Math.min(3,(account.veteranMedals[x.id]||0)+1)}</button>`).join('')||'<small>İlk hikâye zaferinden sonra açılır.</small>'}</div></article>
   <article><h3>✧ 16 Kat Labirent</h3><p>Sunucu tarafından doğrulanmış kat savaşı. Tamamlanan katlar kaybolmaz.</p><button class="primary" data-account-maze ${mission||account.mazeFloor>=16||cleared.size<Math.ceil((account.mazeFloor+1)/2)?'disabled':''}>Kat ${Math.min(16,account.mazeFloor+1)} · Muhafızla savaş</button></article>
   <article><h3>☼ Haftalık Yıldız Yarığı</h3><p>Hikâye tamamlanınca her hafta tek resmî ödül.</p><button class="secondary" data-account-rift ${mission||cleared.size<8?'disabled':''}>Haftanın sınavı</button></article></section>
