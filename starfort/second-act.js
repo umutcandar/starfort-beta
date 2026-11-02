@@ -1,0 +1,17 @@
+/** Act II: eight new sequential regions and 24 named operations. The server owns rewards. */
+export const SECOND_ACT=Object.freeze([["Kızıl Ufuk","Kızıl Kıyı","Sönen krallığın ardında yükselen kızıl dalga.","Kızıl Gözcü","Kıyı Fenerleri","Işığı kapatan akıncıları durdur.","Kanlı Rıhtım","Denizden inen gölge birliğini geri püskürt.","Kızıl Sancak","Sancağın kaptanını yen, kıyı kapısını aç."],["Cam Çölü","Ayna Çölleri","Kırılan camın altında saklanan eski ordu.","Cam Kehanetçisi","Kayıp İzler","Çölde saklanan iz sürücüleri temizle.","Kum Fırtınası","Cam kumların savunma hattını aş.","Kehanet Aynası","Kehanetçinin can emen ayinini kes."],["Göktaşı Vadisi","Göktaşı Krateri","Yıldız taşlarının çağırdığı dev nöbetçiler.","Göktaşı Devi","Çatlayan Toprak","Kraterin dış savunmasını yar.","Taş Nöbet","Büyüyen taş muhafızlarını durdur.","Krater Kalbi","Göktaşı devini son darbesine kadar yen."],["Diken Tacı","İblis Çalılığı","Dikenlerin içine saklanan hüküm halkası.","Diken Kraliçesi","Siyah Kökler","Diken avcılarını ormandan temizle.","Kanlı Çelenk","Kraliçenin çevreleyen birliklerini dağıt.","Dikenin Tahtı","Kraliçenin kalkanını kır ve son savaşı kazan."],["Mavi Kül Dağı","Küllü Zirve","Alevi sönmeyen dağın içinde eski bir ocak.","Kül Muhafızı","Yanık Geçit","Dağ geçidinin ateş nöbetini yar.","Kor Ocağı","Kül büyücülerinin kor törenini durdur.","Külün Kalbi","Kadim muhafızın yakıcı hücumuna dayan."],["Sonsuz Gece","Gece Şehri","Gündüzün yüzyıllardır doğmadığı surlar.","Gece Başrahibi","Karanlık Sokak","Sokak avcılarını ve suikastçıları durdur.","Kayıp Mabed","Başrahibin koruduğu mabede ulaş.","Son Çan","Gece ayinini kes, şehrin çanını uyandır."],["Fırtına Sırtı","Yıldırım Geçidi","Bulutların üstünde son bir yeminli kule.","Fırtına Mareşali","Kırık Köprü","Fırtına altında ileri karakolu koru.","Gökgürültüsü","Mareşalin hücum birliklerini yen.","Fırtına Tacı","Yıldırım mareşalinin son savunmasını indir."],["Şafak Uçurumu","Yıldız Yarığı","İkinci perdenin sonunda ışık ile boşluk yeniden çarpışır.","Boşluk Varisi","Son Yol","Uçurumun son muhafızlarını dağıt.","Sessiz Yemin","Varisin gölge kalkanını sök.","Yeni Şafak","Boşluk Varisini yen ve yıldızın mirasını koru."]].map((r,i)=>Object.freeze({id:i+1,name:r[0],zone:r[1],lore:r[2],boss:r[3],recommendedPower:1000+(i+1)*150,operations:Object.freeze([0,1,2].map(j=>Object.freeze({id:(i+1)+'-'+(j+1),name:r[4+j*2],objective:r[5+j*2]})))})));
+export function secondActReadiness(account,power,stageId){
+ const entry=SECOND_ACT[stageId-1];
+ if(!entry)return {ok:false,reason:'Bilinmeyen ikinci perde bölgesi.'};
+ const cleared=Array.isArray(account?.act2Cleared)?account.act2Cleared:[];
+ if(!Array.isArray(account?.cleared)||account.cleared.length!==8)return {ok:false,reason:'Önce sekiz ana hikâye bölgesini tamamla.'};
+ if(stageId>cleared.length+1)return {ok:false,reason:'Önce ikinci perdenin önceki bölgesini bitir.'};
+ if(power<entry.recommendedPower*.7)return {ok:false,reason:'Gerekli güç '+Math.ceil(entry.recommendedPower*.7)+'. Kahraman ve ekipmanı geliştir.'};
+ return {ok:true,reason:''};
+}
+export function secondActMission(mission){
+ if(!mission||mission.mode!=='act2'||!Number.isInteger(mission.stage)||!SECOND_ACT[mission.stage-1])return null;
+ const total=mission.waves===3?3:1;
+ const wave=Number.isInteger(mission.wave)&&mission.wave>=1&&mission.wave<=total?mission.wave:1;
+ return {...SECOND_ACT[mission.stage-1].operations[Math.min(wave-1,2)],wave,total,stage:SECOND_ACT[mission.stage-1]};
+}
