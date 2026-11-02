@@ -2,7 +2,7 @@
   "name": "starfort",
   "private": true,
   "version": "2.26.0",
-  "description": "Starfort v2.14.0: bölüm koşulları, düşman çeşitliliği, sezonlar, hesap yedeği ve ses",
+  "description": "Starfort v2.26.0: sunucu savaş görselleri, dünya haritası, eşya ustalığı ve haftalık dünya patronu",
   "type": "module",
   "scripts": {
     "start": "node launch-starfort.mjs",
