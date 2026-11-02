@@ -1,4 +1,5 @@
 import * as R from './rules.js';
+import {ACCOUNT_ONLY,isLegacyOnlyAction,normalizeOnlineView} from './account-only.js';
 import {createGameAudio} from './audio.js';
 import {loadAccountSession,accountSession,accountSignIn,accountSignUp,accountSignOut,accountBackup,accountRequestPasswordReset,accountAcceptAuthHash,accountResendConfirmation,accountUpdatePassword} from './account-auth.js';
 import {createAccountSync} from './account-sync.js';
@@ -142,6 +143,10 @@ window.addEventListener('storage',event=>{
 });
 
 function notify(message) {
+  if(!villageSignedIn()){
+    const gateStatus=$('#account-gate-status');
+    if(gateStatus)gateStatus.textContent=message;
+  }
   const el = $('#toast'); el.textContent = message; el.classList.add('show'); clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
 }
@@ -152,6 +157,23 @@ const official3D=createOfficialBattleDirector({store:localStorage,motionPreferen
 let lastCombatDelta=null;
 let dailySnapshot=null,dailyOwner=null,dailyBusy=false;
 const villageSignedIn=()=>!!accountSession();
+function syncAccountGate(){
+  const locked=!villageSignedIn();
+  document.body.classList.toggle('account-locked',locked);
+  const app=document.querySelector('.app');
+  if(app){app.inert=locked;app.setAttribute('aria-hidden',String(locked));}
+  const gate=$('#account-gate');
+  if(gate)gate.hidden=!locked;
+  const resend=$('[data-gate-resend]');
+  if(resend)resend.hidden=!signupPending;
+  if(locked){
+    combatRunner.pause();
+    official3D.sync(null);
+    for(const selector of ['#reward-dialog','#building-dialog','#battle-dialog']){
+      const modal=$(selector);if(modal?.open)modal.close();
+    }
+  }
+}
 function villageView(){
  if(!villageSignedIn())return state;
  const uid=accountSession()?.user?.id;
@@ -161,9 +183,9 @@ function villageView(){
 function renderDailyDialog(){
  const dialog=$('#reward-dialog');
  if(!dialog?.open)return;
- const online=villageSignedIn(),owner=accountSession()?.user?.id;
- const calendar=online?(dailyOwner===owner?dailySnapshot:null):R.dailyRewardState(state,Date.now());
- $('#reward-content').innerHTML=rewardCalendarMarkup(calendar,{online,loading:online&&!calendar});
+ const owner=accountSession()?.user?.id;
+ const calendar=villageSignedIn()&&dailyOwner===owner?dailySnapshot:null;
+ $('#reward-content').innerHTML=rewardCalendarMarkup(calendar,{online:true,loading:!calendar});
  const claim=dialog.querySelector('[data-reward-claim]');
  if(claim)claim.disabled=claim.disabled||dailyBusy||villageBusy;
 }
@@ -350,6 +372,7 @@ function renderBuildingDialog() {
   }
 }
 function openBuilding(id) {
+  if(!villageSignedIn())return syncAccountGate();
   if (!R.BUILDINGS.some(building => building.id === id)) return;
   $('#building-picker').hidden=true; $('[data-city-buildings]').setAttribute('aria-expanded','false');
   selectedBuilding = id; activeView = 'keep'; render(); scene?.focus(id);
@@ -559,69 +582,38 @@ async function guildAction(name){
   catch(error){guildError=error.message;notify(error.message);}
   finally{guildBusy=false;if(activeView==='guild')renderGuild();}
 }
-function renderAccountExtras(){
-  const local=progressionSummary(state);
-  let remote=null;
-  try{if(syncConflictDetails?.remote)remote=progressionSummary(syncConflictDetails.remote);}catch{}
-  const label=p=>p?`Kale ${p.keep}, ${p.chapters} bölüm, ${p.heroes} kahraman, ${number(p.gold)} altın`:'Bulut bilgisi henüz alınamadı';
-  const points=recoveryPoints(localStorage);
-  return `<section class="account-extra-grid">
-    ${accountSyncInfo.status==='conflict'?`<article class="guild-panel account-conflict"><h3>İki farklı köy kaydı bulundu</h3><p>İkisini karşılaştır. Seçim yapmadan ilerleme silinmez.</p>
-    <div class="account-compare"><div><small>BU CİHAZ</small><p>${esc(label(local))}</p></div><div><small>BULUT</small><p>${esc(label(remote))}</p></div></div>
-    <p>Önce kayıt dosyanı indir. Ardından hangi köyle devam edeceğini seç.</p></article>`:''}
-    ${signupPending&&!accountSession()?`<article class="guild-panel account-pending"><h3>E-posta onayı bekleniyor</h3><p>${esc(confirmationEmail)} adresine gönderilen bağlantıyı açıp oyuna dön.</p>
-    <button class="secondary wide" data-account-action="resend-confirmation">Onay e-postasını tekrar gönder</button></article>`:''}
-    <article class="guild-panel account-recovery"><h3>Önceki köy kurtarma noktaları</h3><p>Bir yedeği geri yüklemeden önce önceki kaydın son üç kopyası saklanır.</p>
-    ${points.length?points.map((p,i)=>`<button class="secondary wide" data-recovery-key="${esc(p.key)}">${i+1}. Kurtarma kaydı · ${esc(label(progressionSummary(p.state)))}</button>`).join(''):'<small>Henüz kurtarma kopyası yok.</small>'}</article></section>`;
-}
+/** Account-only settings: local save import, guest backups and demo progression are retired. */
 function renderSettings(){
-  const hosted=location.hostname.endsWith('github.io')||new URLSearchParams(location.search).get('hosted')==='1';
-  const cloudReady=hosted&&!!guildToken,cloudLabel=!hosted?'Bulut yedeği GitHub Pages çevrim içi beta hesabında kullanılabilir.':!cloudReady?'Önce İttifak bölümünden bu cihazda komutan hesabı oluştur.':cloudSaveInfo?.exists?`Bulut yedeği: ${new Date(cloudSaveInfo.savedAt).toLocaleString('tr-TR')} · Rev. ${cloudSaveInfo.revision}`:cloudSaveInfo?'Henüz bulut yedeği yok.':'Bulut durumu henüz sorgulanmadı.';
-  workspaceEl.innerHTML=`<header><div><span class="eyebrow">KOMUTA MERKEZİ</span><h2>Ayarlar ve kayıt güvenliği</h2><p>${villageSignedIn()?'Resmî köy, kahramanlar ve savaş ödülleri sunucuda; yerel deneme ayrı korunuyor.':'Yerel deneme kaydın cihazında korunur. Hesap açarsan gerçek ekonomi sunucuda tutulur.'}</p></div><button class="secondary" data-close-view>Köye dön</button></header>
-    <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">OYUN İLERLEMESİ</span><h3>Kayıt yedeği</h3><p>Bu JSON dosyası yalnızca cihazındaki deneme kaydını içerir. Gerçek sunucu kaynaklarını, kahramanlarını veya ödüllerini değiştirmez.</p><button class="primary wide" data-export-save>Kayıt dosyasını indir</button><button class="secondary wide" data-import-save>Yedeği geri yükle</button><small>İçe aktarma mevcut ilerlemenin üzerine yazar. Önce bir yedek al.</small></article><article class="guild-panel"><span class="eyebrow">OYUN DENEYİMİ</span><h3>Kontroller</h3><p>Köyü sürükle; +/− ile yakınlaştır. Savaşta hedef seç, 1 / 2 / 3 ile kahraman yeteneklerini kullan, Space ile taktik mola ver.</p><button class="secondary wide" data-fullscreen>Tam ekranı değiştir</button><button class="secondary wide" data-audio-toggle>Ses ve özgün müzik: ${gameAudio.enabled?'Açık · Kapat':'Kapalı · Aç'}</button><small>Sesler yalnızca sen açtığında başlar; köy melodisi ve savaş efektleri orijinaldir.</small><p class="guild-disclaimer">Klan oturumu, ana oyun kaydından ayrı bir geliştirme sunucusuna bağlıdır.</p></article>
-    <article class="guild-panel"><span class="eyebrow">GÜVENLİ HESAP · SUPABASE AUTH</span><h3>E-posta hesabı ve özel yedek</h3>
-      <p>Tek e-posta hesabıyla sunucu köyünü, kahramanlarını, demirhaneni ve doğrulanmış sefer ödüllerini farklı cihazlarda oynarsın. Yerel deneme kaydı ayrıca korunur; sunucu bakiyesine aktarılmaz.</p>
-      ${accountSession()?`<strong>${esc(accountSession().user.email||'Doğrulanmış hesap')}</strong>
-      <small aria-live="polite">Eşitleme: ${esc(({synced:'Güncel',checking:'Kontrol ediliyor',uploading:'Yükleniyor',conflict:'Kayıt çatışması',offline:'Çevrimdışı',disconnected:'Kapalı',error:'Kayıt hatası'})[accountSyncInfo.status]||accountSyncInfo.status)} · Bulut sürümü ${accountSync.revision??'—'}</small>
-      ${accountSyncInfo.status==='conflict'?'<p class="guild-error">Diğer cihazın kaydı farklı. Birini seçmeden üstüne yazmayacağım.</p><button class="primary wide" data-account-action="use-local">Bu cihazın kaydını kullan</button><button class="secondary wide" data-account-action="restore">Bulut kaydını kullan</button>':''}
-      <button class="secondary wide" data-account-action="sync" ${accountBusy?'disabled':''}>Şimdi eşitle</button>
-      <button class="secondary wide" data-account-action="status" ${accountBusy?'disabled':''}>Hesap yedeğini kontrol et</button>
-      <button class="primary wide" data-account-action="save" ${accountBusy?'disabled':''}>Bu cihazı hesabıma yedekle</button>
-      <button class="secondary wide" data-account-action="restore" ${accountBusy?'disabled':''}>Hesap yedeğini geri yükle</button>
-      <button class="secondary wide" data-account-action="logout" ${accountBusy?'disabled':''}>E-posta hesabından çıkış</button>`:
-      `<form id="starfort-account-form" autocomplete="on">
-        <label>E-posta <input required name="email" type="email" maxlength="180" autocomplete="username" placeholder="eposta@ornek.com"></label>
-        <label>Şifre <input required name="password" type="password" minlength="8" maxlength="100" autocomplete="current-password"></label>
-        <div class="season-titles"><button type="submit" class="primary" name="account-mode" value="login">Giriş yap</button>
-        <button type="submit" class="secondary" name="account-mode" value="signup">Hesap oluştur</button></div></form><button class="text-button" data-account-action="reset-request">Şifremi unuttum</button>`}
-      ${accountRecovering?'<div class="guild-form"><input id="account-new-password" type="password" minlength="8" maxlength="100" autocomplete="new-password" placeholder="Yeni şifren"><button class="primary" data-account-action="password-update">Şifremi güncelle</button></div>':''}
-      <small>Otomatik eşitleme yalnızca hesaba giriş yapıldığında çalışır. Bulut çatışmalarını oyuncu çözer.</small>
-    </article></div>`;
-  workspaceEl.insertAdjacentHTML('beforeend',renderAccountExtras());
-  workspaceEl.insertAdjacentHTML('beforeend',`<article class="guild-panel village-account-panel"><span class="eyebrow">KRALLIK EKONOMİSİ · ${villageSignedIn()?'SUNUCU':'YEREL DENEME'}</span>
-   <h3>${villageSignedIn()?'Korunan sunucu köyü':'Sunucu ekonomisine geçiş'}</h3>
-   <p>${villageSignedIn()?'Köy, kahramanlar, envanter, gerçek sefer ilerlemesi, inşaat ve kaynaklar Supabase üzerinde tutulur. Yerel JSON kayıtları bu bakiyeye dönüştürülemez.':'Giriş yaptığında sunucuda yeni ve bağımsız bir krallık açılır. Eski yerel kayıtların silinmez, ancak doğrulanmamış kazanımlar sunucuya taşınmaz.'}</p>
-   ${villageSignedIn()?`<strong>${villageSnapshot?'Sunucu revizyonu '+villageSnapshot.revision+' · Ustalık '+villageSnapshot.mastery+'/24':'Sunucuya bağlanılıyor'}</strong>
-    <button class="secondary wide" data-village-refresh>Sunucu köyünü yenile</button>
-    <button class="primary wide" data-village-match-claim>Doğrulanmış zafer ödüllerini al</button>
-    <small>Günlük sunucu sandığı +1 ustalık, sunucuda doğrulanan her galibiyet +3 ustalık verir. Yerel bot ve sefer ödülleri online bakiyeyi artırmaz.</small>`:'<small>Sunucu ekonomisi için e-posta hesabı gerekir. Yerel oyuna devam edebilirsin.</small>'}
-   </article>`);
-
+  const email=accountSession()?.user?.email||'Doğrulanmış hesap';
+  workspaceEl.innerHTML=`<header><div><span class="eyebrow">KOMUTA MERKEZİ · ÇEVRİM İÇİ</span>
+   <h2>Hesap ve oyun ayarları</h2><p>Kaynaklar, inşaatlar, kahramanlar, ekipmanlar ve sefer ödülleri yalnızca sunucuda tutulur. Misafir modu bulunmaz.</p></div>
+   <button class="secondary" data-close-view>Köye dön</button></header>
+   <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">HESAP GÜVENLİĞİ</span><h3>E-posta hesabın</h3>
+   <strong>${esc(email)}</strong><p>Oyun ilerlemen doğrulanmış hesabına bağlıdır. Yeni cihazda aynı e-postayla oturum açabilirsin.</p>
+   <button class="secondary wide" data-village-refresh>Sunucudaki ilerlemeyi yenile</button>
+   <button class="primary wide" data-account-action="logout">Hesaptan çıkış yap</button></article>
+   <article class="guild-panel"><span class="eyebrow">OYUN DENEYİMİ</span><h3>Kontroller</h3>
+   <p>Köyü sürükle ve binaları geliştir. Savaş emirleri ve ödüller çevrim içi sunucu tarafından hesaplanır.</p>
+   <button class="secondary wide" data-fullscreen>Tam ekranı değiştir</button>
+   <button class="secondary wide" data-audio-toggle>Ses ve özgün müzik: ${gameAudio.enabled?'Açık · Kapat':'Kapalı · Aç'}</button>
+   <small>Bağlantın kesilirse yeni kaynak veya savaş ödülü üretilmez. Yeniden bağlandığında sunucu durumunu yenileyebilirsin.</small></article></div>
+   ${accountRecovering?'<div class="guild-panel"><h3>Şifreni güncelle</h3><input id="account-new-password" type="password" minlength="8" maxlength="100" autocomplete="new-password" placeholder="Yeni şifre"><button class="primary" data-account-action="password-update">Şifremi güncelle</button></div>':''}`;
 }
 
 async function accountAction(action){
+ if(!['logout','reset-request','resend-confirmation','password-update'].includes(action))return notify('Yerel yedek ve misafir hesabı işlemleri kaldırıldı.');
  if(accountBusy)return;
  accountBusy=true;if(activeView==='settings')renderSettings();
  try{
    if(action==='reset-request'){
-     const email=$('#starfort-account-form [name=email]')?.value.trim();
+     const email=($('#starfort-gate-form [name=email]')||$('#starfort-account-form [name=email]'))?.value.trim();
      if(!email)throw Error('Önce e-posta adresini yaz.');
      await accountRequestPasswordReset(email,location.origin+location.pathname);
      notify('Hesap varsa kurtarma e-postası gönderildi.');return;
    }
    if(action==='password-update'){
      await accountUpdatePassword($('#account-new-password')?.value);
-     accountRecovering=false;notify('Şifre güncellendi.');await accountSync.start();return;
+     accountRecovering=false;notify('Şifre güncellendi.');await refreshVillage();return;
    }
    if(action==='resend-confirmation'){
      if(!confirmationEmail)throw Error('Önce e-posta adresinle hesap oluştur.');
@@ -630,7 +622,7 @@ async function accountAction(action){
    }
    if(action==='logout'){
      accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();
-     notify('E-posta hesabından çıkış yapıldı. Yerel oyun korundu.');return;
+     notify('E-posta hesabından çıkış yapıldı. Tekrar giriş yaparak krallığına ulaşabilirsin.');return;
    }
    if(action==='sync'){await accountSync.refresh();return;}
    if(action==='use-local'){
@@ -658,7 +650,7 @@ async function accountAction(action){
 }
 
 document.addEventListener('submit',async event=>{
- if(event.target?.id!=='starfort-account-form')return;
+ if(!['starfort-gate-form','starfort-account-form'].includes(event.target?.id))return;
  event.preventDefault();
  if(accountBusy)return;
  const fd=new FormData(event.target),email=String(fd.get('email')||'').trim(),password=String(fd.get('password')||'');
@@ -670,15 +662,15 @@ document.addEventListener('submit',async event=>{
      const info=await accountSignUp(email,password,undefined,authRedirect());
      signupPending=info.needsConfirmation;confirmationEmail=email;
       notify(info.needsConfirmation?'Onay bağlantısı e-postana gönderildi. Onayla ve oyuna dön.':'E-posta hesabı oluşturuldu.');
-     if(accountSession()){await accountSync.start();await refreshVillage();}
+     if(accountSession()){await refreshVillage();}
    }else{
      await accountSignIn(email,password);
      signupPending=false;confirmationEmail='';
      notify('E-posta hesabına giriş yapıldı.');
-     await accountSync.start();await refreshVillage();if(activeView==='guild')void refreshGuild();
+     await refreshVillage();if(activeView==='guild')void refreshGuild();
    }
  }catch(error){notify('Hesap: '+error.message);}
- finally{accountBusy=false;if(activeView==='settings')renderSettings();}
+ finally{accountBusy=false;syncAccountGate();if(villageSignedIn()){activeView='keep';render();}else if(activeView==='settings')renderSettings();}
 });
 
 async function transferAccount(action){
@@ -860,21 +852,20 @@ function castHeroSkill(heroId) {
 }
 
 function render() {
+  syncAccountGate();
+  if(!villageSignedIn())return;
   gameAudio.setScene($('#battle-dialog').open||(villageSignedIn()&&accountProgressSnapshot?.mission&&activeView==='campaign')?'combat':'village');
   renderResources(); renderNav(); renderPicker(); renderInspector(); renderQuest(); renderWorkspace();
   scene?.update(villageView());
   if ($('#building-dialog').open) renderBuildingDialog();
   if ($('#reward-dialog').open)renderDailyDialog();
 }
-function openBattle(stageId) {
-  if (stageId !== undefined) {
-    const started = R.startLiveBattle(state, Number(stageId),{enforceGates:true});
-    if (!started.ok) return notify(started.error);
-  }
-  if(state.battle?.status==='active')R.prepareLiveBattle(state);
-  persist(); render(); renderBattle();
-  combatRunner.resume(); renderBattle();
+function openBattle(stageId){
+  if(!villageSignedIn())return notify('Önce e-posta hesabına giriş yap.');
+  activeView='campaign';render();
+  if(stageId!==undefined)void accountProgressAction('mission_start',String(stageId));
 }
+
 async function toggleFullscreen() {
   try {
     if(document.fullscreenElement)await document.exitFullscreen();
@@ -956,22 +947,17 @@ async function accountAutoEquip(heroId){
 }
 function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
+  if(button.hasAttribute('data-gate-reset')){void accountAction('reset-request');return;}
+  if(button.hasAttribute('data-gate-resend')){void accountAction('resend-confirmation');return;}
+  if(!villageSignedIn()){syncAccountGate();return notify('Oynamak için e-posta hesabına giriş yap.');}
+  if(ACCOUNT_ONLY&&isLegacyOnlyAction(button))return notify('Misafir ve yerel deneme özellikleri kaldırıldı. Resmî seferleri kullan.');
+
   if(!villageSignedIn()&&saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.hasAttribute('data-finish-building')||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
   if(button.hasAttribute('data-audio-toggle')){const enabled=gameAudio.toggle();notify(enabled?'Ses ve müzik açıldı.':'Ses ve müzik kapatıldı.');if(activeView==='settings')renderSettings();return;}
   gameAudio.cue('click');
-  if(button.dataset.welcome){
-    $('#account-welcome').close();
-    localStorage.setItem('starfort:welcome-seen','1');
-    if(button.dataset.welcome==='account'){activeView='settings';render();}
-    return;
-  }
   if(button.hasAttribute('data-reward-close')){$('#reward-dialog').close();return;}
-  if(button.hasAttribute('data-reward-retry')){if(villageSignedIn())void refreshVillage({preserve:true});else renderDailyDialog();return;}
-  if(button.hasAttribute('data-reward-claim')){
-   if(villageSignedIn())void claimServerDaily();
-   else{const granted=R.claimDailyReward(state,Date.now());if(result(granted,granted.ok?'✦ '+granted.day+'. gün sandığını açtın!':''))renderDailyDialog();}
-   return;
-  }
+  if(button.hasAttribute('data-reward-retry')){void refreshVillage({preserve:true});return;}
+  if(button.hasAttribute('data-reward-claim')){void claimServerDaily();return;}
   if(button.hasAttribute('data-village-refresh')){void refreshVillage({preserve:true});return;}
   if(button.hasAttribute('data-village-match-claim')){void claimServerMatchRewards();return;}
   if(button.hasAttribute('data-official-render-toggle')){
@@ -1015,11 +1001,11 @@ function dispatch(action) {
   }
   if(button.hasAttribute('data-fullscreen')) { toggleFullscreen(); return; }
   if(button.dataset.quickBot){quickPlayBot(button.dataset.quickBot);return;}
-  if(button.hasAttribute('data-labyrinth-open')){activeView=villageSignedIn()?'campaign':'labyrinth';render();return;}
+  if(button.hasAttribute('data-labyrinth-open')){activeView='campaign';render();return;}
   if(button.dataset.labyrinthMove!==undefined){if(villageSignedIn()){activeView='campaign';render();return;}const step=R.moveLabyrinth(state,Number(button.dataset.labyrinthMove));result(step,step.event||'Yeni koridor keşfedildi.');return;}
   if(button.hasAttribute('data-labyrinth-fight')){if(villageSignedIn()){void accountProgressAction('mission_start','maze:'+((accountProgressSnapshot?.mazeFloor||0)+1));return;}const step=R.startLabyrinthBattle(state);if(!step.ok)return notify(step.error);openBattle();return;}
   if(button.hasAttribute('data-labyrinth-complete')){if(villageSignedIn())return notify('Sunucu labirentinde ödül savaş sonucuyla otomatik kaydedilir.');const step=R.completeLabyrinthFloor(state);result(step,step.ok?`Kat ${step.floor} tamamlandı! +${step.reward.gold} altın, +${step.reward.aether} yıldız özü.`:null);return;}
-  if(button.hasAttribute('data-training-open')){activeView='training';render();return;}
+  if(button.hasAttribute('data-training-open')){activeView='campaign';render();return;}
   if(button.hasAttribute('data-arena-open')){activeView='arena';render();return;}
   if(button.hasAttribute('data-team-open')){activeView='team';render();return;}
   if(button.hasAttribute('data-daily-reward')){$('#reward-dialog').showModal();renderDailyDialog();return;}
@@ -1050,11 +1036,11 @@ function dispatch(action) {
   if(button.dataset.equip) {if(villageSignedIn()){void accountProgressAction('equip',selectedArmoryHero,button.dataset.equip);return;} result(R.equipItem(state,selectedArmoryHero,button.dataset.equip),'Ekipman kuşanıldı. Savaş gücü güncellendi.'); return; }
   if(button.dataset.unequip) {if(villageSignedIn()){void accountProgressAction('unequip',selectedArmoryHero,button.dataset.unequip);return;} result(R.unequipItem(state,selectedArmoryHero,button.dataset.unequip),'Ekipman çantaya alındı.'); return; }
   if(button.dataset.trial) { if(state.battle?.status==='active') return notify('Önce devam eden savaşı tamamla.'); trialState=R.createHeroTrial(state,button.dataset.trial); renderBattle(); combatRunner.resume(); renderBattle(); return; }
-  if(button.hasAttribute('data-quest-toggle')) { activeView='expedition'; questPanelExpanded=true; render(); return; }
+  if(button.hasAttribute('data-quest-toggle')) { activeView='campaign'; questPanelExpanded=true; render(); return; }
   if(button.hasAttribute('data-quest-close')) { questPanelExpanded=false; render(); return; }
   if (button.dataset.view) {
     questPanelExpanded=button.dataset.view==='expedition';
-    activeView = button.dataset.view; render(); if(activeView==='guild')refreshGuild(); return;
+    activeView = normalizeOnlineView(button.dataset.view); render(); if(activeView==='guild')refreshGuild(); return;
   }
   if (button.dataset.building) { openBuilding(button.dataset.building); return; }
   if(button.hasAttribute('data-workshop-expedition')){
@@ -1171,7 +1157,7 @@ try {
   cityFallback(error);
 }
 $('#recenter').addEventListener('click', () => { activeView = 'keep'; questPanelExpanded=false; scene?.overview(); render(); });
-if (state.battle?.status === 'active') { R.prepareLiveBattle(state); persist(); renderBattle(); }
+// Historic local battles are not resumed in the account-only release.
 render();
 (async()=>{
  try{
@@ -1182,8 +1168,8 @@ render();
        if(accountRecovering){notify('Kurtarma bağlantısı onaylandı. Şimdi yeni şifreni yaz.');return;}
        notify('E-posta hesabın doğrulandı. Bulut ilerlemen kontrol ediliyor.');
      }
-     if(accountSession()){await accountSync.start();await refreshVillage();}
-     if(!accountSession()&&!localStorage.getItem('starfort:welcome-seen')&&!location.hash)$('#account-welcome')?.showModal();
+     if(accountSession())await refreshVillage();
+     syncAccountGate();
  }catch(error){notify('Kurtarma: '+error.message);}
 })();
 setInterval(()=>{if(accountSession()&&!document.hidden)void accountSync.refresh();},45000);
