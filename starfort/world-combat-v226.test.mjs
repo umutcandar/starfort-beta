@@ -97,6 +97,13 @@ test('authenticated campaign contains battle scene, world map, shared boss and s
  assert.match(combat,/official-combat-scene/);
  assert.match(combat,/data-account-turn="strike"/);
  assert.match(combat,/DÜNYA PATRONU/);
+ assert.equal((combat.match(/data-account-turn="skill:[a-z]+"/g)||[]).length,3,'each hero has a server-validated unique ability');
+ assert.match(combat,/official-hero-ability-strip/);
+ account.mission.cooldowns={aldren:4};
+ account.mission.turn=1;
+ const cooling=accountExpeditionMarkup(state,account,NOW+3500);
+ assert.match(cooling,/data-account-turn="skill:aldren" disabled/);
+
 });
 test('SQL does not expose the shared boss ledger and computes gear costs, set synergies and rewards server-side',()=>{
  const sql=readFileSync(new URL('./sql/starfort-v226-world-boss-gear.sql',import.meta.url),'utf8');
@@ -116,6 +123,14 @@ test('SQL does not expose the shared boss ledger and computes gear costs, set sy
  assert.match(sql,/power:=power\+coalesce\(\(enchant->>item_id\)::integer,0\)\*9/);
  assert.match(sql,/n>=2 then power:=power\+case slot/);
  assert.match(sql,/grant execute on function public.sfb_starfort_progress/);
+ const skills=readFileSync(new URL('./sql/starfort-v226-hero-abilities.sql',import.meta.url),'utf8');
+ assert.match(skills,/p_aux !~ '\^skill:\(aldren\|lyra/);
+ assert.match(skills,/roster @> to_jsonb\(array\[hero\]\)/);
+ assert.match(skills,/cooldowns/);
+ assert.match(skills,/when 'mira' then/);
+ assert.match(skills,/when 'vesper' then/);
+ assert.match(skills,/grant execute on function public.sfb_starfort_progress/);
+
 });
 test('server enhancements, map selection and community boss are wired to real actions',()=>{
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8'),
