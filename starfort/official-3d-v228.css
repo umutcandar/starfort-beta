@@ -12,3 +12,11 @@
 .official-damage-summary span{white-space:nowrap}.official-damage-summary b{color:#ffdc9e;font-weight:800}.official-damage-summary small{color:#afcbd1;font-size:10px}
 @media(max-width:580px){.official-render-switch{font-size:9px;right:7px;top:37px;padding:7px 8px}.official-combat-scene.is-3d .official-3d-canvas{min-height:250px}.official-damage-summary{font-size:10px;padding:8px}}
 @media(prefers-reduced-motion:reduce){.official-combat-scene.is-3d .official-impact-ring,.official-combat-scene.is-3d .official-weapon-flash{animation:none}}
+
+/* Act II keeps identical authoritative battle logic but has its own palette. */
+.official-combat-scene.act-two-scene{border:1px solid #987056}
+.official-combat-scene.act-two-scene .official-arena-vignette{background:radial-gradient(ellipse at 50% 70%,transparent 25%,rgba(48,16,42,.48) 92%)}
+.official-combat-scene.act-two-scene .official-arena-badge{background:linear-gradient(95deg,rgba(103,54,81,.93),rgba(53,29,59,.91));border-color:#c09569;color:#f5d6ab}
+.official-combat-scene.act-two-scene .battle-biome{border-color:#a78267;background:rgba(34,24,42,.73)}
+.official-combat-scene.act-two-scene .official-3d-viewport{background:#2f243d}
+@media(prefers-reduced-motion:reduce){.official-combat-scene.act-two-scene *{transition:none!important}}
