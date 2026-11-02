@@ -1,6 +1,7 @@
 import {STAGES,ITEMS,HEROES,teamPower} from './rules.js';
 import {officialCombatScene} from './official-combat-scene.js';
 import {realmMapMarkup} from './realm-map.js';
+import {officialNextGoal,officialNextGoalMarkup,officialStoryReadiness} from './official-progress-coach.js';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const n=v=>new Intl.NumberFormat('tr-TR').format(v);
 const names={win:'Sefer zaferi',hero:'Kahraman eğitimi',forge:'Ekipman üretimi',maze:'Labirent katı'};
@@ -14,8 +15,9 @@ export function accountExpeditionMarkup(game,account,now=Date.now(),selectedReal
  const next=Math.min(8,cleared.size+1);
  const rows=STAGES.map(stage=>{
   const done=cleared.has(stage.id),stars=account.campaignStars[stage.id]||0,open=stage.id<=next;
-  return `<article class="server-stage-card ${done?'complete':''}"><div><small>BÖLGE ${stage.id.toString().padStart(2,'0')} · ${done?'TEMİZLENDİ':open?'AÇIK':'KİLİTLİ'}</small><h3>${esc(stage.name)}</h3><span aria-label="${stars} yıldız" class="server-star-row">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</span><p>${esc(stage.description)}</p><small>Önerilen takım gücü: ${n(stage.recommendedPower)}</small></div>
-  <button class="${done?'secondary':'primary'}" data-account-stage="${stage.id}" ${!open||mission?'disabled':''}>${mission?'Savaş sürüyor':done?'Yeniden sefer':'⚔ Sunucu seferine gir'}</button></article>`;
+  const readiness=officialStoryReadiness(game,account,stage.id);
+  return `<article class="server-stage-card ${done?'complete':''}"><div><small>BÖLGE ${stage.id.toString().padStart(2,'0')} · ${done?'TEMİZLENDİ':open?'AÇIK':'KİLİTLİ'}</small><h3>${esc(stage.name)}</h3><span aria-label="${stars} yıldız" class="server-star-row">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</span><p>${esc(stage.description)}</p><small>Önerilen takım gücü: ${n(stage.recommendedPower)}</small>${open&&!done&&!readiness.ok?`<small class="official-stage-gate">Eksik: ${readiness.missing.map(x=>esc(x.label)+' ('+x.value+'/'+x.required+')').join(' · ')}</small>`:''}</div>
+  <button class="${done?'secondary':'primary'}" data-account-stage="${stage.id}" ${!open||mission||!readiness.ok?'disabled':''}>${mission?'Savaş sürüyor':done?'Yeniden sefer':'⚔ Sunucu seferine gir'}</button></article>`;
  }).join('');
  const wait=mission?Math.max(0,3000-(now-mission.lastTurnAt)):0;
  const heroAbilities=mission?(game.team||[]).map(id=>HEROES.find(h=>h.id===id)).filter(Boolean).map(hero=>{
@@ -39,6 +41,7 @@ export function accountExpeditionMarkup(game,account,now=Date.now(),selectedReal
  const rankTitles=[['Sınır Nöbetçisi',5],['Yıldız Ustası',20],['Kuzey Muhafızı',40]];
  const count=Object.values(account.counters).reduce((a,b)=>a+b,0);
  return `<section class="server-expedition">${campaignHeader}
+  ${officialNextGoalMarkup(officialNextGoal(game,account,now))}
   <div class="server-summary"><div><b>${cleared.size} / 8</b><small>Hikâye bölgesi</small></div><div><b>${Object.values(account.campaignStars).reduce((a,b)=>a+b,0)} / 24</b><small>Sefer yıldızı</small></div><div><b>${n(teamPower(game))}</b><small>Sunucu takım gücü</small></div><div><b>${n(account.mazeFloor)} / 16</b><small>Labirent</small></div></div>
   ${missionUi}${resultUi}
   ${realmMapMarkup(account,{selected:selectedRealm})}

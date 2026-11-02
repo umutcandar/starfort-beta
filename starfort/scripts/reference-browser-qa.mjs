@@ -291,6 +291,11 @@ try{
   await evaluate("document.querySelector('[data-action=open-expedition]').click()");
   assert.equal(await evaluate("document.querySelectorAll('[data-account-stage]').length"),8,'Eight official server missions must render');
   assert.equal(await evaluate("document.querySelectorAll('.realm-map-pin').length"),8,'Official campaign has eight map provinces');
+  assert.ok(await evaluate("document.querySelector('.official-next-goal')?.textContent.includes('İlk kahramanını donat')"),'Authenticated next step must come from the server loadout, not from the level-10 local save');
+  assert.equal(await evaluate("document.querySelector('.official-next-goal [data-view]')?.dataset.view"),'armory','First real account step must open armory');
+  const guideShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
+  await writeFile('qa-artifacts/starfort-1536x864-trusted-next-goal-v229.png',Buffer.from(guideShot.data,'base64'));
+
   assert.ok(await evaluate("!!document.querySelector('[data-account-boss]')"),'Authenticated campaign includes shared weekly boss');
   const mapShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
   await writeFile('qa-artifacts/starfort-1536x864-world-map-v226.png',Buffer.from(mapShot.data,'base64'));

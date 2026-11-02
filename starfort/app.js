@@ -421,7 +421,7 @@ function renderHeroes() {
 }
 
 function renderCommanderPath(){
-  const route=commanderPath(state);
+  const route=commanderPath(villageView());
   const next=route.next;
   return `<section class="commander-path" aria-label="Komutan Yolu"><div class="commander-path-header"><div><span class="eyebrow">OYUNCU GELİŞİM HARİTASI · İSTEĞE BAĞLI</span><h3>Komutan Yolu</h3><p>Bir sonraki anlamlı hedefini gösterir; kaçırılan ödül, giriş serisi veya ödeme koşulu yoktur.</p></div><strong class="commander-path-count">${route.completed} / ${route.total} adım</strong></div><div class="commander-path-track" role="progressbar" aria-valuemin="0" aria-valuemax="${route.total}" aria-valuenow="${route.completed}" aria-label="Komutan Yolu ilerlemesi"><span style="width:${route.completed/route.total*100}%"></span></div><div class="commander-path-next"><div><b>${next?esc(next.title):'Kuzeyin usta komutanısın'}</b><small>${next?esc(next.detail):'Bütün gelişim hedeflerini tamamladın. Klan arkadaşlarınla yeni savaşlar deneyebilirsin.'}</small></div>${next?`<button class="secondary" data-view="${next.action}">${esc(next.cta)}</button>`:'<button class="secondary" data-view="guild">İttifaklara git</button>'}</div><div class="commander-path-stages">${route.steps.map(step=>`<span class="${step.completed?'complete':''}" title="${esc(step.detail)}">${step.completed?'✓':'○'} ${esc(step.title)}</span>`).join('')}</div></section>`;
 }

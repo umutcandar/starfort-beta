@@ -72,5 +72,5 @@ export function accountServerView(state,account){
   inventory:{...account.inventory},loadouts:structuredClone(account.loadouts),itemUpgrades:{...account.itemUpgrades},team:[...account.team],
   cleared:[...account.cleared],campaignStars:{...account.campaignStars},veteranMedals:{...account.veteranMedals},
   serverMission:account.mission,serverReport:account.lastReport,serverCounters:{...account.counters},
-  serverTitles:[...account.titles],serverMazeFloor:account.mazeFloor,serverContractClaims:{...account.contractClaims}};
+  serverTitles:[...account.titles],serverRiftWeek:account.riftWeek,serverMazeFloor:account.mazeFloor,serverContractClaims:{...account.contractClaims}};
 }
