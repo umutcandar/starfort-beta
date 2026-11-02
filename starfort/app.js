@@ -16,9 +16,7 @@ import {createSaveGuard} from './save-guard.js';
 import {guildRequest,guildOnline,guildMatchHistory,GUILD_TOKEN_KEY} from './guild-client.js';
 import {mountTraining} from './tactics-view.js';
 import {mountArena} from './arena-view.js';
-import {practiceReward} from './battle-assist.js';
 import {mountTeamArena} from './team-view.js';
-import {ensureTestCommander} from './quick-play.js';
 import {commanderPath} from './commander-path.js';
 import {battleExperience} from './battle-experience.js';
 import {armoryArt} from './armory-art.js';
@@ -64,10 +62,9 @@ const resourceIcon = { gold: 'coin', wood: 'wood', stone: 'stone', aether: 'star
 const battlePolicy=battleExperience(window.location);
 const resourceName = { gold: 'Altın', wood: 'Kereste', stone: 'Taş', aether: 'Yıldız özü' };
 const navItems = [ ['keep', 'keep', 'Köy'], ['expedition', 'expedition', 'Seferler'], ['heroes', 'heroes', 'Kahramanlar'], ['armory', 'armor', 'Çanta'], ['guild', 'guild', 'İttifak'], ['shop', 'shop', 'Mağaza'] ];
-let state, saveInitialRaw=null;
-try {saveInitialRaw=localStorage.getItem(R.STORAGE_KEY);state=R.restoreState(saveInitialRaw);}
-catch {state=R.createState();}
-const saveGuard=createSaveGuard(localStorage,R.STORAGE_KEY,saveInitialRaw);
+// Legacy saves remain untouched in browser storage but are never opened or replayed.
+let state=R.createState();
+const saveGuard=createSaveGuard(localStorage,R.STORAGE_KEY,null);
 
 let battleSpeed=1, battleFxExpires=0;
 let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
@@ -104,43 +101,13 @@ const combatRunner=createBattleRunner({
   onPause:()=>{if(!trialState)persist(); if($('#battle-dialog').open)renderBattle();},
 });
 
-function grantReward(r,won,source){
-  // Practice rewards never enter the authoritative account economy.
-  state.res.gold=(state.res.gold||0)+r.gold;state.res.aether=(state.res.aether||0)+r.aether;
-  persist();try{renderResources();}catch{}
-  notify(`${won?'Zafer':'Savaş bitti'}: +${r.gold} ◈${r.aether?` +${r.aether} ✦`:''}${r.bonus?' · Günün ilk zaferi x2!':''}${source}${villageSignedIn()?' · Yalnızca deneme kaydı, sunucu kasasına eklenmez.':''}`);
+// Account-only client never grants or persists resources outside a verified RPC.
+// Server progress is saved by Supabase and is unaffected by old browser save data.
+function persist(){
+ const badge=$('#save-status');
+ if(badge){badge.textContent=accountReady()?'Sunucuda doğrulandı':'Hesap doğrulanıyor';badge.title='STARFORT ilerlemesi yalnızca hesap sunucusunda tutulur.';}
+ return accountReady();
 }
-window.addEventListener('starfort:practice-result',async e=>{
-  const {won,difficulty,mode='duel',matchId}=e.detail||{};
-  const token=guildToken||localStorage.getItem(GUILD_TOKEN_KEY);
-  const id=String(matchId||'').replace(/[^a-f0-9]/gi,'').slice(0,32);
-  if(token&&id.length>=8){
-    try{const r=await guildRequest('reward/claim',token,{mode,difficulty,won:!!won,matchId:id});grantReward(r,won,'');return;}
-    catch(error){if(!/ulaşılamadı|bulunamadı|404|fetch|timeout|abort/i.test(error.message||'')){notify('Ödül verilmedi: '+error.message);return;}}
-  }
-  const day=new Date().toISOString().slice(0,10);
-  const first=won&&localStorage.getItem('starfort:practice-win-day')!==day;if(first)localStorage.setItem('starfort:practice-win-day',day);
-  grantReward(practiceReward(difficulty,won,first,mode),won,' (çevrimdışı, yerel kayıt)');
-});
-function persist() {
-  try {
-    if(!saveGuard.write(state)){
-      $('#save-status').textContent='Başka sekme ilerledi · Yenile';
-      $('#save-status').title='Bu sekme eski kayıtla açıldı. Yeni ilerlemeyi korumak için oyunu yenile.';
-      combatRunner.pause();
-      return false;
-    }
-    $('#save-status').textContent='Yerel kayıt hazır';accountSync.noteSaved();return true;
-  }catch{$('#save-status').textContent='Kayıt başarısız';return false;}
-}
-window.addEventListener('storage',event=>{
-  if(event.key!==R.STORAGE_KEY)return;
-  if(!saveGuard.observe(event.newValue)){
-    combatRunner.pause();
-    $('#save-status').textContent='Diğer sekme kaydetti · Yenile';
-    notify('Başka sekmedeki yeni ilerleme korunuyor. Bu sekmeyi yenileyerek güncel oyuna dön.');
-  }
-});
 
 function notify(message) {
   if(document.body.classList.contains('account-locked')){
@@ -883,22 +850,7 @@ async function toggleFullscreen() {
     else notify('Bu tarayıcı tam ekranı desteklemiyor; telefonu yatay çevirebilirsin.');
   } catch { notify('Tam ekran açılamadı. Yatay görünümde oynamaya devam edebilirsin.'); }
 }
-let quickBotBusy=false;
-async function quickPlayBot(mode) {
-  if(quickBotBusy||!['duel','siege'].includes(mode))return;
-  quickBotBusy=true;
-  try {
-    const token=await ensureTestCommander({storage:localStorage,request:guildRequest});
-    guildToken=token;
-    activeView=mode==='duel'?'arena':'team';
-    if(mode==='duel')sessionStorage.setItem('starfort:autostart-duel','1');
-    render();
-    const control=workspaceEl.querySelector(mode==='duel'?'[data-arena-bot]':'[data-team-bot][data-team-variant="siege"]');
-    if(!control)throw new Error('Bot savaşını başlatma düğmesi bulunamadı.');
-    control.click();
-  }catch(error){notify('Savaş başlatılamadı: '+error.message);}
-  finally{quickBotBusy=false;}
-}
+
 let verifiedClockAnchor=null;
 function constructionUiNow(){
  return verifiedClockAnchor?verifiedClockAnchor.now+Math.max(0,performance.now()-verifiedClockAnchor.monotonic):Date.now();
@@ -964,7 +916,6 @@ function dispatch(action) {
   if(!accountReady()){syncAccountGate();return notify('Sunucu hesabın doğrulanmadan oyun açılmaz.');}
   if(ACCOUNT_ONLY&&isLegacyOnlyAction(button))return notify('Misafir ve yerel deneme özellikleri kaldırıldı. Resmî seferleri kullan.');
 
-  if(!villageSignedIn()&&saveGuard.conflicted && (button.dataset.stage||button.dataset.retryStage||button.dataset.upgradeBuilding||button.dataset.collectUpgrade||button.hasAttribute('data-finish-building')||button.dataset.upgradeHero||button.dataset.claimContract||button.dataset.seasonTitle||button.hasAttribute('data-collect')||button.hasAttribute('data-daily-reward')||button.dataset.equip||button.dataset.unequip||button.dataset.forgeItem)){notify('Başka sekmede yeni ilerleme var. Kaydı korumak için bu sekmeyi yenile.');return;}
   if(button.hasAttribute('data-audio-toggle')){const enabled=gameAudio.toggle();notify(enabled?'Ses ve müzik açıldı.':'Ses ve müzik kapatıldı.');if(activeView==='settings')renderSettings();return;}
   gameAudio.cue('click');
   if(button.hasAttribute('data-reward-close')){$('#reward-dialog').close();return;}
@@ -1012,7 +963,6 @@ function dispatch(action) {
     return;
   }
   if(button.hasAttribute('data-fullscreen')) { toggleFullscreen(); return; }
-  if(button.dataset.quickBot){quickPlayBot(button.dataset.quickBot);return;}
   if(button.hasAttribute('data-labyrinth-open')){activeView='campaign';render();return;}
   if(button.dataset.labyrinthMove!==undefined){if(villageSignedIn()){activeView='campaign';render();return;}const step=R.moveLabyrinth(state,Number(button.dataset.labyrinthMove));result(step,step.event||'Yeni koridor keşfedildi.');return;}
   if(button.hasAttribute('data-labyrinth-fight')){if(villageSignedIn()){void accountProgressAction('mission_start','maze:'+((accountProgressSnapshot?.mazeFloor||0)+1));return;}const step=R.startLabyrinthBattle(state);if(!step.ok)return notify(step.error);openBattle();return;}
@@ -1184,13 +1134,12 @@ render();
      syncAccountGate();
  }catch(error){notify('Kurtarma: '+error.message);}
 })();
-setInterval(()=>{if(accountSession()&&!document.hidden)void accountSync.refresh();},45000);
 setInterval(()=>{if(accountSession()&&!document.hidden&&!villageBusy)void refreshVillage({preserve:true});},60000);
 setInterval(() => { const pending = $('#production-gain'); if (pending) pending.innerHTML = costHtml(R.production(villageView(),constructionUiNow()), true); renderCityProduction(); }, 3000);
 setInterval(()=>{if(activeView==='guild'&&!guildBusy&&!document.hidden&&guildToken&&document.activeElement?.tagName!=='INPUT')refreshGuild();},7000);
 document.addEventListener('visibilitychange', () => {
- if(document.hidden){gameAudio.suspend();combatRunner.pause();official3D.pause();persist();void accountSync.flush();}
- else{gameAudio.resume();official3D.resume();if(accountSession())void accountSync.refresh();}
+ if(document.hidden){gameAudio.suspend();combatRunner.pause();official3D.pause();}
+ else{gameAudio.resume();official3D.resume();if(accountReady())void refreshVillage({preserve:true});}
 });
 window.addEventListener('pagehide', () => {combatRunner.pause();official3D.destroy();persist();});
 
