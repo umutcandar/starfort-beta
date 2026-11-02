@@ -4,3 +4,5 @@
 .official-next-goal p{font:12px/1.6 system-ui,sans-serif;color:#c2d6d7;max-width:750px;margin:0}
 .official-next-goal button{white-space:nowrap;min-height:40px;flex-shrink:0}
 @media(max-width:550px){.official-next-goal{padding:12px;align-items:stretch}.official-next-goal button{width:100%}.official-next-goal h3{font-size:20px}}
+
+.official-stage-gate{display:block;margin-top:8px;color:#f7c58c!important;background:#4a34288a;border:1px solid #e2b5856b;border-radius:6px;padding:7px 9px;font-size:11px;line-height:1.5}
