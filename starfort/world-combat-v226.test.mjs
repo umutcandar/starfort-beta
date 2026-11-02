@@ -85,7 +85,7 @@ test('authenticated campaign contains battle scene, world map, shared boss and s
  const html=accountExpeditionMarkup(state,account,NOW);
  assert.equal((html.match(/data-account-stage=/g)||[]).length,8);
  assert.match(html,/data-realm-select=/);assert.match(html,/data-account-boss/);assert.match(html,/data-account-boss-claim/);
- assert.match(html,/4500/);assert.match(html,/Küllerin Kadim Hükümdarı/);
+ assert.match(html,/4\.500/);assert.match(html,/Küllerin Kadim Hükümdarı/);
  assert.match(html,/data-account-boss disabled/);
  account.cleared=[1,2,3,4];
  account.worldBoss={week:'2026-45',goal:4500,damage:4500,victories:3,claimed:false};account.bossWeek='2026-45';
