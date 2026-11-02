@@ -1,11 +1,11 @@
 import {SECOND_ACT,secondActReadiness} from './second-act.js';
-import {teamPower} from './rules.js';
+import {officialServerTeamPower} from './official-server-team-power.js';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function secondActMarkup(game,account,mission){
  if(!account)return '';
  const completed=Array.isArray(account.act2Cleared)?account.act2Cleared:[];
  const stars=account.act2Stars||{};
- const power=teamPower(game);
+ const power=officialServerTeamPower(game,account);
  const ready=account.cleared.length===8;
  const rows=SECOND_ACT.map(region=>{
   const done=completed.includes(region.id),next=region.id===completed.length+1,open=ready&&(done||next);
