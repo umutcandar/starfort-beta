@@ -17,11 +17,25 @@ function saveSession(data,storage=globalThis.sessionStorage){
  try{if(session)storage.setItem(KEY,JSON.stringify(session));else storage.removeItem(KEY);}catch{}
  return session;
 }
+export function explainAuthError(status,payload={}){
+ const code=String(payload?.error_code||payload?.code||payload?.error||'').toLowerCase();
+ if(status===429||code==='over_email_send_rate_limit')
+  return 'E-posta gönderim sınırına ulaşıldı. Yeni bir onay bağlantısı istemeden önce daha sonra tekrar dene; hesabın varsa giriş yapmayı deneyebilirsin.';
+ if(code==='email_address_not_authorized')
+  return 'Bu e-posta adresine doğrulama gönderilemiyor. E-posta hizmeti yöneticisi tarafından yapılandırılmalı.';
+ if(code==='email_address_invalid')
+  return 'E-posta adresi sağlayıcı tarafından geçersiz bulundu. Gerçek ve kullanılabilir bir e-posta adresi gir.';
+ if(code==='email_not_confirmed')
+  return 'Hesabın e-posta doğrulaması bekliyor. Gelen kutunu ve gereksiz klasörünü kontrol et.';
+ if(code==='invalid_credentials')
+  return 'E-posta veya şifre hatalı. Bilgilerini kontrol et; gerekirse şifre sıfırlamayı kullan.';
+ return payload?.msg||payload?.message||payload?.error_description||payload?.error||'Hesap işlemi başarısız.';
+}
 async function request(path,opts={},fetcher=fetch){
  let res,payload;
  try {res=await fetcher(SUPABASE_URL+path,{...opts,signal:AbortSignal.timeout(12000),headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json',...(opts.headers||{})}});payload=await res.json();}
  catch{throw Error('Sunucuya bağlanılamadı. Yerel kayıt değişmedi.');}
- if(!res.ok)throw Error(payload?.msg||payload?.message||payload?.error_description||payload?.error||'Hesap işlemi başarısız.');
+ if(!res.ok)throw Error(explainAuthError(res.status,payload));
  return payload;
 }
 export async function accountSignIn(email,password,fetcher=fetch){
