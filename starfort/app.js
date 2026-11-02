@@ -972,7 +972,7 @@ function dispatch(action) {
    else{const granted=R.claimDailyReward(state,Date.now());if(result(granted,granted.ok?'✦ '+granted.day+'. gün sandığını açtın!':''))renderDailyDialog();}
    return;
   }
-  if(button.hasAttribute('data-village-refresh')){void refreshVillage();return;}
+  if(button.hasAttribute('data-village-refresh')){void refreshVillage({preserve:true});return;}
   if(button.hasAttribute('data-village-match-claim')){void claimServerMatchRewards();return;}
   if(button.hasAttribute('data-official-render-toggle')){
     if(!villageSignedIn()||!accountProgressSnapshot?.mission)return;
