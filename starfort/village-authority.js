@@ -2,10 +2,11 @@ import {SUPABASE_URL,SUPABASE_KEY} from './online-config.js';
 import {freshAccountSession} from './account-auth.js';
 const BUILDINGS=['keep','farm','lumber','quarry','forge','tavern','observatory'];
 const RESOURCES=['gold','wood','stone','aether'];
+const ROUTES=['wood','stone','aether'];
 /** Zero trust in browser clocks, balances, saves or progress. Only action & building ID are sent. */
 export async function villageAuthorityRequest(action,{building=null,roomId=null,requestId=null,fetcher=fetch}={}){
- if(!['get','collect','upgrade','finish','daily','match'].includes(action))throw Error('Bilinmeyen sunucu köy işlemi.');
- if(building!==null&&!BUILDINGS.includes(building))throw Error('Geçersiz bina.');
+ if(!['get','collect','upgrade','finish','daily','match','trade'].includes(action))throw Error('Bilinmeyen sunucu köy işlemi.');
+ if(building!==null&&!(action==='trade'?ROUTES:BUILDINGS).includes(building))throw Error('Geçersiz bina.');
  if(roomId!==null&&(typeof roomId!=='string'||roomId.length>128))throw Error('Maç kimliği geçersiz.');
  const current=await freshAccountSession(fetcher);
  if(!current?.access_token||!current.user?.id)throw Error('Sunucu köyü için e-posta hesabına giriş yap.');
@@ -33,15 +34,19 @@ export function validateVillageSnapshot(data){
  const c=data.construction;
  if(c!==null&&(!c||!BUILDINGS.includes(c.id)||!Number.isSafeInteger(c.endsAt)||!Number.isSafeInteger(c.startedAt)||c.endsAt<=c.startedAt||c.fromLevel!==data.buildings[c.id]))throw Error('İnşaat kaydı geçersiz.');
  if(data.lastDailyReward!==null&&!/^\d{4}-\d{2}-\d{2}$/.test(data.lastDailyReward||''))throw Error('Günlük görev bilgisi geçersiz.');
+ const tradeDay=data.tradeDay??null,tradeRoutes=data.tradeRoutes??[];
+ if(tradeDay!==null&&!/^\d{4}-\d{2}-\d{2}$/.test(tradeDay))throw Error('Kervan tarihi geçersiz.');
+ if(!Array.isArray(tradeRoutes)||tradeRoutes.length>2||new Set(tradeRoutes).size!==tradeRoutes.length||!tradeRoutes.every(x=>ROUTES.includes(x)))throw Error('Kervan hakları geçersiz.');
  return {res:Object.fromEntries(RESOURCES.map(k=>[k,data.res[k]])),
   buildings:Object.fromEntries(BUILDINGS.map(k=>[k,data.buildings[k]])),
   construction:c?{id:c.id,fromLevel:c.fromLevel,startedAt:c.startedAt,endsAt:c.endsAt}:null,
   mastery:data.mastery,lastCollected:data.lastCollected,lastDailyReward:data.lastDailyReward,
-  serverNow:data.serverNow,revision:data.revision,applied:data.applied,gain:data.gain||{},reward:data.reward||{}};
+  serverNow:data.serverNow,revision:data.revision,applied:data.applied,gain:data.gain||{},reward:data.reward||{},
+  tradeDay,tradeRoutes:[...tradeRoutes]};
 }
 export function villageServerView(local,server){
  if(!server)return {...local,serverVillage:true,serverVillageReady:false};
- return {...local,serverVillage:true,serverVillageReady:true,serverMastery:server.mastery,
+ return {...local,serverVillage:true,serverVillageReady:true,serverMastery:server.mastery,serverTradeDay:server.tradeDay,serverTradeRoutes:[...server.tradeRoutes],
   res:{...server.res},buildings:{...server.buildings},construction:server.construction?{...server.construction}:null,
   lastCollected:server.lastCollected,lastDailyReward:server.lastDailyReward};
 }
