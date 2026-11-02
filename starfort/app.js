@@ -238,7 +238,7 @@ async function serverVillageAction(action,building=null,roomId=null){
   const response=await villageAuthorityRequest(action,{building,roomId});
   if(accountSession()?.user?.id!==uid)return;
   if(acceptVillage(response)){
-   const label=action==='upgrade'?'Sunucu inşaatı başlatıldı':action==='finish'?'Sunucu inşaatı tamamlandı':action==='daily'?'Sunucu günlük ödülü alındı':action==='collect'?'Sunucu üretimi toplandı':'Doğrulanmış maç ödülü alındı';
+   const label=action==='trade'?'Kervan takası sunucuda tamamlandı':action==='upgrade'?'Sunucu inşaatı başlatıldı':action==='finish'?'Sunucu inşaatı tamamlandı':action==='daily'?'Sunucu günlük ödülü alındı':action==='collect'?'Sunucu üretimi toplandı':'Doğrulanmış maç ödülü alındı';
    notify(label+' · Revizyon '+response.snapshot.revision);
   }
  }catch(error){notify('Sunucu işlemi: '+error.message);await refreshVillage();}
@@ -925,6 +925,7 @@ function dispatch(action) {
   if(button.hasAttribute('data-reward-retry')){void refreshVillage({preserve:true});return;}
   if(button.hasAttribute('data-reward-claim')){void claimServerDaily();return;}
   if(button.hasAttribute('data-village-refresh')){void refreshVillage({preserve:true});return;}
+  if(button.dataset.caravanTrade){if(!villageSignedIn())return notify('Kervan için hesap gerekiyor.');void serverVillageAction('trade',button.dataset.caravanTrade);return;}
   if(button.hasAttribute('data-village-match-claim')){void claimServerMatchRewards();return;}
   if(button.hasAttribute('data-official-render-toggle')){
     if(!villageSignedIn()||!accountProgressSnapshot?.mission)return;
