@@ -1,6 +1,7 @@
 import {STAGES,ITEMS,HEROES,teamPower} from './rules.js';
 import {officialCombatScene} from './official-combat-scene.js';
 import {realmMapMarkup} from './realm-map.js';
+import {officialNextGoal,officialNextGoalMarkup} from './official-progress-coach.js';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const n=v=>new Intl.NumberFormat('tr-TR').format(v);
 const names={win:'Sefer zaferi',hero:'Kahraman eğitimi',forge:'Ekipman üretimi',maze:'Labirent katı'};
@@ -39,6 +40,7 @@ export function accountExpeditionMarkup(game,account,now=Date.now(),selectedReal
  const rankTitles=[['Sınır Nöbetçisi',5],['Yıldız Ustası',20],['Kuzey Muhafızı',40]];
  const count=Object.values(account.counters).reduce((a,b)=>a+b,0);
  return `<section class="server-expedition">${campaignHeader}
+  ${officialNextGoalMarkup(officialNextGoal(game,account,now))}
   <div class="server-summary"><div><b>${cleared.size} / 8</b><small>Hikâye bölgesi</small></div><div><b>${Object.values(account.campaignStars).reduce((a,b)=>a+b,0)} / 24</b><small>Sefer yıldızı</small></div><div><b>${n(teamPower(game))}</b><small>Sunucu takım gücü</small></div><div><b>${n(account.mazeFloor)} / 16</b><small>Labirent</small></div></div>
   ${missionUi}${resultUi}
   ${realmMapMarkup(account,{selected:selectedRealm})}
