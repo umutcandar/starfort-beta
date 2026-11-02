@@ -581,7 +581,7 @@ function renderSettings(){
 async function accountAction(action){
  if(!['logout','reset-request','resend-confirmation','password-update'].includes(action))return notify('Yerel yedek ve misafir hesabı işlemleri kaldırıldı.');
  if(accountBusy)return;
- accountBusy=true;if(activeView==='settings')renderSettings();
+ accountBusy=true;if(activeView==='settings'&&accountReady())renderSettings();
  try{
    if(action==='reset-request'){
      const email=($('#starfort-gate-form [name=email]')||$('#starfort-account-form [name=email]'))?.value.trim();
@@ -590,7 +590,7 @@ async function accountAction(action){
      notify('Hesap varsa kurtarma e-postası gönderildi.');return;
    }
    if(action==='password-update'){
-     await accountUpdatePassword($('#account-new-password')?.value);
+     await accountUpdatePassword(($('#account-gate .account-gate-recovery #account-new-password')||$('#account-new-password'))?.value);
      accountRecovering=false;notify('Şifre güncellendi.');await refreshVillage();return;
    }
    if(action==='resend-confirmation'){
@@ -624,7 +624,7 @@ async function accountAction(action){
      location.reload();
    }
  }catch(error){notify('Hesap: '+error.message);}
- finally{accountBusy=false;if(activeView==='settings')renderSettings();}
+ finally{accountBusy=false;if(activeView==='settings'&&accountReady())renderSettings();syncAccountGate();}
 }
 
 document.addEventListener('submit',async event=>{
