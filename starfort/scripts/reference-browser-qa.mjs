@@ -171,6 +171,50 @@ try{
  assert.equal(await evaluate("location.hash"),'','Signup confirmation URL tokens remained visible');
  console.log('PASS synthetic provider: signup locked until confirmation, email callback verified, session unlocked');
 
+ // Exercise real store rendering and free season claims with a synthetic server.
+ // The mock does NOT accept a real charge or credit any crystals.
+ assert.equal(await evaluate("!!document.querySelector('[data-view=shop]')"),true,'Shop navigation missing');
+ await evaluate("document.querySelector('[data-view=shop]').click()");
+ let premiumReady=false;
+ for(let i=0;i<80;i++){
+  premiumReady=await evaluate("!!document.querySelector('.premium-live-item')&&!!document.querySelector('.premium-season-tier')");
+  if(premiumReady)break;await sleep(100);
+ }
+ assert.ok(premiumReady,'Account shop not displaying server premium catalog');
+ assert.equal(await evaluate("document.querySelector('.premium-wallet')?.textContent.includes('0 ✦')"),true,'Zero uncredited crystals not shown');
+ assert.equal(await evaluate("[...document.querySelectorAll('.premium-packages button')].every(x=>x.disabled)"),true,'An unverified payment button was enabled');
+ // Simulate verified wins inside the isolated browser network stub, not real game state.
+ await evaluate(`(()=>{
+  const d=JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot'));
+  d.counters.win=2;
+  sessionStorage.setItem('__starfort_qa_snapshot',JSON.stringify(d));
+  document.querySelector('[data-premium-refresh]').click();
+ })()`);
+ let seasonReady=false;
+ for(let i=0;i<70;i++){
+  seasonReady=await evaluate("!!document.querySelector('[data-premium-action=claim][data-premium-item=\"1\"]:not([disabled])')");
+  if(seasonReady)break;await sleep(100);
+ }
+ assert.ok(seasonReady,'Verified synthetic wins did not unlock free season claim');
+ await evaluate("document.querySelector('[data-premium-action=claim][data-premium-item=\"1\"]').click()");
+ let claimed=false;
+ for(let i=0;i<70;i++){
+  claimed=await evaluate("!!document.querySelector('[data-premium-action=equip][data-premium-item=banner-trailblazer]')");
+  if(claimed)break;await sleep(100);
+ }
+ assert.ok(claimed,'Free season reward not in account inventory');
+ await evaluate("document.querySelector('[data-premium-action=equip][data-premium-item=banner-trailblazer]').click()");
+ let banner=false;
+ for(let i=0;i<70;i++){
+  banner=await evaluate("document.body.dataset.premiumBanner==='banner-trailblazer'");
+  if(banner)break;await sleep(100);
+ }
+ assert.ok(banner,'Purchased/earned cosmetics are not applied to village appearance');
+ const premiumMobile=await evaluate("({w:innerWidth,scroll:document.documentElement.scrollWidth,crystals:document.querySelector('.premium-wallet')?.textContent})");
+ assert.ok(premiumMobile.scroll<=premiumMobile.w+6,'Mobile premium shop horizontal overflow '+JSON.stringify(premiumMobile));
+ console.log('PASS v2.36: zero-charge payment lock, authenticated shop, verified free season reward, cosmetic equip and mobile layout');
+
+
 }finally{
  if(ws&&ws.readyState===1)ws.close();
  chrome.kill('SIGTERM');
