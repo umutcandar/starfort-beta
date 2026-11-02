@@ -253,23 +253,23 @@ begin
    -- Match the guest campaign's actual 3–8 progression contracts.
    -- Returning veterans can replay cleared chapters without being retroactively blocked.
    if stage>=3 and not (cleared @> to_jsonb(array[stage])) then
-    if (l.buildings->>'forge')::integer <
-       case when stage<=4 then 2 when stage<=6 then 3 else 4 end then
+    req:=case when stage<=4 then 2 when stage<=6 then 3 else 4 end;
+    if (l.buildings->>'forge')::integer < req then
      raise exception 'Yeni sefer için demirhaneyi geliştir.';
     end if;
-    if p.maze_floor <
-       case stage when 3 then 1 when 4 then 2 when 5 then 3 when 6 then 4 when 7 then 6 else 8 end then
+    req:=case stage when 3 then 1 when 4 then 2 when 5 then 3 when 6 then 4 when 7 then 6 else 8 end;
+    if p.maze_floor < req then
      raise exception 'Yeni sefer için önce labirent muhafızlarını geç.';
     end if;
     n:=0;
-    for hero in select jsonb_array_elements_text(roster) loop
-      for slot in select jsonb_object_keys(coalesce(gear->hero,'{}'::jsonb)) loop
-       n:=n+1;
-      end loop;
+    for i in 0..2 loop
+     hero:=roster->>i;
+     for slot in select jsonb_object_keys(coalesce(gear->hero,'{}'::jsonb)) loop
+      n:=n+1;
+     end loop;
     end loop;
-    if n < case when stage<=4 then 1 when stage<=6 then 2 else 3 end then
-     raise exception 'Yeni sefer için daha fazla ekipman kuşan.';
-    end if;
+    req:=case when stage<=4 then 1 when stage<=6 then 2 else 3 end;
+    if n<req then raise exception 'Yeni sefer için daha fazla ekipman kuşan.'; end if;
    end if;
   end if;
   power:=0;
