@@ -1072,7 +1072,11 @@ setInterval(()=>{if(villageView().construction){renderConstructionBanner();if($(
 setInterval(()=>{
  if(!villageSignedIn()||!accountProgressSnapshot?.mission||activeView!=='campaign')return;
  const remaining=Math.max(0,3000-(constructionUiNow()-accountProgressSnapshot.mission.lastTurnAt));
- for(const button of workspaceEl.querySelectorAll('[data-account-turn]'))button.disabled=villageBusy||remaining>0;
+ for(const button of workspaceEl.querySelectorAll('[data-account-turn]')){
+   const action=button.dataset.accountTurn||'',hero=action.startsWith('skill:')?action.slice(6):null;
+   const next=hero?(accountProgressSnapshot.mission.cooldowns?.[hero]||0):0;
+   button.disabled=villageBusy||remaining>0||next>accountProgressSnapshot.mission.turn+1;
+  }
  const hint=workspaceEl.querySelector('[data-server-wait]');
  if(hint)hint.textContent=remaining?'Yaklaşık '+Math.ceil(remaining/1000)+' sn bekle.':'Komut verebilirsin.';
 },1000);
