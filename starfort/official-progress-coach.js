@@ -10,6 +10,21 @@ export function isoWeek(now=Date.now()){
  const first=new Date(Date.UTC(year,0,1));
  return `${year}-${String(Math.ceil(((thursday-first)/86400000+1)/7)).padStart(2,'0')}`;
 }
+export const OFFICIAL_STORY_GATES=Object.freeze({
+ 3:{forge:2,gear:1,maze:1},4:{forge:2,gear:1,maze:2},
+ 5:{forge:3,gear:2,maze:3},6:{forge:3,gear:2,maze:4},
+ 7:{forge:4,gear:3,maze:6},8:{forge:4,gear:3,maze:8}
+});
+export function officialStoryReadiness(view,account,stage){
+ const gate=OFFICIAL_STORY_GATES[stage];
+ if(!gate||account?.cleared?.includes(stage))return {ok:true,missing:[]};
+ const equipped=Object.values(account?.loadouts||{}).reduce((sum,slots)=>sum+Object.values(slots||{}).filter(Boolean).length,0);
+ const missing=[];
+ if((view?.buildings?.forge||0)<gate.forge)missing.push({kind:'forge',value:view?.buildings?.forge||0,required:gate.forge,label:'Demirhane '+gate.forge});
+ if(equipped<gate.gear)missing.push({kind:'gear',value:equipped,required:gate.gear,label:gate.gear+' kuşanılmış eşya'});
+ if((account?.mazeFloor||0)<gate.maze)missing.push({kind:'maze',value:account?.mazeFloor||0,required:gate.maze,label:'Labirent '+gate.maze+'. kat'});
+ return {ok:missing.length===0,missing};
+}
 export function officialNextGoal(view,account,now=Date.now()){
  if(!account)return {id:'loading',title:'Komutan hesabı doğrulanıyor',detail:'Kayıtların alınması için sunucu bağlantısını yenile.',action:'campaign',label:'Tekrar dene'};
  const mission=account.mission;
@@ -20,6 +35,14 @@ export function officialNextGoal(view,account,now=Date.now()){
  if(!equipped&&account.inventory?.iron_sword)return {id:'equip',title:'İlk kahramanını donat',detail:'Çantandaki başlangıç kılıcını kuşan. Eşya, sunucu savaş gücünü kalıcı artırır.',action:'armory',label:'Cephaneliğe git'};
  if(cleared<8){
   const stage=STAGES[cleared],required=OFFICIAL_STAGE_THRESHOLDS[cleared];
+  const readiness=officialStoryReadiness(view,account,stage.id);
+  if(!readiness.ok){
+   const next=readiness.missing[0];
+   const action=next.kind==='maze'?'expedition':next.kind==='forge'?'keep':'armory';
+   return {id:'gate-'+next.kind,title:stage.name+' · '+next.label+' gerekli',
+     detail:`Şu an ${next.value}/${next.required}. Diğer bölgeye geçmeden önce ${next.kind==='forge'?'Demirhaneni yükselt':next.kind==='maze'?'Labirent muhafızlarını yen':'daha fazla ekipman kuşan'}. Bu şart sunucu tarafından da doğrulanır.`,
+     action,label:next.kind==='maze'?'Labirenti aç':next.kind==='forge'?'Köyü aç':'Cephaneliğe git'};
+  }
   if(power<required*.7)return {id:'train',title:stage.name+' için takımını güçlendir',detail:`Yeni bölgenin önerilen gücü ${required}. Kahraman eğitimleri veya ekipmanlarla hazır ol; resmî sunucu asgari gücü kontrol eder.`,action:'heroes',label:'Kahramanları eğit'};
   return {id:'story',title:'Sıradaki sefer: '+stage.name,detail:`${cleared}/8 bölge tamamlandı. Bu seferde yeni hikâye, ganimet ve kalıcı 1–3 yıldız kazanabilirsin.`,action:'expedition',label:'Seferi aç'};
  }
