@@ -27,12 +27,28 @@ export function specialEnemyAttack(battle,enemy,count) {
   if(battle.combatVersion===1)return null;
   if(battle.stageId===3 && enemy.role==='raider' && count%3===0)
     return {type:'thorn',label:'Dikenli pusu',detail:'Zehirli oklar yıldız enerjisini azaltır.',danger:true,multiplier:.85};
-  if(battle.stageId===4 && enemy.role==='boss' && count%4===0)
-    return {type:'shatter',label:'Demir kırıcı',detail:'Ön saftaki kalkanları aşan ağır tekli darbe.',danger:true,multiplier:1.6};
+  if(battle.stageId===2 && enemy.role==='caster' && count%3===0)
+    return {type:'grave',label:'Kırık Çan ayini',detail:'Rahip düşmanını iyileştirmeden önce büyüsünü kes.',danger:true,multiplier:.5};
+  if(battle.stageId===4 && enemy.role==='boss'){
+    const ratio=enemy.hp/Math.max(1,enemy.maxHp);
+    if(ratio<=.35 && count%2===0)
+      return {type:'shatter',label:'Celladın son yemini · III',detail:'Son safha: siperleri kıran ağır darbe. Hedefi sersemlet.',danger:true,multiplier:1.8};
+    if(ratio<=.7 && count%3===0)
+      return {type:'crush',label:'Demir fırtınası · II',detail:'İkinci safha: takıma alan hasarı. Hücumu kes veya sipere geç.',danger:true,multiplier:1.3};
+    if(ratio>.7 && count%4===0)
+      return {type:'shatter',label:'Demir kırıcı · I',detail:'İlk safha: ön hattın kalkanlarını kırar.',danger:true,multiplier:1.6};
+  }
   if(battle.stageId===5 && enemy.role==='caster' && count%2===0)
     return {type:'grave',label:'Mahzen ayini',detail:'Düşmanı iyileştirir ve takımı yaralar.',danger:true,multiplier:.5};
   if(battle.stageId===6 && enemy.role==='caster' && count%2===0)
     return {type:'frost',label:'Ayaz zinciri',detail:'Bütün takımı yavaşlatır, yıldız enerjisini tüketir.',danger:true,multiplier:.6};
+  if(battle.stageId===6 && enemy.role==='boss'){
+    const ratio=enemy.hp/Math.max(1,enemy.maxHp);
+    if(ratio<=.4 && count%2===0)
+      return {type:'nova',label:'Ayazın son nefesi · III',detail:'Son safha: bütün takıma ağır hasar. Hazırlığını kes.',danger:true,multiplier:1.45};
+    if(ratio<=.75 && count%3===0)
+      return {type:'crush',label:'Buzdan hüküm · II',detail:'İkinci safha: alan saldırısı. Savunmaya geç.',danger:true,multiplier:1.2};
+  }
   if(battle.stageId===7 && enemy.role==='caster' && count%2===0)
     return {type:'drain',label:'Tutulma soğurması',detail:'Takıma zarar verir ve kendini iyileştirir.',danger:true,multiplier:.55};
   if(battle.stageId===8 && enemy.role==='boss'){
