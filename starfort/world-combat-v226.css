@@ -109,3 +109,8 @@
 @keyframes act2-banner{0%,100%{box-shadow:0 0 7px var(--act2-haze)}50%{box-shadow:0 0 23px var(--act2-flare)}}
 @media(max-width:550px){.act2-ability-aura{top:25%;right:6%;width:38%;height:51%}.act2-ability-aura span{font-size:19px}.act2-ability-banner{font-size:8px;top:64px;padding:5px 7px}}
 @media(prefers-reduced-motion:reduce){.act2-environment i,.act2-ability-aura.active,.act2-ability-banner{animation:none!important}.act2-environment{opacity:.3}}
+
+/* Keep cinematic boss warnings visible above the WebGL renderer as well. */
+.official-combat-scene.is-3d .act2-environment{z-index:3;opacity:.3}
+.official-combat-scene.is-3d .act2-ability-aura{z-index:4}
+.official-combat-scene.is-3d .act2-ability-banner{z-index:8}
