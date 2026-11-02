@@ -15,7 +15,7 @@ export {seasonStatus,claimSeasonTitle,SEASON_GOALS,SEASON_TITLES} from './season
 export { CONTRACTS, BANNER_MILESTONES, contractsStatus } from './campaign-contracts.js';
 export { weeklyRiftStatus, RIFT_MODIFIERS } from './weekly-rift.js';
 export { COSMETIC_CONCEPTS, toggleWishlist } from './cosmetic-concepts.js';
-export { ITEMS, SLOTS, RARITIES, FIRST_CLEAR_LOOT, itemById, forgeItem, equipItem, unequipItem, equipmentStats } from './equipment.js';
+export { ITEMS, SLOTS, RARITIES, FIRST_CLEAR_LOOT, itemById, forgeItem, equipItem, unequipItem, equipmentStats, gearMasteryCost } from './equipment.js';
 export { campaignStarStatus, STAR_MILESTONES, THREE_STAR_LOOT } from './campaign-stars.js';
 export { labyrinthStatus, labyrinthLayout, moveLabyrinth, completeLabyrinthFloor, MAZE_FLOORS } from './labyrinth.js';
 // Starfort's local, deterministic rules. No DOM, storage or network side effects.
