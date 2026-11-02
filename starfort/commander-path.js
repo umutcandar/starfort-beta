@@ -13,7 +13,7 @@ export const COMMANDER_STEPS = Object.freeze([
   {id:'equip-hero',title:'Kahramanını donat',detail:'Cephanelikten bir kahramana ekipman kuşandır.',action:'armory',cta:'Cephaneliğe git',done:hasEquipment},
   {id:'finish-campaign',title:'Kuzey Sınırı’nı kurtar',detail:'Sekiz ana hikâye seferini tamamla.',action:'expedition',cta:'Seferlere git',done:s=>chaptersCleared(s)>=8},
   {id:'veteran',title:'Ustalık mührü kazan',detail:'Tamamladığın bir seferin Usta seviyesini kazan.',action:'expedition',cta:'Usta Seferlerine git',done:s=>tierTotal(s)>=1},
-  {id:'rift',title:'Yıldız Yarığı’nı keşfet',detail:'Haftalık meydan okumayı bir kez tamamla.',action:'expedition',cta:'Yıldız Yarığı’na git',done:s=>Array.isArray(s.riftRecords)&&s.riftRecords.length>0}
+  {id:'rift',title:'Yıldız Yarığı’nı keşfet',detail:'Haftalık meydan okumayı bir kez tamamla.',action:'expedition',cta:'Yıldız Yarığı’na git',done:s=>(Array.isArray(s.riftRecords)&&s.riftRecords.length>0)||!!s.serverRiftWeek}
 ]);
 
 export function commanderPath(state){
