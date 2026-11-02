@@ -1,0 +1,14 @@
+/* STARFORT v2.28 — official authenticated battles use the existing WebGL3D arena renderer. */
+.official-combat-scene{isolation:isolate}
+.official-3d-viewport{display:none;position:absolute;inset:0;z-index:2;overflow:hidden;background:#192b35}
+.official-combat-scene.is-3d .official-3d-viewport{display:block}
+.official-combat-scene.is-3d .official-stage-formation,.official-combat-scene.is-3d .official-arena-light,.official-combat-scene.is-3d .official-arena-vignette{display:none}
+.official-3d-canvas{display:block;width:100%;height:100%;min-height:100%;object-fit:cover;touch-action:pan-y;pointer-events:none}
+.official-render-switch{position:absolute;z-index:9;right:12px;top:41px;border:1px solid #b8c1c081;background:#152b3be8;color:#fbdfaa;font:700 10px system-ui,sans-serif;border-radius:7px;padding:7px 10px;cursor:pointer}
+.official-render-switch:hover,.official-render-switch:focus-visible{background:#394850;border-color:#edd59f;outline-offset:2px}
+.official-combat-scene.is-3d .official-weapon-flash,.official-combat-scene.is-3d .official-impact-ring{mix-blend-mode:screen}
+.official-combat-scene.is-3d .official-arena-foot,.official-combat-scene.is-3d .official-action-caption{background:#091a27a1;border-radius:5px;padding:3px 6px}
+.official-damage-summary{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:10px 0;padding:10px 12px;border:1px solid #7d99a970;background:linear-gradient(110deg,#23384d,#182836);border-radius:9px;font:12px system-ui,sans-serif;color:#e3d9c6}
+.official-damage-summary span{white-space:nowrap}.official-damage-summary b{color:#ffdc9e;font-weight:800}.official-damage-summary small{color:#afcbd1;font-size:10px}
+@media(max-width:580px){.official-render-switch{font-size:9px;right:7px;top:37px;padding:7px 8px}.official-combat-scene.is-3d .official-3d-canvas{min-height:250px}.official-damage-summary{font-size:10px;padding:8px}}
+@media(prefers-reduced-motion:reduce){.official-combat-scene.is-3d .official-impact-ring,.official-combat-scene.is-3d .official-weapon-flash{animation:none}}
