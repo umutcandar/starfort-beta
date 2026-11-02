@@ -173,7 +173,15 @@ try{
 
  // Exercise real store rendering and free season claims with a synthetic server.
  // The mock does NOT accept a real charge or credit any crystals.
- assert.equal(await evaluate("!!document.querySelector('[data-view=shop]')"),true,'Shop navigation missing');
+ let navReady=false;
+ for(let i=0;i<100;i++){
+  navReady=await evaluate("document.readyState==='complete'&&!!document.querySelector('[data-view=shop]')");
+  if(navReady)break;await sleep(100);
+ }
+ if(!navReady){
+  const d=await evaluate("({ready:document.readyState,nav:document.querySelector('#nav')?.innerHTML?.length||0,views:[...document.querySelectorAll('[data-view]')].slice(0,8).map(x=>x.dataset.view),app:document.querySelector('.app')?.inert,gate:document.body.classList.contains('account-locked'),hash:!!location.hash})");
+  throw Error('Shop navigation missing: '+JSON.stringify(d));
+ }
  await evaluate("document.querySelector('[data-view=shop]').click()");
  let premiumReady=false;
  for(let i=0;i<80;i++){
