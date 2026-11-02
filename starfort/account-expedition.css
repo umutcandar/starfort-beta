@@ -90,3 +90,11 @@
 .second-act-boss-phase .eyebrow{color:#ffc89a;font-size:10px}
 .second-act-boss-phase strong{font:700 17px Georgia,serif;color:#ffe0b0}
 .second-act-boss-phase small{font:12px/1.5 system-ui,sans-serif;color:#f0e5de}
+
+/* v2.33: the highlighted boss ability predicts the incoming counter window. */
+.act-two-special{margin-top:9px;padding:10px 12px;background:rgba(18,32,43,.65);border:1px solid rgba(188,163,126,.48);border-radius:8px;display:grid;gap:5px}
+.act-two-special.active{background:linear-gradient(100deg,rgba(121,53,32,.48),rgba(60,27,38,.68));border-color:#f3b366;box-shadow:0 0 0 1px #f3b36644}
+.act-two-special .eyebrow{font-weight:800;letter-spacing:.07em}
+.act-two-special p{margin:0;color:#ffe2b0;font:600 12px/1.5 system-ui,sans-serif}
+.act-two-special small{font:11px/1.45 system-ui,sans-serif;color:#c8d4d8}
+@media(max-width:600px){.act-two-special{padding:9px}.act-two-special p{font-size:11px}}
