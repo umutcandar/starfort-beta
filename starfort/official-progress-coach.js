@@ -2,7 +2,14 @@
  * Authenticated progress is never inferred from the guest/local browser save. */
 import {STAGES,teamPower} from './rules.js';
 export const OFFICIAL_STAGE_THRESHOLDS=Object.freeze([250,310,380,450,540,650,780,920]);
-const week=(now)=>{const d=new Date(now);const first=new Date(Date.UTC(d.getUTCFullYear(),0,4));const dow=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-dow);const fDow=(first.getUTCDay()+6)%7;first.setUTCDate(first.getUTCDate()-fDow);return `${d.getUTCFullYear()}-${String(Math.floor((d-first)/604800000)+1).padStart(2,'0')}`;};
+export function isoWeek(now=Date.now()){
+ const d=new Date(now);if(!Number.isFinite(d.getTime()))return null;
+ const thursday=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));
+ thursday.setUTCDate(thursday.getUTCDate()+4-(thursday.getUTCDay()||7));
+ const year=thursday.getUTCFullYear();
+ const first=new Date(Date.UTC(year,0,1));
+ return `${year}-${String(Math.ceil(((thursday-first)/86400000+1)/7)).padStart(2,'0')}`;
+}
 export function officialNextGoal(view,account,now=Date.now()){
  if(!account)return {id:'loading',title:'Komutan hesabı doğrulanıyor',detail:'Kayıtların alınması için sunucu bağlantısını yenile.',action:'campaign',label:'Tekrar dene'};
  const mission=account.mission;
@@ -21,7 +28,7 @@ export function officialNextGoal(view,account,now=Date.now()){
  if(bestStars<24)return {id:'stars',title:'Eksik yıldızları tamamla',detail:`Hikâye mührün ${bestStars}/24. Bölümleri tekrar oynayıp dereceni üç yıldıza çıkar.`,action:'expedition',label:'Yıldızlara git'};
  const veteran=Object.values(account.veteranMedals||{}).reduce((sum,n)=>sum+n,0);
  if(veteran<24)return {id:'veteran',title:'Usta seferlerini tamamla',detail:`Ustalık mührün ${veteran}/24. Bütün sekiz bölgenin üç zorluk kademesini aş.`,action:'expedition',label:'Usta seferlerini aç'};
- if(account.riftWeek!==week(now))return {id:'rift',title:'Haftalık Yıldız Yarığı seni bekliyor',detail:'Bu haftanın tek resmî yarık mührünü kazan.',action:'expedition',label:'Haftalık yarığı aç'};
+ if(account.riftWeek!==isoWeek(now))return {id:'rift',title:'Haftalık Yıldız Yarığı seni bekliyor',detail:'Bu haftanın tek resmî yarık mührünü kazan.',action:'expedition',label:'Haftalık yarığı aç'};
  if(view?.construction)return {id:'build',title:'Köy ustası çalışıyor',detail:'İnşaatının durumunu ve tamamlandığında kazandığın bina bonusunu kontrol et.',action:'keep',label:'Köye git'};
  return {id:'long-game',title:'Kuzeyin koruyucusu',detail:'Ekipmanlarını +5 ustalığa taşı, köyünü seviye 20’ye geliştir ve haftalık dünya patronuna katkı yap.',action:'armory',label:'Ekipmanı güçlendir'};
 }
