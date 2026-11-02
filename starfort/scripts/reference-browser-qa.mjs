@@ -101,6 +101,71 @@ try{
  assert.ok(state.right<=state.viewport+2&&state.left>=-2&&state.scroll<=state.viewport+3,'Mobile login must not overflow screen');
  await shot('starfort-390x844-server-verification.png');
  console.log('PASS v2.32: desktop/mobile account-only gate, no guest access, rejected login, fake-session lock');
+
+ // Real Chromium + synthetic email-provider responses: no live mail quota or player data.
+ // This tests login UI, confirmed-link browser callback, reload, mobile and account gate.
+ await evaluate("sessionStorage.clear()");
+ const mock=await readFile(new URL('./synthetic-account-network.cjs',import.meta.url),'utf8');
+ await cdp('Page.addScriptToEvaluateOnNewDocument',{source:mock});
+ await cdp('Emulation.setDeviceMetricsOverride',{width:1365,height:850,deviceScaleFactor:1,mobile:false});
+ await cdp('Page.navigate',{url:origin});
+ await ready();
+ assert.equal(await evaluate("window.__starfortQaMock===true"),true,'Synthetic service mock did not load');
+ assert.equal(await evaluate("document.querySelector('.app').inert"),true,'Unsigned mock browser unexpectedly unlocked');
+ await evaluate(\`(()=>{
+  const f=document.querySelector('#starfort-gate-form');
+  f.querySelector('[name=email]').value='qa@starfort.test';
+  f.querySelector('[name=password]').value='StarfortTest!528468';
+  f.requestSubmit(f.querySelector('[value=login]'));
+ })()\`);
+ let accountUnlocked=false;
+ for(let i=0;i<100;i++){
+  if(await evaluate("!document.body.classList.contains('account-locked')&&!document.querySelector('.app').inert")){accountUnlocked=true;break;}
+  await sleep(100);
+ }
+ assert.ok(accountUnlocked,'Synthetic signed-in account did not unlock the real UI');
+ assert.equal(await evaluate("!!document.querySelector('.village, .server-expedition, .app')"),true);
+ await cdp('Page.navigate',{url:origin});
+ let persists=false;
+ for(let i=0;i<100;i++){
+  if(await evaluate("!!document.querySelector('.app')&&!document.querySelector('.app').inert")){persists=true;break;}
+  await sleep(100);
+ }
+ assert.ok(persists,'Authenticated account session not restored after page reload');
+ await cdp('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:2,mobile:true});
+ await sleep(150);
+ const mobileSignedIn=await evaluate("({viewport:innerWidth,scroll:document.documentElement.scrollWidth,locked:document.querySelector('.app').inert})");
+ assert.equal(mobileSignedIn.locked,false,'Mobile authenticated app locked');
+ assert.ok(mobileSignedIn.scroll<=mobileSignedIn.viewport+5,'Mobile authenticated app horizontal overflow: '+JSON.stringify(mobileSignedIn));
+ console.log('PASS synthetic server responses: desktop login, persistent reload, 390px authenticated mobile game');
+ // The actual callback parser must accept the token from a confirmed email link.
+ await evaluate("sessionStorage.clear()");
+ await cdp('Page.navigate',{url:origin});
+ await ready();
+ await evaluate(\`(()=>{
+  const f=document.querySelector('#starfort-gate-form');
+  f.querySelector('[name=email]').value='qa@starfort.test';
+  f.querySelector('[name=password]').value='StarfortTest!528468';
+  f.requestSubmit(f.querySelector('[value=signup]'));
+ })()\`);
+ let signupPending=false;
+ for(let i=0;i<100;i++){
+  signupPending=await evaluate("!document.querySelector('[data-gate-resend]').hidden");
+  if(signupPending)break;
+  await sleep(100);
+ }
+ assert.ok(signupPending,'Synthetic signup did not render email-confirmation step');
+ assert.equal(await evaluate("document.querySelector('.app').inert"),true,'Signup without confirmation unlocked game');
+ await cdp('Page.navigate',{url:origin+'#access_token=qa.synthetic.jwt&refresh_token=qa.synthetic.refresh&expires_in=3600&type=signup'});
+ let confirmed=false;
+ for(let i=0;i<100;i++){
+  if(await evaluate("!!document.querySelector('.app')&&!document.querySelector('.app').inert")){confirmed=true;break;}
+  await sleep(100);
+ }
+ assert.ok(confirmed,'Simulated confirmation link failed to authorize account browser');
+ assert.equal(await evaluate("location.hash"),'','Signup confirmation URL tokens remained visible');
+ console.log('PASS synthetic provider: signup locked until confirmation, email callback verified, session unlocked');
+
 }finally{
  if(ws&&ws.readyState===1)ws.close();
  chrome.kill('SIGTERM');
