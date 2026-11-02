@@ -10,7 +10,7 @@ import {SUPABASE_URL,SUPABASE_KEY} from '../online-config.js';
 import {accountSignIn,accountSignOut,accountSession,loadAccountSession} from '../account-auth.js';
 import {accountProgressRequest} from '../account-progression.js';
 const tag='starfort-qa-'+(process.env.GITHUB_RUN_ID||Date.now());
-const email=tag+'@example.com';
+const email=tag+'-'+randomBytes(9).toString('hex')+'@gmail.com';
 const password='Test!'+randomBytes(36).toString('base64url');
 const headers={apikey:SUPABASE_KEY,'Content-Type':'application/json'};
 const must=(value,message)=>assert.ok(value,message);
