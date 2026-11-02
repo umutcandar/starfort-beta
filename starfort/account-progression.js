@@ -38,7 +38,7 @@ export function validateAccountSnapshot(data){
  if(data.bossWeek!==null&&data.bossWeek!==undefined&&(typeof data.bossWeek!=='string'||data.bossWeek.length>12))throw Error('Patron haftası geçersiz.');
 
  const m=data.mission;
- if(m!==null&&(!object(m)||!['story','veteran','rift','maze','boss'].includes(m.mode)||!safeNumber(m.stage,1,8)||
+ if(m!==null&&(!object(m)|| (m.enemyIntent!==undefined&&!['strike','crush','shield','drain'].includes(m.enemyIntent))||!['story','veteran','rift','maze','boss'].includes(m.mode)||!safeNumber(m.stage,1,8)||
  !safeNumber(m.turn,0,14)||!safeNumber(m.enemyHp,0,100000)||!safeNumber(m.playerHp,0,100000)||
  !safeNumber(m.lastTurnAt,1e12,2e13)|| (m.cooldowns!==undefined&&(!object(m.cooldowns)||!Object.entries(m.cooldowns).every(([id,next])=>HERO_IDS.has(id)&&safeNumber(next,1,20))))))throw Error('Sunucu sefer kaydı bozuk.');
  return {heroes:{...heroes},inventory:{...inventory},loadouts:structuredClone(loadouts),team:[...team],
