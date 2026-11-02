@@ -1,0 +1,39 @@
+/* STARFORT v2.27 — collectible 28-day chest board (account or local practice). */
+#reward-dialog{width:min(1040px,96vw);max-width:1040px;max-height:min(93dvh,1000px);padding:0;margin:auto;border:1px solid #c5a97e99;border-radius:16px;background:#0f2031;color:#e9efec;box-shadow:0 30px 90px #040f1be8;overflow:auto;overscroll-behavior:contain}
+#reward-dialog::backdrop{background:#020917df;backdrop-filter:blur(7px)}
+#reward-dialog .reward-sheet{position:relative;display:grid;gap:15px;padding:clamp(13px,2.5vw,26px);background:radial-gradient(ellipse at 76% 2%,#9c6d3e4b,transparent 47%),linear-gradient(150deg,#1b3347,#0c1d30)}
+.reward-close{position:sticky;top:3px;justify-self:end;z-index:5;width:37px;height:37px;border:1px solid #8c9f9b;border-radius:50%;color:#fff4d6;background:#243746;font-size:23px;cursor:pointer}
+.reward-sheet-header h2{font:700 clamp(27px,3vw,43px)/1.1 Georgia,serif;margin:5px 0 8px;color:#f8dfab}
+.reward-sheet-header p{font-size:13px;color:#c7d8da;margin:0;line-height:1.6}
+.reward-sheet .eyebrow{letter-spacing:.13em;color:#f4c87e;font-weight:700;font-size:10px}
+.reward-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.reward-summary>div{display:grid;gap:5px;padding:12px 9px;border:1px solid #7995a069;border-radius:9px;background:#152e3ea9;min-width:0}
+.reward-summary strong{color:#f9e4bb;font:700 clamp(15px,1.9vw,22px) Georgia,serif}
+.reward-summary small{color:#bbd1d7;font-size:10px}
+.reward-progress{height:9px;border:1px solid #b4ae9478;background:#081523;border-radius:99px;overflow:hidden}
+.reward-progress>span{display:block;height:100%;background:linear-gradient(90deg,#83bcbb,#ecc07b);transition:width .3s}
+.reward-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.reward-day{display:grid;grid-template-rows:auto 34px auto auto;align-content:space-between;gap:6px;min-width:0;min-height:116px;padding:10px 7px;border:1px solid #7288947c;border-radius:9px;background:linear-gradient(155deg,#2a3d4c,#172b40);text-align:center;opacity:.8}
+.reward-day-top{display:flex;justify-content:space-between;align-items:center;min-width:0}
+.reward-day-top small{font-size:9px;letter-spacing:.07em;color:#e7d6b8;font-weight:800}
+.reward-day-top span{display:grid;place-items:center;color:#162f29;background:#b5dfba;border-radius:50%;font-weight:800;font-size:11px;width:17px;height:17px}
+.reward-day-icon{font-size:27px;color:#ecc685;text-shadow:0 0 12px #cba2709c}
+.reward-day strong{font:700 11px/1.25 Georgia,serif;color:#f5ead5;min-height:28px}
+.reward-day-amount{font:700 9px/1.3 system-ui,sans-serif;color:#c6d7dc}
+.reward-day.collected{border-color:#82bfa27c;background:linear-gradient(155deg,#314e4a,#1b3c42)}
+.reward-day.active{opacity:1;border:2px solid #f0cb82;background:linear-gradient(145deg,#60503f,#263d4e);box-shadow:0 0 19px #e2b87538}
+.reward-day.milestone{background:linear-gradient(150deg,#5a413e,#2b3349);border-color:#dbac7cba;opacity:1}
+.reward-day.milestone.active{box-shadow:0 0 21px #e4a36d78}
+.reward-today{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:17px;align-items:center;border:1px solid #e3bf819c;border-radius:12px;padding:17px;background:linear-gradient(125deg,#3b3c41,#142a3e);box-shadow:0 8px 22px #0717265e}
+.reward-today h3{font:700 clamp(18px,2vw,26px) Georgia,serif;color:#ffe5b5;margin:6px 0 12px}
+.reward-breakdown{display:flex;flex-wrap:wrap;gap:6px}
+.reward-breakdown span{font-size:11px;font-weight:700;border:1px solid #77969c70;border-radius:6px;padding:7px 9px;background:#091e2da9}
+.reward-item{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:11px 0;color:#fff0c2}
+.reward-item small{font-size:10px;color:#c2d8d9;line-height:1.4}
+.reward-next{font-size:11px;color:#b6d1d5;margin:12px 0 0;line-height:1.6}
+.reward-claim{min-width:165px;min-height:52px;font-size:13px}
+.reward-claim:disabled{cursor:not-allowed;opacity:.65}
+.reward-footer{font-size:11px;line-height:1.55;color:#c8d5d5;margin:0;border-top:1px solid #90a1a54c;padding-top:13px}
+@media(max-width:760px){.reward-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.reward-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.reward-today{grid-template-columns:1fr}.reward-claim{width:100%}}
+@media(max-width:430px){#reward-dialog{width:98vw;max-height:95dvh}#reward-dialog .reward-sheet{padding:11px;gap:10px}.reward-grid{gap:5px}.reward-day{padding:7px 3px;min-height:98px;grid-template-rows:auto 28px auto auto;gap:3px}.reward-day strong{font-size:9px;min-height:24px}.reward-day-amount{font-size:8px}.reward-day-icon{font-size:21px}.reward-today{padding:12px}.reward-summary>div{padding:8px}.reward-summary small{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.reward-progress>span{transition:none}}
