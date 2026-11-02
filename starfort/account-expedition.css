@@ -45,3 +45,20 @@
 @media(max-width:850px){.server-modes{grid-template-columns:1fr}.server-stage-grid{grid-template-columns:1fr}.server-stage-card{min-height:90px}}
 @media(max-width:510px){.server-expedition{gap:10px}.server-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.server-progress-header{flex-direction:column;align-items:flex-start}.server-chapters,.server-modes>article,.server-contracts,.server-titles{padding:11px}.server-stage-card{padding:10px;flex-wrap:wrap}.server-stage-card button{width:100%;max-width:none}.server-health{grid-template-columns:1fr}.server-moves button{flex:1 1 35%}.server-progress-counters{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.server-expedition *{scroll-behavior:auto}}
+
+/* v2.30: three objective-driven stages per official story campaign. */
+.story-operation-list{list-style:none;margin:10px 0;padding:0;display:grid;gap:6px}
+.story-operation-list li{display:flex;gap:8px;align-items:flex-start;border-left:2px solid #4c6777;padding:5px 7px;background:rgba(10,25,40,.32);border-radius:3px}
+.story-operation-list li.current{border-color:#f0c783;background:rgba(180,135,64,.10)}
+.story-operation-list li.complete{border-color:#6eae9c;opacity:.86}
+.story-operation-list li>span{border:1px solid #668090;min-width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;color:#f7d99c}
+.story-operation-list li div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.story-operation-list li strong{color:#e8dfcc;font-size:12px}
+.story-operation-list li small{font-size:10px;line-height:1.4;color:#b4c7ce}
+.operation-guide{color:#b8ccd4;font-size:12px;line-height:1.55}
+.official-operation-current{background:rgba(197,143,63,.12);border:1px solid #8d754b;border-radius:8px;margin:8px 0;padding:10px}
+.official-operation-current strong{font-size:14px;color:#f6d899}
+.official-operation-current p{margin:6px 0;color:#d6e5e8;line-height:1.5;font-size:12px}
+.operation-dots{display:flex;gap:6px;margin-top:9px}
+.operation-dots span{height:5px;flex:1;border-radius:5px;background:#486374}
+.operation-dots span.reached{background:#f0ca84}

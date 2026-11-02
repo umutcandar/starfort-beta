@@ -1,4 +1,5 @@
 import {HEROES,STAGES} from './rules.js';
+import {operationStatus} from './story-operations.js';
 import {chapterAtmosphere} from './battle-atmosphere.js';
 const rects={aldren:[1,0,560],lyra:[1,560,525],rovan:[1,1085,451],mira:[2,0,575],doran:[2,575,565],vesper:[2,1140,396],eira:[3,0,505],raider:['enemies',0,512],caster:['enemies',512,528],boss:['enemies',1040,496]};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -10,6 +11,7 @@ const portrait=(unit,type,index,percent)=>`<div class="official-fighter ${type} 
 export function officialCombatScene(game,mission,report=null){
  if(!mission)return '';
  const stage=STAGES[mission.stage-1]||STAGES[0],atmosphere=chapterAtmosphere(stage.id);
+ const operation=operationStatus(mission);
  const team=(game.team||[]).filter(id=>HEROES.some(h=>h.id===id)).slice(0,3);
  const actorId=String(mission.lastAction||'').startsWith('skill:')?String(mission.lastAction).slice(6):'';
  const actor=HEROES.find(h=>h.id===actorId);
@@ -22,7 +24,7 @@ export function officialCombatScene(game,mission,report=null){
   <div class="official-3d-viewport" data-official-3d-view aria-hidden="true"></div>
   <button class="official-render-switch" type="button" data-official-render-toggle aria-pressed="false" title="Resmî savaşın 3D veya 2D görünümünü seç">3D görüntüyü aç</button>
   <div class="battle-biome"><strong>${esc(atmosphere.name)}</strong><small>${esc(atmosphere.mood)}</small></div>
-  <div class="official-arena-top"><span class="official-arena-badge">BÖLGE ${String(stage.id).padStart(2,'0')} · ${mission.mode==='veteran'?'USTA '+mission.tier:mission.mode==='maze'?'KAT '+mission.floor:mission.mode==='rift'?'YARIK':mission.mode==='boss'?'DÜNYA PATRONU':'RESMÎ SEFER'}</span><span class="official-turn-counter">TUR ${mission.turn+1} · <span data-official-render-state>2D savaş</span> · SUNUCU ONAYLI</span></div>
+  <div class="official-arena-top"><span class="official-arena-badge">BÖLGE ${String(stage.id).padStart(2,'0')} · ${mission.mode==='veteran'?'USTA '+mission.tier:mission.mode==='maze'?'KAT '+mission.floor:mission.mode==='rift'?'YARIK':mission.mode==='boss'?'DÜNYA PATRONU':'RESMÎ SEFER'}</span><span class="official-turn-counter">${operation?`GÖREV ${operation.wave}/${operation.total} · `:''}TUR ${mission.turn+1} · <span data-official-render-state>2D savaş</span> · SUNUCU ONAYLI</span></div>
   <div class="official-stage-formation"><div class="official-side allies">${team.map((id,i)=>portrait(id,'ally',i,ph)).join('')}</div>
   <div class="official-clash-center" aria-hidden="true"><span>⚔</span></div>
   <div class="official-side hostiles">${enemies.map((id,i)=>portrait(id,'enemy',i,eh)).join('')}</div></div>

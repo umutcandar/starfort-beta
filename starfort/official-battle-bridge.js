@@ -3,7 +3,7 @@
  * Supabase mission snapshot to the same room format used by the arena renderer. */
 import {HEROES} from './rules.js';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-const enemiesFor=mission=>mission.mode==='boss'||mission.stage>=7?['raider','boss','caster']:['raider','caster','raider'];
+const enemiesFor=mission=>mission.mode==='story'&&mission.waves>1&&mission.wave===mission.waves?['raider','boss','caster']:mission.mode==='story'&&mission.wave===2?['caster','raider','caster']:mission.mode==='boss'||mission.stage>=7?['raider','boss','caster']:['raider','caster','raider'];
 export function officialMissionIdentity(mission){
  if(!mission||!Number.isSafeInteger(mission.startedAt))return null;
  return `pve:${mission.mode}:${mission.stage}:${mission.startedAt}`;
@@ -49,7 +49,7 @@ export function officialBattleDelta(before,after){
  if(!after)return null;
  if(!before||officialMissionIdentity(before)!==officialMissionIdentity(after))return {turn:after.turn,damage:0,received:0,action:after.lastAction,initial:true};
  if(after.turn<=before.turn)return null;
- return Object.freeze({turn:after.turn,damage:Math.max(0,before.enemyHp-after.enemyHp),
+ return Object.freeze({turn:after.turn,waveAdvanced:after.wave>before.wave,damage:after.wave>before.wave?Math.max(0,before.enemyHp):Math.max(0,before.enemyHp-after.enemyHp),
   received:Math.max(0,before.playerHp-after.playerHp),action:after.lastAction,initial:false});
 }
 export function officialBattleOutcome(before,report){
