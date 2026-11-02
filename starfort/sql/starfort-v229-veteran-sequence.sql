@@ -247,7 +247,7 @@ begin
     raise exception 'Önce önceki usta seferi kademesini tamamla.';
    end if;
   else
-   if p_target is null or p_target!~'^[1-8] then raise exception 'Bilinmeyen hikâye bölümü.'; end if;
+   if p_target is null or p_target!~'^[1-8]$' then raise exception 'Bilinmeyen hikâye bölümü.'; end if;
    stage:=p_target::integer;
    if stage>jsonb_array_length(cleared)+1 then raise exception 'Önce önceki hikâye bölümünü tamamla.'; end if;
   end if;
