@@ -26,16 +26,22 @@ export function caravanStatus(village,now=Date.now()){
   }))});
 }
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export function caravanMarkup(village,now=Date.now()){
+export function caravanRecommendation(village,missing={},now=Date.now()){
+ const status=caravanStatus(village,now);
+ return status.offers.filter(o=>o.available&&Object.keys(o.reward).some(key=>(missing[key]||0)>0))
+  .sort((a,b)=>Math.min(missing[Object.keys(b.reward)[0]]||0,Object.values(b.reward)[0])-Math.min(missing[Object.keys(a.reward)[0]]||0,Object.values(a.reward)[0]))[0]?.id||null;
+}
+export function caravanMarkup(village,now=Date.now(),{missing={}}={}){
  if(!village?.serverVillage)return '';
  const status=caravanStatus(village,now);
+ const recommendation=caravanRecommendation(village,missing,now);
  const labels={gold:'altın',wood:'kereste',stone:'taş',aether:'yıldız özü'};
  const fmt=o=>Object.entries(o).map(([id,n])=>n.toLocaleString('tr-TR')+' '+labels[id]).join(' · ');
  return `<section class="caravan-market" aria-label="Kervan pazarı ve günlük kaynak takası">
  <div class="caravan-head"><div><span class="eyebrow">✦ KRALLIK LOJİSTİĞİ · SUNUCU TAKASI</span><h3>Kervan Pazarı</h3><p>Hangi malzemenin eksik olduğuna sen karar ver. Günlük en fazla iki ayrı ticaret tamamlanır. Teklifler ücretsiz kaynak üretmez.</p></div>
  <strong class="caravan-quota">${status.remaining}<small>/ ${status.limit} HAK</small></strong></div>
- <div class="caravan-routes">${status.offers.map(o=>`<article class="caravan-route ${o.available?'ready':''}">
-  <div class="caravan-symbol" aria-hidden="true">${o.icon}</div><strong>${esc(o.name)}</strong><p>${esc(o.description)}</p>
+ <div class="caravan-routes">${status.offers.map(o=>`<article class="caravan-route ${o.available?'ready':''} ${recommendation===o.id?'recommended':''}">
+  <div class="caravan-symbol" aria-hidden="true">${o.icon}</div><strong>${esc(o.name)}${recommendation===o.id?' · ÖNERİLEN':''}</strong><p>${esc(o.description)}</p>
   <div class="caravan-exchange"><small>VERİLECEK</small><span>${fmt(o.cost)}</span><small>ALINACAK</small><b>${fmt(o.reward)}</b></div>
   <button class="${o.available?'primary':'secondary'}" data-caravan-trade="${o.id}" ${o.available?'':'disabled'}>${o.claimed?'Bugün yapıldı':!o.unlocked?'Kale seviye '+o.unlock+' gerekli':status.remaining===0?'Günlük hak bitti':o.capped?'Depo dolu':!o.affordable?'Kaynak yetersiz':'Kervanı gönder'}</button>
   </article>`).join('')}</div>
