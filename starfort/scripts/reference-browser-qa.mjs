@@ -128,7 +128,7 @@ try{
  await cdp('Page.navigate',{url:origin});
  let persists=false;
  for(let i=0;i<100;i++){
-  if(await evaluate("!!document.querySelector('.app')&&!document.querySelector('.app').inert")){persists=true;break;}
+  if(await evaluate("document.readyState==='complete'&&!document.body.classList.contains('account-locked')&&!!document.querySelector('[data-view=shop]')&&!document.querySelector('.app').inert")){persists=true;break;}
   await sleep(100);
  }
  assert.ok(persists,'Authenticated account session not restored after page reload');
@@ -157,7 +157,14 @@ try{
  assert.ok(signupPending,'Synthetic signup did not render email-confirmation step');
  assert.equal(await evaluate("document.querySelector('.app').inert"),true,'Signup without confirmation unlocked game');
  await cdp('Page.navigate',{url:origin+'#access_token=qa.synthetic.jwt&refresh_token=qa.synthetic.refresh&expires_in=3600&type=signup'});
- // Same-document hash navigation does not run startup auth callback; email links perform a new document load.
+ // The same-document hash update is asynchronous in Chrome DevTools: wait before forcing reload.
+ let emailHashReady=false;
+ for(let i=0;i<80;i++){
+  emailHashReady=await evaluate("location.hash.includes('access_token=qa.synthetic.jwt')");
+  if(emailHashReady)break;await sleep(50);
+ }
+ assert.ok(emailHashReady,'Simulated email link did not update current browser address');
+ // Real confirmation opens a new document; execute the actual startup auth parser.
  await cdp('Page.reload',{ignoreCache:true});
  let confirmed=false;
  for(let i=0;i<100;i++){
