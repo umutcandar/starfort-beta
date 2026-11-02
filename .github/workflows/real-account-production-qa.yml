@@ -1,0 +1,21 @@
+name: STARFORT real-account production QA
+on:
+  push:
+    paths:
+      - 'starfort/scripts/real-account-production-qa.mjs'
+      - '.github/workflows/real-account-production-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  authenticated-campaign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify real Supabase signup, login and production battle
+        working-directory: starfort
+        run: node scripts/real-account-production-qa.mjs
