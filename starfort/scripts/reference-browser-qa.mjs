@@ -301,6 +301,30 @@ try{
   assert.ok(await evaluate("!!document.querySelector('.server-mission [data-account-turn=skill]')"),'Server combat must expose real turn commands');
   assert.equal(await evaluate("document.querySelectorAll('.official-combat-scene .official-fighter.ally').length"),3,'Illustrated combat has three original hero sprites');
   assert.equal(await evaluate("document.querySelectorAll('.official-combat-scene .official-fighter.enemy').length"),3,'Illustrated combat has three original enemy sprites');
+  assert.ok(await evaluate("!!document.querySelector('[data-official-3d-view]')"),'Authenticated battle exposes real WebGL3D viewport');
+  const supports3D=await evaluate("!!document.createElement('canvas').getContext('webgl2')");
+  const actual3D=await evaluate("document.querySelector('.official-combat-scene').classList.contains('is-3d')");
+  if(supports3D)assert.ok(actual3D,'WebGL2-supported Chromium should render official 3D by default');
+  const initialEngine=await evaluate("document.querySelector('[data-official-render-state]')?.textContent");
+  assert.ok(initialEngine==='3D canlı savaş'||initialEngine==='2D savaş');
+  if(actual3D){
+   await evaluate("document.querySelector('.official-3d-canvas').dataset.qaStable='persisted'");
+   await evaluate("document.querySelector('[data-realm-select]').click()");
+   assert.equal(await evaluate("document.querySelector('.official-3d-canvas')?.dataset.qaStable"),'persisted','3D GPU canvas must survive expedition DOM rerender');
+   await evaluate("document.querySelector('[data-village-refresh]').click()");
+   await sleep(450);
+   assert.equal(await evaluate("document.querySelector('.official-3d-canvas')?.dataset.qaStable"),'persisted','3D GPU canvas must survive authenticated server refresh');
+  }
+  await evaluate("document.querySelector('[data-official-render-toggle]').click()");
+  assert.ok(await evaluate("!!document.querySelector('.official-combat-scene')"),'Switching 3D/2D may never lose the active verified mission');
+  assert.notEqual(await evaluate("document.querySelector('.official-combat-scene').classList.contains('is-3d')"),actual3D,'Renderer mode toggles when 3D is available');
+  await evaluate("document.querySelector('[data-official-render-toggle]').click()");
+  assert.equal(await evaluate("document.querySelector('.official-combat-scene').classList.contains('is-3d')"),actual3D,'Original rendering mode restored');
+  if(actual3D){
+   const glShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
+   await writeFile('qa-artifacts/starfort-1536x864-official-webgl3d-v228.png',Buffer.from(glShot.data,'base64'));
+  }
+
 
   const authScreenshot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
   await writeFile('qa-artifacts/starfort-1536x864-server-account-campaign.png',Buffer.from(authScreenshot.data,'base64'));
