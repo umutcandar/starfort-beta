@@ -46,7 +46,7 @@ export function validateVillageSnapshot(data){
 }
 export function villageServerView(local,server){
  if(!server)return {...local,serverVillage:true,serverVillageReady:false};
- return {...local,serverVillage:true,serverVillageReady:true,serverMastery:server.mastery,serverTradeDay:server.tradeDay,serverTradeRoutes:[...server.tradeRoutes],
+ return {...local,serverVillage:true,serverVillageReady:true,serverMastery:server.mastery,tradeDay:server.tradeDay,tradeRoutes:[...server.tradeRoutes],
   res:{...server.res},buildings:{...server.buildings},construction:server.construction?{...server.construction}:null,
   lastCollected:server.lastCollected,lastDailyReward:server.lastDailyReward};
 }
