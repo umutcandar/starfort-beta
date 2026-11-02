@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {CARAVAN_ROUTES,CARAVAN_DAILY_LIMIT,caravanMarkup,caravanStatus} from './kingdom-caravan.js';
+import {CARAVAN_ROUTES,CARAVAN_DAILY_LIMIT,caravanMarkup,caravanStatus,caravanRecommendation} from './kingdom-caravan.js';
 import {validateVillageSnapshot,villageServerView,villageAuthorityRequest} from './village-authority.js';
 import {loadAccountSession} from './account-auth.js';
 import {createState} from './rules.js';
@@ -85,4 +85,13 @@ test('SQL is the sole authority for trade cost, guard, daily quota and idempoten
  assert.match(sql,/trade_day=v_row.trade_day,trade_routes=v_row.trade_routes/);
  assert.match(sql,/insert into public.starfort_village_requests\(user_id,request_id,response\)/);
  assert.match(sql,/revoke all on function public.sfb_village_api/);
+});
+
+test('workshop highlights an affordable caravan matching the missing building materials',()=>{
+ const town=village();
+ assert.equal(caravanRecommendation(town,{wood:110},TODAY),'wood');
+ assert.equal(caravanRecommendation(town,{stone:180},TODAY),'stone');
+ assert.equal(caravanRecommendation(town,{aether:10},TODAY),'aether');
+ assert.equal(caravanRecommendation(town,{gold:100},TODAY),null);
+ assert.match(caravanMarkup(town,TODAY,{missing:{wood:110}}),/caravan-route ready recommended/);
 });
