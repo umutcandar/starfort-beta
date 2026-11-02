@@ -43,8 +43,8 @@ test('official combat reuses real hero enemy atlases, chapter biome and server H
  const html=officialCombatScene(game,mission);
  assert.match(html,/scene-forest/);
  assert.match(html,/battle-heroes-1.webp/);assert.match(html,/battle-enemies.webp/);
- assert.match(html,/SUNUCU ONAYLI/);assert.match(html,/Kılıçlar/); 
- assert.match(html,/server/gi);
+ assert.match(html,/SUNUCU ONAYLI/);assert.match(html,/Siperler kuruldu/); 
+ assert.match(html,/official-combat-scene/);
  assert.doesNotMatch(html,/data-claim-|data-stage="3"|data-reward=/);
  assert.equal(officialCombatScene(game,null),'');
 });
