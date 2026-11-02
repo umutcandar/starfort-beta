@@ -17,14 +17,14 @@ export function officialCombatScene(game,mission,report=null){
  const ph=mission.playerMaxHp?mission.playerHp/mission.playerMaxHp*100:0;
  const eh=mission.enemyMaxHp?mission.enemyHp/mission.enemyMaxHp*100:0;
  const enemies=mission.mode==='boss'?['raider','boss','caster']:mission.stage>=7?['raider','caster','boss']:mission.stage>=4?['raider','caster','raider']:['raider','caster','raider'];
- return `<section class="official-combat-scene scene-${atmosphere.id}" role="region" aria-label="Sunucu tarafından yönetilen görsel savaş alanı">
+ return `<section class="official-combat-scene scene-${atmosphere.id} ${actor?'hero-skill-impact':'basic-combat-impact'}" role="region" aria-label="Sunucu tarafından yönetilen görsel savaş alanı">
   <div class="official-arena-light" aria-hidden="true"></div><div class="official-arena-vignette"></div>
   <div class="battle-biome"><strong>${esc(atmosphere.name)}</strong><small>${esc(atmosphere.mood)}</small></div>
   <div class="official-arena-top"><span class="official-arena-badge">BÖLGE ${String(stage.id).padStart(2,'0')} · ${mission.mode==='veteran'?'USTA '+mission.tier:mission.mode==='maze'?'KAT '+mission.floor:mission.mode==='rift'?'YARIK':mission.mode==='boss'?'DÜNYA PATRONU':'RESMÎ SEFER'}</span><span class="official-turn-counter">TUR ${mission.turn+1} · SUNUCU ONAYLI</span></div>
   <div class="official-stage-formation"><div class="official-side allies">${team.map((id,i)=>portrait(id,'ally',i,ph)).join('')}</div>
   <div class="official-clash-center" aria-hidden="true"><span>⚔</span></div>
   <div class="official-side hostiles">${enemies.map((id,i)=>portrait(id,'enemy',i,eh)).join('')}</div></div>
-  <div class="official-weapon-flash" aria-hidden="true"></div><div class="official-action-caption" role="status">${esc(lastLabel)}</div>
+  <div class="official-weapon-flash" aria-hidden="true"></div><div class="official-impact-ring" aria-hidden="true"></div><div class="official-action-caption" role="status">${esc(lastLabel)}</div>
   <div class="official-arena-foot"><span>${esc(stage.enemyName)}</span><span>Güç ${Number(mission.power||0).toLocaleString('tr-TR')} · ${mission.turn} hamle</span></div>
  </section>`;
 }
