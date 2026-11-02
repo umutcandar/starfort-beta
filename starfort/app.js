@@ -27,6 +27,8 @@ import {buildingWorkshopMarkup} from './building-workshop.js';
 import {villageAuthorityRequest,villageServerView,validateVillageSnapshot} from './village-authority.js';
 import {accountProgressRequest,accountServerView} from './account-progression.js';
 import {accountExpeditionMarkup} from './account-expedition.js';
+import {createOfficialBattleDirector} from './official-3d-director.js';
+import {officialBattleDelta} from './official-battle-bridge.js';
 import {calendarRequest,rewardCalendarMarkup} from './reward-calendar.js';
 import {trustedConstructionNow} from './construction-clock.js';
 import {labyrinthMarkup} from './labyrinth-view.js';
@@ -146,6 +148,8 @@ function notify(message) {
 function result(action, success) { if (!action.ok) { notify(action.error); return false; } if (success) notify(success); persist(); render(); return true; }
 let villageSnapshot=null,villageOwner=null,villageBusy=false,villageGeneration=0;
 let accountProgressSnapshot=null,accountProgressOwner=null,selectedRealm=null;
+const official3D=createOfficialBattleDirector({store:localStorage,motionPreference:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false});
+let lastCombatDelta=null;
 let dailySnapshot=null,dailyOwner=null,dailyBusy=false;
 const villageSignedIn=()=>!!accountSession();
 function villageView(){
@@ -186,7 +190,9 @@ function acceptVillage(response){
 function acceptAccountProgress(response){
  if(!villageSignedIn()||response.identity!==accountSession()?.user?.id)return false;
  if(villageOwner===response.identity&&villageSnapshot&&response.data.revision<villageSnapshot.revision)return false;
- accountProgressOwner=response.identity;accountProgressSnapshot=response.account;
+ const prevCombat=accountProgressOwner===response.identity?accountProgressSnapshot?.mission:null;
+  lastCombatDelta=officialBattleDelta(prevCombat,response.account.mission);
+  accountProgressOwner=response.identity;accountProgressSnapshot=response.account;
  return acceptVillage({identity:response.identity,snapshot:validateVillageSnapshot(response.data)});
 }
 async function refreshVillage({preserve=false}={}){
@@ -428,7 +434,11 @@ function renderContractCards() {
   return `<section class="campaign-contracts" aria-label="Günlük komutan görevleri"><div class="contract-heading"><div><span class="eyebrow">GÜNLÜK KOMUTAN GÖREVLERİ · İSTEĞE BAĞLI</span><h3>Bugün kalende iz bırak</h3><p>Her gün yeni küçük hedefler. Seri kaybı veya ödeme zorunluluğu yok; ödüller yalnızca hikâye ilerlemesini destekler.</p></div><div class="banner-track"><b>✦ ${status.totalClaims} mühür</b><small>${next ? `Sonraki kozmetik unvan: ${next.name} (${next.count} mühür)` : 'Tüm unvanlar açıldı'}</small></div></div><div class="contract-grid">${status.contracts.map(c=>`<article class="contract-card"><span class="eyebrow">${c.progress} / ${c.target}</span><h4>${c.title}</h4><p>${c.detail}</p><div class="contract-progress"><i style="width:${c.progress/c.target*100}%"></i></div><small>Ödül: ${Object.entries(c.reward).map(([id,n])=>`${number(n)} ${resourceName[id]}`).join(' · ')}</small><button class="${c.progress>=c.target&&!c.claimed?'primary':'secondary'}" data-claim-contract="${c.id}" ${c.claimed||c.progress<c.target?'disabled':''}>${c.claimed?'Alındı':c.progress>=c.target?'Ödülü al':'Devam ediyor'}</button></article>`).join('')}</div><p class="contract-cosmetic">${status.earned.length?'Açılan kozmetik unvanlar: '+status.earned.join(' · '):'İlk unvan için 3 görev mühürü topla.'} · Unvanlar kozmetiktir, savaş gücünü artırmaz.</p></section>`;
 }
 function renderExpedition() {
-  if(villageSignedIn()){workspaceEl.innerHTML=accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow(),selectedRealm);return;}
+  if(villageSignedIn()){
+    workspaceEl.innerHTML=accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow(),selectedRealm,lastCombatDelta);
+    official3D.sync(workspaceEl,villageView().team,accountProgressSnapshot?.mission,accountProgressOwner);
+    return;
+  }
   const starStatus=R.campaignStarStatus(state),season=R.seasonStatus(state);
   const completed=state.cleared.length===R.STAGES.length;
   const next = Math.min(state.cleared.length + 1, R.STAGES.length), currentStage = R.STAGES[next-1], chapter = CHAPTERS[next-1];
@@ -730,6 +740,7 @@ async function cloudSaveAction(action){
   finally{cloudSaveBusy=false;if(activeView==='settings')renderSettings();}
 }
 function renderWorkspace() {
+  if(activeView!=='campaign'&&!(villageSignedIn()&&activeView==='labyrinth'))official3D.sync(null);
   if(trainingCleanup){trainingCleanup();trainingCleanup=null;}
   const open = activeView !== 'keep' && activeView !== 'expedition'; workspaceEl.hidden = !open; inspectorEl.hidden = open; document.querySelector('.app').classList.toggle('panel-open', open); workspaceEl.dataset.view = activeView;
   if (activeView === 'heroes') renderHeroes(); else if (activeView === 'campaign') renderExpedition(); else if (activeView === 'journal') renderJournal(); else if (activeView === 'labyrinth') {if(villageSignedIn())renderExpedition();else workspaceEl.innerHTML=labyrinthMarkup(state);} else if (activeView === 'armory') renderArmory(); else if (activeView === 'shop') renderShop(); else if (activeView === 'guild') renderGuild(); else if (activeView === 'settings') renderSettings(); else if (activeView === 'training') trainingCleanup=mountTraining(workspaceEl); else if(activeView==='arena')trainingCleanup=mountArena(workspaceEl); else if(activeView==='team')trainingCleanup=mountTeamArena(workspaceEl);
@@ -963,6 +974,12 @@ function dispatch(action) {
   }
   if(button.hasAttribute('data-village-refresh')){void refreshVillage();return;}
   if(button.hasAttribute('data-village-match-claim')){void claimServerMatchRewards();return;}
+  if(button.hasAttribute('data-official-render-toggle')){
+    if(!villageSignedIn()||!accountProgressSnapshot?.mission)return;
+    const pref=official3D.toggle(workspaceEl,villageView().team,accountProgressSnapshot.mission,accountProgressOwner);
+    notify(pref==='3d'?'Resmî savaş için 3D görünüm seçildi.':'Resmî savaş için 2D görünüm seçildi.');
+    return;
+  }
   if(button.dataset.realmSelect){
     const chapter=Number(button.dataset.realmSelect);
     if(Number.isInteger(chapter)&&chapter>=1&&chapter<=8){selectedRealm=chapter;renderExpedition();}
@@ -1174,10 +1191,10 @@ setInterval(()=>{if(accountSession()&&!document.hidden&&!villageBusy)void refres
 setInterval(() => { const pending = $('#production-gain'); if (pending) pending.innerHTML = costHtml(R.production(villageView(),constructionUiNow()), true); renderCityProduction(); }, 3000);
 setInterval(()=>{if(activeView==='guild'&&!guildBusy&&!document.hidden&&guildToken&&document.activeElement?.tagName!=='INPUT')refreshGuild();},7000);
 document.addEventListener('visibilitychange', () => {
- if(document.hidden){gameAudio.suspend();combatRunner.pause();persist();void accountSync.flush();}
- else{gameAudio.resume();if(accountSession())void accountSync.refresh();}
+ if(document.hidden){gameAudio.suspend();combatRunner.pause();official3D.pause();persist();void accountSync.flush();}
+ else{gameAudio.resume();official3D.resume();if(accountSession())void accountSync.refresh();}
 });
-window.addEventListener('pagehide', () => {combatRunner.pause();persist();});
+window.addEventListener('pagehide', () => {combatRunner.pause();official3D.destroy();persist();});
 
 document.addEventListener('fullscreenchange',()=>{const active=!!document.fullscreenElement; $('[data-fullscreen]').setAttribute('aria-label',active?'Tam ekrandan çık':'Tam ekranı aç'); scene?.resize();});
 
