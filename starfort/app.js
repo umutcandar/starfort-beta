@@ -144,7 +144,7 @@ function notify(message) {
 }
 function result(action, success) { if (!action.ok) { notify(action.error); return false; } if (success) notify(success); persist(); render(); return true; }
 let villageSnapshot=null,villageOwner=null,villageBusy=false,villageGeneration=0;
-let accountProgressSnapshot=null,accountProgressOwner=null;
+let accountProgressSnapshot=null,accountProgressOwner=null,selectedRealm=null;
 const villageSignedIn=()=>!!accountSession();
 function villageView(){
  if(!villageSignedIn())return state;
@@ -188,7 +188,7 @@ async function accountProgressAction(action,target=null,aux=null){
    const report=response.account.lastReport;
    if(action==='mission_turn'&&!response.account.mission&&report){
     notify(report.won?'★ Sunucu zaferi! '+report.stars+' yıldız · Kaynaklar ve ganimet kaydedildi.':'Sefer sonuçlandı. Takımını geliştirip yeniden dene.');
-   }else notify(({'hero':'Kahraman eğitildi','forge':'Ekipman üretildi','equip':'Ekipman kuşanıldı','unequip':'Ekipman çıkarıldı','team':'Takım kaydedildi','mission_start':'Sunucu seferi başladı','mission_abandon':'Seferden çekildin','contract':'Doğrulanmış görev ödülü alındı','title':'Unvan açıldı'})[action]||'Savaş komutu sunucuda işlendi.');
+   }else notify(({'hero':'Kahraman eğitildi','enhance':'Eşya ustalığı geliştirildi','boss_claim':'Ortak dünya patronu ödülü alındı','forge':'Ekipman üretildi','equip':'Ekipman kuşanıldı','unequip':'Ekipman çıkarıldı','team':'Takım kaydedildi','mission_start':'Sunucu seferi başladı','mission_abandon':'Seferden çekildin','contract':'Doğrulanmış görev ödülü alındı','title':'Unvan açıldı'})[action]||'Savaş komutu sunucuda işlendi.');
   }
  }catch(error){notify('Sunucu: '+error.message);await refreshVillage({preserve:true});}
  finally{villageBusy=false;}
@@ -396,7 +396,7 @@ function renderContractCards() {
   return `<section class="campaign-contracts" aria-label="Günlük komutan görevleri"><div class="contract-heading"><div><span class="eyebrow">GÜNLÜK KOMUTAN GÖREVLERİ · İSTEĞE BAĞLI</span><h3>Bugün kalende iz bırak</h3><p>Her gün yeni küçük hedefler. Seri kaybı veya ödeme zorunluluğu yok; ödüller yalnızca hikâye ilerlemesini destekler.</p></div><div class="banner-track"><b>✦ ${status.totalClaims} mühür</b><small>${next ? `Sonraki kozmetik unvan: ${next.name} (${next.count} mühür)` : 'Tüm unvanlar açıldı'}</small></div></div><div class="contract-grid">${status.contracts.map(c=>`<article class="contract-card"><span class="eyebrow">${c.progress} / ${c.target}</span><h4>${c.title}</h4><p>${c.detail}</p><div class="contract-progress"><i style="width:${c.progress/c.target*100}%"></i></div><small>Ödül: ${Object.entries(c.reward).map(([id,n])=>`${number(n)} ${resourceName[id]}`).join(' · ')}</small><button class="${c.progress>=c.target&&!c.claimed?'primary':'secondary'}" data-claim-contract="${c.id}" ${c.claimed||c.progress<c.target?'disabled':''}>${c.claimed?'Alındı':c.progress>=c.target?'Ödülü al':'Devam ediyor'}</button></article>`).join('')}</div><p class="contract-cosmetic">${status.earned.length?'Açılan kozmetik unvanlar: '+status.earned.join(' · '):'İlk unvan için 3 görev mühürü topla.'} · Unvanlar kozmetiktir, savaş gücünü artırmaz.</p></section>`;
 }
 function renderExpedition() {
-  if(villageSignedIn()){workspaceEl.innerHTML=accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow());return;}
+  if(villageSignedIn()){workspaceEl.innerHTML=accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow(),selectedRealm);return;}
   const starStatus=R.campaignStarStatus(state),season=R.seasonStatus(state);
   const completed=state.cleared.length===R.STAGES.length;
   const next = Math.min(state.cleared.length + 1, R.STAGES.length), currentStage = R.STAGES[next-1], chapter = CHAPTERS[next-1];
@@ -817,7 +817,7 @@ function castHeroSkill(heroId) {
 }
 
 function render() {
-  gameAudio.setScene($('#battle-dialog').open?'combat':'village');
+  gameAudio.setScene($('#battle-dialog').open||(villageSignedIn()&&accountProgressSnapshot?.mission&&activeView==='campaign')?'combat':'village');
   renderResources(); renderNav(); renderPicker(); renderInspector(); renderQuest(); renderWorkspace();
   scene?.update(villageView());
   if ($('#building-dialog').open) renderBuildingDialog();
@@ -923,12 +923,23 @@ function dispatch(action) {
   }
   if(button.hasAttribute('data-village-refresh')){void refreshVillage();return;}
   if(button.hasAttribute('data-village-match-claim')){void claimServerMatchRewards();return;}
-  if(button.dataset.accountStage||button.dataset.accountVeteran||button.dataset.accountTurn||button.dataset.accountContract||button.dataset.accountTitle||button.hasAttribute('data-account-maze')||button.hasAttribute('data-account-rift')||button.hasAttribute('data-account-abandon')){
+  if(button.dataset.realmSelect){
+    const chapter=Number(button.dataset.realmSelect);
+    if(Number.isInteger(chapter)&&chapter>=1&&chapter<=8){selectedRealm=chapter;renderExpedition();}
+    return;
+  }
+  if(button.dataset.accountEnhance){
+    if(villageSignedIn())void accountProgressAction('enhance',button.dataset.accountEnhance);
+    return;
+  }
+  if(button.hasAttribute('data-account-boss-claim')){if(villageSignedIn())void accountProgressAction('boss_claim');return;}
+  if(button.hasAttribute('data-account-boss')){if(villageSignedIn())void accountProgressAction('mission_start','boss');return;}
+  if(button.dataset.realmMission||button.dataset.accountStage||button.dataset.accountVeteran||button.dataset.accountTurn||button.dataset.accountContract||button.dataset.accountTitle||button.hasAttribute('data-account-maze')||button.hasAttribute('data-account-rift')||button.hasAttribute('data-account-abandon')){
     if(!villageSignedIn())return notify('Önce hesabına giriş yap.');
     const action=button.dataset.accountTurn?'mission_turn':
       button.hasAttribute('data-account-abandon')?'mission_abandon':
       button.dataset.accountContract?'contract':button.dataset.accountTitle?'title':'mission_start';
-    const target=button.dataset.accountStage||button.dataset.accountContract||button.dataset.accountTitle||
+    const target=button.dataset.realmMission||button.dataset.accountStage||button.dataset.accountContract||button.dataset.accountTitle||
       (button.dataset.accountVeteran?'veteran:'+button.dataset.accountVeteran:button.hasAttribute('data-account-maze')?'maze:'+((accountProgressSnapshot?.mazeFloor||0)+1):button.hasAttribute('data-account-rift')?'rift':null);
     void accountProgressAction(action,target,button.dataset.accountTurn||null);return;
   }
