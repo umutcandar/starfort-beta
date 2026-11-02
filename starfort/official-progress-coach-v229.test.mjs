@@ -34,7 +34,7 @@ test('server game state genuinely drives progression steps, veteran and weekly r
  p.veteranMedals=Object.fromEntries(Array.from({length:8},(_,i)=>[i+1,3]));
  assert.equal(officialNextGoal(s,p,T).id,'rift');
  p.riftWeek=isoWeek(T);
- assert.equal(officialNextGoal(s,p,T).id,'long-game');
+ assert.equal(officialNextGoal(s,p,T).id,'chronicle-train');
 });
 test('active official combat wins over all other recommendations, and teacher never invents a claim',()=>{
  const s=accountServerView(game(),profile()),p=profile({mission:{mode:'story',stage:1,turn:0,lastAction:'Başladı'}});
