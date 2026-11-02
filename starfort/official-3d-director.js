@@ -9,18 +9,23 @@ export function officialGraphicsPreference(store){
 }
 export function createOfficialBattleDirector({store=null,onModeChange=()=>{},motionPreference=false}={}){
  let preferred=officialGraphicsPreference(store),renderer=null,canvas=null,active=null,party=[],previous=null,owner=null;
- let clock=0,frameId=null,lastRender=0,disposed=false,root=null,mode='sprites',lost=()=>{};
+ let frameId=null,lastRender=0,lastPaint=0,disposed=false,root=null,mode='sprites',lost=()=>{};
  function stop(){if(frameId!==null){cancelAnimationFrame(frameId);frameId=null;}}
  function release(){
   stop();try{canvas?.removeEventListener('webglcontextlost',lost);}catch{}
   try{renderer?.dispose();}catch{}
-  renderer=null;canvas=null;mode='sprites';previous=null;active=null;party=[];owner=null;
+  renderer=null;canvas=null;mode='sprites';previous=null;active=null;party=[];owner=null;lastPaint=0;
   if(root){root.classList.remove('is-3d');root=null;}
  }
  function frame(){
   frameId=null;
   if(disposed||!renderer||!active||!root?.isConnected||document.hidden){if(!document.hidden&&!disposed&&renderer&&root?.isConnected)frameId=requestAnimationFrame(frame);return;}
   if(root.clientWidth!==lastRender){renderer.resize();lastRender=root.clientWidth;}
+  // Cap the heavy triangle-mesh pipeline to ~30 FPS desktop / ~20 FPS mobile.
+  // This changes only presentation, never server hit timing or rewards.
+  const drawClock=performance.now(),minimum=root.clientWidth<560?48:32;
+  if(lastPaint&&drawClock-lastPaint<minimum){frameId=requestAnimationFrame(frame);return;}
+  lastPaint=drawClock;
   const now=Date.now(),room=officialBattleRoom(party,active,{now,previous});
   if(room){
    try{renderer.render(room,room.you,now/1000,{quality:root.clientWidth<560?'performance':'balanced',cameraMode:'overview',reducedMotion:motionPreference});}
