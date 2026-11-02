@@ -1,5 +1,6 @@
 /** Building upgrade command center: authored from the existing game state. */
 import {buildingUpgradePlan,buildingRoadmap,villageResourceNames} from './building-planner.js';
+import {caravanMarkup} from './kingdom-caravan.js';
 import {ART_EVOLUTION} from './city-art-layout.js';
 import {MASTERY_START_LEVEL,MASTERY_ARCHITECTURE} from './mastery-architecture.js';
 const nice=v=>new Intl.NumberFormat('tr-TR',{maximumFractionDigits:2}).format(v);
@@ -57,6 +58,7 @@ export function buildingWorkshopMarkup(state,selectedId,{icon,number=nice,now=Da
        <div class="ws-effect-box"><div class="ws-effect-title"><span>YÜKSELTME ETKİSİ</span><b>${plan.maxed?'TAMAMLANDI':'+'+numberLabel(plan.effectIncrease)+' kazanım'}</b></div><div class="ws-effect-values"><div><small>Şimdiki güç</small><strong>${numberLabel(current.value)}</strong><span>${current.unit}</span></div><span class="ws-effect-arrow">→</span><div class="ws-after"><small>${plan.maxed?'Son seviye':'Sonraki seviye'}</small><strong>${numberLabel(next.value)}</strong><span>${next.unit}</span></div></div></div>
        <div class="ws-levels-header"><b>Köy gelişimi</b><span>${level} / ${building.maxLevel} seviye</span></div>
        <div class="building-levels ws-levels" aria-label="${building.name} seviye ${level}">${Array.from({length:building.maxLevel},(_,i)=>`<span class="${i<level?'built':''} ${i===level?'upcoming':''}" title="Seviye ${i+1}">${i+1}</span>`).join('')}</div>
+       ${caravanMarkup(state,now)}
        <div class="ws-next-evolution"><span>✦ ${nextLevel>=MASTERY_START_LEVEL?'USTALIK MİMARİSİ':level>=8?'MİMARİ HAZIRLIĞI':'SIRADAKİ MİMARİ DETAY'}</span><strong>${plan.maxed?'Ebedî yıldız anıtı':nextLevel>=MASTERY_START_LEVEL?MASTERY_ARCHITECTURE[nextLevel-MASTERY_START_LEVEL].name:level===8?'Ustalık temeli — seviye 10’da yeni mimari':ART_EVOLUTION[building.id][level]}</strong><small>${plan.maxed?'Tüm 11 ustalık mimari eklentisi açıldı.':nextLevel===9?'9. seviyede mevcut görünüm korunur. Yeni mimari parçalar 10. seviyede başlar.':nextLevel>=MASTERY_START_LEVEL?'Yeni çizilen mimari parça köyde kalıcı olarak görünür.':'Yükseltince mimari parçalar köy manzarasına eklenir.'}</small></div>
      </main>
      <aside class="ws-investment"><div class="ws-invest-head"><span class="eyebrow">${state.serverVillage?'SUNUCU EKONOMİSİ':'YEREL DENEME'} · YATIRIM PLANI</span><h3>${plan.maxed?'Bina tamamlandı':'Seviye '+nextLevel+' maliyeti'}</h3><p>${plan.maxed?'Bu bina için yeni maliyet yok.':'Toplanabilecek üretim de hesaplandı.'}</p></div>
