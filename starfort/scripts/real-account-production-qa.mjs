@@ -9,6 +9,7 @@ import {setTimeout as sleep} from 'node:timers/promises';
 import {SUPABASE_URL,SUPABASE_KEY} from '../online-config.js';
 import {accountSignIn,accountSignOut,accountSession,loadAccountSession} from '../account-auth.js';
 import {accountProgressRequest} from '../account-progression.js';
+import {testDeployedLogin} from './authenticated-browser-smoke.mjs';
 const tag='starfort-qa-'+(process.env.GITHUB_RUN_ID||Date.now());
 const email=tag+'-'+randomBytes(9).toString('hex')+'@gmail.com';
 const password='Test!'+randomBytes(36).toString('base64url');
@@ -98,6 +99,7 @@ try{
  }else{
   line('CHECK: starter team LOST the first stage. This is real balancing evidence.');
  }
+ await testDeployedLogin(email,password);
  line('QA_RESULT='+JSON.stringify({accountCreated:true,loggedIn:true,serverGet:true,stageStarted:true,stageWon:!!result.won,
   turns:result.turns,stars:result.stars||0,cleared:data.cleared.length,ownerId:id}));
 }finally{
