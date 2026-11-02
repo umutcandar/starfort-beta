@@ -95,3 +95,13 @@ test('workshop highlights an affordable caravan matching the missing building ma
  assert.equal(caravanRecommendation(town,{gold:100},TODAY),null);
  assert.match(caravanMarkup(town,TODAY,{missing:{wood:110}}),/caravan-route ready recommended/);
 });
+
+test('side inspector respects the same server mastery and one-builder restrictions as workshop',()=>{
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(app,/function renderInspector\(\)/);
+ assert.match(app,/const job=R\.constructionStatus\(v,constructionUiNow\(\)\)/);
+ assert.match(app,/!R\.buildingMasteryGate\(v,building\.id\)\.ok/);
+ assert.match(app,/!!job\|\|Object\.entries\(cost\)/);
+ assert.match(app,/job\.ready\?'İnşaat bitti/);
+ assert.match(app,/data-caravan-trade/);
+});
