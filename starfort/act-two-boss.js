@@ -1,5 +1,6 @@
 /** Honest presentation of the server-owned Act II boss's three health phases. */
 import {SECOND_ACT} from './second-act.js';
+import {actTwoBossAbility} from './act-two-abilities.js';
 const labels=Object.freeze([
  ['Fenerlerin Nöbeti','Kızıl Hiddet','Sancağın Son Yemini'],
  ['Cam Perde','Kırık Kehanet','Çölün Son Aynası'],
@@ -21,5 +22,5 @@ export function actTwoBossStatus(mission){
  const hint=phase===1?'Düşmanın ilk niyetini izle; savunma durumunda kahraman yeteneğini kullan.':
    phase===2?'Patron can emme ve kalkan arasında geçiş yapıyor. Yeteneğini zamanında kullan.':
    'Patron son gücünde daha sert ağır darbeler yapıyor. Ağır darbe öncesi siper emrini seç.';
- return Object.freeze({phase,total:3,title:labels[mission.stage-1][phase-1],boss:SECOND_ACT[mission.stage-1].boss,hint,ratio});
+ return Object.freeze({phase,total:3,title:labels[mission.stage-1][phase-1],boss:SECOND_ACT[mission.stage-1].boss,hint,ratio,ability:actTwoBossAbility(mission)});
 }
