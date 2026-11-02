@@ -37,18 +37,22 @@ export function validateAccountSnapshot(data){
   throw Error('Ortak dünya patronu verisi bozuk.');
  if(data.bossWeek!==null&&data.bossWeek!==undefined&&(typeof data.bossWeek!=='string'||data.bossWeek.length>12))throw Error('Patron haftası geçersiz.');
 
+ const act2Cleared=data.act2Cleared??[],act2Stars=data.act2Stars??{};
+ if(!Array.isArray(act2Cleared)||act2Cleared.length>8||!act2Cleared.every((x,i)=>x===i+1)||!object(act2Stars)||
+  !Object.entries(act2Stars).every(([k,v])=>safeNumber(Number(k),1,8)&&act2Cleared.includes(Number(k))&&safeNumber(v,1,3)))
+  throw Error('İkinci perde ilerlemesi bozuk.');
  const m=data.mission;
  // Three-wave stories have a longer server turn budget. Preserve legacy single-wave saves.
- const multiWave=object(m)&&m.mode==='story'&&m.waves===3;
+ const multiWave=object(m)&&['story','act2'].includes(m.mode)&&m.waves===3;
  const waveValid=!object(m)||(m.waves===undefined&&m.wave===undefined&&m.waveTurn===undefined)||
-  (safeNumber(m.waves,1,3)&& (m.waves===1||m.mode==='story'&&m.waves===3)&&
+  (safeNumber(m.waves,1,3)&& (m.waves===1||['story','act2'].includes(m.mode)&&m.waves===3)&&
    safeNumber(m.wave,1,m.waves)&&safeNumber(m.waveTurn,0,multiWave?36:14)&&
    m.waveTurn<=m.turn);
- if(m!==null&&(!object(m)||!waveValid|| (m.enemyIntent!==undefined&&!['strike','crush','shield','drain'].includes(m.enemyIntent))||!['story','veteran','rift','maze','boss'].includes(m.mode)||!safeNumber(m.stage,1,8)||
+ if(m!==null&&(!object(m)||!waveValid|| (m.enemyIntent!==undefined&&!['strike','crush','shield','drain'].includes(m.enemyIntent))||!['story','act2','veteran','rift','maze','boss'].includes(m.mode)||!safeNumber(m.stage,1,8)||
  !safeNumber(m.turn,0,multiWave?36:14)||!safeNumber(m.enemyHp,0,100000)||!safeNumber(m.playerHp,0,100000)||
  !safeNumber(m.lastTurnAt,1e12,2e13)|| (m.cooldowns!==undefined&&(!object(m.cooldowns)||!Object.entries(m.cooldowns).every(([id,next])=>HERO_IDS.has(id)&&safeNumber(next,1,multiWave?40:20))))))throw Error('Sunucu sefer kaydı bozuk.');
  return {heroes:{...heroes},inventory:{...inventory},loadouts:structuredClone(loadouts),team:[...team],
-  cleared:[...cleared],campaignStars:{...stars},veteranMedals:{...(data.veteranMedals||{})},
+  cleared:[...cleared],campaignStars:{...stars},act2Cleared:[...act2Cleared],act2Stars:{...act2Stars},veteranMedals:{...(data.veteranMedals||{})},
   mazeFloor:data.mazeFloor,riftWeek:data.riftWeek,mission:m?{...m}:null,lastReport:data.lastReport?{...data.lastReport}:null,
   counters:{...data.counters},contractClaims:{...data.contractClaims},titles:[...data.titles],itemUpgrades:{...upgrades},bossWeek:data.bossWeek??null,worldBoss:boss?{...boss}:null};
 }
@@ -76,7 +80,7 @@ export function accountServerView(state,account){
  if(!account)return state;
  return {...state,heroes:Object.fromEntries(Object.entries(account.heroes).map(([id,level])=>[id,{level}])),
   inventory:{...account.inventory},loadouts:structuredClone(account.loadouts),itemUpgrades:{...account.itemUpgrades},team:[...account.team],
-  cleared:[...account.cleared],campaignStars:{...account.campaignStars},veteranMedals:{...account.veteranMedals},
+  cleared:[...account.cleared],campaignStars:{...account.campaignStars},act2Cleared:[...(account.act2Cleared||[])],act2Stars:{...(account.act2Stars||{})},veteranMedals:{...account.veteranMedals},
   serverMission:account.mission,serverReport:account.lastReport,serverCounters:{...account.counters},
   serverTitles:[...account.titles],serverRiftWeek:account.riftWeek,serverMazeFloor:account.mazeFloor,serverContractClaims:{...account.contractClaims}};
 }
