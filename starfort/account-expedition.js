@@ -1,6 +1,7 @@
 import {STAGES,ITEMS,HEROES,teamPower} from './rules.js';
 import {secondActMarkup} from './second-act-view.js';
 import {secondActMission} from './second-act.js';
+import {actTwoBossStatus} from './act-two-boss.js';
 import {STORY_OPERATIONS,operationStatus} from './story-operations.js';
 import {officialCombatScene} from './official-combat-scene.js';
 import {realmMapMarkup} from './realm-map.js';
@@ -33,12 +34,13 @@ export function accountExpeditionMarkup(game,account,now=Date.now(),selectedReal
  const campaignHeader=`<header class="server-progress-header"><div><span class="eyebrow">KOMUTAN HESABI · DOĞRULANMIŞ SEFERLER</span><h2>Kuzey Seferleri</h2><p>Gerçek kaynaklar, savaş sonucu ve ganimet sunucuda hesaplanır. Yerel kayıt veya değiştirilmiş savaş ekranı ödül kazandıramaz.</p></div><div class="official-server-actions"><button class="secondary" data-village-refresh aria-label="Sunucu savaşını yeniden doğrula">↻ Sunucuyu yenile</button><button class="secondary" data-close-view>Köye dön</button></div></header>`;
  const deltaUi=mission&&combatDelta&&!combatDelta.initial&&combatDelta.turn===mission.turn?
   `<div class="official-damage-summary" role="status"><span>⚔ Sunucu hasarı: <b>${n(combatDelta.damage)}</b></span><span>🛡 Alınan hasar: <b>${n(combatDelta.received)}</b></span><small>Doğrulanmış ${n(combatDelta.turn)}. tur</small></div>`:'';
- const operation=operationStatus(mission),act2Mission=secondActMission(mission);
+ const operation=operationStatus(mission),act2Mission=secondActMission(mission),act2Boss=actTwoBossStatus(mission);
  const intent=mission?.enemyIntent||'strike';
  const nextAttack={strike:{icon:'⚔',name:'Normal Saldırı',hint:'Normal hasar. İstersen saldırıya geç.'},crush:{icon:'☄',name:'Ağır Darbe',hint:'Siper komutunu kullan: ağır darbeyi büyük ölçüde engellersin.'},shield:{icon:'🛡',name:'Kalkan Savunması',hint:'Özel kahraman yetenekleri düşmanın kalkanını deler.'},drain:{icon:'☾',name:'Can Emme',hint:'Düşman hasar verdiğinde kendini iyileştirir. Güçlü saldırıya yönel.'}}[intent];
  const missionUi=mission?`<article class="server-mission" aria-label="Devam eden sunucu savaşı"><div class="server-mission-header"><span class="eyebrow">⚔ CANLI SUNUCU MUHAREBESİ</span><h3>${esc(mission.mode==='boss'?'Küllerin Kadim Hükümdarı':act2Mission?.stage.name||STAGES[mission.stage-1]?.name||'Yıldız Seferi')} · TUR ${mission.turn+1}</h3>${operation?`<div class="official-operation-current"><strong>GÖREV ${operation.wave} / ${operation.total} · ${esc(operation.title)}</strong><p>${esc(operation.objective)}</p><div class="operation-dots">${Array.from({length:operation.total},(_,i)=>`<span class="${i<operation.wave?'reached':''}"></span>`).join('')}</div></div>`:''}<p>${mission.mode==='boss'?'Haftalık ortak dünya patronu':mission.mode==='act2'?'İkinci perde · Şafağın Ötesi':mission.mode==='maze'?'Labirent katı '+mission.floor:mission.mode==='rift'?'Haftalık Yarık':mission.mode==='veteran'?'Usta seferi '+mission.tier:'Hikâye seferi'} · Takımın her hamlesi sunucuda sonuçlandırılır.</p></div>
  ${officialCombatScene(game,mission)}
  ${deltaUi}
+ ${act2Boss?`<aside class="second-act-boss-phase" aria-label="Patron savaş safhası"><span class="eyebrow">PATRON · SAFHA ${act2Boss.phase}/3</span><strong>${esc(act2Boss.boss)} · ${esc(act2Boss.title)}</strong><small>${esc(act2Boss.hint)}</small></aside>`:''}
  <aside class="server-enemy-intent intent-${intent}" aria-label="Düşmanın sıradaki hamlesi"><span class="intent-symbol">${nextAttack.icon}</span><div><strong>Sıradaki düşman hamlesi: ${nextAttack.name}</strong><small>${nextAttack.hint}</small></div></aside>
  <div class="server-health"><div><strong>Takımın</strong><span>${n(mission.playerHp)} / ${n(mission.playerMaxHp)}</span><progress max="${mission.playerMaxHp}" value="${mission.playerHp}"></progress></div><div><strong>${esc(mission.mode==='boss'?'Kadim Hükümdar':act2Mission?.stage.boss||STAGES[mission.stage-1]?.enemyName||'Muhafız')}</strong><span>${n(mission.enemyHp)} / ${n(mission.enemyMaxHp)}</span><progress max="${mission.enemyMaxHp}" value="${mission.enemyHp}"></progress></div></div>
  <p class="server-combat-hint">Son hamle: ${esc(mission.lastAction)} · Rakibin saldırısı ve hasar hesabı sunucuda. <span data-server-wait>${wait?'Yaklaşık '+Math.ceil(wait/1000)+' sn bekle.':'Komut verebilirsin.'}</span></p>
