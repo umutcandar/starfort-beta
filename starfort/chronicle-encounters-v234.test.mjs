@@ -52,7 +52,7 @@ test('two-dimensional sprite scene uses chapter roster, biome and distinct teleg
 });
 test('3D bridge uses exactly the same named enemies and roles as the illustrated 2D fight',()=>{
  for(let i=1;i<=8;i++)for(let wave=1;wave<=3;wave++){
-  const m=mission(i,w),r=officialBattleRoom(state.team,m,{now,previous:null});
+  const m=mission(i,wave),r=officialBattleRoom(state.team,m,{now,previous:null});
   const expected=ACT_TWO_ENCOUNTERS[i-1].waves[wave-1].roster;
   assert.deepEqual(r.squads.map(x=>x.name),expected.map(x=>x.name));
   assert.deepEqual(r.squads.map(x=>x.type),expected.map(x=>x.kind));
