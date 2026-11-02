@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import * as R from './rules.js';
-import {officialNextGoal,officialNextGoalMarkup,isoWeek} from './official-progress-coach.js';
+import {officialNextGoal,officialNextGoalMarkup,officialStoryReadiness,isoWeek} from './official-progress-coach.js';
 import {commanderPath} from './commander-path.js';
 import {accountServerView} from './account-progression.js';
 import {accountExpeditionMarkup} from './account-expedition.js';
@@ -64,3 +64,28 @@ test('server veteran tier guard is in the applied SQL and bypass cannot be done 
  assert.match(html,/official-next-goal/);
 });
 function signedInView(){return accountServerView(game(),profile());}
+
+test('stage 3–8 story gates match the server and local requirements precisely',()=>{
+ const cases=[[3,2,1,1],[4,2,1,2],[5,3,2,3],[6,3,2,4],[7,4,3,6],[8,4,3,8]];
+ for(const [stage,forge,gear,maze] of cases){
+  const p=profile({cleared:Array.from({length:stage-1},(_,i)=>i+1),loadouts:{}});
+  const v=accountServerView(game(),p);
+  v.buildings.forge=forge-1;
+  let result=officialStoryReadiness(v,p,stage);
+  assert.equal(result.ok,false);assert.deepEqual(result.missing.map(x=>x.kind),['forge','gear','maze']);
+  assert.equal(officialNextGoal(v,p,T).id,'equip','training equipment remains first safe action');
+  p.inventory={};
+  assert.equal(officialNextGoal(v,p,T).id,'gate-forge');
+  v.buildings.forge=forge;
+  p.mazeFloor=maze;
+  p.loadouts={aldren:{weapon:'iron_sword',armor:'ward_mail',relic:'lunar_charm'}};
+  assert.equal(officialStoryReadiness(v,p,stage).ok,true);
+  const markup=accountExpeditionMarkup(v,p,T);
+  assert.match(markup,/server-stage-card/);
+ }
+ const sql=readFileSync(new URL('./sql/starfort-v229-unified-story-gates.sql',import.meta.url),'utf8');
+ assert.match(sql,/if stage>=3 and not \(cleared @> to_jsonb\(array\[stage\]\)\)/);
+ assert.match(sql,/Yeni sefer için demirhaneyi geliştir/);
+ assert.match(sql,/Yeni sefer için önce labirent muhafızlarını geç/);
+ assert.match(sql,/Yeni sefer için daha fazla ekipman kuşan/);
+});
