@@ -1,3 +1,4 @@
+-- v2.33 mastery fix: cap Act II enemy scaling so investing in heroes can earn a 3-star fast win.
 -- v2.33: eight unique server-bound boss abilities and additional Act II wave healing.
 -- STARFORT v2.32: authoritative last-wave boss health phases and attacks.
 -- STARFORT v2.31: 8 Act II chapters, 24 operations; caller cannot submit damage, waves or rewards.
@@ -327,7 +328,7 @@ begin
   if mode='act2' then req:=1000+stage*150; end if;
   difficulty:=case when mode='act2' then 1.5+stage*.12 else 1+0.4*tier+case when mode='maze' then floor_no*0.035 else 0 end end;
   if power<req*(case when mode='act2' then .7 else difficulty*.7 end) then raise exception 'Takımın sefer için yeterince güçlü değil.'; end if;
-  ehp:=round(case when mode='act2' then greatest((110+stage*45)*difficulty,power*1.2)
+  ehp:=round(case when mode='act2' then greatest((110+stage*45)*difficulty,least(power,(1000+stage*150)*1.25)*1.2)
               else (110+stage*45)*difficulty*(case when mode='story' then .8 else 1 end) end)::integer;
   php:=round(130+power*0.6)::integer;
   battle:=jsonb_build_object('mode',mode,'stage',stage,'tier',tier,'floor',floor_no,
@@ -437,7 +438,7 @@ begin
     stage:=(battle->>'stage')::integer;
     ehp:=round(case when battle->>'mode'='act2' then
           greatest((110+stage*45)*(1.5+stage*.12)*(case req when 2 then 1.25 else 1.50 end),
-                   power*(case req when 2 then 1.55 else 1.90 end))
+                   least(power,(1000+stage*150)*1.25)*(case req when 2 then 1.55 else 1.90 end))
         else (110+stage*45)*(case req when 2 then 1.0 else 1.25 end) end)::integer;
     php:=least((battle->>'playerMaxHp')::integer,
         php+round((battle->>'playerMaxHp')::numeric*(case when battle->>'mode'='act2' then .34 else .24 end))::integer);
