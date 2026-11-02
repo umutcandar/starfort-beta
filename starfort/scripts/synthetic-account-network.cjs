@@ -23,6 +23,11 @@
  const ok=(data,status=200)=>Promise.resolve(new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}}));
  const authResponse=()=>({access_token:'qa.synthetic.jwt',refresh_token:'qa.synthetic.refresh',
    expires_in:3600,user:{id:ID,email:mail}});
+ const premiumInitial=()=>({ok:true,source:'server-premium',paymentsEnabled:false,crystals:0,vipUntil:null,
+  equipped:{},owned:[],revision:1,season:{month:new Date().toISOString().slice(0,7),wins:0,
+   thresholds:[2,5,10,18],freeClaims:[],premium:false,premiumClaims:[]},applied:'get'});
+ const premiumRead=()=>{try{return JSON.parse(sessionStorage.getItem('__starfort_qa_premium'))||premiumInitial()}catch{return premiumInitial()}};
+ const premiumWrite=x=>{sessionStorage.setItem('__starfort_qa_premium',JSON.stringify(x));return x;};
  const realFetch=window.fetch.bind(window);
  window.fetch=(input,options={})=>{
   const url=String(input?.url||input);
@@ -65,6 +70,29 @@
     }
    }
    return ok(write(d));
+  }
+  if(path.includes('/rest/v1/rpc/sfb_premium_api')){
+   if(!String(options.headers?.Authorization||'').startsWith('Bearer qa.synthetic.'))return ok({message:'unauthorized'},401);
+   const d=premiumRead(),a=payload.p_action,item=payload.p_item;
+   d.season.wins=Math.max(0,read().counters.win||0);
+   if(a==='purchase')return ok({message:'Yetersiz Yıldız Kristali. Ödeme sistemi henüz kapalı.'},400);
+   if(a==='claim'){
+    const milestones={'1':2,'2':5,'3':10,'4':18};
+    const rewards={'1':'banner-trailblazer','2':'cape-scout','3':'castle-dawn','4':'victory-constellation'};
+    if(!(item in milestones)||d.season.wins<milestones[item]||d.season.freeClaims.includes(item))
+     return ok({message:'Sezon ödülü henüz kazanılmadı veya alındı.'},400);
+    d.season.freeClaims.push(item);d.owned.push(rewards[item]);d.revision++;
+   }
+   if(a==='equip'){
+    const types={'banner-trailblazer':'banner','cape-scout':'cape','castle-dawn':'castle','victory-constellation':'victory'};
+    if(!d.owned.includes(item)||!types[item])return ok({message:'Bu kozmetiğe sahip değilsin.'},400);
+    d.equipped[types[item]]=item;d.revision++;
+   }
+   if(a==='unequip'){
+    if(!['banner','castle','cape','victory'].includes(item))return ok({message:'Geçersiz görünüm yuvası.'},400);
+    delete d.equipped[item];d.revision++;
+   }
+   return ok(premiumWrite({...d,applied:a}));
   }
   if(path.includes('/rest/v1/rpc/sfb_daily_calendar'))return ok({message:'calendar not mocked'},404);
   if(path.includes('/rest/v1/rpc/sfb_village_api')){
