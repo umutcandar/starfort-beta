@@ -32,6 +32,7 @@ import {calendarRequest,rewardCalendarMarkup} from './reward-calendar.js';
 import {trustedConstructionNow} from './construction-clock.js';
 import {labyrinthMarkup} from './labyrinth-view.js';
 import {premiumCatalogMarkup} from './premium-catalog.js';
+import {premiumRequest,premiumStoreMarkup,applyPremiumAppearance} from './premium-store.js';
 import {cloudSaveRequest,cloudBackupSummary} from './cloud-save.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -67,6 +68,7 @@ let state=R.createState();
 const saveGuard=createSaveGuard(localStorage,R.STORAGE_KEY,null);
 
 let battleSpeed=1, battleFxExpires=0;
+let premiumOwner=null,premiumSnapshot=null,premiumBusy=false,premiumGeneration=0;
 let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
 let accountBackupInfo=null,accountBusy=false,accountSyncInfo={status:'disconnected'},accountRecovering=false;
@@ -195,15 +197,49 @@ function acceptAccountProgress(response){
   accountProgressOwner=response.identity;accountProgressSnapshot=response.account;
  return acceptVillage({identity:response.identity,snapshot:validateVillageSnapshot(response.data)});
 }
+async function refreshPremium(){
+ const uid=accountSession()?.user?.id;
+ if(!uid||!accountReady()){premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);return false;}
+ const gen=++premiumGeneration;
+ if(premiumOwner!==uid){premiumOwner=uid;premiumSnapshot=null;applyPremiumAppearance(null);}
+ try{
+  const response=await premiumRequest('get');
+  if(gen!==premiumGeneration||accountSession()?.user?.id!==response.identity)return false;
+  if(premiumSnapshot&&response.snapshot.revision<premiumSnapshot.revision)return false;
+  premiumOwner=uid;premiumSnapshot=response.snapshot;applyPremiumAppearance(premiumSnapshot);
+  if(activeView==='shop')renderShop();
+  return true;
+ }catch(error){
+  if(gen===premiumGeneration&&accountSession()?.user?.id===uid){
+   if(activeView==='shop'){notify('Yıldız Hazinesi: '+error.message);renderShop();}
+  }
+  return false;
+ }
+}
+async function premiumAction(action,item=null){
+ if(premiumBusy||!accountReady())return;
+ premiumBusy=true;
+ try{
+  const response=await premiumRequest(action,{item});
+  if(accountSession()?.user?.id!==response.identity)return;
+  if(!premiumSnapshot||response.snapshot.revision>=premiumSnapshot.revision){
+    premiumOwner=response.identity;premiumSnapshot=response.snapshot;
+    applyPremiumAppearance(premiumSnapshot);
+  }
+  notify(action==='claim'?'Ücretsiz sezon ödülü hesabına kaydedildi.':action==='purchase'?'Görünüm Yıldız Kristali ile alındı.':action==='equip'?'Kozmetik kuşanıldı.':'Kozmetik kaldırıldı.');
+ }catch(error){notify('Yıldız Hazinesi: '+error.message);await refreshPremium();}
+ finally{premiumBusy=false;if(activeView==='shop')renderShop();}
+}
 async function refreshVillage({preserve=false}={}){
  const uid=accountSession()?.user?.id;
- if(!uid){villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();return false;}
+ if(!uid){villageGeneration++;premiumGeneration++;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();return false;}
  const gen=++villageGeneration;
  if(!preserve||villageOwner!==uid){villageOwner=uid;villageSnapshot=null;accountProgressOwner=uid;accountProgressSnapshot=null;dailyOwner=uid;dailySnapshot=null;render();}
  try{
   const response=await accountProgressRequest('get');
   if(gen!==villageGeneration||accountSession()?.user?.id!==uid)return false;
   const ok=acceptAccountProgress(response);
+  if(ok&&premiumOwner!==uid)void refreshPremium();
   try{
    const next=await calendarRequest('get');
    if(gen===villageGeneration&&accountSession()?.user?.id===uid&&next.identity===uid){
@@ -492,6 +528,7 @@ function renderArmory() {
 function renderShop() {
   workspaceEl.innerHTML=`<header><div><span class="eyebrow">YILDIZ PAZARI</span><h2>Efsanevi yeminler</h2><p>Özel kahramanların yeteneklerini eğitim savaşında keşfet.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
     <div class="shop-status"><strong>Mağaza önizlemesi · ödeme kapalı</strong><span>Gerçek para satışı henüz açık değil. Eğitim denemeleri ücretsizdir. Özel PvE ekipmanları ayrıca tasarlanıyor; PvP'de ücretli güç avantajı planlanmıyor.${state.battle?.status==='active'?' Önce devam eden seferini tamamla.':''}</span></div>
+    ${premiumStoreMarkup(premiumOwner===accountSession()?.user?.id?premiumSnapshot:null,{loading:premiumOwner!==accountSession()?.user?.id||!premiumSnapshot,busy:premiumBusy})}
     ${premiumCatalogMarkup()}
     <section class="cosmetic-concepts"><div><span class="eyebrow">KOZMETİK TASARIM ANKETİ · GERÇEK SATIŞ YOK</span><h3>Hangi görünümleri oyunda istersin?</h3><p>Beğendiklerini işaretle. Bu seçim yalnızca cihazındaki kayıt dosyasında tutulur; ödeme, satın alma veya sunucuya veri gönderme değildir.</p></div><div class="concept-grid">${R.COSMETIC_CONCEPTS.map(c=>`<article class="concept-card"><span class="eyebrow">${c.category}</span><h4>${c.name}</h4><p>${c.detail}</p><button class="${state.cosmeticWishlist.includes(c.id)?'primary':'secondary'}" data-cosmetic-interest="${c.id}" aria-pressed="${state.cosmeticWishlist.includes(c.id)}">${state.cosmeticWishlist.includes(c.id)?'✓ İstek listemde':'İsterim'}</button></article>`).join('')}</div><small>Bir tasarımı beğenmek, ona para ödeyeceğin anlamına gelmez. Gerçek oyuncu anketi ve ödeme altyapısı ayrıca geliştirilecek.</small></section>
     <div class="premium-grid">${R.SPECIAL_HEROES.map(hero=>`<article class="premium-card"><div class="premium-portrait">${heroPortrait(hero)}<span class="premium-seal">EFSANEVİ</span><div class="portrait-title"><small>${hero.title}</small><h3>${hero.name}</h3></div></div><div class="premium-copy"><span class="eyebrow">${ROLES[hero.role]} · ÖZEL KAHRAMAN</span><h3>${hero.name}</h3><p>${hero.description}</p><p class="skill">${R.HERO_ABILITIES[hero.id].name}: ${R.HERO_ABILITIES[hero.id].description}</p><div class="hero-stats"><span>Seviye 1 · ⚔ ${hero.attack} saldırı</span><span>♡ ${hero.hp} can</span></div><p class="trial-note">Denemede takımının ortalama seviyesine uyarlanır.</p><button class="primary wide" data-trial="${hero.id}" ${state.battle?.status==='active'?'disabled':''}>Eğitim savaşında dene</button><button class="secondary wide" disabled>Satış henüz açık değil</button></div></article>`).join('')}</div>
@@ -602,7 +639,7 @@ async function accountAction(action){
      notify('Onay e-postası yeniden istendi. Gelen kutunu kontrol et.');return;
    }
    if(action==='logout'){
-     accountSync.stop();await accountSignOut();accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();
+     accountSync.stop();await accountSignOut();premiumGeneration++;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();
      notify('E-posta hesabından çıkış yapıldı. Tekrar giriş yaparak krallığına ulaşabilirsin.');return;
    }
    if(action==='sync'){await accountSync.refresh();return;}
@@ -921,6 +958,8 @@ function dispatch(action) {
   if(button.hasAttribute('data-gate-logout')){void accountAction('logout');return;}
   if(!accountReady()){syncAccountGate();return notify('Sunucu hesabın doğrulanmadan oyun açılmaz.');}
   if(ACCOUNT_ONLY&&isLegacyOnlyAction(button))return notify('Misafir ve yerel deneme özellikleri kaldırıldı. Resmî seferleri kullan.');
+  if(button.hasAttribute('data-premium-refresh')){void refreshPremium();return;}
+  if(button.dataset.premiumAction){void premiumAction(button.dataset.premiumAction,button.dataset.premiumItem||null);return;}
 
   if(button.hasAttribute('data-audio-toggle')){const enabled=gameAudio.toggle();notify(enabled?'Ses ve müzik açıldı.':'Ses ve müzik kapatıldı.');if(activeView==='settings')renderSettings();return;}
   gameAudio.cue('click');
@@ -1009,7 +1048,7 @@ function dispatch(action) {
   if(button.hasAttribute('data-quest-close')) { questPanelExpanded=false; render(); return; }
   if (button.dataset.view) {
     questPanelExpanded=button.dataset.view==='expedition';
-    activeView = normalizeOnlineView(button.dataset.view); render(); if(activeView==='guild')refreshGuild(); return;
+    activeView = normalizeOnlineView(button.dataset.view); render(); if(activeView==='guild')refreshGuild(); if(activeView==='shop')void refreshPremium(); return;
   }
   if (button.dataset.building) { openBuilding(button.dataset.building); return; }
   if(button.hasAttribute('data-workshop-expedition')){
