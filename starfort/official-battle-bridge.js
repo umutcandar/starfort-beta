@@ -2,6 +2,7 @@
  * This module cannot decide damage, rewards or victories; it only maps the accepted
  * Supabase mission snapshot to the same room format used by the arena renderer. */
 import {HEROES} from './rules.js';
+import {SECOND_ACT} from './second-act.js';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const enemiesFor=mission=>mission.mode==='act2'&&mission.wave===3?['caster','boss','raider']:mission.mode==='act2'&&mission.wave===2?['raider','caster','caster']:mission.mode==='story'&&mission.waves>1&&mission.wave===mission.waves?['raider','boss','caster']:mission.mode==='story'&&mission.wave===2?['caster','raider','caster']:mission.mode==='boss'||mission.stage>=7?['raider','boss','caster']:['raider','caster','raider'];
 export function officialMissionIdentity(mission){
@@ -29,7 +30,7 @@ export function officialBattleRoom(team,mission,{now=Date.now(),previous=null}={
  }));
  const enemyIds=enemiesFor(mission);
  const foes=enemyIds.map((kind,i)=>({
-  id:'official-enemy-'+i,name:kind==='boss'?'Kadim Hükümdar':kind==='caster'?'Gölge Büyücüsü':'Kül Akıncısı',
+  id:'official-enemy-'+i,name:kind==='boss'?(mission.mode==='act2'?SECOND_ACT[mission.stage-1]?.boss||'Kadim Hükümdar':'Kadim Hükümdar'):kind==='caster'?'Gölge Büyücüsü':'Kül Akıncısı',
   team:1,x:72-i*4-impulse*2,y:20+i*12,type:kind,
   hp:Math.max(1,Math.round(enemyHealth*1000)),maxHp:1000,
   action:impulse&&i===1?'attack':'idle',attackAt:isRecent?mission.lastTurnAt/1000:0
