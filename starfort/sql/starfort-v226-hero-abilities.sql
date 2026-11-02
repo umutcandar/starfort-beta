@@ -293,7 +293,10 @@ begin
   p.last_mission_at:=stamp;
  elsif p_action='mission_turn' then
   if battle is null then raise exception 'Devam eden sunucu savaşı yok.'; end if;
-  if p_aux not in ('strike','guard','skill') and p_aux !~ '^skill:(aldren|lyra|rovan|mira|doran|vesper|eira)
+  if p_aux not in ('strike','guard','skill') and
+     p_aux !~ '^skill:(aldren|lyra|rovan|mira|doran|vesper|eira)$' then
+   raise exception 'Savaş hamlesi geçersiz.';
+  end if;
   last_action:=(battle->>'lastTurnAt')::bigint;
   if ms-last_action<3000 then raise exception 'Savaş hamlesi için 3 saniye bekle.'; end if;
   turns:=(battle->>'turn')::integer+1;
@@ -301,211 +304,30 @@ begin
   ehp:=(battle->>'enemyHp')::integer;php:=(battle->>'playerHp')::integer;
   ability:=p_aux;
   if ability like 'skill:%' then
-    hero:=split_part(ability,':',2);
-    if not (roster @> to_jsonb(array[hero])) then raise exception 'Yetenek yalnızca aktif takımdaki kahramana aittir.'; end if;
-    if coalesce((battle->'cooldowns'->>hero)::integer,0)>turns then
-      raise exception 'Bu kahramanın yeteneği henüz yenilenmedi.';
-    end if;
-    battle:=jsonb_set(battle,'{cooldowns}',coalesce(battle->'cooldowns','{}'::jsonb),true);
-    battle:=jsonb_set(battle,array['cooldowns',hero],to_jsonb(turns+3),true);
-  end if;
-  dmg:=greatest(12,round(power/5*(case ability when 'skill' then 1.3 when 'guard' then 0.68 else 1 end)))::integer;
-  edmg:=greatest(5,round((18+(battle->>'stage')::integer*9)*(case ability when 'guard' then 0.35 else 1 end)*(1+(battle->>'tier')::integer*.3)))::integer;
-  if ability like 'skill:%' then
-    dmg:=greatest(12,round(dmg*(case hero
-      when 'aldren' then 0.82 when 'lyra' then 1.75 when 'rovan' then 1.55
-      when 'mira' then 0.85 when 'doran' then 1.80 when 'vesper' then 1.93
-      when 'eira' then 1.35 else 1 end))::integer);
-    if hero='aldren' then edmg:=greatest(2,round(edmg*.38)::integer); end if;
-    if hero='eira' then
-      edmg:=greatest(2,round(edmg*.55)::integer);
-      php:=least((battle->>'playerMaxHp')::integer,php+18+(heroes->>hero)::integer*3);
-    end if;
-    if hero='mira' then php:=least((battle->>'playerMaxHp')::integer,php+42+(heroes->>hero)::integer*6); end if;
-    if hero='rovan' and ehp<(battle->>'enemyMaxHp')::integer*.5 then dmg:=round(dmg*1.25)::integer; end if;
-    if hero='vesper' and ehp<(battle->>'enemyMaxHp')::integer*.35 then dmg:=round(dmg*1.4)::integer; end if;
-  end if;
-  ehp:=greatest(0,ehp-dmg);
-  if ehp>0 then php:=greatest(0,php-edmg); end if;
-  battle:=jsonb_set(battle,'{turn}',to_jsonb(turns));
-  battle:=jsonb_set(battle,'{enemyHp}',to_jsonb(ehp));
-  battle:=jsonb_set(battle,'{playerHp}',to_jsonb(php));
-  battle:=jsonb_set(battle,'{lastTurnAt}',to_jsonb(ms));
-  battle:=jsonb_set(battle,'{lastAction}',to_jsonb(ability));
-  if ehp=0 or php=0 or turns>=14 then
-   stage:=(battle->>'stage')::integer;
-   mode:=battle->>'mode';
-   tier:=(battle->>'tier')::integer;
-   floor_no:=(battle->>'floor')::integer;
-   if ehp=0 then
-    stars_won:=case when php>=((battle->>'playerMaxHp')::integer*.7) and turns<=5 then 3
-      when php>=((battle->>'playerMaxHp')::integer*.3) then 2 else 1 end;
-    reward:=case stage
-      when 1 then '{"gold":120,"wood":60,"stone":35,"aether":12}'::jsonb
-      when 2 then '{"gold":160,"wood":70,"stone":50,"aether":18}'::jsonb
-      when 3 then '{"gold":190,"wood":100,"stone":65,"aether":22}'::jsonb
-      when 4 then '{"gold":230,"wood":110,"stone":90,"aether":28}'::jsonb
-      when 5 then '{"gold":280,"wood":130,"stone":110,"aether":35}'::jsonb
-      when 6 then '{"gold":330,"wood":150,"stone":135,"aether":42}'::jsonb
-      when 7 then '{"gold":400,"wood":180,"stone":160,"aether":50}'::jsonb
-      else '{"gold":500,"wood":220,"stone":200,"aether":65}'::jsonb end;
-    if mode='story' and (cleared @> to_jsonb(array[stage])) then
-      for c in select jsonb_object_keys(reward) loop
-       reward:=jsonb_set(reward,array[c],to_jsonb(round((reward->>c)::numeric*.4)::bigint));
-      end loop;
-    elsif mode='veteran' then
-      for c in select jsonb_object_keys(reward) loop
-       reward:=jsonb_set(reward,array[c],to_jsonb(round((reward->>c)::numeric*(1+tier*.16))::bigint));
-      end loop;
-      veteran:=jsonb_set(veteran,array[stage::text],to_jsonb(greatest(coalesce((veteran->>stage::text)::integer,0),tier)),true);
-    elsif mode='maze' then
-      reward:='{"gold":90,"wood":30,"stone":40,"aether":12}'::jsonb;
-      p.maze_floor:=floor_no;
-    elsif mode='rift' then
-      reward:='{"gold":320,"wood":150,"stone":180,"aether":40}'::jsonb;
-      p.rift_week:=to_char(stamp at time zone 'UTC','IYYY-IW');
-    elsif mode='boss' then
-      reward:='{"gold":420,"wood":175,"stone":160,"aether":60}'::jsonb;
-      p.boss_week:=player_week;
-      contribution:=greatest(300,round((battle->>'power')::numeric*5)::integer);
-      insert into public.starfort_world_boss_week(week,goal_damage,damage,victories)
-       values(player_week,4500,0,0) on conflict (week) do nothing;
-      update public.starfort_world_boss_week
-       set damage=least(goal_damage,damage+contribution),victories=victories+1 where week=player_week;
-      insert into public.starfort_world_boss_contribution(week,user_id,damage)
-       values(player_week,u,contribution)
-       on conflict(week,user_id) do update set damage=public.starfort_world_boss_contribution.damage+excluded.damage;
-    end if;
-    for c in select jsonb_object_keys(reward) loop
-      resources:=jsonb_set(resources,array[c],to_jsonb(least(1000000000,(resources->>c)::bigint+(reward->>c)::bigint)));
-    end loop;
-    if mode='story' then
-      if not (cleared @> to_jsonb(array[stage])) then
-       cleared:=cleared||to_jsonb(stage);
-       bonus_item:=case stage when 1 then 'lunar_charm' when 2 then 'ember_blade' when 3 then 'warden_plate'
-        when 4 then 'star_lens' when 5 then 'grave_seal' when 6 then 'royal_blade'
-        when 7 then 'eclipse_edge' else 'moonheart' end;
-       items:=jsonb_set(items,array[bonus_item],to_jsonb(coalesce((items->>bonus_item)::integer,0)+1),true);
-       if stage=2 then heroes:=jsonb_set(heroes,'{mira}','1'::jsonb,true); end if;
-       if stage=3 then heroes:=jsonb_set(heroes,'{vesper}','1'::jsonb,true); end if;
-       if stage=4 then heroes:=jsonb_set(heroes,'{doran}','1'::jsonb,true); end if;
-       if stage=6 then heroes:=jsonb_set(heroes,'{eira}','1'::jsonb,true); end if;
-      end if;
-      old_stars:=coalesce((stars->>stage::text)::integer,0);
-      if stars_won>old_stars then stars:=jsonb_set(stars,array[stage::text],to_jsonb(stars_won),true); end if;
-      -- Trusted 1–3★ campaign victories unlock the village mastery gates.
-      select coalesce(sum(value::integer),0) into n from jsonb_each_text(stars);
-      l.mastery:=least(24,greatest(l.mastery,n));
-      -- Five unique three-star chapters grant one permanent exclusive item each.
-      if old_stars<3 and stars_won=3 then
-        n:=0;
-        for c in select jsonb_object_keys(stars) loop
-         if (stars->>c)::integer=3 then n:=n+1; end if;
-        end loop;
-        bonus_item:=case n when 1 then 'moon_watch' when 2 then 'ember_guard'
-          when 3 then 'dawn_relic' when 4 then 'star_spear' when 5 then 'dawn_guard' else null end;
-        if bonus_item is not null then
-         items:=jsonb_set(items,array[bonus_item],to_jsonb(coalesce((items->>bonus_item)::integer,0)+1),true);
-        end if;
-      end if;
-    end if;
-    counter_name:=case mode when 'boss' then 'rift' when 'maze' then 'maze' when 'rift' then 'rift' when 'veteran' then 'veteran' else 'win' end;
-    counters:=jsonb_set(counters,array[counter_name],to_jsonb((counters->>counter_name)::integer+1));
-    outcome:=jsonb_build_object('won',true,'mode',mode,'stage',stage,'stars',stars_won,
-      'reward',reward,'floor',floor_no,'at',ms,'turns',turns);
-   else
-    outcome:=jsonb_build_object('won',false,'mode',battle->>'mode','stage',(battle->>'stage')::integer,
-      'stars',0,'reward','{}'::jsonb,'at',ms,'turns',turns);
+   hero:=split_part(ability,':',2);
+   if not (roster @> to_jsonb(array[hero])) then raise exception 'Yetenek yalnızca aktif takımdaki kahramana aittir.'; end if;
+   if coalesce((battle->'cooldowns'->>hero)::integer,0)>turns then
+    raise exception 'Bu kahramanın yeteneği henüz yenilenmedi.';
    end if;
-   battle:=null;
+   battle:=jsonb_set(battle,'{cooldowns}',coalesce(battle->'cooldowns','{}'::jsonb),true);
+   battle:=jsonb_set(battle,array['cooldowns',hero],to_jsonb(turns+3),true);
   end if;
- elsif p_action='mission_abandon' then
-  if battle is null then raise exception 'Aktif sunucu seferi bulunamadı.'; end if;
-  battle:=null;
-  outcome:=jsonb_build_object('won',false,'abandoned',true,'at',ms);
- elsif p_action='contract' then
-  if p_target not in ('win','hero','forge','maze') then raise exception 'Günlük sözleşme bilinmiyor.'; end if;
-  contract_key:=to_char(stamp at time zone 'UTC','YYYY-MM-DD')||':'||p_target;
-  if claims ? contract_key then raise exception 'Günlük sözleşme zaten alındı.'; end if;
-  counter_target:=case p_target when 'win' then 1 when 'hero' then 1 when 'forge' then 1 else 1 end;
-  counter_value:=coalesce((counters->>p_target)::integer,0);
-  select coalesce(max(value::integer),0) into fee
-    from jsonb_each_text(claims) where key like '%:'||p_target;
-  if counter_value<counter_target or counter_value<=fee then
-   raise exception 'Bu görev için yeni bir doğrulanmış ilerleme gerekli.';
-  end if;
-  reward:=case p_target when 'win' then '{"gold":65,"wood":25}'::jsonb
-    when 'hero' then '{"aether":12,"gold":35}'::jsonb when 'forge' then '{"stone":55,"gold":40}'::jsonb
-    else '{"aether":18,"wood":40}'::jsonb end;
-  for c in select jsonb_object_keys(reward) loop
-   resources:=jsonb_set(resources,array[c],to_jsonb(least(1000000000,(resources->>c)::bigint+(reward->>c)::bigint)));
-  end loop;
-  claims:=jsonb_set(claims,array[contract_key],to_jsonb(counter_value),true);
- elsif p_action='boss_claim' then
-  select damage,goal_damage,victories into boss_damage,boss_total,boss_victories
-   from public.starfort_world_boss_week where week=player_week for update;
-  if not found or boss_damage<boss_total then raise exception 'Ortak dünya patronu henüz yenilmedi.'; end if;
-  update public.starfort_world_boss_contribution
-   set claimed=true where week=player_week and user_id=u and damage>0 and claimed=false;
-  if not found then raise exception 'Ortak ödül daha önce alındı veya katılım yok.'; end if;
-  reward:='{"gold":600,"stone":260,"aether":120}'::jsonb;
-  for c in select jsonb_object_keys(reward) loop
-   resources:=jsonb_set(resources,array[c],to_jsonb(least(1000000000,(resources->>c)::bigint+(reward->>c)::bigint)));
-  end loop;
- elsif p_action='title' then
-  if p_target not in ('Sınır Nöbetçisi','Yıldız Ustası','Kuzey Muhafızı') then raise exception 'Bilinmeyen unvan.'; end if;
-  req:=case p_target when 'Sınır Nöbetçisi' then 5 when 'Yıldız Ustası' then 20 else 40 end;
-  n:=(counters->>'win')::integer+(counters->>'hero')::integer+(counters->>'forge')::integer
-    +(counters->>'maze')::integer+(counters->>'rift')::integer+(counters->>'veteran')::integer;
-  if n<req then raise exception 'Unvan hedefi tamamlanmadı.'; end if;
-  if titles ? p_target then raise exception 'Bu unvan zaten açıldı.'; end if;
-  titles:=titles||to_jsonb(p_target);
- end if;
-
- if p_action<>'get' then
-  update public.starfort_village_ledger set res=resources,mastery=l.mastery,revision=l.revision+1,updated_at=stamp where user_id=u;
-  l.revision:=l.revision+1;
-  update public.starfort_player_progress set heroes=heroes,inventory=items,loadouts=gear,
-   team=roster,cleared=cleared,stars=stars,veteran=veteran,item_upgrades=enchant,boss_week=p.boss_week,
-   maze_floor=p.maze_floor,rift_week=p.rift_week,mission=battle,last_mission_at=p.last_mission_at,
-   last_report=outcome,counters=counters,contract_claims=claims,titles=titles,updated_at=stamp
-   where user_id=u;
- end if;
- select damage,goal_damage,victories into boss_damage,boss_total,boss_victories
-   from public.starfort_world_boss_week where week=player_week;
- boss_damage:=coalesce(boss_damage,0);
- boss_total:=coalesce(boss_total,4500);
- boss_victories:=coalesce(boss_victories,0);
- select coalesce((select claimed from public.starfort_world_boss_contribution where week=player_week and user_id=u),false) into can_claim;
- reply:=jsonb_build_object('ok',true,'source','server','applied',p_action,'serverNow',ms,'revision',l.revision,
-  'res',resources,'buildings',l.buildings,'construction',l.construction,'mastery',l.mastery,
-  'lastCollected',floor(extract(epoch from l.last_collected)*1000)::bigint,
-  'lastDailyReward',case when l.last_daily is null then null else to_char(l.last_daily,'YYYY-MM-DD') end,
-  'heroes',heroes,'inventory',items,'loadouts',gear,'team',roster,'cleared',cleared,
-  'campaignStars',stars,'veteranMedals',veteran,'mazeFloor',p.maze_floor,
-  'riftWeek',p.rift_week,'bossWeek',p.boss_week,'worldBoss',jsonb_build_object('week',player_week,'goal',boss_total,'damage',boss_damage,'victories',boss_victories,'claimed',can_claim),
-  'itemUpgrades',enchant,'mission',battle,'lastReport',outcome,
-  'counters',counters,'contractClaims',claims,'titles',titles,'cost',cost,'reward',reward);
- if p_action<>'get' then
-  insert into public.starfort_village_requests(user_id,request_id,response)
-   values(u,p_request_id,reply);
- end if;
- return reply;
-end;
-$fn$;
-revoke all on function public.sfb_starfort_progress(text,text,text,uuid) from public,anon,authenticated;
-grant execute on function public.sfb_starfort_progress(text,text,text,uuid) to authenticated;
-
-
-    then raise exception 'Savaş hamlesi geçersiz.'; end if;
-  last_action:=(battle->>'lastTurnAt')::bigint;
-  if ms-last_action<3000 then raise exception 'Savaş hamlesi için 3 saniye bekle.'; end if;
-  turns:=(battle->>'turn')::integer+1;
-  power:=(battle->>'power')::numeric;
-  ehp:=(battle->>'enemyHp')::integer;php:=(battle->>'playerHp')::integer;
-  ability:=p_aux;
   dmg:=greatest(12,round(power/5*(case ability when 'skill' then 1.3 when 'guard' then 0.68 else 1 end)))::integer;
   edmg:=greatest(5,round((18+(battle->>'stage')::integer*9)*(case ability when 'guard' then 0.35 else 1 end)*(1+(battle->>'tier')::integer*.3)))::integer;
+  if ability like 'skill:%' then
+   dmg:=greatest(12,round(dmg*(case hero
+     when 'aldren' then 0.82 when 'lyra' then 1.75 when 'rovan' then 1.55
+     when 'mira' then 0.85 when 'doran' then 1.80 when 'vesper' then 1.93
+     when 'eira' then 1.35 else 1 end))::integer);
+   if hero='aldren' then edmg:=greatest(2,round(edmg*.38)::integer); end if;
+   if hero='eira' then
+    edmg:=greatest(2,round(edmg*.55)::integer);
+    php:=least((battle->>'playerMaxHp')::integer,php+18+(heroes->>hero)::integer*3);
+   end if;
+   if hero='mira' then php:=least((battle->>'playerMaxHp')::integer,php+42+(heroes->>hero)::integer*6); end if;
+   if hero='rovan' and ehp<(battle->>'enemyMaxHp')::integer*.5 then dmg:=round(dmg*1.25)::integer; end if;
+   if hero='vesper' and ehp<(battle->>'enemyMaxHp')::integer*.35 then dmg:=round(dmg*1.4)::integer; end if;
+  end if;
   ehp:=greatest(0,ehp-dmg);
   if ehp>0 then php:=greatest(0,php-edmg); end if;
   battle:=jsonb_set(battle,'{turn}',to_jsonb(turns));
