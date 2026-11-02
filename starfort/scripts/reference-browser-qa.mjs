@@ -164,7 +164,10 @@ try{
   if(await evaluate("!!document.querySelector('.app')&&!document.querySelector('.app').inert")){confirmed=true;break;}
   await sleep(100);
  }
- assert.ok(confirmed,'Simulated confirmation link failed to authorize account browser');
+ if(!confirmed){
+  const snapshot=await evaluate("({mock:window.__starfortQaMock===true,ready:document.readyState,hasHash:location.hash.length>0,appInert:document.querySelector('.app')?.inert,locked:document.body.classList.contains('account-locked'),session:!!sessionStorage.getItem('starfort:account-session'),status:document.querySelector('#account-gate-status')?.textContent.slice(0,200),toast:document.querySelector('#toast')?.textContent.slice(0,200)})");
+  throw Error('Simulated email confirmation failed: '+JSON.stringify(snapshot));
+ }
  assert.equal(await evaluate("location.hash"),'','Signup confirmation URL tokens remained visible');
  console.log('PASS synthetic provider: signup locked until confirmation, email callback verified, session unlocked');
 
