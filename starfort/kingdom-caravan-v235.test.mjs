@@ -103,5 +103,5 @@ test('side inspector respects the same server mastery and one-builder restrictio
  assert.match(app,/!R\.buildingMasteryGate\(v,building\.id\)\.ok/);
  assert.match(app,/!!job\|\|Object\.entries\(cost\)/);
  assert.match(app,/job\.ready\?'İnşaat bitti/);
- assert.match(app,/data-caravan-trade/);
+ assert.match(app,/button\.dataset\.caravanTrade/);
 });
