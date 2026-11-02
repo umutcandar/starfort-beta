@@ -37,3 +37,17 @@
 @media(max-width:760px){.reward-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.reward-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.reward-today{grid-template-columns:1fr}.reward-claim{width:100%}}
 @media(max-width:430px){#reward-dialog{width:98vw;max-height:95dvh}#reward-dialog .reward-sheet{padding:11px;gap:10px}.reward-grid{gap:5px}.reward-day{padding:7px 3px;min-height:98px;grid-template-rows:auto 28px auto auto;gap:3px}.reward-day strong{font-size:9px;min-height:24px}.reward-day-amount{font-size:8px}.reward-day-icon{font-size:21px}.reward-today{padding:12px}.reward-summary>div{padding:8px}.reward-summary small{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.reward-progress>span{transition:none}}
+
+/* v2.27 combat tells the player what the AI will do next, so Guard and special skills are decisions. */
+.server-enemy-intent{display:flex;align-items:center;gap:11px;margin:13px 0;padding:10px 13px;border:1px solid #a2b5af73;background:#183244c9;border-radius:9px;color:#f5e3c8}
+.server-enemy-intent .intent-symbol{font-size:27px;flex:0 0 34px;text-align:center}
+.server-enemy-intent div{display:grid;gap:5px}.server-enemy-intent strong{font-size:12px}
+.server-enemy-intent small{font-size:10px;line-height:1.45;color:#c1d0cf}
+.server-enemy-intent.intent-crush{border-color:#df8879;background:#482b3194}
+.server-enemy-intent.intent-shield{border-color:#9fc2dd;background:#273e558a}
+.server-enemy-intent.intent-drain{border-color:#bb9fe1;background:#382d4c94}
+.official-impact-ring{position:absolute;top:32%;left:44%;width:13%;height:25%;z-index:4;pointer-events:none;transform:scale(.4);border:2px solid #f0ca88ba;border-radius:50%;opacity:0}
+.official-combat-scene.hero-skill-impact .official-impact-ring{animation:official-impact-echo 1.25s ease-out infinite}
+.official-combat-scene.hero-skill-impact .official-weapon-flash{background:radial-gradient(ellipse,#d6edff89,transparent 73%);animation:official-weapon-pulse 1s ease-in-out infinite}
+@keyframes official-impact-echo{0%{transform:scale(.4);opacity:.75}100%{transform:scale(2.3);opacity:0}}
+@media(prefers-reduced-motion:reduce){.official-impact-ring{animation:none!important}}
