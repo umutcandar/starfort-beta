@@ -161,7 +161,7 @@ try{
  await cdp('Page.reload',{ignoreCache:true});
  let confirmed=false;
  for(let i=0;i<100;i++){
-  if(await evaluate("!!document.querySelector('.app')&&!document.querySelector('.app').inert")){confirmed=true;break;}
+  if(await evaluate("document.readyState==='complete'&&!document.body.classList.contains('account-locked')&&!!document.querySelector('[data-view=shop]')&&!document.querySelector('.app').inert&&location.hash===''")){confirmed=true;break;}
   await sleep(100);
  }
  if(!confirmed){
