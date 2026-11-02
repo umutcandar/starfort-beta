@@ -11,6 +11,9 @@ export function officialCombatScene(game,mission,report=null){
  if(!mission)return '';
  const stage=STAGES[mission.stage-1]||STAGES[0],atmosphere=chapterAtmosphere(stage.id);
  const team=(game.team||[]).filter(id=>HEROES.some(h=>h.id===id)).slice(0,3);
+ const actorId=String(mission.lastAction||'').startsWith('skill:')?String(mission.lastAction).slice(6):'';
+ const actor=HEROES.find(h=>h.id===actorId);
+ const lastLabel=actor?actor.name+' özel yeteneğini kullandı':(({strike:'Kılıçlar çarpıştı',guard:'Siperler kuruldu',skill:'Yıldız yeteneği',Başladı:'Muharebe başlıyor'})[mission.lastAction]||mission.lastAction||'Muharebe sürüyor');
  const ph=mission.playerMaxHp?mission.playerHp/mission.playerMaxHp*100:0;
  const eh=mission.enemyMaxHp?mission.enemyHp/mission.enemyMaxHp*100:0;
  const enemies=mission.mode==='boss'?['raider','boss','caster']:mission.stage>=7?['raider','caster','boss']:mission.stage>=4?['raider','caster','raider']:['raider','caster','raider'];
@@ -21,7 +24,7 @@ export function officialCombatScene(game,mission,report=null){
   <div class="official-stage-formation"><div class="official-side allies">${team.map((id,i)=>portrait(id,'ally',i,ph)).join('')}</div>
   <div class="official-clash-center" aria-hidden="true"><span>⚔</span></div>
   <div class="official-side hostiles">${enemies.map((id,i)=>portrait(id,'enemy',i,eh)).join('')}</div></div>
-  <div class="official-weapon-flash" aria-hidden="true"></div><div class="official-action-caption" role="status">${esc(({strike:'Kılıçlar çarpıştı',guard:'Siperler kuruldu',skill:'Yıldız yeteneği',Başladı:'Muharebe başlıyor'})[mission.lastAction]||mission.lastAction||'Muharebe sürüyor')}</div>
+  <div class="official-weapon-flash" aria-hidden="true"></div><div class="official-action-caption" role="status">${esc(lastLabel)}</div>
   <div class="official-arena-foot"><span>${esc(stage.enemyName)}</span><span>Güç ${Number(mission.power||0).toLocaleString('tr-TR')} · ${mission.turn} hamle</span></div>
  </section>`;
 }
