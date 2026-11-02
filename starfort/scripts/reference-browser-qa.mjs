@@ -1,4 +1,5 @@
-// Real Chromium DOM and screenshot smoke test: no external test dependencies.
+// v2.32 real Chromium integration: all entry points require a verified server account.
+// No guest flow, local rewards, or trusted gameplay exists behind the login screen.
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {mkdtemp,readFile,mkdir,writeFile,rm} from 'node:fs/promises';
@@ -7,344 +8,102 @@ import path from 'node:path';
 import {createGuildServer} from '../guild-server.mjs';
 
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-const profile=await mkdtemp(path.join(tmpdir(),'starfort-ref-ui-'));
+const profile=await mkdtemp(path.join(tmpdir(),'starfort-authonly-'));
 const server=await createGuildServer({host:'127.0.0.1',port:0});
-const origin=`http://127.0.0.1:${server.address().port}/starfort/`;
+const origin='http://127.0.0.1:'+server.address().port+'/starfort/';
 const chrome=spawn(process.env.CHROME_BIN||'google-chrome',[
-  '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
-  '--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'
+ '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
+ '--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'
 ],{stdio:['ignore','ignore','pipe']});
-let chromeError='';
-chrome.stderr.on('data',chunk=>{chromeError+=String(chunk).slice(0,1000)});
-chrome.on('error',error=>{chromeError=error.message});
-let ws,closed=false,sequence=0;
+let chromeError='',ws=null,sequence=0;
 const pending=new Map();
+chrome.stderr.on('data',chunk=>{chromeError+=String(chunk).slice(0,1500)});
+chrome.on('error',err=>{chromeError=err.message});
 try{
-  let port;
-  for(let retry=0;retry<100;retry++){
-    try{
-      const content=await readFile(path.join(profile,'DevToolsActivePort'),'utf8');
-      port=Number(content.split('\n')[0]);if(port)break;
-    }catch{}
-    if(chrome.exitCode!==null || chromeError.includes('ENOENT'))throw new Error('Chromium açılmadı: '+chromeError.slice(0,500));
-    await sleep(100);
-  }
-  assert.ok(port,'Chromium devtools bağlantısı açılmadı: '+chromeError.slice(0,500));
-  let page;
-  for(let retry=0;retry<30;retry++){
-    const targets=await fetch(`http://127.0.0.1:${port}/json/list`).then(r=>r.json());
-    page=targets.find(t=>t.type==='page');if(page)break;await sleep(100);
-  }
-  assert.ok(page,'Chromium sayfa hedefi bulunamadı.');
-  ws=new WebSocket(page.webSocketDebuggerUrl);
-  await new Promise((resolve,reject)=>{
-    ws.addEventListener('open',resolve,{once:true});ws.addEventListener('error',reject,{once:true});
-  });
-  ws.addEventListener('message',e=>{
-    const msg=JSON.parse(String(e.data));if(!msg.id)return;
-    const p=pending.get(msg.id);if(!p)return;pending.delete(msg.id);
-    msg.error?p.reject(new Error(msg.error.message)):p.resolve(msg.result);
-  });
-  function cdp(method,params={}){
-    return new Promise((resolve,reject)=>{
-      const id=++sequence;pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));
-    });
-  }
-  async function evaluate(js){
-    const r=await cdp('Runtime.evaluate',{expression:js,returnByValue:true,awaitPromise:true});
-    if(r.exceptionDetails)throw new Error('Tarayıcı JS hatası: '+(r.exceptionDetails.exception?.description||r.exceptionDetails.text));
-    return r.result.value;
-  }
-  async function ready(){
-    for(let i=0;i<70;i++){
-      const r=await evaluate("document.readyState==='complete' && !!document.querySelector('.nav-item[data-view=armory]')");
-      if(r)return;await sleep(100);
-    }
-    throw new Error('Oyun arayüzü yüklenmedi');
-  }
-  function layoutExpression(){
-    return `(()=>{const box=s=>{const e=document.querySelector(s);if(!e)return null;const r=e.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,bottom:r.bottom,right:r.right}};return {viewport:{w:innerWidth,h:innerHeight},nav:box('.rail'),quest:box('.next-quest'),brand:box('.brand'),roster:box('.bag-v212-roster'),hero:box('.bag-v212-character'),inventory:box('.bag-v212-right'),detail:box('.armory-v212>.bag-v212-detail'),workspace:box('#workspace'),workScroll:document.querySelector('#workspace')?.scrollWidth,workWidth:document.querySelector('#workspace')?.clientWidth,questButton:!!document.querySelector('.quest-actions [data-stage],.quest-actions [data-action="resume-battle"]'),bagItems:document.querySelectorAll('.bag-v212-item').length,hasDetailAction:!!document.querySelector('.bag-v212-detail-actions [data-equip],.bag-v212-detail-actions [data-unequip]')}})()`;
-  }
-  await cdp('Page.enable');
-  await cdp('Runtime.enable');
-  await cdp('Emulation.setDeviceMetricsOverride',{width:1536,height:864,deviceScaleFactor:1,mobile:false});
-  await cdp('Page.navigate',{url:origin});
-  await ready();
-  await sleep(160);
-  assert.equal(await evaluate("document.querySelector('#account-welcome')?.open"),true,'İlk oyunda misafir ve hesap seçimi gösterilmeli');
-  assert.ok(await evaluate("!!document.querySelector('#account-welcome [data-welcome=account]')"),'Hesapla başla seçeneği olmalı');
-  await evaluate("document.querySelector('#account-welcome [data-welcome=guest]').click()");
-  assert.equal(await evaluate("document.querySelector('#account-welcome').open"),false,'Misafir seçince köy oynanabilir olmalı');
-  assert.equal(await evaluate("localStorage.getItem('starfort:welcome-seen')"),'1','İlk giriş ekranı yalnızca bir defa açılmalı');
-  // Do not block the castle view unless the player explicitly requests a quest.
-  assert.equal(await evaluate("document.querySelector('#next-quest').hidden"),true,'Köyde sefer kartı ilk açılışta kapalı olmalı');
-  assert.equal(await evaluate("document.querySelector('#quest-mini').hidden"),false,'Küçük Sefer düğmesi görünmeli');
-  await evaluate("document.querySelector('#quest-mini').click()");
-  assert.equal(await evaluate("document.querySelector('#next-quest').hidden"),false,'Sefer kısayolu kartı açmalı');
-  await evaluate("document.querySelector('.quest-dismiss').click()");
-  assert.equal(await evaluate("document.querySelector('#next-quest').hidden"),true,'X düğmesi kartı kapatmalı');
-  assert.equal(await evaluate("document.querySelector('#quest-mini').hidden"),false,'Kapatılan kart tekrar açılabilir olmalı');
-  // Rerendering after collapsing must not reopen the card.
-  await evaluate("document.querySelector('.nav-item[data-view=keep]').click()");
-  assert.equal(await evaluate("document.querySelector('#next-quest').hidden"),true,'Köye dönünce kart kapalı kalmalı');
-  // v2.21 building workshop: real map click, building switch and actual upgrade.
-  await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
-  assert.equal(await evaluate("document.querySelector('#building-dialog').open"),true,'Bina merkezinin gerçek dialog penceresi açılmalı');
-  const workshopDesktop=await evaluate("(()=>{const d=document.querySelector('#building-dialog'),r=d.getBoundingClientRect();return {w:r.width,right:r.right,viewport:innerWidth,columns:getComputedStyle(document.querySelector('.ws-layout')).gridTemplateColumns,tabs:document.querySelectorAll('.ws-building-tab').length,resources:document.querySelectorAll('.ws-resource').length,cta:!!document.querySelector('.ws-upgrade-button:not(:disabled)')}})()");
-  assert.equal(workshopDesktop.tabs,7,'Yedi bina tek menüde görünmeli');
-  assert.equal(workshopDesktop.resources,3,'Kale üç temel kaynakla yükseltilir');
-  assert.ok(workshopDesktop.w>800&&workshopDesktop.right<=workshopDesktop.viewport+2,'Bina merkezinin geniş masaüstü düzeni ekran dışına taşmamalı');
-  assert.equal(workshopDesktop.cta,true,'Başlangıç kalesi geliştirilebilir olmalı');
-  await evaluate("document.querySelector('[data-plan-building=forge]').click()");
-  assert.ok(await evaluate("document.querySelector('.ws-building-heading h3').textContent.includes('Demirhanesi')"),'Pencere kapanmadan seçilen binaya geçilmeli');
-  await evaluate("document.querySelector('[data-plan-building=keep]').click()");
-  await evaluate("document.querySelector('.ws-upgrade-button').click()");
-  assert.equal(await evaluate("document.querySelector('#building-dialog').open"),true,'Yükseltmeden sonra pencere kapanmamalı');
-  assert.ok(await evaluate("document.querySelector('.ws-building-heading .eyebrow').textContent.includes('SEVİYE 2')"),'Yükseltilen seviye anında görünmeli');
-  const workshopShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await mkdir('qa-artifacts',{recursive:true});
-  await writeFile('qa-artifacts/starfort-1536x864-buildings.png',Buffer.from(workshopShot.data,'base64'));
-  await evaluate("document.querySelector('[data-close-building]').click()");
-  assert.equal(await evaluate("document.querySelector('#building-dialog').open"),false,'Kapat düğmesi çalışmalı');
-  await evaluate("document.querySelector('.nav-item[data-view=expedition]').click()");
-  assert.equal(await evaluate("document.querySelector('#next-quest').hidden"),false,'Seferler sekmesi kartı açmalı');
-  let scenic=await evaluate(layoutExpression());
-  assert.equal(scenic.questButton,true,'Sefer kartından savaş başlatılabilmeli');
-  assert.ok(scenic.quest.x>scenic.viewport.w/2,'Sefer kartı sağda olmalı');
-  assert.ok(scenic.quest.bottom<scenic.nav.y+3,'Sefer kartı alt menünün üstünde kalmalı');
-  const wideScenic=scenic;
-  await evaluate("document.querySelector('.nav-item[data-view=armory]').click()");
-  await sleep(400);
-  let bag=await evaluate(layoutExpression());
-  assert.ok(bag.roster&&bag.hero&&bag.inventory&&bag.detail,'Çanta dört ana sütunu göstermeli');
-  assert.ok(bag.roster.x<bag.hero.x && bag.hero.x<bag.inventory.x && bag.inventory.x<bag.detail.x,'Geniş ekranda dört sütun sıralı olmalı');
-  assert.ok(bag.detail.right<=bag.viewport.w+2,'Eşya paneli yatay ekrandan taşmamalı');
-  assert.ok(bag.nav.y>bag.detail.y,'Alt menü ekrandaki içerikten sonra olmalı');
-  assert.ok(bag.bagItems>=19,'Ekipman ve malzeme ızgarası doldurulmalı');
-  assert.ok(bag.hasDetailAction,'Eşya panelinde işlevsel işlem olmalı');
-  const wideBag=bag;
-  await mkdir('qa-artifacts',{recursive:true});
-  const shot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await writeFile('qa-artifacts/starfort-1536x864-bag.png',Buffer.from(shot.data,'base64'));
-  await evaluate("document.querySelector('.nav-item[data-view=expedition]').click()");
-  await sleep(200);
-  const sceneShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await writeFile('qa-artifacts/starfort-1536x864-village.png',Buffer.from(sceneShot.data,'base64'));
-  await cdp('Emulation.setDeviceMetricsOverride',{width:667,height:375,deviceScaleFactor:1,mobile:false});
-  await sleep(200);
-  scenic=await evaluate(layoutExpression());
-  assert.equal(scenic.questButton,true,'Telefon yatay sefer kartı oynanabilir kalmalı');
-  assert.ok(scenic.quest.bottom<=scenic.nav.y+3,'Telefon sefer kartı menüyü örtmemeli');
-  const mobileScenic=scenic;
-  await evaluate("document.querySelector('.nav-item[data-view=armory]').click()");
-  await sleep(220);
-  bag=await evaluate(layoutExpression());
-  assert.ok(bag.roster&&bag.hero&&bag.inventory&&bag.detail,'Dar ekranda tüm çanta parçaları korunmalı');
-  assert.ok(bag.workScroll<=bag.workWidth+4,`Telefon çantasında yatay taşma: ${bag.workScroll}/${bag.workWidth}`);
-  assert.ok(bag.nav.y>=300,'Telefon yatay menü görünür kalmalı');
-  assert.ok(Math.abs(bag.inventory.y-bag.detail.y)<=15,'Telefon çantasında seçili eşya ve envanter aynı sırada görünmeli');
-  assert.ok(bag.detail.x>bag.inventory.x,'Telefon çantasında eşya ayrıntısı seçimin sağında görünmeli');
-  const mobile=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await writeFile('qa-artifacts/starfort-667x375-bag.png',Buffer.from(mobile.data,'base64'));
-  const mobileBag=bag;
-  await evaluate("document.querySelector('.nav-item[data-view=keep]').click()");
-  await evaluate("document.querySelector('#city-labels [data-building=farm]').click()");
-  await sleep(80);
-  const workshopLandscape=await evaluate("(()=>{const d=document.querySelector('#building-dialog'),r=d.getBoundingClientRect();return {open:d.open,right:r.right,bottom:r.bottom,w:innerWidth,h:innerHeight,scroll:d.scrollWidth,client:d.clientWidth,tabs:document.querySelectorAll('.ws-building-tab').length,cta:!!document.querySelector('.ws-upgrade-button')}})()");
-  assert.equal(workshopLandscape.open,true);
-  assert.equal(workshopLandscape.tabs,7);
-  assert.ok(workshopLandscape.right<=workshopLandscape.w+2&&workshopLandscape.bottom<=workshopLandscape.h+2,'Yatay telefonda bina penceresi çerçeveyi aşmamalı');
-  assert.ok(workshopLandscape.scroll<=workshopLandscape.client+5,'Yatay telefonda sayfa yatay taşmamalı');
-  const landscapeShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await writeFile('qa-artifacts/starfort-667x375-buildings.png',Buffer.from(landscapeShot.data,'base64'));
-  await cdp('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
-  await sleep(120);
-  const workshopPortrait=await evaluate("(()=>{const d=document.querySelector('#building-dialog'),r=d.getBoundingClientRect();return {open:d.open,right:r.right,bottom:r.bottom,w:innerWidth,h:innerHeight,scroll:d.scrollWidth,client:d.clientWidth,tabCount:document.querySelectorAll('.ws-building-tab').length}})()");
-  assert.ok(workshopPortrait.open&&workshopPortrait.tabCount===7);
-  assert.ok(workshopPortrait.right<=workshopPortrait.w+2&&workshopPortrait.bottom<=workshopPortrait.h+2,'Dikey telefonda bina penceresi ekranda kalmalı');
-  assert.ok(workshopPortrait.scroll<=workshopPortrait.client+5,'Dikey telefonda bina penceresi yatay taşmamalı');
-  const portraitShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await writeFile('qa-artifacts/starfort-390x844-buildings.png',Buffer.from(portraitShot.data,'base64'));
-  await evaluate("document.querySelector('[data-close-building]').click()");
-  await cdp('Emulation.setDeviceMetricsOverride',{width:667,height:375,deviceScaleFactor:1,mobile:false});
-  await sleep(150);
-  await evaluate("document.querySelector('.nav-item[data-view=armory]').click()");
-  await evaluate("document.querySelector('#workspace').scrollTop=document.querySelector('#workspace').scrollHeight");
-  await sleep(150);
-  const scrollDetail=await evaluate("(()=>{const r=document.querySelector('.armory-v212>.bag-v212-detail').getBoundingClientRect();const nav=document.querySelector('.rail').getBoundingClientRect();return {top:r.top,bottom:r.bottom,navTop:nav.top}})()");
-  assert.ok(scrollDetail.top<scrollDetail.navTop,'Telefon çanta ayrıntısı kaydırarak görülebilmeli');
-  const mobileDetail=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await writeFile('qa-artifacts/starfort-667x375-bag-detail.png',Buffer.from(mobileDetail.data,'base64'));
-  // A new player can equip the owned starter sword and take it off.
-  const equipClicked=await evaluate("(()=>{document.querySelector('[data-bag-item=iron_sword]')?.click();const b=document.querySelector('.bag-v212-detail-actions [data-equip=iron_sword]');if(!b||b.disabled)return false;b.click();return true})()");
-  assert.ok(equipClicked,'İlk başlangıç kılıcı kuşanılabilmeli');
-  await sleep(80);
-  assert.ok(await evaluate("!!document.querySelector('.bag-v212-detail-actions [data-unequip=weapon]')"),'Kuşanılan kılıç çıkarılabilmeli');
-  await evaluate("document.querySelector('.bag-v212-detail-actions [data-unequip=weapon]').click()");
-  await sleep(80);
-  assert.ok(await evaluate("!!document.querySelector('.bag-v212-detail-actions [data-equip=iron_sword]')"),'Kılıç çantaya geri dönmeli');
-  // The scenic expedition card must launch the real live combat modal.
-  await evaluate("document.querySelector('.nav-item[data-view=expedition]').click()");
-  const campLink=await evaluate("(()=>{const el=document.querySelector('[data-action=open-expedition]');el?.click();return !!el})()");
-  assert.ok(campLink,'Tüm seferleri aç bağlantısı bulunmalı');
-  assert.equal(await evaluate("document.querySelectorAll('.stage-card').length"),8,'Sekiz hikâye bölümü ulaşılabilir olmalı');
-  await evaluate("document.querySelector('.nav-item[data-view=expedition]').click()");
-  await evaluate("document.querySelector('.quest-actions [data-stage]').click()");
+ let port;
+ for(let i=0;i<100;i++){
+  try{const lines=(await readFile(path.join(profile,'DevToolsActivePort'),'utf8')).split('\n');port=Number(lines[0]);if(port)break;}catch{}
+  if(chrome.exitCode!==null||chromeError.includes('ENOENT'))throw Error('Chromium did not launch: '+chromeError.slice(0,500));
   await sleep(100);
-  assert.ok(await evaluate("document.querySelector('#battle-dialog').open"),'Savaşa Başla gerçek savaş modalını açmalı');
-  await evaluate("document.querySelector('[data-close-battle]').click()");
-  await evaluate("document.querySelector('.header-action[data-view=settings]').click()");
-  await sleep(110);
-  assert.ok(await evaluate("!!document.querySelector('#starfort-account-form')"),'E-posta hesap formu ayarlardan erişilebilir olmalı');
-  assert.ok(await evaluate("!!document.querySelector('[data-audio-toggle]')"),'Ses aç/kapat kontrolleri görünmeli');
-  await evaluate("document.querySelector('[data-audio-toggle]').click()");
-  assert.ok(await evaluate("document.querySelector('[data-audio-toggle]').textContent.includes('Açık')"),'Ses izne bağlı açılmalı');
-  await evaluate("document.querySelector('[data-audio-toggle]').click()");
-  assert.ok(await evaluate("document.querySelector('[data-audio-toggle]').textContent.includes('Kapalı')"),'Ses kapatılabilmeli');
-  // Long-game smoke: a fully funded veteran building must start a real, persistent timer.
-  await evaluate(`(()=>{const key='starfort:v1',state=JSON.parse(localStorage.getItem(key));state.buildings.keep=8;state.battle=null;
-    state.res={gold:1000000,wood:1000000,stone:1000000,aether:1000000};
-    state.cleared=[1,2,3,4,5,6,7,8];
-    state.campaignStars={1:3,2:3,3:3,4:3,5:3,6:3,7:3,8:3};
-    localStorage.setItem(key,JSON.stringify(state));location.reload();return true})()`);
-  await sleep(450);
-  await ready();
-  await evaluate("document.querySelector('.nav-item[data-view=keep]').click()");
-  await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
-  assert.ok(await evaluate("!!document.querySelector('[data-upgrade-building=keep]')"),'8. seviyeden sonraki inşaat başlatılabilmeli');
-  await evaluate("document.querySelector('[data-upgrade-building=keep]').click()");
-  for(let retry=0;retry<40;retry++){
-    if(await evaluate("!!JSON.parse(localStorage.getItem('starfort:v1'))?.construction"))break;
-    await sleep(100);
+ }
+ assert.ok(port,'Chromium DevTools port unavailable');
+ let page;
+ for(let i=0;i<30;i++){
+  const targets=await fetch('http://127.0.0.1:'+port+'/json/list').then(r=>r.json());
+  page=targets.find(t=>t.type==='page');if(page)break;await sleep(100);
+ }
+ assert.ok(page,'No Chromium tab');
+ ws=new WebSocket(page.webSocketDebuggerUrl);
+ await new Promise((resolve,reject)=>{ws.addEventListener('open',resolve,{once:true});ws.addEventListener('error',reject,{once:true});});
+ ws.addEventListener('message',e=>{const m=JSON.parse(String(e.data)),req=pending.get(m.id);if(!req)return;pending.delete(m.id);m.error?req.reject(Error(m.error.message)):req.resolve(m.result);});
+ const cdp=(method,params={})=>new Promise((resolve,reject)=>{const id=++sequence;pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
+ const evaluate=async expression=>{
+  const data=await cdp('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
+  if(data.exceptionDetails)throw Error('Browser JS: '+(data.exceptionDetails.exception?.description||data.exceptionDetails.text));
+  return data.result.value;
+ };
+ const ready=async()=>{
+  for(let i=0;i<100;i++){
+   if(await evaluate("document.readyState==='complete'&&!!document.querySelector('#starfort-gate-form')&&document.body.classList.contains('account-locked')"))return;
+   await sleep(100);
   }
-  const started=await evaluate("(()=>({status:document.querySelector('.ws-status-chip')?.className,notice:document.querySelector('#toast')?.textContent,job:JSON.parse(localStorage.getItem('starfort:v1'))?.construction,level:JSON.parse(localStorage.getItem('starfort:v1'))?.buildings.keep,button:document.querySelector('.ws-upgrade-button')?.outerHTML}))()");
-  assert.ok(started.job&&started.status?.includes('building'),'İnşaatı başlatınca seviye anında yükselmemeli: '+JSON.stringify(started));
-  assert.equal(await evaluate("document.querySelector('#construction-status').hidden"),false,'Köyde usta çalışması takip edilmeli');
-  assert.equal(await evaluate("JSON.parse(localStorage.getItem('starfort:v1')).buildings.keep"),8,'Yapı süre bitmeden 9 olmamalı');
-  assert.ok(await evaluate("!!JSON.parse(localStorage.getItem('starfort:v1')).construction"),'Aktif inşaat kayda geçmeli');
-  await evaluate("location.reload()");
-  await sleep(400);
-  await ready();
-  for(let retry=0;retry<25;retry++){
-    if(await evaluate("!!document.querySelector('#city-labels [data-building=keep]')"))break;
-    await sleep(100);
-  }
-  assert.ok(await evaluate("!!document.querySelector('#city-labels [data-building=keep]')"),'Yenileme sonrası köy haritası yeniden kurulmalı');
-  await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
-  assert.ok(await evaluate("!!document.querySelector('.ws-status-chip.building')"),'Yenileme sonrası inşaat kuyruğu kalmalı');
-  await evaluate("document.querySelector('[data-plan-building=farm]').click()");
-  assert.ok(await evaluate("!!document.querySelector('.ws-status-chip.builder-busy')"),'İkinci binaya ustanın meşgul olduğu bildirilmeli');
-  await evaluate("document.querySelector('[data-plan-building=keep]').click()");
-  const timeSkew=await evaluate("(()=>{const original=Date.now;Date.now=()=>original()+100*86400000;try{return {banner:document.querySelector('#construction-caption')?.textContent,claim:!!document.querySelector('[data-finish-building]'),level:JSON.parse(localStorage.getItem('starfort:v1')).buildings.keep}}finally{Date.now=original}})()");
-  assert.equal(timeSkew.claim,false,'Tarayıcı duvar saatini ileri almak teslim al düğmesini açmamalı');
-  assert.equal(timeSkew.level,8,'Sahte ileri saat binayı tamamlayamamalı');
-  await evaluate("document.querySelector('[data-close-building]').click()");
-  await evaluate("(()=>{const key='starfort:v1',saved=JSON.parse(localStorage.getItem(key));saved.construction=null;saved.buildings.keep=10;localStorage.setItem(key,JSON.stringify(saved));return true})()");
-  await cdp('Page.navigate',{url:origin});
-  await sleep(550);
-  await ready();
-  for(let retry=0;retry<25;retry++){
-    if(await evaluate("!!document.querySelector('#city-labels [data-building=keep]')"))break;
-    await sleep(100);
-  }
-  await evaluate("document.querySelector('#city-labels [data-building=keep]').click()");
-  assert.ok(await evaluate("!!document.querySelector('[data-building-preview=\"10\"]')"),'10. seviye mimari önizlemesi gösterilmeli');
-  assert.ok(await evaluate("!!document.querySelector('[data-building-preview=\"11\"]')"),'11. seviye yeni mimari önizlemesi gösterilmeli');
-  assert.ok(await evaluate("document.querySelector('.ws-next-evolution').textContent.includes('Yaldızlı gözetleme feneri')"),'10→11 mimari bileşeni farklı olmalı');
-  await cdp('Emulation.setDeviceMetricsOverride',{width:1536,height:864,deviceScaleFactor:1,mobile:false});
-  await sleep(250);
-  const masteryShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await writeFile('qa-artifacts/starfort-1536x864-level-10-mastery.png',Buffer.from(masteryShot.data,'base64'));
-  await evaluate("document.querySelector('[data-close-building]').click()");
-
-  // Authenticated browser smoke: the server account must override a cheated local save.
-  await cdp('Page.addScriptToEvaluateOnNewDocument',{source:"(()=>{\n sessionStorage.setItem('starfort:account-session',JSON.stringify({access_token:'test',refresh_token:'test',user:{id:'11111111-1111-4111-8111-111111111111',email:'test@example.invalid'},expires_at:Math.ceil(Date.now()/1000)+3600}));\n const orig=fetch.bind(globalThis);\n const data={ok:true,source:'server',serverNow:Date.now(),lastCollected:Date.now(),revision:1,lastDailyReward:null,mastery:0,construction:null,res:{gold:280,wood:180,stone:150,aether:65},buildings:{keep:1,farm:1,lumber:1,quarry:1,forge:1,tavern:1,observatory:1},heroes:{aldren:1,lyra:1,rovan:1},inventory:{iron_sword:1,ward_mail:1},loadouts:{},itemUpgrades:{},worldBoss:{week:'2026-45',goal:4500,damage:2100,victories:1,claimed:false},bossWeek:null,team:['aldren','lyra','rovan'],cleared:[],campaignStars:{},veteranMedals:{},mazeFloor:0,riftWeek:null,mission:null,lastReport:null,counters:{win:0,hero:0,forge:0,maze:0,rift:0,veteran:0},contractClaims:{},titles:[]};\n const calendar={ok:true,source:'server-calendar',claimCount:0,streak:0,lastClaimDay:null,available:true,nextDay:1,displayDay:1,cycle:1,serverNow:Date.now(),granted:null};\n globalThis.fetch=(url,opts={})=>{\n  const u=String(url);\n  if(u.includes('/rest/v1/starfort_account_backups'))return Promise.resolve(new Response(JSON.stringify(opts.method==='GET'?[]:[{revision:1}]),{status:200}));\n  if(u.includes('/rest/v1/rpc/sfb_daily_calendar')){\n   const method=JSON.parse(opts.body||'{}').p_action,day=new Date().toISOString().slice(0,10);\n   if(method==='claim'&&calendar.claimCount===0){\n    calendar.claimCount=1;calendar.streak=1;calendar.lastClaimDay=day;calendar.available=false;\n    calendar.nextDay=2;calendar.displayDay=1;calendar.cycle=1;\n    calendar.granted={day:1,resources:{gold:102,wood:51,stone:40,aether:5},item:null};\n    data.res.gold+=102;data.res.wood+=51;data.res.stone+=40;data.res.aether+=5;\n    data.revision++;\n   }\n   calendar.serverNow=Date.now();\n   return Promise.resolve(new Response(JSON.stringify(calendar),{status:200,headers:{'Content-Type':'application/json'}}));\n  }\n  if(u.includes('/rest/v1/rpc/sfb_starfort_progress')){\n   const body=JSON.parse(opts.body||'{}'),type=body.p_action;\n   if(type==='enhance'){data.itemUpgrades.iron_sword=1;data.res.gold-=120;data.res.stone-=40;data.res.aether-=8;data.revision++;}\n   if(type==='hero'){data.heroes.aldren++;data.res.gold-=60;data.res.wood-=15;data.res.aether-=6;data.revision++;}\n   if(type==='mission_start'){data.mission={mode:'story',stage:Number(body.p_target),tier:0,floor:0,startedAt:Date.now(),lastTurnAt:Date.now()-4000,turn:0,power:267,enemyHp:155,enemyMaxHp:155,playerHp:288,playerMaxHp:288,lastAction:'Başladı'};data.revision++;}\n   data.serverNow=Date.now();\n   return Promise.resolve(new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json'}}));\n  }\n  return orig(url,opts);\n };\n})();"});
-  await cdp('Page.navigate',{url:origin});
-  await sleep(550);
-  await ready();
-  for(let i=0;i<25;i++){if(await evaluate("document.querySelector('[data-res=gold] b')?.textContent==='280'"))break;await sleep(100);}
-  assert.equal(await evaluate("document.querySelector('[data-res=gold] b')?.textContent"),'280','Server wallet must replace local currency in signed-in mode');
-  await evaluate("document.querySelector('#daily-reward').click()");
-  assert.equal(await evaluate("document.querySelectorAll('#reward-dialog .reward-day').length"),28,'Daily reward modal must list all 28 days');
-  assert.equal(await evaluate("document.querySelectorAll('#reward-dialog .reward-day.milestone').length"),4,'Day 7/14/21/28 chest items must be displayed');
-  assert.ok(await evaluate("document.querySelector('#reward-dialog').textContent.includes('102 altın')"),'Current day contents visible before claiming');
-  const calendarShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await writeFile('qa-artifacts/starfort-1536x864-reward-calendar-v227.png',Buffer.from(calendarShot.data,'base64'));
-  await evaluate("document.querySelector('[data-reward-claim]').click()");
-  for(let i=0;i<35;i++){if(await evaluate("document.querySelector('[data-reward-claim]')?.disabled"))break;await sleep(100);}
-  assert.ok(await evaluate("document.querySelector('#reward-dialog').textContent.includes('Bugünün ödülü alındı')"),'Daily chest claims once and remains inspectable');
-  await evaluate("document.querySelector('[data-reward-close]').click()");
-  assert.ok(await evaluate("!document.querySelector('#reward-dialog').open"),'Reward modal can close');
-
-  await evaluate("document.querySelector('.nav-item[data-view=heroes]').click()");
-  assert.ok(await evaluate("document.querySelector('.hero-card .hero-level')?.textContent.includes('SEV. 1')"),'Server hero levels must override local saves');
-  await evaluate("document.querySelector('[data-upgrade-hero=aldren]').click()");
-  for(let i=0;i<20;i++){if(await evaluate("document.querySelector('.hero-card .hero-level')?.textContent.includes('SEV. 2')"))break;await sleep(100);}
-  assert.ok(await evaluate("document.querySelector('.hero-card .hero-level')?.textContent.includes('SEV. 2')"),'Authenticated hero upgrade must use server result');
-  await evaluate("document.querySelector('.nav-item[data-view=armory]').click()");
-  await evaluate("document.querySelector('[data-bag-item=iron_sword]').click()");
-  assert.ok(await evaluate("!!document.querySelector('[data-account-enhance=iron_sword]')"),'Authenticated armory should display the +5 mastery control');
-  await evaluate("document.querySelector('[data-account-enhance=iron_sword]').click()");
-  for(let i=0;i<25;i++){if(await evaluate("document.querySelector('.bag-v226-mastery')?.textContent.includes('+1')"))break;await sleep(100);}
-  assert.ok(await evaluate("document.querySelector('.bag-v226-mastery')?.textContent.includes('+1')"),'Server gear mastery is visible after enhancement');
-  await evaluate("document.querySelector('.nav-item[data-view=expedition]').click()");
-  await evaluate("document.querySelector('[data-action=open-expedition]').click()");
-  assert.equal(await evaluate("document.querySelectorAll('[data-account-stage]').length"),8,'Eight official server missions must render');
-  assert.equal(await evaluate("document.querySelectorAll('.realm-map-pin').length"),8,'Official campaign has eight map provinces');
-  assert.ok(await evaluate("document.querySelector('.official-next-goal')?.textContent.includes('İlk kahramanını donat')"),'Authenticated next step must come from the server loadout, not from the level-10 local save');
-  assert.equal(await evaluate("document.querySelector('.official-next-goal [data-view]')?.dataset.view"),'armory','First real account step must open armory');
-  const guideShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await writeFile('qa-artifacts/starfort-1536x864-trusted-next-goal-v229.png',Buffer.from(guideShot.data,'base64'));
-
-  assert.ok(await evaluate("!!document.querySelector('[data-account-boss]')"),'Authenticated campaign includes shared weekly boss');
-  const mapShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await writeFile('qa-artifacts/starfort-1536x864-world-map-v226.png',Buffer.from(mapShot.data,'base64'));
-
-  assert.equal(await evaluate("document.querySelectorAll('.server-stage-card [data-stage]').length"),0,'Signed-in battle must not use a client-trusted victory');
-  await evaluate("document.querySelector('[data-account-stage]').click()");
-  for(let i=0;i<20;i++){if(await evaluate("!!document.querySelector('.server-mission')"))break;await sleep(100);}
-  assert.ok(await evaluate("!!document.querySelector('.server-mission [data-account-turn=skill]')"),'Server combat must expose real turn commands');
-  assert.equal(await evaluate("document.querySelectorAll('.official-combat-scene .official-fighter.ally').length"),3,'Illustrated combat has three original hero sprites');
-  assert.equal(await evaluate("document.querySelectorAll('.official-combat-scene .official-fighter.enemy').length"),3,'Illustrated combat has three original enemy sprites');
-  assert.ok(await evaluate("!!document.querySelector('[data-official-3d-view]')"),'Authenticated battle exposes real WebGL3D viewport');
-  const supports3D=await evaluate("!!document.createElement('canvas').getContext('webgl2')");
-  const actual3D=await evaluate("document.querySelector('.official-combat-scene').classList.contains('is-3d')");
-  if(supports3D)assert.ok(actual3D,'WebGL2-supported Chromium should render official 3D by default');
-  const initialEngine=await evaluate("document.querySelector('[data-official-render-state]')?.textContent");
-  assert.ok(initialEngine==='3D canlı savaş'||initialEngine==='2D savaş');
-  if(actual3D){
-   await evaluate("document.querySelector('.official-3d-canvas').dataset.qaStable='persisted'");
-   await evaluate("document.querySelector('[data-realm-select]').click()");
-   assert.equal(await evaluate("document.querySelector('.official-3d-canvas')?.dataset.qaStable"),'persisted','3D GPU canvas must survive expedition DOM rerender');
-   await evaluate("document.querySelector('[data-village-refresh]').click()");
-   await sleep(450);
-   assert.equal(await evaluate("document.querySelector('.official-3d-canvas')?.dataset.qaStable"),'persisted','3D GPU canvas must survive authenticated server refresh');
-  }
-  await evaluate("document.querySelector('[data-official-render-toggle]').click()");
-  assert.ok(await evaluate("!!document.querySelector('.official-combat-scene')"),'Switching 3D/2D may never lose the active verified mission');
-  assert.notEqual(await evaluate("document.querySelector('.official-combat-scene').classList.contains('is-3d')"),actual3D,'Renderer mode toggles when 3D is available');
-  await evaluate("document.querySelector('[data-official-render-toggle]').click()");
-  assert.equal(await evaluate("document.querySelector('.official-combat-scene').classList.contains('is-3d')"),actual3D,'Original rendering mode restored');
-  if(actual3D){
-   const glShot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-   await writeFile('qa-artifacts/starfort-1536x864-official-webgl3d-v228.png',Buffer.from(glShot.data,'base64'));
-  }
-
-
-  const authScreenshot=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await writeFile('qa-artifacts/starfort-1536x864-server-account-campaign.png',Buffer.from(authScreenshot.data,'base64'));
-  await cdp('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:2,mobile:true});
-  await sleep(300);
-  assert.ok(await evaluate("!!document.querySelector('.official-combat-scene')"),'Illustrated official combat remains available on narrow mobile');
-  const narrow=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});
-  await writeFile('qa-artifacts/starfort-390x844-official-combat-v226.png',Buffer.from(narrow.data,'base64'));
-  await cdp('Emulation.setDeviceMetricsOverride',{width:1536,height:864,deviceScaleFactor:1,mobile:false});
-
-  console.log('STARFORT gerçek Chromium görsel/etkileşim kontrolleri BAŞARILI');
-  console.log(JSON.stringify({desktop:{scenic:wideScenic,bag:wideBag},mobile:{scenic:mobileScenic,bag:mobileBag,scrollDetail}},null,2));
-} finally{
-  if(ws && ws.readyState===1)ws.close();
-  if(!closed){chrome.kill('SIGTERM');closed=true;}
-  await new Promise(resolve=>server.close(resolve));
-  await rm(profile,{recursive:true,force:true,maxRetries:2});
+  throw Error('Authenticated-only entry did not load');
+ };
+ const shot=async filename=>{const png=await cdp('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false});await mkdir('qa-artifacts',{recursive:true});await writeFile('qa-artifacts/'+filename,Buffer.from(png.data,'base64'));};
+ await cdp('Page.enable');await cdp('Runtime.enable');
+ await cdp('Emulation.setDeviceMetricsOverride',{width:1536,height:864,deviceScaleFactor:1,mobile:false});
+ await cdp('Page.navigate',{url:origin});
+ await ready();await sleep(120);
+ let state=await evaluate(`(()=>{
+  const g=document.querySelector('#account-gate'),form=document.querySelector('#starfort-gate-form'),app=document.querySelector('.app'),r=g.getBoundingClientRect();
+  return {locked:document.body.classList.contains('account-locked'),gateVisible:getComputedStyle(g).display!=='none',
+   appHidden:getComputedStyle(app).visibility==='hidden',appInert:app.inert,formPresent:!!form,login:!!form.querySelector('[value=login]'),
+   signup:!!form.querySelector('[value=signup]'),guestButton:!!document.querySelector('[data-welcome=guest]'),welcomeDialog:!!document.querySelector('#account-welcome'),
+   gateWidth:r.width,viewport:innerWidth};
+ })()`);
+ assert.ok(state.locked&&state.gateVisible&&state.appHidden&&state.appInert&&state.login&&state.signup);
+ assert.equal(state.guestButton,false);assert.equal(state.welcomeDialog,false);
+ assert.ok(state.gateWidth<=state.viewport);
+ await shot('starfort-1536x864-login-required.png');
+ // Synthetic UI navigation cannot skip authentication or trigger a local reward.
+ await evaluate("document.querySelector('#daily-reward')?.click()");
+ assert.equal(await evaluate("document.body.classList.contains('account-locked')&&document.querySelector('.app').inert"),true);
+ assert.equal(await evaluate("document.querySelector('#reward-dialog').open"),false);
+ // Rejected sign-in may not accidentally fall back to guest state.
+ await evaluate(`(()=>{
+  window.fetch=async()=>({ok:false,status:401,json:async()=>({message:'invalid_credentials'})});
+  const form=document.querySelector('#starfort-gate-form');
+  form.querySelector('[name=email]').value='wrong@example.com';
+  form.querySelector('[name=password]').value='wrong-password-123';
+  form.querySelector('[value=login]').click();
+ })()`);
+ await sleep(300);
+ assert.equal(await evaluate("document.body.classList.contains('account-locked')&&document.querySelector('.app').inert"),true);
+ assert.ok(await evaluate("document.querySelector('#account-gate-status').textContent.length>15"));
+ // Fake stored credentials are never enough to reveal real gameplay.
+ await evaluate(`(()=>{
+  sessionStorage.setItem('starfort:account-session',JSON.stringify({
+   access_token:'fake.jwt.token',refresh_token:'fake-refresh',
+   user:{id:'00000000-0000-4000-8000-000000000001',email:'forged@example.com'},
+   expires_at:Math.floor(Date.now()/1000)+3600
+  }));
+ })()`);
+ await cdp('Page.navigate',{url:origin});
+ await ready(); // The gate remains locked even with a locally stored token.
+ assert.equal(await evaluate("document.querySelector('.app').inert"),true);
+ await cdp('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:2,mobile:true});
+ await sleep(120);
+ state=await evaluate(`(()=>{
+  const e=document.querySelector('#account-gate'),r=e.querySelector('.account-gate-panel').getBoundingClientRect();
+  return {scroll:document.documentElement.scrollWidth,viewport:innerWidth,right:r.right,left:r.left,locked:document.body.classList.contains('account-locked'),appHidden:getComputedStyle(document.querySelector('.app')).visibility==='hidden'};
+ })()`);
+ assert.ok(state.locked&&state.appHidden);
+ assert.ok(state.right<=state.viewport+2&&state.left>=-2&&state.scroll<=state.viewport+3,'Mobile login must not overflow screen');
+ await shot('starfort-390x844-server-verification.png');
+ console.log('PASS v2.32: desktop/mobile account-only gate, no guest access, rejected login, fake-session lock');
+}finally{
+ if(ws&&ws.readyState===1)ws.close();
+ chrome.kill('SIGTERM');
+ await new Promise(resolve=>server.close(resolve));
+ await rm(profile,{recursive:true,force:true,maxRetries:2});
 }
