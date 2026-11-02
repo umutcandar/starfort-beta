@@ -63,7 +63,7 @@ test('storefront displays balance, owned item controls and real free progress wi
  const owned=validatePremium({...baseline(),owned:['banner-trailblazer','castle-aurora'],crystals:400,
   equipped:{banner:'banner-trailblazer'},season:{...today,wins:5,freeClaims:['1']}});
  const a=premiumStoreMarkup(owned);
- assert.match(a,/Kuşanımı kaldır/);
+ assert.match(a,/Çıkar/);
  assert.match(a,/data-premium-action="equip"/);
  assert.match(a,/Ödülü al/);
  assert.match(a,/Öncü Sancağı/);
