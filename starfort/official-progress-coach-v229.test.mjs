@@ -21,7 +21,7 @@ test('a legitimate fresh player sees a real equip action, not the local test sav
  assert.equal(commanderPath(trusted).steps.find(x=>x.id==='rift').completed,false);
 });
 test('server game state genuinely drives progression steps, veteran and weekly rift',()=>{
- const p=profile({cleared:[1,2,3,4,5,6,7,8],veteranMedals:{1:1},riftWeek:'2026-44'});
+ const p=profile({cleared:[1,2,3,4,5,6,7,8],loadouts:{aldren:{weapon:'iron_sword'}},veteranMedals:{1:1},riftWeek:'2026-44'});
  const s=accountServerView(game(),p);
  assert.equal(commanderPath(s).steps.find(x=>x.id==='finish-campaign').completed,true);
  assert.equal(commanderPath(s).steps.find(x=>x.id==='veteran').completed,true);
