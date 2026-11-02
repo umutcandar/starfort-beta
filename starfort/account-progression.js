@@ -40,7 +40,7 @@ export function validateAccountSnapshot(data){
  const m=data.mission;
  if(m!==null&&(!object(m)||!['story','veteran','rift','maze','boss'].includes(m.mode)||!safeNumber(m.stage,1,8)||
  !safeNumber(m.turn,0,14)||!safeNumber(m.enemyHp,0,100000)||!safeNumber(m.playerHp,0,100000)||
- !safeNumber(m.lastTurnAt,1e12,2e13)))throw Error('Sunucu sefer kaydı bozuk.');
+ !safeNumber(m.lastTurnAt,1e12,2e13)|| (m.cooldowns!==undefined&&(!object(m.cooldowns)||!Object.entries(m.cooldowns).every(([id,next])=>HERO_IDS.has(id)&&safeNumber(next,1,20))))))throw Error('Sunucu sefer kaydı bozuk.');
  return {heroes:{...heroes},inventory:{...inventory},loadouts:structuredClone(loadouts),team:[...team],
   cleared:[...cleared],campaignStars:{...stars},veteranMedals:{...(data.veteranMedals||{})},
   mazeFloor:data.mazeFloor,riftWeek:data.riftWeek,mission:m?{...m}:null,lastReport:data.lastReport?{...data.lastReport}:null,
@@ -50,7 +50,7 @@ export async function accountProgressRequest(action,{target=null,aux=null,reques
  if(!ACCOUNT_ACTIONS.includes(action))throw Error('Tanımsız hesap işlemi.');
  if(target!==null&&(typeof target!=='string'||target.length>90))throw Error('Geçersiz seçim.');
  if(aux!==null&&(typeof aux!=='string'||aux.length>60))throw Error('Geçersiz hamle.');
- if(action==='mission_turn'&&!MOVES.includes(aux))throw Error('Geçersiz savaş hamlesi.');
+ if(action==='mission_turn'&&!MOVES.includes(aux)&&!(typeof aux==='string'&&/^skill:(aldren|lyra|rovan|mira|doran|vesper|eira)$/.test(aux)))throw Error('Geçersiz savaş hamlesi.');
  const session=await freshAccountSession(fetcher);
  if(!session?.access_token||!session?.user?.id)throw Error('E-posta hesabına giriş yapman gerekiyor.');
  const id=action==='get'?null:requestId??crypto.randomUUID();
