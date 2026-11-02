@@ -98,3 +98,24 @@
 .act-two-special p{margin:0;color:#ffe2b0;font:600 12px/1.5 system-ui,sans-serif}
 .act-two-special small{font:11px/1.45 system-ui,sans-serif;color:#c8d4d8}
 @media(max-width:600px){.act-two-special{padding:9px}.act-two-special p{font-size:11px}}
+
+/* v2.34: thirty server-verified long-term career milestones. */
+.commander-chronicle{display:grid;gap:13px;padding:clamp(12px,2vw,22px);border:1px solid #d2ad7e85;border-radius:13px;background:radial-gradient(ellipse at top right,#78604739,transparent 58%),linear-gradient(135deg,#192e3b,#191d33)}
+.commander-chronicle>header{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.commander-chronicle h3{font:700 clamp(20px,2.7vw,29px) Georgia,serif;color:#f6dba8;margin:5px 0}
+.commander-chronicle header p{font-size:12px;line-height:1.6;color:#c3d0d6;max-width:72ch}
+.chronicle-current-rank{display:grid;gap:3px;text-align:center;color:#ffe0a1;font:800 32px/1.1 Georgia,serif;flex:0 0 auto}
+.chronicle-current-rank small{font:700 10px system-ui,sans-serif;color:#d1bd94}
+.chronicle-journey{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;color:#e5d7bd;font-size:12px}
+.chronicle-track{height:10px;border:1px solid #d4b9857d;border-radius:10px;background:#071724;overflow:hidden}
+.chronicle-track i{display:block;height:100%;background:linear-gradient(90deg,#aa7856,#f6d393);transition:width .3s}
+.chronicle-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.chronicle-rank{display:flex;flex-direction:column;gap:6px;padding:14px;border:1px solid #8d8a8171;border-radius:11px;background:#11283db9;min-width:0}
+.chronicle-rank.ready{border-color:#ebc384;box-shadow:inset 0 0 24px #e8c8841c}
+.chronicle-rank .eyebrow{color:#e5c798;font-size:10px}
+.chronicle-rank strong{color:#ffe1aa;font:700 17px Georgia,serif}
+.chronicle-rank small,.chronicle-rank p{font-size:11px;line-height:1.5;color:#d3dbe0;margin:0}
+.chronicle-rank button{margin-top:auto;min-height:36px;font-size:11px}
+.chronicle-complete{color:#fbe1a5;font:700 18px Georgia,serif;grid-column:1/-1}
+@media(max-width:850px){.chronicle-cards{grid-template-columns:1fr}.commander-chronicle>header{align-items:start}}
+@media(prefers-reduced-motion:reduce){.chronicle-track i{transition:none}}
