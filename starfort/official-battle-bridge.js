@@ -3,7 +3,7 @@
  * Supabase mission snapshot to the same room format used by the arena renderer. */
 import {HEROES} from './rules.js';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-const enemiesFor=mission=>mission.mode==='story'&&mission.waves>1&&mission.wave===mission.waves?['raider','boss','caster']:mission.mode==='story'&&mission.wave===2?['caster','raider','caster']:mission.mode==='boss'||mission.stage>=7?['raider','boss','caster']:['raider','caster','raider'];
+const enemiesFor=mission=>mission.mode==='act2'&&mission.wave===3?['caster','boss','raider']:mission.mode==='act2'&&mission.wave===2?['raider','caster','caster']:mission.mode==='story'&&mission.waves>1&&mission.wave===mission.waves?['raider','boss','caster']:mission.mode==='story'&&mission.wave===2?['caster','raider','caster']:mission.mode==='boss'||mission.stage>=7?['raider','boss','caster']:['raider','caster','raider'];
 export function officialMissionIdentity(mission){
  if(!mission||!Number.isSafeInteger(mission.startedAt))return null;
  return `pve:${mission.mode}:${mission.stage}:${mission.startedAt}`;
@@ -54,7 +54,7 @@ export function officialBattleDelta(before,after){
 }
 export function officialBattleOutcome(before,report){
  if(!before||!report||typeof report.won!=='boolean')return null;
- if(!['story','maze','veteran','rift','boss'].includes(before.mode)||before.stage!==report.stage)return null;
+ if(!['story','act2','maze','veteran','rift','boss'].includes(before.mode)||before.stage!==report.stage)return null;
  return Object.freeze({won:report.won,stars:clamp(Number(report.stars)||0,0,3),stage:report.stage,
   reward:report.won&&report.reward&&typeof report.reward==='object'?{...report.reward}:{},source:'server'});
 }
