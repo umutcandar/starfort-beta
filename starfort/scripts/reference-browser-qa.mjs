@@ -309,7 +309,7 @@ try{
   assert.ok(initialEngine==='3D canlı savaş'||initialEngine==='2D savaş');
   if(actual3D){
    await evaluate("document.querySelector('.official-3d-canvas').dataset.qaStable='persisted'");
-   await evaluate("document.querySelector('[data-realm-select=2]').click()");
+   await evaluate("document.querySelector('[data-realm-select]').click()");
    assert.equal(await evaluate("document.querySelector('.official-3d-canvas')?.dataset.qaStable"),'persisted','3D GPU canvas must survive expedition DOM rerender');
    await evaluate("document.querySelector('[data-village-refresh]').click()");
    await sleep(450);
