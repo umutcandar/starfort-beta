@@ -1,3 +1,4 @@
+import {rewardForDay,normalizeCalendar,utcDate} from './reward-calendar.js';
 import { createGearState, restoreGear, equipmentStats, awardFirstClearItem, FIRST_CLEAR_LOOT, itemById, optimizeHeroEquipment } from './equipment.js';
 import { restoreCampaignStars, recordCampaignStars, campaignStarStatus } from './campaign-stars.js';
 import { encounterEnemies, enemyIntent } from './encounters.js';
@@ -94,7 +95,7 @@ export function createState(now = Date.now()) {
     buildings: Object.fromEntries(BUILDINGS.map(item => [item.id, 1])),
     heroes: Object.fromEntries(HEROES.filter(hero => !hero.unlockStage).map(hero => [hero.id, { level: 1 }])),
     team: ['aldren', 'lyra', 'rovan'], cleared: [], campaignStars: {}, labyrinth:createLabyrinth(), veteranMedals: {}, riftRecords: [], cosmeticWishlist: [], selectedStage: 1,
-    lastCollected: safeNow(now), construction:null, lastDailyReward: null, contracts:createContracts(now), season:newSeason(now), battle: null, ...createGearState(),
+    lastCollected: safeNow(now), construction:null, lastDailyReward: null, dailyCalendar:{claimCount:0,streak:0,lastClaimDay:null}, contracts:createContracts(now), season:newSeason(now), battle: null, ...createGearState(),
   };
 }
 
@@ -132,6 +133,16 @@ export function restoreState(raw, now = Date.now()) {
       }
     }
     if(typeof saved.lastDailyReward==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(saved.lastDailyReward))state.lastDailyReward=saved.lastDailyReward;
+    const cal=saved.dailyCalendar;
+    if(cal&&typeof cal==='object'&&Number.isSafeInteger(cal.claimCount)&&cal.claimCount>=0&&cal.claimCount<=100000&&
+       Number.isInteger(cal.streak)&&cal.streak>=0&&cal.streak<=100000&&
+       (cal.lastClaimDay===null||typeof cal.lastClaimDay==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(cal.lastClaimDay))&&
+       (!cal.lastClaimDay||cal.lastClaimDay<=utcDate(time))){
+      state.dailyCalendar={claimCount:cal.claimCount,streak:cal.streak,lastClaimDay:cal.lastClaimDay};
+    }else if(state.lastDailyReward&&state.lastDailyReward<=utcDate(time)){
+      state.dailyCalendar={claimCount:1,streak:1,lastClaimDay:state.lastDailyReward};
+    }
+
     state.contracts=restoreContracts(saved.contracts,time);
     state.season=restoreSeason(saved.season,time);
     state.riftRecords=restoreRiftRecords(saved.riftRecords);
@@ -145,19 +156,30 @@ export function restoreState(raw, now = Date.now()) {
   return state;
 }
 
-export const DAILY_REWARD = Object.freeze({gold:120,wood:90,stone:70,aether:10});
+// A guest-only version of the exact 28-day reward track. Never accepted as online currency.
+export const DAILY_REWARD = Object.freeze({gold:102,wood:51,stone:40,aether:5});
 export function dailyRewardState(state,now=Date.now()){
-  const date=new Date(safeNow(now));
-  const day=state.serverVillage?date.toISOString().slice(0,10):`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-  // Client-only daily rewards are for the offline campaign; they are not competitive currency.
-  return {available:!state.lastDailyReward||state.lastDailyReward<day,day,reward:DAILY_REWARD};
+  const t=safeNow(now),base=state.dailyCalendar||{claimCount:state.lastDailyReward?1:0,streak:state.lastDailyReward?1:0,lastClaimDay:state.lastDailyReward};
+  const cal=normalizeCalendar({...base,serverNow:t});
+  return {...cal,day:utcDate(t),reward:rewardForDay(cal.nextDay)};
 }
 export function claimDailyReward(state,now=Date.now()){
   if(activeBattle(state))return fail('Önce devam eden savaşı tamamla.');
   const status=dailyRewardState(state,now);
-  if(!status.available)return fail('Bugünün ödülünü zaten aldın.');
-  award(state,DAILY_REWARD);state.lastDailyReward=status.day;
-  return {ok:true,gain:{...DAILY_REWARD}};
+  if(!status.available)return fail('Bugünün sandığını zaten açtın.');
+  const chosen=rewardForDay(status.nextDay),resources={gold:chosen.gold,wood:chosen.wood,stone:chosen.stone,aether:chosen.aether};
+  award(state,resources);
+  let item=null;
+  if(chosen.item){
+    const count=state.inventory?.[chosen.item]||0;
+    if(count<20){state.inventory[chosen.item]=count+1;item=chosen.item;}
+    else{award(state,{aether:250});resources.aether+=250;}
+  }
+  const before=state.dailyCalendar||{claimCount:status.claimCount,streak:status.streak,lastClaimDay:status.lastClaimDay};
+  const previous=before.lastClaimDay,previousUtc=utcDate(new Date(status.serverNow-86400000).getTime());
+  state.dailyCalendar={claimCount:before.claimCount+1,streak:previous===previousUtc?Math.min(100000,before.streak+1):1,lastClaimDay:status.day};
+  state.lastDailyReward=status.day;
+  return {ok:true,gain:resources,item,day:status.nextDay};
 }
 
 export function claimCampaignContract(state,id,now=Date.now()) {
