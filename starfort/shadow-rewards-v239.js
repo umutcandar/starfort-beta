@@ -36,7 +36,7 @@ export function shadowVictoryMarkup(report,regions=[]){
         <span><small>${l('İLK ZAFER GANİMETİ','FIRST-CLEAR LOOT')} · ${(rarity[item.rarity]||['Özel','Special'])[getLocale()==='en'?1:0]}</small><strong>${esc(item.name)}</strong>
           <small>${esc(item.description)}</small></span>
         <button class="secondary" data-shadow-open-armory>${l('Çantada incele','View in inventory')}</button>
-      </div>`:'<p class="shadow-repeat-note">${report.converted===true?"${l("Ekipman için 20 adet çanta sınırına ulaşıldı; ödül 36 Yıldız Özü’ne dönüştürüldü.","Inventory is at the 20-item cap. The item reward was converted to 36 Star essence.")}":"${l("Kaynaklar sunucuda hesaplandı. Bu sefer için ilk-zafer ekipmanı verilmedi.","Resources were calculated on the server. No first-clear equipment was granted for this replay.")}"}</p>'}`:''}
+      </div>`:'<p class="shadow-repeat-note">${report.converted===true?l("Ekipman için 20 adet çanta sınırına ulaşıldı; ödül 36 Yıldız Özü’ne dönüştürüldü.","Inventory is at the 20-item cap. The item reward was converted to 36 Star essence."):l("Kaynaklar sunucuda hesaplandı. Bu sefer için ilk-zafer ekipmanı verilmedi.","Resources were calculated on the server. No first-clear equipment was granted for this replay.")}</p>'}`:''}
       <button class="secondary" data-shadow-dismiss-result>${l('Sonucu kapat','Close result')}</button>
     </div></div></article>`;
 }
