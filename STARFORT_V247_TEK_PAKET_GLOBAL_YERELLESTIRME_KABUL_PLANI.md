@@ -13,16 +13,16 @@ v2.43–v2.46 arasında dil seçici 14 dil oldu, ancak 12 ek dilde çoğu hikây
 | Hesap / şifre sıfırlama | v2.44'ten beri 14 dil beta | Tüm doğrulama ve sunucu hata durumlarının 14 dilde tam kontrolü |
 | Navigasyon / ayarlar | v2.44 çekirdeği | Menü, ipucu, erişilebilirlik ve durum bildirimlerinin denetlenmesi |
 | Köy / 7 bina / inşaat 20 seviye | v2.47: 7 bina adı ve açıklaması, 4 kaynak adı **14 dilde** | Dinamik inşaat ipuçları, kaynak hata mesajları ve görsel alt metinlerinin kalan 12 dilde denetimi |
-| Kahramanlar / 9 karakter / yetenekler | v2.47: 9 unvan, 9 yetenek adı ve 6 sınıf **14 dilde** | 9 kahramanın uzun hikâyesi, yetenek açıklamaları ve grafik alt metinleri 12 dilde eksik |
-| Envanter / 19 eşya / 4 kaynak | v2.47: 19 gerçek eşya adı, 3 set, 4 kaynak **14 dilde**; 34 kontrol metni v2.46'da | 19 eşyanın uzun anlatımı, ustalık durumlarının kalan 12 dilde çevrilmesi |
-| Ana hikâye 8 bölge / 24 görev | v2.47: 8 ana hikâye bölge adı **14 dilde** | Bölge açıklamaları ve 24 operasyonun ad/açıklamaları diğer 12 dilde hâlâ İngilizce yedek |
-| İkinci perde 8 bölge / 24 görev | v2.45 İngilizce yedek | 12 ek dilde bölüm/görev açıklamaları ve özel yetenekler |
+| Kahramanlar / 9 karakter / yetenekler | **9 unvan, 9 yetenek adı, 9 uzun biyografi, 9 sayısal yetenek açıklaması ve 6 sınıf 14 dilde** | Oyun içi replikler, animasyon alt metinleri, dil editörü değerlendirmesi |
+| Envanter / 19 eşya / 4 kaynak | **19 gerçek eşyanın adı ve açıklaması, 3 set, 4 kaynak 14 dilde**; 34 kontrol metni v2.46'da | Ustalık/üretim özel hata mesajları, erişilebilirlik ve gerçek cihaz testi |
+| Ana hikâye 8 bölge / 24 görev | **8 bölge adı + 8 açıklama + 24 görev adı ve hedefi 14 dilde** | Sinematik seslendirme, savaş sırasında değişen görev mesajları, editör QA |
+| İkinci perde 8 bölge / 24 görev | **8 bölgenin ad/konum/öykü/patronu ve 24 görevin adı/hedefi 14 dilde**; 4 kilit/güç mesajı ×14 | Dalga içi olay mesajları, patron replikleri, erişilebilirlik ve editör QA |
 | Labirent / 16 kat | v2.47 taslak: 14 dil ortak etiketler, uzun metin EN | Oda, görev, çevresel olaylar ve dinamik olay metinleri |
 | Günlük ödül 28 günlük döngü | v2.45: 39 anahtar ×14 | Yerel tarih biçimi, gün uzunluğu, UTC ve RTL testleri |
 | Kervan pazarı / sunucu takası | v2.47 taslak: ana düğmeler 14 dil | 3 rota açıklaması, sınır ve hata mesajları |
-| Cephe / ikmal / savaş sandığı | v2.47 taslak: ana düğmeler 14 dil | Doktrinler, ödül ve kural metinleri 12 dilde |
+| Cephe / ikmal / savaş sandığı | **3 doktrinin adı + yüzde açıklaması + önerisi 14 dilde**; kaynak isimleri seçilen dile dinamik uyarlanır | Savaş sandığı ve dönemsel görevlerin diğer uzun açıklamaları, özel hata metinleri |
 | 30 kalıcı Komutan Kroniği rütbesi | v2.47 taslak: arayüz 14 dil, rütbe EN | 30 unvanın bütün dillerde tutarlı terminolojisi |
-| Premium vitrin / 8 kozmetik / 4 ücretsiz ödül | v2.47 taslak, ödemeler kapalı | 12 dilde ürün adı/açıklaması, ödeme yok durumunun hukukî kontrolü |
+| Premium vitrin / 8 kozmetik / 4 ücretsiz ödül | **8 kozmetik + 4 ücretsiz sezon ödülü + 3 planlanan paketin adı ve açıklaması 14 dilde**; ödemeler kapalı | Ödeme yok uyarısı ve VIP açıklamalarında kalan İngilizce yedekler, hukukî kontrol |
 | Arena 1v1 / bot / canlı eşleşme | v2.47 taslak: giriş ve bir kısım durum mesajı | Bütün bekleme/yeniden bağlantı/maç sonucu, grafik ve dokunmatik kontroller |
 | Takım arena / 2v2 / 5v5 / kuşatma | v2.47: 33 takım komut/başlık etiketi **14 dilde**, maç yaşam döngüsü ve HUD EN yedekli | 12 dilde uzun açıklamalar, objektif kartları, minimap ve tüm dinamik bildirimler |
 | Lonca / ittifak / parti / baskın | v2.47: 33 ittifak/üyelik/savaş odası/baskın/sohbet etiketi **14 dilde**, ekran açıklamaları EN yedekli | Sunucu kaynaklı hatalar, davet kodu akışı, yerel sıralama, tüm anlatılar |
@@ -52,6 +52,23 @@ v2.43–v2.46 arasında dil seçici 14 dil oldu, ancak 12 ek dilde çoğu hikây
 - Gözden geçirilen dosyalarda `data-guild-action`, `data-team-order`, `data-caravan-trade`, `data-premium-action` ve kaydedilen savaş/ödül kimlikleri değiştirilmedi.
 - **Kapalı tutulan yayın kriteri:** `node scripts/i18n-coverage.mjs --release-check` tüm diller ve ekranlar tamamlanana kadar başarısız olmalıdır. Normal `--check` mevcut 14 dilli sözlüklerin teknik tutarlılığını denetler.
 - Ürünün tamamında kalan eski Türkçe ifadelerin sıfırlandığı henüz kanıtlanmadı. Ayrıntılı çeviri raporu hâlâ eksik ekranlar bulur.
+
+## 3 Kasım 2026 — genişletilmiş içerik çevirileri
+
+Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer 12 dil için:
+- Ana hikâye: **8 bölüm açıklaması, 24 görev adı ve 24 görev hedefi** (`locale-story-eu-v247.js`, `locale-story-asia-v247.js`, `locale-story-v247.js`).
+- İkinci perde: **8 × bölüm adı, mekân, hikâye ve patron adı** ile **24 görev adı ve 24 hedefi**; tüm dillerde dört kilit/güç uyarısı (`locale-act2-*.js`).
+- Kahramanlar: **9 tam biyografi ve 9 sayısal yetenek açıklaması**; hasar ve süre yüzdeleri sunucunun kurallarından bağımsız metinsel karşılıklardır (`locale-hero-lore-*.js`).
+- Envanter: **19 eşyanın tam açıklaması** (`locale-item-lore-*.js`).
+- Mağaza: **15 ürün ve ödülün adı ve açıklaması**, bunların 3'ü henüz satılmayan paketlerdir. Gerçek para ödemesi ve VIP satın alma **kapalı kalır** (`locale-premium-*.js`).
+- Cephe: **3 doktrin adı, kural yüzdeleri, taktik önerisi** ve dil değişince anında güncellenen kaynak adları (`locale-warfront-v247.js`).
+
+### Global yayın hâlâ neden engelli?
+- **Sözlüklerin doğrulanması, tüm oyunun 14 dilde bittiği anlamına gelmez.** PvP sunucu hata kodları, ittifak hataları, labirent/yarık içerik olayları, gerçek zamanlı bildirimler, kronik unvanları, kervan ayrıntıları, bütün sinematik replikler ve sesler tamamlanmadı.
+- Dinamik UI ve statik HTML çeviri taraması kısmi kanıt sağlar. Tüm ekranların gerçek hesapla, her dilde mobil ve masaüstü etkileşimli görüntülerinin denetlenmesi gerekir.
+- Arapça RTL, Japonca/Çince/Korece satır kırılması, mobil taşmalar ve ana dili editörü kontrolü henüz tamamlanmış kabul edilmedi.
+- Yeni `locale-release-v247.test.mjs`: mevcut sözlüklerin `--check` denetimini geçmesini; **global `--release-check` çalıştırmasının ise tüm eksikler tamamlanana kadar hata vermesini** zorunlu kılar.
+- PR #32 taslak kalır. Sunucu, ödeme ve ekonomi kurallarına dokunulmaz. Her dilde kaynak string değiştiğinde sunucu UUID/operasyon kodu ve ödül sabit kalmalıdır.
 
 ## Tek yayın için zorunlu geçiş koşulları
 
