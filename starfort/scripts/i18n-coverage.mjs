@@ -25,6 +25,7 @@ import {auditActOne,ACT_ONE_NATIVE} from '../locale-story-v247.js';
 import {auditActTwo,ACT_TWO_NATIVE,ACT_TWO_GATES,ACT_TWO_GATE_KEYS} from '../locale-act2-v247.js';
 import {auditHeroLore,HERO_LORE_NATIVE} from '../locale-hero-lore-v247.js';
 import {auditItemLore,ITEM_LORE_NATIVE} from '../locale-item-lore-v247.js';
+import {auditPremiumNative,PREMIUM_NATIVE} from '../locale-premium-v247.js';
 const root=resolve(fileURLToPath(new URL('../',import.meta.url)));
 const watch=[
  {file:'armory-v212.js',strict:true},
@@ -63,7 +64,7 @@ function checkPack(pack,keys,name){
  }
  return problems;
 }
-const problems=[...auditActOne(),...auditActTwo(),...auditHeroLore(),...auditItemLore(),...checkPack(ACT_TWO_GATES,ACT_TWO_GATE_KEYS,'act2-gates'),...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
+const problems=[...auditActOne(),...auditActTwo(),...auditHeroLore(),...auditItemLore(),...auditPremiumNative(),...checkPack(ACT_TWO_GATES,ACT_TWO_GATE_KEYS,'act2-gates'),...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
 for(const locale of localeSet){
  const itemNames=ITEM_NAMES[locale];
  if(!itemNames||Object.keys(itemNames.names||{}).length!==19||Object.keys(itemNames.sets||{}).length!==3)problems.push(locale+': incomplete native item and set names');
@@ -109,7 +110,8 @@ const summary={
   secondActNarrative:{nativeAdditionalLocales:Object.keys(ACT_TWO_NATIVE).length,regions:8,operations:24,regionContent:['name','zone','lore','boss']},
   secondActGates:{keysPerLanguage:ACT_TWO_GATE_KEYS.length,languages:localeSet.length},
   heroNativeNarrative:{additionalLocales:Object.keys(HERO_LORE_NATIVE).length,heroes:9,biographyAndSkillText:true},
-  itemNativeNarrative:{additionalLocales:Object.keys(ITEM_LORE_NATIVE).length,items:19}, 
+  itemNativeNarrative:{additionalLocales:Object.keys(ITEM_LORE_NATIVE).length,items:19},
+  premiumNativeCatalog:{additionalLocales:Object.keys(PREMIUM_NATIVE).length,items:15,paymentsRemainDisabled:true}, 
   dailyRewards:{keysPerLanguage:REWARD_MESSAGE_KEYS.length,languages:localeSet.length},
   gearEnglishFallback:{translated:ITEMS.filter(x=>Boolean(ITEM_DISPLAY_EN[x.id])).length,canonical:ITEMS.length}
  },
