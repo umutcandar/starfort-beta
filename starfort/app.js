@@ -154,7 +154,7 @@ function syncAccountGate(){
     const status=$('#account-gate-status');
     if(signed&&status&&accountRecovering)status.textContent=t('gate.recovery');
     else if(signed&&status&&!status.dataset.error)status.textContent=t('gate.verifying');
-     else if(!signed&&status&&!status.dataset.error&&['Hesabın yoksa yeni hesap oluştur. E-postanı doğruladıktan sonra giriş yapabilirsin.',t('gate.help')].includes(status.textContent))status.textContent=t('gate.help');
+     else if(!signed&&status&&!status.dataset.error&&['Hesabın yoksa yeni hesap oluştur. E-postanı doğruladıktan sonra giriş yapabilirsin.','New player? Create an account, verify your email, then sign in.'].includes(status.textContent))status.textContent=t('gate.help');
     combatRunner.pause();
     official3D.sync(null);
     for(const selector of ['#reward-dialog','#building-dialog','#battle-dialog']){
