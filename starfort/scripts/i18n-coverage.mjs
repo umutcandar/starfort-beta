@@ -92,9 +92,15 @@ const userFacingModules=modules.filter(file=>{
 const needsLocalizationReview=userFacingModules.filter(m=>!m.localized||m.rawTurkishCandidates>0);
 const partialSourceCoverage={totalUserFacingModules:userFacingModules.length,needsLocalizationReview:needsLocalizationReview.length,
  examples:needsLocalizationReview.slice(0,30),fullyTranslatedInto14Languages:false};
-const reviewedNarrativeLocales=new Set(['tr','en']); // Existing canonical Turkish + verified English fallback only.
-const missingNativeNarrativeLocales=localeSet.filter(lang=>!reviewedNarrativeLocales.has(lang));
-const releaseReady=problems.length===0&&needsLocalizationReview.length===0&&missingNativeNarrativeLocales.length===0;
+// Structured content coverage is distinct from complete live-UI translation and human linguistic QA.
+const structuredNarrativeLocales=new Set(['tr','en',...localeSet.filter(lang=>
+ ACT_ONE_NATIVE[lang]&&ACT_TWO_NATIVE[lang]&&HERO_LORE_NATIVE[lang]&&ITEM_LORE_NATIVE[lang]&&PREMIUM_NATIVE[lang]
+)]);
+const missingNativeNarrativeLocales=localeSet.filter(lang=>!structuredNarrativeLocales.has(lang));
+// No native-speaker reviews have been recorded. Never silently promote automated translations.
+const humanReviewedLocales=new Set();
+const pendingHumanReviewLocales=localeSet.filter(lang=>!humanReviewedLocales.has(lang));
+const releaseReady=problems.length===0&&needsLocalizationReview.length===0&&missingNativeNarrativeLocales.length===0&&pendingHumanReviewLocales.length===0;
 const summary={
  auditedAt:'STARFORT v2.47 unified beta (not production-ready)',
  supportedLanguages:localeSet,
@@ -120,8 +126,9 @@ const summary={
  staticUiCandidates:auditFiles,
  sourceCoverage:partialSourceCoverage,
  missingNativeNarrativeLocales,
+ pendingHumanReviewLocales,
  releaseReady,
- caveat:'Source scanning is advisory and partial. 14-language shared controls DO NOT mean full 14-language narrative. Runtime messages, server errors, guild and native-speaker review remain blocking.',
+ caveat:'Core campaign, hero, equipment, and cosmetic dictionaries now cover all fourteen languages. This is NOT full-game translation: runtime messages, server errors, other UI panels, voice scripts, RTL layout and native-speaker review remain blocking.',
  errors:problems
 };
 console.log(JSON.stringify(summary,null,2));
