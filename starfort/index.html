@@ -84,13 +84,26 @@
       <div class="language-tools"><div class="language-switch" aria-label="Language / Dil"><button type="button" data-language="tr" aria-pressed="true">Türkçe</button><button type="button" data-language="en" aria-pressed="false">English</button></div><label class="language-select-label">🌐 <select data-language-picker aria-label="Language / Dil"><option value="tr">Türkçe</option><option value="en">English</option><option value="es">Español · Beta</option><option value="pt-BR">Português (Brasil) · Beta</option><option value="fr">Français · Beta</option><option value="de">Deutsch · Beta</option><option value="it">Italiano · Beta</option><option value="ru">Русский · Beta</option><option value="ar">العربية · Beta</option><option value="hi">हिन्दी · Beta</option><option value="id">Bahasa Indonesia · Beta</option><option value="ja">日本語 · Beta</option><option value="ko">한국어 · Beta</option><option value="zh-CN">简体中文 · Beta</option></select></label></div>
       <span class="eyebrow" data-i18n="gate.subtitle">STARFORT · ÇEVRİM İÇİ KRALLIK</span>
       <h1 id="gate-title" data-i18n="gate.title">Kendi krallığını kur</h1>
-      <p data-i18n="gate.intro">STARFORT artık yalnızca e-posta hesabıyla oynanıyor. Köyün, kahramanların, savaşların ve ödüllerin sunucu hesabında korunur.</p>
+      <p data-i18n="gate.intro">STARFORT ilerlemeni doğrulanmış hesabında saklar. E-postayla veya etkinleştirilmiş Google ve Apple seçenekleriyle giriş yapabilirsin.</p>
       <form id="starfort-gate-form" autocomplete="on">
         <label><span data-i18n="gate.email">E-posta</span><input required name="email" type="email" maxlength="180" autocomplete="username" data-i18n-placeholder="gate.emailPlaceholder" placeholder="eposta@ornek.com"></label>
         <label><span data-i18n="gate.password">Şifre</span><input required name="password" type="password" minlength="8" maxlength="100" autocomplete="current-password" data-i18n-placeholder="gate.passwordPlaceholder" placeholder="En az 8 karakter"></label>
         <div class="account-gate-actions">
           <button type="submit" class="primary" name="account-mode" value="login" data-i18n="gate.login">Hesabımla giriş yap</button>
           <button type="submit" class="secondary" name="account-mode" value="signup" data-i18n="gate.signup">Yeni hesap oluştur</button>
+        </div>
+        <div class="social-auth" aria-labelledby="social-auth-divider">
+          <div class="social-auth-divider" id="social-auth-divider"><span data-i18n="gate.socialDivider">veya</span></div>
+          <div class="social-auth-buttons">
+            <button type="button" class="social-auth-button social-google" data-social-login="google" disabled aria-disabled="true" title="Bu giriş yöntemi henüz etkin değil.">
+              <span class="social-auth-google-mark" aria-hidden="true">G</span><span data-i18n="gate.google">Google ile devam et</span>
+            </button>
+            <button type="button" class="social-auth-button social-apple" data-social-login="apple" disabled aria-disabled="true" title="Bu giriş yöntemi henüz etkin değil.">
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18.7 12.6c0-2 1.6-3 1.7-3.1a5.6 5.6 0 0 0-4.4-2.4c-1.8-.2-3.6 1.1-4.5 1.1-.9 0-2.3-1-3.8-1a5.7 5.7 0 0 0-4.8 2.9c-2 3.5-.5 8.6 1.4 11.4.9 1.4 2 2.9 3.5 2.9 1.5-.1 2.1-.9 3.9-.9 1.8 0 2.3.9 3.9.9 1.7 0 2.7-1.5 3.6-2.8a11.3 11.3 0 0 0 1.6-3.3 5.1 5.1 0 0 1-2.1-4.8zM14.9 5.6a5.4 5.4 0 0 0 1.3-3.9c-1.3.1-2.8.9-3.7 1.9a5.2 5.2 0 0 0-1.3 3.7 4.5 4.5 0 0 0 3.7-1.7z"/></svg>
+              <span data-i18n="gate.apple">Apple ile devam et</span>
+            </button>
+          </div>
+          <small class="social-auth-help" data-i18n="gate.socialHelp">Oyun ilerlemen hesap kimliğine bağlıdır. Farklı giriş yöntemi ayrı bir hesap oluşturabilir.</small>
         </div>
       </form>
       <p id="account-gate-status" role="status" aria-live="polite">Hesabın yoksa yeni hesap oluştur. E-postanı doğruladıktan sonra giriş yapabilirsin.</p>
