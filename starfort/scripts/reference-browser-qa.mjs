@@ -195,6 +195,31 @@ try{
   if(lang==='ja')await shot('starfort-390x844-authenticated-japanese.png');
  }
  assert.equal(await chooseLanguage('tr'),'tr');
+ // A global game must not pass merely by translating its login and village.
+ // Exercise the six active account-owned navigation surfaces in every language.
+ for(const lang of ['tr','en','es','pt-BR','fr','de','it','ru','ar','hi','id','ja','ko','zh-CN']){
+  assert.equal(await chooseLanguage(lang),lang);
+  for(const view of ['keep','expedition','heroes','armory','guild','shop']){
+   const clicked=await evaluate(`(()=>{const b=document.querySelector('.nav-item[data-view="${view}"]');if(!b)return false;b.click();return true;})()`);
+   assert.equal(clicked,true,'missing account navigation: '+view);
+   await sleep(55);
+   const panel=await evaluate(`(()=>{
+    const b=document.querySelector('.nav-item[data-view="${view}"]');
+    const nav=[...document.querySelectorAll('.nav-item')].map(x=>({name:x.textContent.trim(),aria:x.getAttribute('aria-label')}));
+    return {lang:document.documentElement.lang,dir:document.documentElement.dir,
+     width:innerWidth,scroll:document.documentElement.scrollWidth,locked:document.querySelector('.app').inert,
+     active:b?.classList.contains('active'),nav};})()`);
+   assert.equal(panel.locked,false,'unexpected logout: '+lang+' / '+view);
+   assert.equal(panel.lang,lang,'wrong language: '+lang+' / '+view);
+   assert.equal(panel.dir,lang==='ar'?'rtl':'ltr','wrong RTL setting: '+lang+' / '+view);
+   assert.ok(panel.active,'navigation failed: '+lang+' / '+view);
+   assert.ok(panel.nav.every(x=>x.name&&x.aria),'blank navigation label: '+lang+' / '+view);
+   assert.ok(panel.scroll<=panel.width+5,'authenticated '+view+' mobile overflow in '+lang+': '+JSON.stringify(panel));
+  }
+ }
+ await chooseLanguage('tr');
+ await evaluate("document.querySelector('.nav-item[data-view=keep]').click()");
+ console.log('PASS v2.47: six authenticated mobile views x 14 languages (84 navigation checks)');
  console.log('PASS v2.47: all 14 languages, RTL and overflow in authenticated 390px village');
  console.log('PASS synthetic server responses: desktop login, persistent reload, 390px authenticated mobile game');
  // The actual callback parser must accept the token from a confirmed email link.
