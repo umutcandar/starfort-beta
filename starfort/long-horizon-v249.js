@@ -27,6 +27,7 @@ export const LONG_ROAD_TRANSLATIONS=Object.freeze(Object.fromEntries(Object.entr
 )));
 export const LONG_ROAD_KEYS=Object.freeze(KEYS);
 const words=key=>LONG_ROAD_TRANSLATIONS[getLocale()]?.[key]||LONG_ROAD_TRANSLATIONS.en[key];
+export const longRoadWord=key=>words(key);
 const clamp=(x,max)=>Number.isSafeInteger(x)?Math.max(0,Math.min(max,x)):0;
 const starsFor=(stages,stars)=>stages.reduce((n,id)=>n+clamp(stars?.[id],3),0);
 const medalsFor=value=>Array.from({length:8},(_,i)=>clamp(value?.[i+1],3)).reduce((a,b)=>a+b,0);
