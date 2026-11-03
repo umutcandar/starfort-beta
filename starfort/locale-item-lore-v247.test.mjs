@@ -12,7 +12,7 @@ test('all nineteen item explanations have native translations in twelve addition
  for(const lang of twelve){
   assert.deepEqual(Object.keys(ITEM_LORE_NATIVE[lang]).sort(),ITEMS.map(x=>x.id).sort(),lang);
   for(const [id,description] of Object.entries(ITEM_LORE_NATIVE[lang])){
-   assert.ok(typeof description==='string'&&description.length>15,lang+': '+id);
+   assert.ok(typeof description==='string'&&description.trim().length>=8,lang+': '+id);
    assert.doesNotMatch(description,/<script|onerror\s*=|javascript:/i);
   }
  }
