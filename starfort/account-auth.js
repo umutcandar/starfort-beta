@@ -116,6 +116,80 @@ export async function accountRequestPasswordReset(email,redirectTo,fetcher=fetch
  await request('/auth/v1/recover?redirect_to='+encodeURIComponent(dest),{method:'POST',body:JSON.stringify({email})},fetcher);
  return {ok:true};
 }
+/** v2.48: Google and Apple web OAuth; client contains no provider secrets. */
+const SOCIAL_PENDING_KEY='starfort:oauth-pending-v248';
+export const SOCIAL_PROVIDERS=Object.freeze(['google','apple']);
+const socialProvider=provider=>{
+ if(!SOCIAL_PROVIDERS.includes(provider))throw Error(t('auth.socialInvalid'));
+ return provider;
+};
+export async function accountSocialAvailability(fetcher=fetch){
+ try{
+  const response=await fetcher(SUPABASE_URL+'/auth/v1/settings',{
+   method:'GET',headers:{apikey:SUPABASE_KEY},signal:AbortSignal.timeout(12000)
+  });
+  if(!response.ok)return {google:false,apple:false,checked:false};
+  const settings=await response.json();
+  return {google:settings?.external?.google===true,apple:settings?.external?.apple===true,checked:true};
+ }catch{
+  // Fail closed when the provider configuration cannot be verified.
+  return {google:false,apple:false,checked:false};
+ }
+}
+export function accountBeginSocialLogin(provider,redirectTo,{
+ storage=globalThis.sessionStorage,
+ navigate=url=>globalThis.location.assign(url),
+ random=()=>globalThis.crypto.randomUUID(),
+ clock=()=>Date.now()
+}={}){
+ socialProvider(provider);
+ const redirect=verifiedRedirect(redirectTo);
+ const target=new URL(redirect);
+ const allowed=(target.hostname==='umutcandar.github.io'&&['/starfort-beta/starfort/','/starfort-beta/starfort/index.html'].includes(target.pathname))||
+  (target.hostname==='starfort-online-beta.onrender.com'&&['/starfort/','/starfort/index.html'].includes(target.pathname));
+ if(!allowed)throw Error(t('auth.socialInvalid'));
+ // A one-time, same-tab marker binds the returned session to this login click.
+ // Provider authorization state is independently verified by Supabase Auth.
+ const nonce=random();
+ if(typeof nonce!=='string'||!/^[\da-f-]{36}$/i.test(nonce))throw Error(t('auth.socialInvalid'));
+ target.searchParams.set('starfort_oauth',nonce);
+ const url=new URL(SUPABASE_URL+'/auth/v1/authorize');
+ url.searchParams.set('provider',provider);
+ url.searchParams.set('redirect_to',target.toString());
+ storage.setItem(SOCIAL_PENDING_KEY,JSON.stringify({nonce,provider,createdAt:clock()}));
+ navigate(url.toString());
+ return url.toString();
+}
+export async function accountAcceptSocialCallback(search,hash,clearUrl=()=>{},fetcher=fetch,
+ storage=globalThis.sessionStorage,clock=()=>Date.now()){
+ const query=new URLSearchParams(String(search||'').replace(/^\?/,''));
+ if(!query.has('starfort_oauth'))return null;
+ let pending=null;
+ try{pending=JSON.parse(storage.getItem(SOCIAL_PENDING_KEY)||'null')}catch{}
+ // Consume the marker and remove query/hash before any remote request. Tokens
+ // must never linger in browser history, analytics, error logs or referrers.
+ try{storage.removeItem(SOCIAL_PENDING_KEY)}catch{}
+ clearUrl();
+ if(query.getAll('starfort_oauth').length!==1||
+  !pending||!SOCIAL_PROVIDERS.includes(pending.provider)||
+  pending.nonce!==query.get('starfort_oauth')||
+  !Number.isFinite(pending.createdAt)||clock()-pending.createdAt>10*60*1000||
+  clock()<pending.createdAt-60*1000)throw Error(t('auth.socialInvalid'));
+ const fragment=String(hash||'');
+ if(fragment.length>12000)throw Error(t('auth.socialInvalid'));
+ const params=new URLSearchParams(fragment.replace(/^#/,''));
+ if(query.has('error')||query.has('error_code')||params.has('error')||params.has('error_code'))
+  throw Error(t('auth.socialFailed'));
+ const access_token=params.get('access_token'),refresh_token=params.get('refresh_token');
+ if(!access_token||!refresh_token||!['','bearer'].includes((params.get('token_type')||'').toLowerCase()))
+  throw Error(t('auth.socialInvalid'));
+ // Never accept an OAuth hash as proof of login until /auth/v1/user validates it.
+ const user=await request('/auth/v1/user',{method:'GET',headers:{Authorization:'Bearer '+access_token}},fetcher);
+ if(typeof user?.id!=='string'||!user.id)throw Error(t('auth.socialInvalid'));
+ saveSession({access_token,refresh_token,expires_in:Number(params.get('expires_in')||3600),user});
+ return {type:'oauth',provider:pending.provider,user};
+}
+
 export async function accountAcceptAuthHash(hash,clearHash=()=>{},fetcher=fetch){
  if(typeof hash!=='string'||hash.length>5000)return false;
  const args=new URLSearchParams(hash.replace(/^#/,''));
