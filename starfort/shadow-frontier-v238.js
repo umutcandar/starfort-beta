@@ -5,6 +5,7 @@ import {HEROES,ITEMS} from './rules.js';
 import {shadowBossArtwork,shadowBossPhase} from './shadow-boss-art-v239.js';
 import {shadowVictoryMarkup} from './shadow-rewards-v239.js';
 import {shadowAtmosphereParticles,shadowVoiceStatus} from './shadow-battle-director-v240.js';
+import {shadowMasterySnapshot,shadowMasteryMarkup} from './shadow-mastery-v241.js';
 export const SHADOW_STAGES=Object.freeze([
  Object.freeze({id:1,name:'Diken Nöbetçisi',region:'Karanlık Geçit',boss:'Diken Nöbetçisi',
   unlock:2,description:'Yaşayan surların bekçisi. Son dalgada kalkanı sürekli onarır.',
@@ -54,13 +55,16 @@ export function validateShadowSnapshot(data){
    !safe(b.lastTurnAt,1e12,2e13)||!['strike','crush','shield','drain'].includes(b.enemyIntent)||
    !object(b.cooldowns)||!Object.entries(b.cooldowns).every(([hero,turn])=>heroMap.has(hero)&&safe(turn,1,40))))
   throw Error('Gölge Sınırı savaş kaydı geçersiz.');
+ const mastery=shadowMasterySnapshot(data);
  if(!safe(data.revision,1,1e12)||data.lastReport!==null&&!object(data.lastReport))
   throw Error('Sınır raporu bozuk.');
  return {heroPaths:structuredClone(data.heroPaths),cleared:[...data.cleared],stars:{...data.stars},
-  battle:b?structuredClone(b):null,lastReport:data.lastReport?structuredClone(data.lastReport):null,revision:data.revision};
+  battle:b?structuredClone(b):null,lastReport:data.lastReport?structuredClone(data.lastReport):null,revision:data.revision,
+  masteryXp:mastery.xp,masteryRank:mastery.rank,masteryClaimed:mastery.claimed,
+  weeklyRenown:mastery.weekly,weeklyWins:mastery.wins,weeklyLimit:mastery.limit,week:mastery.week};
 }
 export async function shadowRequest(action,{target=null,aux=null,requestId=null,fetcher=fetch}={}){
- if(!['get','train','start','turn','abandon'].includes(action))throw Error('Bilinmeyen Gölge Sınırı eylemi.');
+ if(!['get','train','start','turn','abandon','claim_mastery'].includes(action))throw Error('Bilinmeyen Gölge Sınırı eylemi.');
  if(action==='train'&&(!heroMap.has(target)||!['assault','warden'].includes(aux)))
   throw Error('Uzmanlık seçimi geçersiz.');
  if(action==='start'&&!stageMap.has(Number(target)))throw Error('Sınır seferi geçersiz.');
@@ -180,6 +184,7 @@ export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false,{hi
       ${SHADOW_STAGES.map(stage=>`<span class="${front.cleared.includes(stage.id)?'is-cleared':''}" aria-label="Bölge ${stage.id}: ${front.cleared.includes(stage.id)?'Temizlendi':'Bekliyor'}">${front.cleared.includes(stage.id)?'✓':stage.id}</span>`).join('')}
      </div></header>
    ${status}${last}
+   ${shadowMasteryMarkup(front,{busy,inBattle:!!b||!!account?.mission})}
    <div class="shadow-stage-grid">${cards}</div>
    <small class="shadow-footer">Bu bölgelerdeki galibiyetler sunucu zafer sayacına işlenir ve tekrar oynanabilir günlük/haftalık hedefleri ilerletir. İlk zafer ekipmanı tekrarlanmaz.</small>
    <button class="secondary" data-shadow-refresh ${busy?'disabled':''}>↻ Sınır hesabını yenile</button>
