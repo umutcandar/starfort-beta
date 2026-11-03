@@ -68,7 +68,7 @@ test('new server mission snapshot is accepted but forged/unknown versions are re
  assert.equal(validateAccountSnapshot(snapshot(mission())).mission.balanceVersion,2);
  const legacy=mission({balanceVersion:undefined});
  assert.equal(validateAccountSnapshot(snapshot(legacy)).mission.balanceVersion,undefined);
- for(const version of [-1,0,3,1.5,'2',null])
+ for(const version of [-1,0,4,1.5,'2',null])
   assert.throws(()=>validateAccountSnapshot(snapshot(mission({balanceVersion:version}))),/sürümü/);
 });
 test('server patch applies new HP strictly to new high-level story bosses and new weekly bosses',()=>{
@@ -111,5 +111,5 @@ test('expedition view wires story boss visual cue and respects new three-star tu
  const source=readFileSync(new URL('./account-expedition.js',import.meta.url),'utf8');
  assert.match(source,/import \{bossV250Markup\} from '\.\/story-boss-v250\.js'/);
  assert.match(source,/\$\{bossV250Markup\(mission\)\}/);
- assert.match(source,/mission\?\.balanceVersion===2&&mission\?\.mode==='story'&&mission\?\.stage>=4\?24/);
+ assert.match(source,/mission\?\.balanceVersion>=2&&mission\?\.mode==='story'&&mission\?\.stage>=4\?24/);
 });
