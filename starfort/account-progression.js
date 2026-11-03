@@ -42,8 +42,8 @@ export function validateAccountSnapshot(data){
   !Object.entries(act2Stars).every(([k,v])=>safeNumber(Number(k),1,8)&&act2Cleared.includes(Number(k))&&safeNumber(v,1,3)))
   throw Error('İkinci perde ilerlemesi bozuk.');
  const m=data.mission;
- // v2.50: only the trusted server can choose an encounter balance version; old saves omit it.
- if(m&&m.balanceVersion!==undefined&&!safeNumber(m.balanceVersion,1,2))throw Error('Sunucu savaş dengesi sürümü geçersiz.');
+ // v2.51: accept the new server-only encounter balance while preserving legacy missions.
+ if(m&&m.balanceVersion!==undefined&&!safeNumber(m.balanceVersion,1,3))throw Error('Sunucu savaş dengesi sürümü geçersiz.');
  // Three-wave stories have a longer server turn budget. Preserve legacy single-wave saves.
  const multiWave=object(m)&&['story','act2'].includes(m.mode)&&m.waves===3;
  const waveValid=!object(m)||(m.waves===undefined&&m.wave===undefined&&m.waveTurn===undefined)||
@@ -53,7 +53,8 @@ export function validateAccountSnapshot(data){
  if(m!==null&&(!object(m)||!waveValid||
   (m.doctrine!==undefined&&!['none','assault','bulwark','recon'].includes(m.doctrine))||
   (m.lastRallyTurn!==undefined&&(!safeNumber(m.lastRallyTurn,0,36)||m.lastRallyTurn>m.turn))||
-  (m.enemyIntent!==undefined&&!['strike','crush','shield','drain'].includes(m.enemyIntent))||!['story','act2','veteran','rift','maze','boss'].includes(m.mode)||!safeNumber(m.stage,1,8)||
+  (m.enemyIntent!==undefined&&!['strike','crush','shield','drain','sunder'].includes(m.enemyIntent))||
+  (m.enemyIntent==='sunder'&&!(m.balanceVersion===3&&(m.mode==='boss'||(m.mode==='story'&&m.stage>=4&&m.wave===3))))||!['story','act2','veteran','rift','maze','boss'].includes(m.mode)||!safeNumber(m.stage,1,8)||
  !safeNumber(m.turn,0,multiWave?36:14)||!safeNumber(m.enemyHp,0,100000)||!safeNumber(m.playerHp,0,100000)||
  !safeNumber(m.lastTurnAt,1e12,2e13)|| (m.cooldowns!==undefined&&(!object(m.cooldowns)||!Object.entries(m.cooldowns).every(([id,next])=>HERO_IDS.has(id)&&safeNumber(next,1,multiWave?40:20))))))throw Error('Sunucu sefer kaydı bozuk.');
  return {heroes:{...heroes},inventory:{...inventory},loadouts:structuredClone(loadouts),team:[...team],
