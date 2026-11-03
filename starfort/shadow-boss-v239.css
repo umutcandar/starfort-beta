@@ -1,0 +1,86 @@
+/* STARFORT v2.39 — original vector boss encounter art, cinematic phase cues and reward reveal.
+   All graphics are native SVG/CSS. Reduced-motion users get static scenes. */
+.shadow-boss-art{display:block;width:100%;height:auto;overflow:visible;isolation:isolate}
+.art-thorns{--boss-sky-core:#263e37;--boss-sky-edge:#081a20;--boss-core-light:#8db696;--boss-core-dark:#1e413b;--boss-accent:#c9e59c;--boss-halo:#8abb73}
+.art-siren{--boss-sky-core:#244d6b;--boss-sky-edge:#081a36;--boss-core-light:#bdd2f1;--boss-core-dark:#3a487d;--boss-accent:#a9d7f5;--boss-halo:#6cb4e6}
+.art-tempest{--boss-sky-core:#6c362b;--boss-sky-edge:#231622;--boss-core-light:#f6a969;--boss-core-dark:#75372f;--boss-accent:#ffbb73;--boss-halo:#ee6940}
+.art-eclipse{--boss-sky-core:#433867;--boss-sky-edge:#0d152e;--boss-core-light:#cba8ee;--boss-core-dark:#352b5e;--boss-accent:#f1d3ff;--boss-halo:#b58ff2}
+.shadow-boss-art .boss-core{fill:var(--boss-core-light);stroke:var(--boss-accent);stroke-width:2.4;stroke-linejoin:round}
+.shadow-boss-art .boss-face{fill:var(--boss-core-dark);stroke:var(--boss-core-light);stroke-width:2.5}
+.shadow-boss-art .boss-eyes{fill:none;stroke:#f9eecc;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px var(--boss-accent))}
+.shadow-boss-art .boss-limbs{fill:none;stroke:var(--boss-core-light);stroke-width:15;stroke-linecap:round;stroke-linejoin:round}
+.shadow-boss-art .boss-detail{fill:none;stroke:var(--boss-accent);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.shadow-boss-art .boss-gem{fill:var(--boss-accent);filter:drop-shadow(0 0 10px var(--boss-halo))}
+.shadow-boss-art .boss-ember{fill:var(--boss-accent);filter:drop-shadow(0 0 8px var(--boss-accent))}
+.shadow-boss-art .boss-eclipse-ring{fill:none;stroke:var(--boss-accent);stroke-width:5;stroke-dasharray:43 14;opacity:.65}
+.shadow-boss-art .boss-land{fill:#121b25;opacity:.85}
+.shadow-boss-art .boss-horizon{fill:none;stroke:var(--boss-core-light);stroke-width:3;opacity:.55}
+.shadow-boss-art .boss-fog{stroke:var(--boss-accent);stroke-opacity:.13;stroke-width:22;fill:none}
+.shadow-boss-art .boss-star{fill:#f5e5c8;opacity:.7}
+.shadow-boss-art .boss-sparks-line{fill:none;stroke:var(--boss-accent);stroke-width:5;stroke-linecap:round;stroke-linejoin:round;opacity:.65}
+.shadow-boss-art .shadow-boss-figure{transform-origin:50% 65%}
+.shadow-stage-symbol{display:block;min-height:0;aspect-ratio:7/5;border:1px solid #b1a6b45e;border-radius:12px;overflow:hidden;background:#0c1826;position:relative}
+.shadow-stage-symbol svg{width:100%;height:100%;object-fit:cover}
+.shadow-stage:has(.art-thorns){border-color:#668d7d9e}
+.shadow-stage:has(.art-siren){border-color:#6f93c69e}
+.shadow-stage:has(.art-tempest){border-color:#bb795e9e}
+.shadow-stage:has(.art-eclipse){border-color:#9d85bd9e}
+.shadow-stage.complete .shadow-stage-symbol:after{content:"✓ YENİLDİ";position:absolute;right:7px;bottom:7px;background:#253f31d9;border:1px solid #9bcc99a3;color:#e9f9e2;border-radius:6px;font-weight:700;letter-spacing:.04em;font-size:9px;padding:5px 7px}
+.shadow-battle-visual{display:grid;grid-template-columns:minmax(185px,.88fr) minmax(0,1fr);gap:16px;align-items:center;padding:11px;border:1px solid #899da06d;border-radius:13px;background:#101b2ad6}
+.shadow-battle-illustration{position:relative;overflow:hidden;isolation:isolate;border-radius:11px;border:1px solid #acb2ba57;box-shadow:0 13px 26px #0007}
+.shadow-battle-illustration svg{width:100%}
+.shadow-battle-story{display:grid;gap:9px;padding:4px}
+.shadow-battle-story .eyebrow{font-size:10px;color:#e4c89c;letter-spacing:.06em}
+.shadow-battle-story h3{font:700 clamp(19px,2.5vw,28px) Georgia,serif;color:#f1dcb2;margin:0}
+.shadow-battle-story p{font-size:12px;line-height:1.6;color:#cddfe4;margin:0}
+.shadow-battle-story>small{font-size:10px;color:#d9d6e4}
+.shadow-boss-phase{padding:11px 12px;display:grid;gap:7px;border:1px solid #bb9e727a;border-left:3px solid #dfba7a;border-radius:9px;background:#43354880}
+.shadow-boss-phase strong{font:700 15px Georgia,serif;color:#f4d8b0}
+.shadow-boss-phase small{font-size:11px;line-height:1.6;color:#d5dfea}
+.shadow-battle-visual[data-boss-wave="3"] .shadow-boss-phase{border-left-color:#eab98b;background:#573b458c}
+.shadow-battle-visual[data-boss-enraged="true"] .shadow-boss-phase{border-color:#ee8566;background:#642d398c}
+.shadow-visual-flash{pointer-events:none;position:absolute;inset:0;opacity:0;background:radial-gradient(circle at 50% 50%,#fff4 0%,transparent 65%)}
+.shadow-battle-visual[data-boss-intent="crush"] .shadow-visual-flash{background:radial-gradient(circle at 50% 50%,#fa7a4355 0%,transparent 70%)}
+.shadow-battle-visual[data-boss-intent="shield"] .shadow-visual-flash{background:radial-gradient(circle at 50% 50%,#abd4e044 0%,transparent 75%)}
+.shadow-battle-visual[data-boss-intent="drain"] .shadow-visual-flash{background:radial-gradient(circle at 50% 50%,#c992ff44 0%,transparent 73%)}
+.shadow-progress-ribbon{display:flex;gap:5px;align-items:center}
+.shadow-progress-ribbon>span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1px solid #bcb0c388;background:#30374d;color:#e7d7eb;font-weight:800;font-size:10px}
+.shadow-progress-ribbon>span.is-cleared{background:#345741;border-color:#acdc94;color:#d7ffcb}
+.shadow-result-layout{display:grid;grid-template-columns:minmax(125px,220px) minmax(0,1fr);gap:20px;align-items:start}
+.shadow-result-art{position:relative;overflow:hidden;border-radius:12px;border:1px solid #d9ba7b8c;box-shadow:0 12px 30px #121a2170}
+.shadow-result-seal{position:absolute;right:10px;bottom:10px;display:grid;place-items:center;width:49px;height:49px;border-radius:50%;font-size:28px;font-weight:900;color:#fff1b9;background:#71552baa;border:2px solid #efce8c}
+.shadow-result-content{min-width:0;display:grid;gap:9px}
+.shadow-result-content h3{font:700 clamp(20px,2.6vw,28px) Georgia,serif;color:#f8dba2;margin:0}
+.shadow-result-content>p{margin:0;color:#d6e5df;font-size:12px;line-height:1.6}
+.shadow-result-content>.eyebrow{font-size:10px;letter-spacing:.09em;color:#eacb9e}
+.shadow-result-stars{font-size:clamp(23px,3.8vw,35px);letter-spacing:.08em;color:#f8cb71;text-shadow:0 0 12px #d6a64f66}
+.shadow-reward-ledger{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:5px 0}
+.shadow-reward-resource{display:grid;gap:4px;padding:10px 7px;border:1px solid #c4aa8085;border-radius:9px;background:#1e3942a8}
+.shadow-reward-resource b{font-size:clamp(12px,1.5vw,17px);color:#ffe0a5}
+.shadow-reward-resource small{font-size:9px;color:#c7dedf}
+.shadow-reward-resource[data-resource="aether"]{border-color:#ab95d5a8;background:#362e5396}
+.shadow-rare-loot{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:13px;padding:13px;border:1px solid #e3be759c;border-radius:10px;background:linear-gradient(110deg,#52413fbd,#242f44b8);box-shadow:inset 0 0 18px #e4b46b13}
+.shadow-loot-symbol{font-size:38px;color:#f9d395;filter:drop-shadow(0 0 10px #e2b45d)}
+.shadow-rare-loot>span:nth-child(2){display:grid;gap:5px;min-width:0}
+.shadow-rare-loot strong{font:700 15px Georgia,serif;color:#fff0c0}
+.shadow-rare-loot small{font-size:10px;color:#e1d8d5;line-height:1.45}
+.shadow-rare-loot button{font-size:11px}
+.shadow-repeat-note{font-size:11px;color:#c9d8dc}
+.shadow-result-content>[data-shadow-dismiss-result]{justify-self:start;font-size:11px}
+@media(prefers-reduced-motion:no-preference){
+ .shadow-battle-illustration .shadow-boss-figure{animation:shadow-boss-breathe 4.3s ease-in-out infinite}
+ .shadow-battle-illustration .boss-star{animation:shadow-star-glint 3.5s ease-in-out infinite alternate}
+ .shadow-battle-visual[data-boss-intent="crush"] .shadow-boss-figure{animation-duration:1.35s}
+ .shadow-battle-visual[data-boss-intent="drain"] .boss-gem{animation:shadow-star-glint .7s ease-in-out infinite alternate}
+ .shadow-battle-visual[data-boss-enraged="true"] .shadow-boss-figure{animation-duration:.8s}
+ .shadow-battle-visual[data-boss-wave="3"] .shadow-visual-flash{animation:shadow-phase-glow 4.8s ease-in-out infinite}
+ .shadow-result-seal{animation:shadow-seal-arrive .8s cubic-bezier(.2,1.3,.35,1) both}
+ .shadow-rare-loot{animation:shadow-loot-arrive .7s ease-out both}
+}
+@keyframes shadow-boss-breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.015)}}
+@keyframes shadow-star-glint{from{opacity:.28}to{opacity:1}}
+@keyframes shadow-phase-glow{0%,100%{opacity:0}50%{opacity:.38}}
+@keyframes shadow-seal-arrive{from{transform:translateY(22px) scale(.7);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+@keyframes shadow-loot-arrive{from{transform:translateY(10px);opacity:.2}to{transform:translateY(0);opacity:1}}
+@media(max-width:950px){.shadow-battle-visual{grid-template-columns:1fr}.shadow-battle-illustration{max-width:500px;margin:0 auto;width:100%}}
+@media(max-width:650px){.shadow-result-layout{grid-template-columns:1fr;gap:13px}.shadow-result-art{max-width:320px;width:100%;margin:0 auto}.shadow-rare-loot{grid-template-columns:auto minmax(0,1fr)}.shadow-rare-loot button{grid-column:2;justify-self:start}.shadow-reward-ledger{grid-template-columns:repeat(2,minmax(0,1fr))}.shadow-stage-symbol{grid-column:1/-1!important;grid-row:auto!important;max-height:190px;aspect-ratio:16/7}.shadow-stage-symbol svg{height:100%;object-fit:cover}.shadow-stage h4,.shadow-stage .eyebrow,.shadow-stage>strong,.shadow-stage p,.shadow-stage>small,.shadow-stage .shadow-stars,.shadow-stage button{grid-column:1/-1!important}}
