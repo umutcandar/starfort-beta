@@ -5,7 +5,7 @@ import {OFFICIAL_KEYS,OFFICIAL_TRANSLATIONS,officialText,auditOfficialTranslatio
 import {accountExpeditionMarkup} from './account-expedition.js';
 import * as R from './rules.js';
 test('46 verified account and combat labels have all twelve additional language translations',()=>{
- assert.equal(OFFICIAL_KEYS.length,46);
+ assert.equal(OFFICIAL_KEYS.length,75);
  assert.equal(new Set(OFFICIAL_KEYS).size,46);
  assert.deepEqual(Object.keys(OFFICIAL_TRANSLATIONS).sort(),SUPPORTED_LOCALES.filter(l=>l!=='tr'&&l!=='en').sort());
  assert.deepEqual(auditOfficialTranslations(),[]);
@@ -36,5 +36,15 @@ test('known and unknown translation lookups preserve canonical source and safe E
  try{for(const lang of SUPPORTED_LOCALES){setLocale(lang);
   assert.equal(officialText('Bilinmeyen','Unknown text'),lang==='tr'?'Bilinmeyen':'Unknown text');
   assert.equal(officialText('Saldır','Attack'),lang==='tr'?'Saldır':lang==='en'?'Attack':OFFICIAL_TRANSLATIONS[lang].Attack);
+ }}finally{setLocale('tr');}
+});
+
+test('live combat intent hints, three-star estimate and battle outcome messages exist in every global language',()=>{
+ const checked=['Heavy strike','Use Guard to significantly reduce the heavy hit.','◈ Feint: break the shield. Normal attacks are weaker here.','Estimated rating from current health and turns','Finish quickly with enough health for three stars. The server decides the final score.',' turns. Resources credited to the server wallet.'];
+ try{for(const lang of SUPPORTED_LOCALES){setLocale(lang);
+  for(const key of checked){const translated=officialText('Görünen savaş metni',key);
+   assert.ok(translated.trim(),lang+':'+key);
+   if(lang!=='tr'&&lang!=='en')assert.equal(translated,OFFICIAL_TRANSLATIONS[lang][key]);
+  }
  }}finally{setLocale('tr');}
 });

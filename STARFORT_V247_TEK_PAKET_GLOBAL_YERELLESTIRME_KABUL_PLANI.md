@@ -127,3 +127,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - Mevcut `local(tr,en)` çağrıları yeni sözlükten karşılığını alır; eksik uzun açıklamalar şimdilik İngilizceye düşer. Sadece mevcut seçili anahtarların tamamlığı doğrulanır, **tüm sefer ekranının tamamen yerelleştiği iddia edilmez**.
 - `data-account-*` eylemleri, sunucu sonuçları ve token/ödül akışları değiştirilmedi. Kanonik olay kaydı orijinal dil ve kodla kalır.
 - `locale-official-ui-v247.test.mjs` 12 sözlüğü ve gerçek hesap ekranından üretilen eylem/ödül değerlerini denetler.
+
+## v2.47 çalışma dalı — savaş niyetleri, üç yıldız ve sonuç bildirimi
+
+- Gerçek sunucu seferindeki **29 yeni savaş ifadesi** (4 düşman niyeti, 4 hamle tavsiyesi, tahmini 1–3 yıldız derecesi uyarısı, yetenek bekleme ve son vuruş bilgileri, yenilgi/geri çekilme) 12 ek dilde tamamlandı.
+- `locale-official-ui-v247.js` artık toplam **75 temel/doğrulanmış savaş mesajı ×12 ek dil** içerir. Oturum/Türkçe ve İngilizce kuralı aynı kalır. Oyun içi ödüller ve hasar hâlâ sunucuda hesaplanır.
+- Bazı uzun dünya patronu anlatımları, istemci dışı hata kodları, seslendirme ve 14 dilde ekran ekran insan QA devam eder.
