@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import * as R from './rules.js';
+import {ARMORY_TRANSLATIONS} from './locale-armory-v246.js';
 import {PREMIUM_PVE_CONCEPTS,premiumCatalogMarkup} from './premium-catalog.js';
 const file=name=>readFileSync(new URL(name,import.meta.url),'utf8');
 test('all eight campaign chapters grow in recommended power and grant first-clear hero gear',()=>{
@@ -25,7 +26,8 @@ test('navigation links story, maze, bag and disabled premium catalog',()=>{
  assert.match(app,/data-labyrinth-open/);
  assert.match(app,/data-labyrinth-complete/);
  assert.match(app,/labyrinthMarkup\(state\)/);
- assert.match(armory,/Çanta ve Donanım/);
+ assert.equal(ARMORY_TRANSLATIONS.tr.title,'Çanta ve Donanım');
+ assert.match(armory,/locale-armory-v246/);
  assert.match(app,/selectedBagSlot = 'all'/);
  assert.match(armory,/data-bag-slot/);
  assert.match(app,/premiumCatalogMarkup\(\)/);
