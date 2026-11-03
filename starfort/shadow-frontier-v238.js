@@ -153,7 +153,7 @@ export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false,{hi
        <span class="eyebrow">${local('BÖLGE','REGION')} ${b.stage} · ${local('DALGA','WAVE')} ${b.wave}/3</span>
        <h3>${esc(displayStage(b.stage)?.boss)}</h3>
        <div class="shadow-boss-phase" role="status"><strong>${esc(phase.title)}</strong><small>${esc(phase.hint)}</small></div>
-       <p>${esc(intentHelp[b.enemyIntent]||'Watch the enemy's next move.')}</p>
+       <p>${esc(intentHelp[b.enemyIntent]||local('Düşmanın hamlesini izle.','Watch the enemy\'s next move.'))}</p>
        <small>${local('Patron canı','Boss HP')}: %${Math.round(b.enemyHp/b.enemyMaxHp*100)} · ${b.enemyIntent==='crush'?local('Ağır Darbe','Heavy strike'):b.enemyIntent==='shield'?local('Kalkan','Shield'):b.enemyIntent==='drain'?local('Can Emme','Life drain'):local('Saldırı','Attack')}</small>
        <div class="shadow-av-controls" aria-label="Patron savaş ses ayarları">
          <button class="secondary" data-shadow-render-toggle aria-pressed="${render3D}" title="Gerçek 3D model veya hafif 2D çizim kullan">${render3D?'🧊 3D model':local('▤ 2D çizim','▤ 2D art')}</button>
@@ -166,7 +166,7 @@ export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false,{hi
    <div class="shadow-health"><div><strong>${local('Takım','Party')} ${num(b.playerHp)} / ${num(b.playerMaxHp)}</strong><progress max="${b.playerMaxHp}" value="${b.playerHp}"></progress></div>
    <div><strong>${local('Patron','Boss')} ${num(b.enemyHp)} / ${num(b.enemyMaxHp)}</strong><progress max="${b.enemyMaxHp}" value="${b.enemyHp}"></progress></div></div>
    <small>${local('Takım gücü','Party power')} ${num(b.power)} · ${local('Hücum rütbesi','Assault rank')} ${b.attackRanks} · ${local('Muhafız rütbesi','Warden rank')} ${b.wardRanks}
-    ${waiting?' · Next move in '+Math.ceil(waiting/1000)+' s':''}</small>
+    ${waiting?' · '+local('Sonraki hamle için '+Math.ceil(waiting/1000)+' sn','Next move in '+Math.ceil(waiting/1000)+' s'):''}</small>
    <div class="shadow-moves">
     <button class="primary" data-shadow-move="strike" ${waiting||busy?'disabled':''}>⚔ ${local('Saldır','Attack')}</button>
     <button class="secondary" data-shadow-move="guard" ${waiting||busy?'disabled':''}>🛡 ${local('Savun','Defend')}</button>
