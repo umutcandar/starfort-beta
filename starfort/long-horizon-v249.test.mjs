@@ -56,7 +56,7 @@ test('new account sees server-verified roadmap and next real campaign region, no
 test('after both acts, smart replay recommends lowest-rated cleared chapter, then Act II stars',()=>{
  const a=complete();
  a.campaignStars={...a.campaignStars,2:2,4:1};
- assert.deepEqual(longRoadStatus(a,NOW).focus,{id:'storyStars',id: 'storyStars',stars:1,stage:4});
+ assert.deepEqual(longRoadStatus(a,NOW).focus,{id:'storyStars',stars:1,stage:4});
  assert.match(longRoadMarkup(a,NOW),/★☆☆ → ★★★/);
  a.campaignStars[2]=3;a.campaignStars[4]=3;
  a.act2Stars={...a.act2Stars,3:1,6:2};
