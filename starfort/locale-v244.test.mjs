@@ -128,7 +128,7 @@ test('account-required page offers all 14 languages before login, with localized
  assert.equal((html.match(/<option value="/g)||[]).length,14);
  assert.match(html,/v2\.44\.0/);
  assert.match(app,/languagePickerMarkup\(\)/);
- assert.match(app,/picker\.matches\?\.\('\[data-language-picker\]'\)/);
+ assert.ok(app.includes("picker?.matches?.('[data-language-picker]')"));
  assert.match(app,/setLocale\(picker\.value\)/);
  assert.match(app,/if\(!accountReady\(\)\)/);
  assert.doesNotMatch(html,/data-welcome="guest"/);
