@@ -34,6 +34,7 @@ import {labyrinthMarkup} from './labyrinth-view.js';
 import {premiumCatalogMarkup} from './premium-catalog.js';
 import {premiumRequest,premiumStoreMarkup,applyPremiumAppearance} from './premium-store.js';
 import {warfrontRequest} from './warfront-v237.js';
+import {shadowRequest,heroDisciplinesMarkup} from './shadow-frontier-v238.js';
 import {cloudSaveRequest,cloudBackupSummary} from './cloud-save.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -71,6 +72,7 @@ const saveGuard=createSaveGuard(localStorage,R.STORAGE_KEY,null);
 let battleSpeed=1, battleFxExpires=0;
 let premiumOwner=null,premiumSnapshot=null,premiumBusy=false,premiumGeneration=0;
 let warfrontOwner=null,warfrontSnapshot=null,warfrontBusy=false,warfrontGeneration=0;
+let shadowOwner=null,shadowSnapshot=null,shadowBusy=false,shadowGeneration=0;
 let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
 let accountBackupInfo=null,accountBusy=false,accountSyncInfo={status:'disconnected'},accountRecovering=false;
@@ -199,6 +201,45 @@ function acceptAccountProgress(response){
   accountProgressOwner=response.identity;accountProgressSnapshot=response.account;
  return acceptVillage({identity:response.identity,snapshot:validateVillageSnapshot(response.data)});
 }
+async function refreshShadow(){
+ const uid=accountSession()?.user?.id;
+ if(!uid||!accountReady()){shadowOwner=null;shadowSnapshot=null;return false;}
+ const gen=++shadowGeneration;
+ if(shadowOwner!==uid){shadowOwner=uid;shadowSnapshot=null;}
+ try{
+  const result=await shadowRequest('get');
+  if(gen!==shadowGeneration||accountSession()?.user?.id!==result.identity)return false;
+  if(shadowSnapshot&&result.snapshot.revision<shadowSnapshot.revision)return false;
+  shadowOwner=result.identity;shadowSnapshot=result.snapshot;
+  if(activeView==='campaign'||activeView==='heroes'||activeView==='expedition')render();
+  return true;
+ }catch(error){
+  if(gen===shadowGeneration&&activeView==='campaign')notify('Gölge Sınırı: '+error.message);
+  return false;
+ }
+}
+async function shadowAction(action,target=null,aux=null){
+ if(shadowBusy||villageBusy||!accountReady())return;
+ shadowBusy=true;
+ try{
+  const user=accountSession().user.id;
+  const response=await shadowRequest(action,{target,aux});
+  if(accountSession()?.user?.id!==user)return;
+  if(!shadowSnapshot||response.snapshot.revision>=shadowSnapshot.revision){
+    shadowOwner=user;shadowSnapshot=response.snapshot;
+  }
+  if(action==='turn'&&!shadowSnapshot.battle&&shadowSnapshot.lastReport?.won)
+    notify('★ Gölge Sınırı zaferi! '+shadowSnapshot.lastReport.stars+' yıldız · Ganimet sunucuda kaydedildi.');
+  else if(action==='train')notify('✦ Kahramanın kalıcı uzmanlık rütbesi yükseldi.');
+  else if(action==='start')notify('⚔ Yeni sınır seferi başladı.');
+  else if(action==='abandon')notify('Gölge Sınırı seferinden çekildin.');
+  if(action==='train'||action==='turn'&&!shadowSnapshot.battle){
+   await refreshVillage({preserve:true});
+   if(action==='turn')void refreshWarfront();
+  }
+ }catch(error){notify('Gölge Sınırı: '+error.message);void refreshShadow();}
+ finally{shadowBusy=false;render();}
+}
 async function refreshWarfront(){
  const uid=accountSession()?.user?.id;
  if(!uid||!accountReady()){warfrontOwner=null;warfrontSnapshot=null;return false;}
@@ -265,7 +306,7 @@ async function premiumAction(action,item=null){
 }
 async function refreshVillage({preserve=false}={}){
  const uid=accountSession()?.user?.id;
- if(!uid){villageGeneration++;premiumGeneration++;warfrontGeneration++;warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();return false;}
+ if(!uid){villageGeneration++;premiumGeneration++;warfrontGeneration++;shadowGeneration++;shadowOwner=null;shadowSnapshot=null;warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();return false;}
  const gen=++villageGeneration;
  if(!preserve||villageOwner!==uid){villageOwner=uid;villageSnapshot=null;accountProgressOwner=uid;accountProgressSnapshot=null;dailyOwner=uid;dailySnapshot=null;render();}
  try{
@@ -274,6 +315,7 @@ async function refreshVillage({preserve=false}={}){
   const ok=acceptAccountProgress(response);
   if(ok&&premiumOwner!==uid)void refreshPremium();
   if(ok&&warfrontOwner!==uid)void refreshWarfront();
+  if(ok&&shadowOwner!==uid)void refreshShadow();
   try{
    const next=await calendarRequest('get');
    if(gen===villageGeneration&&accountSession()?.user?.id===uid&&next.identity===uid){
@@ -492,7 +534,8 @@ function renderHeroes() {
   workspaceEl.innerHTML = `<header><div><span class="eyebrow">KÜL GECESİNDEN SAĞ KALANLAR</span><h2>Kahramanlar</h2><p>Bir kalkan. Bir kıvılcım. Birlikte tutulan bir yemin.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
     <div class="team-editor"><div><span class="eyebrow">SAVAŞ DİZİLİMİ</span><p>Konumu seç, ardından kahramanı yerleştir.</p></div><strong>${number(R.teamPower(v))}<small>TAKIM GÜCÜ</small></strong></div>
     <div class="formation">${chosen.map((hero, index) => `<button class="formation-slot ${selectedSlot === index ? 'active' : ''}" data-select-slot="${index}" aria-pressed="${selectedSlot === index}">${heroPortrait(hero)}<span><small>${String(index+1).padStart(2,'0')} · ${ROLES[hero.role]}</small><b>${hero.name}</b></span><span class="slot-marker">${selectedSlot === index ? '✦' : '+'}</span></button>`).join('')}</div>
-    ${v.battle?.status === 'active' ? '<p class="inline-note">Dizilimi değiştirmek için devam eden savaşı tamamla.</p>' : ''}<div class="hero-grid">${R.HEROES.map(heroCard).join('')}</div>`;
+    ${v.battle?.status === 'active' ? '<p class="inline-note">Dizilimi değiştirmek için devam eden savaşı tamamla.</p>' : ''}<div class="hero-grid">${R.HEROES.map(heroCard).join('')}</div>
+    ${villageSignedIn()?heroDisciplinesMarkup(shadowOwner===accountSession()?.user?.id?shadowSnapshot:null,accountProgressSnapshot,v.res,shadowBusy):''}`;
 }
 
 function renderCommanderPath(){
@@ -510,7 +553,7 @@ function renderContractCards() {
 }
 function renderExpedition() {
   if(villageSignedIn()){
-    workspaceEl.innerHTML=accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow(),selectedRealm,lastCombatDelta,warfrontOwner===accountSession()?.user?.id?warfrontSnapshot:null);
+    workspaceEl.innerHTML=accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow(),selectedRealm,lastCombatDelta,warfrontOwner===accountSession()?.user?.id?warfrontSnapshot:null,shadowOwner===accountSession()?.user?.id?shadowSnapshot:null);
     official3D.sync(workspaceEl,villageView().team,accountProgressSnapshot?.mission,accountProgressOwner);
     return;
   }
@@ -674,7 +717,7 @@ async function accountAction(action){
      notify('Onay e-postası yeniden istendi. Gelen kutunu kontrol et.');return;
    }
    if(action==='logout'){
-     accountSync.stop();await accountSignOut();premiumGeneration++;warfrontGeneration++;warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();
+     accountSync.stop();await accountSignOut();premiumGeneration++;warfrontGeneration++;shadowGeneration++;shadowOwner=null;shadowSnapshot=null;warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();
      notify('E-posta hesabından çıkış yapıldı. Tekrar giriş yaparak krallığına ulaşabilirsin.');return;
    }
    if(action==='sync'){await accountSync.refresh();return;}
@@ -993,6 +1036,11 @@ function dispatch(action) {
   if(button.hasAttribute('data-gate-logout')){void accountAction('logout');return;}
   if(!accountReady()){syncAccountGate();return notify('Sunucu hesabın doğrulanmadan oyun açılmaz.');}
   if(ACCOUNT_ONLY&&isLegacyOnlyAction(button))return notify('Misafir ve yerel deneme özellikleri kaldırıldı. Resmî seferleri kullan.');
+  if(button.hasAttribute('data-shadow-refresh')){void refreshShadow();return;}
+  if(button.dataset.shadowTrain){void shadowAction('train',button.dataset.shadowTrain,button.dataset.shadowPath);return;}
+  if(button.dataset.shadowStart){void shadowAction('start',button.dataset.shadowStart);return;}
+  if(button.dataset.shadowMove){void shadowAction('turn',null,button.dataset.shadowMove);return;}
+  if(button.dataset.shadowAction){void shadowAction(button.dataset.shadowAction);return;}
   if(button.hasAttribute('data-warfront-refresh')){void refreshWarfront();return;}
   if(button.dataset.warfrontAction){void warfrontAction(button.dataset.warfrontAction,button.dataset.warfrontTarget||null);return;}
   if(button.hasAttribute('data-premium-refresh')){void refreshPremium();return;}
