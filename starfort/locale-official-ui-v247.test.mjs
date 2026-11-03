@@ -1,0 +1,40 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {SUPPORTED_LOCALES,setLocale,getLocale} from './locale-v243.js';
+import {OFFICIAL_KEYS,OFFICIAL_TRANSLATIONS,officialText,auditOfficialTranslations} from './locale-official-ui-v247.js';
+import {accountExpeditionMarkup} from './account-expedition.js';
+import * as R from './rules.js';
+test('46 verified account and combat labels have all twelve additional language translations',()=>{
+ assert.equal(OFFICIAL_KEYS.length,46);
+ assert.equal(new Set(OFFICIAL_KEYS).size,46);
+ assert.deepEqual(Object.keys(OFFICIAL_TRANSLATIONS).sort(),SUPPORTED_LOCALES.filter(l=>l!=='tr'&&l!=='en').sort());
+ assert.deepEqual(auditOfficialTranslations(),[]);
+ for(const [lang,values] of Object.entries(OFFICIAL_TRANSLATIONS)){
+  assert.deepEqual(Object.keys(values).sort(),[...OFFICIAL_KEYS].sort(),lang);
+  for(const text of Object.values(values))assert.ok(text.trim()&&!/<script|javascript:|onerror\s*=/i.test(text));
+ }
+});
+test('verified expedition loading and account-only labyrinth labels follow all 14 locale preferences',()=>{
+ const now=Date.UTC(2026,10,3,10),game=R.createState(now);
+ const account={...game,cleared:[],campaignStars:{},mazeFloor:0,mission:null,lastReport:null,counters:{win:0,hero:0,forge:0,maze:0,rift:0,veteran:0},contractClaims:{},titles:[],worldBoss:null,veteranMedals:{},itemUpgrades:{}};
+ const original=JSON.stringify(account),play=JSON.stringify(game);
+ try{for(const lang of SUPPORTED_LOCALES){setLocale(lang);
+  const unverified=accountExpeditionMarkup(null,null,now);
+  assert.ok(unverified.includes(officialText('Sunucu seferleri','Server expeditions')),lang+' loading');
+  const html=accountExpeditionMarkup(game,account,now);
+  assert.ok(html.includes(officialText('Kuzey Seferleri','Northern Expeditions')),lang+' campaign');
+  assert.ok(html.includes(officialText('16 Kat Labirent','16-Floor Labyrinth')),lang+' maze');
+  assert.ok(html.includes(officialText('Muhafızla savaş','Fight guardian')),lang+' guardian');
+  assert.match(html,/data-account-maze/);assert.match(html,/data-account-rift/);
+  assert.match(html,/data-account-stage="1"/);
+  assert.equal(getLocale(),lang);
+  assert.equal(JSON.stringify(account),original,'display must not mutate account');
+  assert.equal(JSON.stringify(game),play,'display must not mutate game');
+ }}finally{setLocale('tr');}
+});
+test('known and unknown translation lookups preserve canonical source and safe English fallback',()=>{
+ try{for(const lang of SUPPORTED_LOCALES){setLocale(lang);
+  assert.equal(officialText('Bilinmeyen','Unknown text'),lang==='tr'?'Bilinmeyen':'Unknown text');
+  assert.equal(officialText('Saldır','Attack'),lang==='tr'?'Saldır':lang==='en'?'Attack':OFFICIAL_TRANSLATIONS[lang].Attack);
+ }}finally{setLocale('tr');}
+});

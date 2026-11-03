@@ -120,3 +120,10 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - `locale-caravan-v247.js`: **3 kervan rotasının adı/açıklaması ve 10 arayüz/koşul metni 14 dilde**. Günlük hak, kalenin seviye şartı, depo dolu, kaynak yetersiz, UTC reset uyarıları kapsandı.
 - `kingdom-caravan.js`: yalnızca metin sunumu değişir; `wood/stone/aether` rota kimlikleri, 2 günlük hak, `cost`, `reward`, sunucu RPC ve UTC kısıtları aynı kalır.
 - `locale-caravan-v247.test.mjs`: 14 dilde tüm rota isimleri, buton durumları, 2 günlük takas sınırı, seviye ve ekonomi değişmezliği denetlenir.
+
+## v2.47 çalışma dalı — gerçek hesapla açılan sunucu seferi
+
+- `locale-official-ui-v247.js`: gerçek oyuncuların kullandığı `account-expedition.js` için **46 temel metin × 12 ek dil**, Türkçe/İngilizce korunarak 14-dil seçimiyle bağlandı. Giriş doğrulama, sefer başlatma, bölge/kat durumu, 1–3 yıldız sonuç başlığı, savaş turu, hasar, altı oyuncu komutu, labirent ve haftalık modların temel etiketleri dahil.
+- Mevcut `local(tr,en)` çağrıları yeni sözlükten karşılığını alır; eksik uzun açıklamalar şimdilik İngilizceye düşer. Sadece mevcut seçili anahtarların tamamlığı doğrulanır, **tüm sefer ekranının tamamen yerelleştiği iddia edilmez**.
+- `data-account-*` eylemleri, sunucu sonuçları ve token/ödül akışları değiştirilmedi. Kanonik olay kaydı orijinal dil ve kodla kalır.
+- `locale-official-ui-v247.test.mjs` 12 sözlüğü ve gerçek hesap ekranından üretilen eylem/ödül değerlerini denetler.

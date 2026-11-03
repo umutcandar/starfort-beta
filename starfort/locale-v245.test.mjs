@@ -119,7 +119,7 @@ test('unverified account loading screen follows international fallback without b
  try{
   setLocale('ja');
   const html=accountExpeditionMarkup(null,null);
-  assert.match(html,/Server expeditions/);
+  assert.match(html,/サーバー遠征/);
   assert.match(html,/data-village-refresh/);
   assert.doesNotMatch(html,/data-account-stage/);
   setLocale('tr');assert.match(accountExpeditionMarkup(null,null),/Sunucu seferleri/);
