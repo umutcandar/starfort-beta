@@ -366,7 +366,7 @@ async function accountProgressAction(action,target=null,aux=null){
    const report=response.account.lastReport;
    if(action==='mission_turn'&&!response.account.mission&&report){
     notify(report.won?'★ Sunucu zaferi! '+report.stars+' yıldız · Kaynaklar ve ganimet kaydedildi.':'Sefer sonuçlandı. Takımını geliştirip yeniden dene.');
-   }else notify(({'hero':'Kahraman eğitildi','enhance':'Eşya ustalığı geliştirildi','boss_claim':'Ortak dünya patronu ödülü alındı','forge':'Ekipman üretildi','equip':'Ekipman kuşanıldı','unequip':'Ekipman çıkarıldı','team':'Takım kaydedildi','mission_start':'Sunucu seferi başladı','mission_abandon':'Seferden çekildin','contract':'Doğrulanmış görev ödülü alındı','chronicle_claim':'✦ Komutan Kroniği sandığı açıldı · Kalıcı rütbe kaydedildi','title':'Unvan açıldı'})[action]||'Savaş komutu sunucuda işlendi.');
+   }else notify(({'hero':'Kahraman eğitildi','enhance':'Eşya ustalığı geliştirildi','ascend':'✦ Yıldız işleme rütbesi sunucuya kaydedildi','boss_claim':'Ortak dünya patronu ödülü alındı','forge':'Ekipman üretildi','equip':'Ekipman kuşanıldı','unequip':'Ekipman çıkarıldı','team':'Takım kaydedildi','mission_start':'Sunucu seferi başladı','mission_abandon':'Seferden çekildin','contract':'Doğrulanmış görev ödülü alındı','chronicle_claim':'✦ Komutan Kroniği sandığı açıldı · Kalıcı rütbe kaydedildi','title':'Unvan açıldı'})[action]||'Savaş komutu sunucuda işlendi.');
   }
  }catch(error){notify('Sunucu: '+error.message);await refreshVillage({preserve:true});}
  finally{villageBusy=false;}
@@ -631,7 +631,7 @@ function renderArmory() {
  const v=villageView();
  if(villageSignedIn()&&!accountProgressSnapshot){workspaceEl.innerHTML=`<section class="guild-panel"><h2>${appStaticText("Sunucu envanteri doğrulanıyor")}</h2><button class="secondary" data-village-refresh>${appStaticText("Yeniden bağlan")}</button></section>`;return;}
   if(!v.heroes[selectedArmoryHero]) selectedArmoryHero=v.team[0];
-  workspaceEl.innerHTML=armoryMarkup(v,selectedArmoryHero,selectedBagSlot,selectedBagItem);
+  workspaceEl.innerHTML=armoryMarkup({...v,serverShadowBattle:!!(shadowOwner===accountSession()?.user?.id&&shadowSnapshot?.battle)},selectedArmoryHero,selectedBagSlot,selectedBagItem);
 }
 
 function renderShop() {
@@ -1141,6 +1141,10 @@ function dispatch(action) {
   }
   if(button.dataset.accountEnhance){
     if(villageSignedIn())void accountProgressAction('enhance',button.dataset.accountEnhance);
+    return;
+  }
+  if(button.dataset.accountAscend){
+    if(villageSignedIn())void accountProgressAction('ascend',button.dataset.accountAscend);
     return;
   }
   if(button.hasAttribute('data-account-boss-claim')){if(villageSignedIn())void accountProgressAction('boss_claim');return;}
