@@ -97,6 +97,13 @@ const WORDS=Object.freeze({
  'auth.resent':['Onay e-postası yeniden istendi. Gelen kutunu kontrol et.','Confirmation email requested. Check your inbox.'],
  'auth.signedOut':['E-posta hesabından çıkış yapıldı. Tekrar giriş yaparak krallığına ulaşabilirsin.','Signed out. Sign in again to access your kingdom.'],
  'auth.locked':['Sunucu hesabın doğrulanmadan oyun açılmaz.','A verified server account is required to play.'],
+ 'auth.limit':['E-posta gönderim sınırına ulaşıldı. Daha sonra tekrar dene.','Email sending limit reached. Please try again later.'],
+ 'auth.unauthorized':['Bu adrese onay e-postası gönderilemiyor. E-posta hizmeti yöneticisi yapılandırmalı.','Verification cannot be sent to this address. Email delivery must be configured by the administrator.'],
+ 'auth.badAddress':['E-posta adresi geçersiz. Geçerli bir adres gir.','Invalid email address. Enter a valid email.'],
+ 'auth.notConfirmed':['Hesabın e-posta doğrulaması bekliyor. Gelen kutunu ve gereksiz klasörünü kontrol et.','Your account is awaiting email verification. Check your inbox and spam folder.'],
+ 'auth.invalidCredentials':['E-posta veya şifre hatalı. Bilgilerini kontrol et; gerekirse şifre sıfırlamayı kullan.','Incorrect email or password. Check your details or reset your password.'],
+ 'auth.failed':['Hesap işlemi başarısız.','Account operation failed.'],
+ 'auth.connection':['Sunucuya bağlanılamadı. Yerel kayıt değişmedi.','Could not connect to the server. No local progress was changed.'],
  'audio.voiceNote':['Seslendirme tarayıcının Türkçe ses sentezine bağlıdır; profesyonel kayıt değildir.','Voice lines use browser speech synthesis, not studio recordings.']
 });
 export function t(key,parameters={}){
