@@ -139,3 +139,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - `locale-realm-ui-v247.js`: gerçek oyuncu hesabındaki 8 bölge/24 yıldız/24 usta kademesi dünya haritasında kullanılan **13 görünür/erişilebilir arayüz ifadesinin 12 ek dili**. Bölge başlıkları ve hikâye isimleri mevcut yerelleştirilmiş içerik sözlüğünden gelir.
 - `realm-map.js`: harita iğneleri, ekran açıklamaları ve **yeniden savaş / bölgeye saldır / usta savaşı** eylem adları seçilen dilde. `data-realm-select`, `data-realm-mission`, `data-account-veteran`, koordinatlar, yıldız sayıları, kilit mantığı değişmez.
 - 14 dilde harita render'ı, 8 bölge ve eylem kimliği ile 1–3 yıldız değerleri `locale-realm-ui-v247.test.mjs` içinde doğrulanır. Bu değişiklik sunucu ekonomisini etkilemez.
+
+## v2.47 çalışma dalı — 14 dil mobil giriş / RTL denetimi
+
+- `reference-browser-qa.mjs`: gerçek Chromium'da **390×844 mobil ekran**, 14 dil arasında canlı geçiş, doğru `lang`/`dir`, kilitli hesap formu, sayfa yatay taşması ve hesap panelinin viewport içinde kalması denetlenir. Arapça ve Japonca ekran görüntüleri GitHub QA artifact olarak üretilir.
+- `locale-v243.css`: doğrulanmış sefer, dünya haritası ve Komutan Kroniği'nde uzun yerel etiketlerin satıra sığması, Arapça yazı yönü ve sağ kenar durum çubukları, CJK satır kırılması iyileştirildi. Haritanın coğrafi pin koordinatları ve savaş sonucu değişmez.
+- Bu otomasyon giriş ekranını gerçekten test eder; **14 dilde gerçek oturum içi bütün ekranların görsel kabulü yerine geçmez**.

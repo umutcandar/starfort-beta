@@ -67,6 +67,26 @@ try{
  assert.equal(await evaluate("document.documentElement.dir==='rtl'&&document.querySelector('#gate-title').textContent==='ابنِ مملكتك'"),true);
  assert.equal(await chooseLanguage('ja'),'ja');
  assert.equal(await evaluate("document.querySelector('#gate-title').textContent==='自分の王国を築こう'"),true);
+ // International mobile regression: inspect every supported language, RTL and
+ // script shaping before login; this cannot bypass the authenticated gate.
+ await cdp('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:2,mobile:true});
+ for(const lang of ['tr','en','es','pt-BR','fr','de','it','ru','ar','hi','id','ja','ko','zh-CN']){
+  assert.equal(await chooseLanguage(lang),lang);
+  const layout=await evaluate(`(()=>{const gate=document.querySelector('.account-gate-panel'),rect=gate.getBoundingClientRect(),title=document.querySelector('#gate-title');
+   return {language:document.documentElement.lang,direction:document.documentElement.dir,scroll:document.documentElement.scrollWidth,
+    width:innerWidth,left:rect.left,right:rect.right,title:title.textContent.trim(),
+    inputs:document.querySelectorAll('#starfort-gate-form input').length,
+    locked:document.body.classList.contains('account-locked'),inert:document.querySelector('.app').inert};})()`);
+  assert.equal(layout.language,lang,'mobile language switch: '+lang);
+  assert.equal(layout.direction,lang==='ar'?'rtl':'ltr','mobile direction: '+lang);
+  assert.ok(layout.locked&&layout.inert&&layout.inputs===2,'no guest or account bypass: '+lang);
+  assert.ok(layout.title.length>0,'missing native login heading: '+lang);
+  assert.ok(layout.left>=-2&&layout.right<=layout.width+2,'account gate clipped: '+lang+' '+JSON.stringify(layout));
+  assert.ok(layout.scroll<=layout.width+2,'horizontal page overflow: '+lang+' '+JSON.stringify(layout));
+  if(lang==='ar')await shot('starfort-390x844-arabic-rtl.png');
+  if(lang==='ja')await shot('starfort-390x844-japanese.png');
+ }
+ await cdp('Emulation.setDeviceMetricsOverride',{width:1536,height:864,deviceScaleFactor:1,mobile:false});
  await evaluate("document.querySelector('[data-language=tr]').click()");
  assert.equal(await evaluate("document.documentElement.lang==='tr'&&document.querySelector('#gate-title').textContent==='Kendi krallığını kur'"),true,'Turkish fallback missing');
  assert.equal(await evaluate("localStorage.getItem('starfort:language-v243')"),'tr');
