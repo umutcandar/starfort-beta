@@ -3,6 +3,7 @@
  */
 import {getLocale} from './locale-v243.js';
 import {worldBuilding,worldStage,worldResource} from './locale-world-v247.js';
+import {storyOperationNative,storyChapterNative} from './locale-story-v247.js';
 export const BUILDING_DISPLAY_EN=Object.freeze({
  "keep": {
   "name": "Star Keep",
@@ -207,11 +208,11 @@ export function displayBuilding(building){
 }
 export function displayStage(stage){
  if(!stage||!international())return stage;
- return {...stage,...(worldStage(stage.id)||STAGE_DISPLAY_EN[stage.id]||{})};
+ return {...stage,...(STAGE_DISPLAY_EN[stage.id]||{}),...(worldStage(stage.id)||{}),...(storyChapterNative(stage.id)?{description:storyChapterNative(stage.id)}:{})};
 }
 export function displayOperation(operation){
  if(!operation||!international())return operation;
- return {...operation,...(OPERATION_DISPLAY_EN[operation.id]||{})};
+ return {...operation,...(storyOperationNative(operation.id)||OPERATION_DISPLAY_EN[operation.id]||{})};
 }
 export function displayRealm(realm){
  if(!realm||!international())return realm;
