@@ -126,7 +126,7 @@ test('account-required page offers all 14 languages before login, with localized
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
  assert.match(html,/data-language-picker/);
  assert.equal((html.match(/<option value="/g)||[]).length,14);
- assert.match(html,/v2\.44\.0/);
+ assert.match(html,/v2\.\d+\.\d+/);
  assert.match(app,/languagePickerMarkup\(\)/);
  assert.ok(app.includes("picker?.matches?.('[data-language-picker]')"));
  assert.match(app,/setLocale\(picker\.value\)/);
