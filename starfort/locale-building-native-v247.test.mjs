@@ -31,7 +31,7 @@ test('building workshop uses translated upgrade controls with immutable construc
  try{for(const lang of SUPPORTED_LOCALES){setLocale(lang);
   const html=buildingWorkshopMarkup(state,'keep',{icon:()=>'<i></i>',now:Date.UTC(2026,10,3,10)});
   assert.ok(html.includes(bilingual('Köy Geliştirme Merkezi','Village Upgrade Center')),lang);
-  assert.ok(html.includes(bilingual('KRALLIK MİMARİSİ','KINGDOM ARCHITECTURE')),lang);
+  assert.ok(html.includes(bilingual('KRALLIK MİMARISI','KINGDOM ARCHITECTURE')),lang);
   assert.match(html,/data-plan-building="keep"/);
   assert.equal(JSON.stringify(state),original,lang+' view mutated game state');
  }}finally{setLocale('tr');}
