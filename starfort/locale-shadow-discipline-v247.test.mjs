@@ -17,8 +17,8 @@ test('hero path identity, training price and immutable server parameters survive
  try{for(const lang of SUPPORTED_LOCALES){setLocale(lang);
   const html=heroDisciplinesMarkup(front,account,res,false);
   assert.ok(html.includes(disciplineText('disciplineTitle')),lang);
-  assert.ok(html.includes(disciplineText('assaultName')),lang);
-  assert.ok(html.includes(disciplineText('wardenName')),lang);
+  assert.ok(html.includes(disciplineText('assaultName').replace(/['"&<>]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))),lang);
+  assert.ok(html.includes(disciplineText('wardenName').replace(/['"&<>]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))),lang);
   assert.match(html,/data-shadow-path="assault"/);
   assert.match(html,/data-shadow-path="warden"/);
   assert.match(html,/data-shadow-train="aldren"/);
