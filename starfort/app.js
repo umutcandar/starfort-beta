@@ -1,5 +1,5 @@
 import * as R from './rules.js';
-import {getLocale,setLocale,t,formatNumber,applyLocaleUI} from './locale-v243.js';
+import {getLocale,setLocale,t,formatNumber,applyLocaleUI,languagePickerMarkup} from './locale-v243.js';
 import {ACCOUNT_ONLY,isLegacyOnlyAction,normalizeOnlineView} from './account-only.js';
 import {createGameAudio} from './audio.js';
 import {createShadowBattleDirector,shadowCombatEffects} from './shadow-battle-director-v240.js';
@@ -154,7 +154,7 @@ function syncAccountGate(){
     const status=$('#account-gate-status');
     if(signed&&status&&accountRecovering)status.textContent=t('gate.recovery');
     else if(signed&&status&&!status.dataset.error)status.textContent=t('gate.verifying');
-     else if(!signed&&status&&!status.dataset.error&&['Hesabın yoksa yeni hesap oluştur. E-postanı doğruladıktan sonra giriş yapabilirsin.','New player? Create an account, verify your email, then sign in.'].includes(status.textContent))status.textContent=t('gate.help');
+     else if(!signed&&status&&!status.dataset.error)status.textContent=t('gate.help');
     combatRunner.pause();
     official3D.sync(null);
     for(const selector of ['#reward-dialog','#building-dialog','#battle-dialog']){
@@ -693,7 +693,7 @@ async function guildAction(name){
 /** Account-only settings: local save import, guest backups and demo progression are retired. */
 function renderSettings(){
  const email=accountSession()?.user?.email||t('settings.verify');
- workspaceEl.innerHTML=`<header><div><span class="eyebrow">${getLocale()==='en'?'COMMAND CENTER · ONLINE':'KOMUTA MERKEZİ · ÇEVRİM İÇİ'}</span>
+ workspaceEl.innerHTML=`<header><div><span class="eyebrow">${getLocale()==='tr'?'KOMUTA MERKEZİ · ÇEVRİM İÇİ':'COMMAND CENTER · ONLINE'}</span>
    <h2>${t('settings.title')}</h2><p>${t('settings.desc')}</p></div>
    <button class="secondary" data-close-view>${t('settings.back')}</button></header>
    <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">${t('settings.security')}</span><h3>${t('settings.email')}</h3>
@@ -709,7 +709,8 @@ function renderSettings(){
     <div class="language-switch settings-language-switch" aria-label="Language / Dil">
      <button type="button" data-language="tr" aria-pressed="${getLocale()==='tr'}">Türkçe</button>
      <button type="button" data-language="en" aria-pressed="${getLocale()==='en'}">English</button>
-    </div><small>${t('settings.languageHelp')}</small></article></div>
+    </div>${languagePickerMarkup()}<small>${t('settings.languageHelp')}</small>
+    <small>${getLocale()==='tr'?'Diğer oyun ekranları henüz tüm dillere çevrilmedi.':'Some game screens still use English while translation is in progress.'}</small></article></div>
     ${accountRecovering?'<div class="guild-panel"><h3>Şifreni güncelle</h3><input id="account-new-password" type="password" minlength="8" maxlength="100" autocomplete="new-password" placeholder="Yeni şifre"><button class="primary" data-account-action="password-update">Şifremi güncelle</button></div>':''}`;
 }
 async function accountAction(action){
@@ -1234,6 +1235,13 @@ function dispatch(action) {
 }
 
 document.addEventListener('click', dispatch);
+document.addEventListener('change',event=>{
+ const picker=event.target;
+ if(!picker?.matches?.('[data-language-picker]'))return;
+ setLocale(picker.value);
+ // Display preferences are local; do not sign in, mutate progress or issue any RPC.
+ render();
+});
 $('#import-save').addEventListener('change',async event=>{
   const file=event.target.files?.[0];event.target.value='';if(!file)return;
   try{if(file.size>2_000_000)throw new Error('Kayıt dosyası 2 MB sınırını aşıyor.');
