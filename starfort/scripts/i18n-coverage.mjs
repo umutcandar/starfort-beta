@@ -119,7 +119,7 @@ const summary={
   completedCoreSettings:{newNativeKeys:CORE_COMPLETION_KEYS.length,additionalLanguages:12},
   commanderChronicle:{rankNamesPerLanguage:30,screenKeysPerLanguage:CHRONICLE_UI_KEYS.length,languages:localeSet.length},
   caravan:{routesWithNativeCopy:3,screenKeysPerLanguage:CARAVAN_UI_KEYS.length,languages:localeSet.length},
-  verifiedExpeditionCore:{translatedLabelsPerAdditionalLanguage:OFFICIAL_KEYS.length,additionalLanguages:12},
+  verifiedExpeditionCore:{translatedLabelsPerAdditionalLanguage:OFFICIAL_KEYS.length,additionalLanguages:12,literalPairsCovered:122,dynamicNamesCovered:7},
   realmMap:{translatedLabelsPerAdditionalLanguage:REALM_UI_KEYS.length,additionalLanguages:12},
   teamBattle:{keysPerLanguage:TEAM_KEYS.length,languages:localeSet.length},
   guild:{keysPerLanguage:GUILD_KEYS.length,languages:localeSet.length},

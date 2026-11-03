@@ -5,8 +5,8 @@ import {OFFICIAL_KEYS,OFFICIAL_TRANSLATIONS,officialText,auditOfficialTranslatio
 import {accountExpeditionMarkup} from './account-expedition.js';
 import * as R from './rules.js';
 test('46 verified account and combat labels have all twelve additional language translations',()=>{
- assert.equal(OFFICIAL_KEYS.length,75);
- assert.equal(new Set(OFFICIAL_KEYS).size,75);
+ assert.equal(OFFICIAL_KEYS.length,129);
+ assert.equal(new Set(OFFICIAL_KEYS).size,129);
  assert.deepEqual(Object.keys(OFFICIAL_TRANSLATIONS).sort(),SUPPORTED_LOCALES.filter(l=>l!=='tr'&&l!=='en').sort());
  assert.deepEqual(auditOfficialTranslations(),[]);
  for(const [lang,values] of Object.entries(OFFICIAL_TRANSLATIONS)){
@@ -47,4 +47,16 @@ test('live combat intent hints, three-star estimate and battle outcome messages 
    if(lang!=='tr'&&lang!=='en')assert.equal(translated,OFFICIAL_TRANSLATIONS[lang][key]);
   }
  }}finally{setLocale('tr');}
+});
+
+test('all 122 direct bilingual server expedition phrases have native mappings in 12 extra languages',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const exp=readFileSync(new URL('./account-expedition.js',import.meta.url),'utf8');
+ const regex=/\\blocal\\(\\s*(?:'((?:\\\\.|[^'\\\\])*)'|"((?:\\\\.|[^"\\\\])*)")\\s*,\\s*(?:'((?:\\\\.|[^'\\\\])*)'|"((?:\\\\.|[^"\\\\])*)")\\s*\\)/g;
+ const direct=[...new Set([...exp.matchAll(regex)].map(m=>(m[3]??m[4]).replace(/\\\\(['"\\\\])/g,'$1')))];
+ assert.equal(direct.length,122);
+ for(const lang of SUPPORTED_LOCALES.filter(l=>l!=='tr'&&l!=='en')){
+  for(const word of direct)assert.ok(OFFICIAL_TRANSLATIONS[lang][word]?.trim(),lang+': '+word);
+ }
+ for(const key of ['Expedition victory','Hero training','Equipment crafted','Labyrinth floor','Frontier Watcher','Star Master','Northern Warden'])assert.ok(OFFICIAL_KEYS.includes(key));
 });

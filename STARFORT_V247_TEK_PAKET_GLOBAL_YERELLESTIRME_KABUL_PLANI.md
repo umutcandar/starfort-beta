@@ -145,3 +145,10 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - `reference-browser-qa.mjs`: gerçek Chromium'da **390×844 mobil ekran**, 14 dil arasında canlı geçiş, doğru `lang`/`dir`, kilitli hesap formu, sayfa yatay taşması ve hesap panelinin viewport içinde kalması denetlenir. Arapça ve Japonca ekran görüntüleri GitHub QA artifact olarak üretilir.
 - `locale-v243.css`: doğrulanmış sefer, dünya haritası ve Komutan Kroniği'nde uzun yerel etiketlerin satıra sığması, Arapça yazı yönü ve sağ kenar durum çubukları, CJK satır kırılması iyileştirildi. Haritanın coğrafi pin koordinatları ve savaş sonucu değişmez.
 - Bu otomasyon giriş ekranını gerçekten test eder; **14 dilde gerçek oturum içi bütün ekranların görsel kabulü yerine geçmez**.
+
+## v2.47 çalışma dalı — doğrulanmış seferin tüm sabit etiketleri
+
+- Kaynak kod taramasında `account-expedition.js` içinde **122 farklı doğrudan `local(tr,en)` sabit mesajı** bulundu. Önceki 75 taneye **47 eksik İngilizce yedek metnin tamamı** 12 ek dilde eklendi.
+- Ayrıca 4 adet görev sayacı adı (`Expedition victory`, `Hero training`, `Equipment crafted`, `Labyrinth floor`) ve 3 kalıcı komutan unvanı yeni 12 dil karşılıklarıyla eklendi. Tek resmi sefer sözlüğü artık **129 metin ×12 ek dil**; Türkçe/İngilizce kaynaklar aynı kalır.
+- `locale-official-ui-v247.test.mjs` tüm doğrudan sabit iki dilli metinleri oyun dosyasından **kaynak taramasıyla** bulur, 12 dilde eşleşmeyen anahtar varsa GitHub CI hata verir. Dinamik sunucu hata kodları, `mission.lastAction` ve gömülü başka modlarda `local()` dışı kurulan cümleler ayrıca incelenmelidir.
+- Hesap kilidi, savaş/ödül otoritesi, kimlikler ve ekonomi değişmez. Global tek sürüm hâlâ QA incelemesi bekler.
