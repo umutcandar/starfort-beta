@@ -101,3 +101,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - `account-auth.js` dosyasındaki 15 doğrudan Türkçe istisna, artık 14 dilde `auth.validation.*` anahtarlarını kullanıyor. Bunlar geçersiz hesap, yedek biçimi ve 125 KB sınırı, eski kayıt revizyonu, güvenli yönlendirme, zaman aşımına uğrayan kurtarma bağlantısı ve 8–100 karakterlik şifre uyarılarını içerir.
 - Tek `locale-auth-messages-v247.js` sözlüğü böylece toplam **31 hesap durumu/validasyon anahtarını 14 dilde** içerir. JWT, güvenli yönlendirme izin listesi, oturum kontrolü, Supabase RPC ve dosya sınırları değiştirilmedi.
 - Kod testleri, 14 dilde geçersiz e-posta, kısa şifre, hatalı yedek eylemi ve son kullanma tarihli bağlantının aynı mantıksal koşullarda reddedilmesini denetler.
+
+## v2.47 çalışma dalı — ilk arayüz sözlüğünün kalan dilleri
+
+- `locale-core-completion-v247.js`: v2.43'teki `WORDS` sözlüğünde 12 yeni dil için yalnızca İngilizceye düşen 20 arayüz alanı çevrildi. Dünya/harita yardım metinleri, sunucu ve üretim durumları, hesap/deneyim ayarları, ses, tam ekran ve profesyonel olmayan TTS uyarısı dahildir.
+- `locale-v243.js` aktif dilde 20 yeni karşılığı kullanır; 41 önceki çekirdek anahtar ile 31 hesap ve yedekleme anahtarı korunur.
+- `locale-core-completion-v247.test.mjs` tüm v2.43 `WORDS` anahtarlarının 14 dilde çeviri katmanı tarafından kapsandığını test eder. Bu denetim yalnızca çekirdek sözlük için geçerlidir, oyunun bütün modlarını kapsamaz.

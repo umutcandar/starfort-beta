@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {LANGUAGE_META,EXTRA_TRANSLATIONS,EXTRA_TRANSLATION_KEYS} from './locale-global-v244.js';
+import {CORE_COMPLETION_TRANSLATIONS} from './locale-core-completion-v247.js';
 import {LOCALE_KEY,SUPPORTED_LOCALES,resolveLocale,normalizeLocale,setLocale,getLocale,t,formatNumber,getLocaleDirection,applyLocaleUI,languagePickerMarkup} from './locale-v243.js';
 import {shadowVoiceLines,shadowVoiceStatus} from './shadow-battle-director-v240.js';
 import {shadowFrontierMarkup} from './shadow-frontier-v238.js';
@@ -57,7 +58,7 @@ test('every extra language translates account controls and menu, falls back to E
    assert.equal(t('gate.title'),EXTRA_TRANSLATIONS[locale]['gate.title']);
    assert.equal(t('nav.expedition'),EXTRA_TRANSLATIONS[locale]['nav.expedition']);
    assert.equal(t('settings.language'),EXTRA_TRANSLATIONS[locale]['settings.language']);
-   assert.equal(t('settings.controls'),'Controls','untranslated keys should default to English, not Turkish');
+   assert.equal(t('settings.controls'),CORE_COMPLETION_TRANSLATIONS[locale]['settings.controls'],'settings controls now have native translations');
    assert.equal(t('auth.locked'),EXTRA_TRANSLATIONS[locale]['auth.locked']);
    assert.ok(formatNumber(1250).length>0);
    const front=shadowFrontierMarkup(FRONT,ACCOUNT);
