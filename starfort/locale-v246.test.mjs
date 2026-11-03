@@ -80,7 +80,7 @@ test('English hero and inventory UI do not localize canonical action identifiers
   setLocale('ja');
   const ui=armoryMarkup(state,'aldren','owned','iron_sword');
   assert.match(ui,/持ち物と装備/);
-  assert.match(ui,/Oath Sword/);
+  assert.match(ui,/誓いの剣/,'Japanese inventory item name is translated');
   assert.match(ui,/data-equip="iron_sword"/);
   assert.match(ui,/data-unequip="weapon"|data-equip="iron_sword"/);
   assert.equal(previewGearDifference(state,'aldren','iron_sword').attack,4);
