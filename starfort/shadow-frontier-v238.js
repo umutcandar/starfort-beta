@@ -4,6 +4,7 @@ import {freshAccountSession} from './account-auth.js';
 import {HEROES,ITEMS} from './rules.js';
 import {shadowBossArtwork,shadowBossPhase} from './shadow-boss-art-v239.js';
 import {shadowVictoryMarkup} from './shadow-rewards-v239.js';
+import {shadowAtmosphereParticles,shadowVoiceStatus} from './shadow-battle-director-v240.js';
 export const SHADOW_STAGES=Object.freeze([
  Object.freeze({id:1,name:'Diken Nöbetçisi',region:'Karanlık Geçit',boss:'Diken Nöbetçisi',
   unlock:2,description:'Yaşayan surların bekçisi. Son dalgada kalkanı sürekli onarır.',
@@ -103,7 +104,7 @@ export function heroDisciplinesMarkup(front,account,resources={},busy=false){
      </article>`;
    }).join('')}</div></section>`;
 }
-export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false,{hiddenReportAt=null}={}){
+export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false,{hiddenReportAt=null,audioEnabled=false,voiceEnabled=false}={}){
  if(!front||!account)return '<section class="shadow-frontier"><h3>🌘 Gölge Sınırı</h3><p>Yeni sefer ve kahraman uzmanlıkları sunucuda doğrulanıyor.</p><button class="secondary" data-shadow-refresh>Yenile</button></section>';
  const b=front.battle,report=front.lastReport;
  const intentHelp={
@@ -114,6 +115,7 @@ export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false,{hi
  const waiting=b?Math.max(0,3000-(now-b.lastTurnAt)):0;
  const phase=b?shadowBossPhase(b.stage,b.wave,b.enemyHp,b.enemyMaxHp):null;
  const enraged=phase?.id==='eclipse-rage';
+ const sound=shadowVoiceStatus({audio:audioEnabled,voice:voiceEnabled});
  const skills=b?(account.team||[]).map(id=>{
    const h=heroMap.get(id);if(!h)return '';
    const cooldown=Math.max(0,(b.cooldowns?.[id]||0)-(b.turn+1));
@@ -122,14 +124,24 @@ export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false,{hi
  const status=b?`<article class="shadow-active-battle" aria-label="Gölge Sınırı aktif savaşı">
    <span class="eyebrow">⚔ GERÇEK SUNUCU SAVAŞI · DALGA ${b.wave} / 3 · TUR ${b.turn+1}</span>
    <div class="shadow-battle-visual" data-boss-region="${b.stage}" data-boss-wave="${b.wave}" data-boss-intent="${b.enemyIntent}" data-boss-enraged="${enraged?'true':'false'}">
-     <div class="shadow-battle-illustration">${shadowBossArtwork(b.stage,{variant:'battle',wave:b.wave,intent:b.enemyIntent,enraged})}
-       <span class="shadow-visual-flash" aria-hidden="true"></span></div>
+     <div class="shadow-battle-illustration" data-shadow-scene="${b.stage}">
+        <div class="shadow-svg-backdrop">${shadowBossArtwork(b.stage,{variant:'battle',wave:b.wave,intent:b.enemyIntent,enraged})}</div>
+        <canvas data-shadow-3d-canvas class="shadow-boss-webgl" width="420" height="300" aria-hidden="true"></canvas>
+        <div class="shadow-ambient-motes" aria-hidden="true">
+          ${shadowAtmosphereParticles(b.stage).map((p,i)=>`<i style="--mote-x:${p.x}%;--mote-y:${p.y}%;--mote-delay:${p.delay}s;--mote-duration:${p.duration}s;--mote-size:${p.size}px" data-particle="${i}"></i>`).join('')}
+        </div>
+        <span class="shadow-visual-flash" aria-hidden="true"></span></div>
      <div class="shadow-battle-story">
        <span class="eyebrow">BÖLGE ${b.stage} · DALGA ${b.wave}/3</span>
        <h3>${esc(stageMap.get(b.stage)?.boss)}</h3>
        <div class="shadow-boss-phase" role="status"><strong>${esc(phase.title)}</strong><small>${esc(phase.hint)}</small></div>
        <p>${esc(intentHelp[b.enemyIntent]||'Düşmanın hamlesini izle.')}</p>
        <small>Patron canı: %${Math.round(b.enemyHp/b.enemyMaxHp*100)} · ${b.enemyIntent==='crush'?'Ağır Darbe':b.enemyIntent==='shield'?'Kalkan':b.enemyIntent==='drain'?'Can Emme':'Saldırı'}</small>
+       <div class="shadow-av-controls" aria-label="Patron savaş ses ayarları">
+         <button class="secondary" data-shadow-audio-toggle aria-pressed="${sound.audio}">${sound.audio?'🔊 Ses açık':'🔈 Sesi aç'}</button>
+         <button class="secondary" data-shadow-voice-toggle aria-pressed="${sound.voice}" ${!sound.audio?'disabled':''} title="${esc(sound.caption)}">${sound.voice?'🎙 Seslendirme açık':'🎙 Seslendirmeyi aç'}</button>
+       </div>
+       <p class="shadow-caption" data-shadow-caption aria-live="polite" aria-atomic="true">Seslendirme isteğe bağlıdır. ${esc(sound.caption)}</p>
      </div>
    </div>
    <div class="shadow-health"><div><strong>Takım ${num(b.playerHp)} / ${num(b.playerMaxHp)}</strong><progress max="${b.playerMaxHp}" value="${b.playerHp}"></progress></div>
