@@ -117,3 +117,16 @@ test('SQL enforces separated battle lock, four stage gates and hero expertise wi
  const exp=readFileSync(new URL('./account-expedition.js',import.meta.url),'utf8');
  assert.match(exp,/shadowFrontierMarkup\(/);
 });
+
+test('Shadow Frontier respects real equipment tiers, enchant ranks and two-piece set synergy',()=>{
+ const sql=readFileSync(new URL('./sql/starfort-v238-gear-parity.sql',import.meta.url),'utf8');
+ assert.match(sql,/when 'iron_sword' then 8/);
+ assert.match(sql,/when 'starbreaker' then 56/);
+ assert.match(sql,/when 'aegis' then 50/);
+ assert.match(sql,/when 'ashes_plate' then 67/);
+ assert.match(sql,/coalesce\(\(p\.item_upgrades->>item_id\)::integer,0\)\*9/);
+ assert.match(sql,/if j>=2 then attack_power:=attack_power\+18/);
+ assert.match(sql,/path='moon'/);
+ assert.match(sql,/path='ember'/);
+ assert.match(sql,/path='dawn'/);
+});

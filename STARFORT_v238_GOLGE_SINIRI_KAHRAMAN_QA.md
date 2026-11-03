@@ -41,3 +41,11 @@ Bu paket gerçek ödeme veya misafir oyununu açmaz. Yeni patronlar ayrı savaş
 ## Sıradaki hedef
 
 Gölge Sınırı için görsel ortamlar, patron animasyonları, özel eşya gösterimi ve çok günlük oyuncu ilerleme testi.
+
+## Ek denge kontrolü (v2.38 son paket)
+
+En son ekipman uyumu güncellemesinden sonra, gerçeğe uygun seviye 20 ve farklı eşyalarla hazırlanmış geçici test takımıyla dört bölge tekrar oynandı. Üç dalga dahil elde edilen sonuçlar sırasıyla 5, 7, 10 ve 14 turda üç yıldızdır. Testlerin tamamı işlem sonunda geri alındı.
+
+Yeni son oyun savaşında eşyanın kendi saldırı/güç değeri, +1 ila +5 eşya ustalığı ve iki parçalı Ay/Kor/Şafak set sinerjisi hesaba katılıyor. Bu düzenleme nadir ekipmanı sıradan eşya ile aynı sayan eski ilk prototip değerini düzeltiyor.
+
+Bu ölçümler yüksek seviyeli simüle bir takım içindir; yeni veya orta seviyeli oyuncunun tüm bölgeleri aynı turlarda bitireceğine dair iddia değildir.
