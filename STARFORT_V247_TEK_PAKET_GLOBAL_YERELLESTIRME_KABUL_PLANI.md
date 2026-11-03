@@ -183,3 +183,8 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 
 - `locale-shadow-hud-native-v247.js`: **Gölge Sınırı'ndaki 52** sabit UI ifadesi ve **Kalıcı Ustalık'taki 26** sabit UI ifadesinin tamamı, toplam **78 ×12 ek dil**. Gerçek savaş HUD, ses açma/kapama, 4 bölge ilerlemesi, 12 kalıcı rütbe, haftalık 100 şöhret sınırı, 1–3 yıldız açıklamaları dahil.
 - 14 dilde sözlük kapsaması kaynak dosyalarındaki `local(tr,en)` ifadeleriyle birebir denetlenir. Kanonik sezon/patron ödülleri, sunucu RPC ve savaş kuralları değiştirilmez.
+
+## v2.47 tek paket — ana oyun / köy / kahraman / klan ortak dil tamamlaması
+
+- `locale-app-native-v247.js` ana `app.js` dosyasındaki **74 iki dilli sabit ifadeyi 12 ek dilin tamamına** taşır. Bina durumu, kahraman dizilişi, 25 kişilik klan, sohbet, davet kodu, haftalık baskın ve açık beta/test açıklamaları içerir.
+- Kaynakta yeni `local(tr,en)` ifadesi eklenirse `locale-app-native-v247.test.mjs` bire bir kontrolle tespit eder. Hesap kilidi, ödül üretimi veya PvP eşleşme yetkileri değiştirilmedi.
