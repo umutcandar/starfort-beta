@@ -4,6 +4,7 @@ import {formatNumber} from './locale-v243.js';
 import {armoryText as a} from './locale-armory-v246.js';
 import {displayItem,displayMaterial,displaySetName} from './locale-items-v246.js';
 import {displayHero} from './locale-heroes-v245.js';
+import {ASCENSION_ITEMS,ascensionMarkup} from './relic-ascension-v252.js';
 import {local,displayResource} from './locale-game-content-v245.js';
 const slotName=slot=>a(slot);
 const rarityName=rarity=>a(({common:'rarityCommon',epic:'rarityEpic',legendary:'rarityLegendary'})[rarity]||rarity);
@@ -47,7 +48,7 @@ export function armoryMarkup(state,heroId='aldren',filter='all',selectedId=null)
   const items=visibleItems(state,filter);
   const material=(filter==='all'||filter==='materials'||filter==='owned')?(MATERIALS.find(m=>selectedId==='material:'+m.id)||(filter==='materials'?MATERIALS[0]:null)):null;
   const selected=material?null:(items.find(item=>item.id===selectedId)||items[0]||null);
-  const busy=state.battle?.status==='active';
+  const busy=state.battle?.status==='active'||!!state.serverMission||!!state.serverShadowBattle;
   const equippedItems=Object.entries(R.SLOTS).map(([slot,label])=>{
     const item=slotItem(state,hero.id,slot);
     const ghost=R.itemById(({weapon:'starbreaker',armor:'ashes_plate',relic:'guardian_seal'})[slot]);
@@ -64,13 +65,13 @@ export function armoryMarkup(state,heroId='aldren',filter='all',selectedId=null)
   </button>`).join('');
   const cards=items.map(item=>{
     const count=itemCount(state,item),equipped=slotItem(state,hero.id,item.slot)?.id===item.id;
-    const mastery=state.itemUpgrades?.[item.id]||0;
+    const mastery=state.itemUpgrades?.[item.id]||0,ascension=state.relicAscensions?.[item.id]||0;
     return `<button class="bag-v212-item ${item.rarity} ${count?'owned':'missing'} ${selected?.id===item.id?'selected':''}"
       data-bag-item="${item.id}" aria-label="${displayItem(item).name}, ${rarityName(item.rarity)}, ${count} ${a('unit')}" aria-pressed="${selected?.id===item.id}">
       <span class="bag-v212-item-art">${itemImage(item)}</span>
       <span class="bag-v212-item-name">${displayItem(item).name}</span>
       ${count?`<span class="bag-v212-count">×${count}</span>`:`<span class="bag-v213-lock" title="${local("Henüz kazanılmadı","Not obtained yet")}" aria-hidden="true">⌑</span>`}
-      ${mastery?`<span class="bag-v226-mastery">+${mastery} ${a('mastery')}</span>`:''}${equipped?`<span class="bag-v212-worn">${local("Takılı","Equipped")}</span>`:''}
+      ${mastery?`<span class="bag-v226-mastery">+${mastery} ${a('mastery')}</span>`:''}${ascension?`<span class="bag-v252-ascension">✦ ${ascension}/4</span>`:''}${equipped?`<span class="bag-v212-worn">${local("Takılı","Equipped")}</span>`:''}
     </button>`;
   }).join('');
   const materialCards=(filter==='all'||filter==='materials'||filter==='owned')?MATERIALS.map(item=>`<button class="bag-v212-item bag-v213-material ${material?.id===item.id?'selected':''}" data-bag-item="material:${item.id}" aria-pressed="${material?.id===item.id}" aria-label="${displayMaterial(item).name}, ${fmt(state.res[item.id]||0)} ${a('unit')}">
@@ -99,6 +100,7 @@ export function armoryMarkup(state,heroId='aldren',filter='all',selectedId=null)
       ${state.serverVillage&&count>0?`<button class="secondary" data-account-enhance="${selected.id}" ${canMaster?'':'disabled'}>${mastery>=5?local("✦ +5 Tamamlandı","✦ +5 Completed"):`✧ ${a("mastery")} +${mastery+1}`}</button>`:''}
     </div>
     ${state.serverVillage&&count>0?`<p class="bag-v226-upgrade-note">${local('Eşya ustalığı','Gear mastery')}: ${mastery}/5 · ${local('Bir eşya türünün tüm kopyalarını kalıcı güçlendirir.','Permanently strengthens all owned copies of this gear type.')} ${masteryCost?`${local('Sıradaki maliyet','Next cost')}: ${Object.entries(masteryCost).map(([k,v])=>fmt(v)+' '+displayResource(k)).join(' · ')}`:local('Maksimum ustalık.','Maximum mastery.')}</p>`:''}
+    ${state.serverVillage&&ASCENSION_ITEMS.includes(selected.id)?ascensionMarkup(state,selected.id,displayResource):''}
     <p class="bag-v212-origin">${selected.exclusive?local('Özel sefer ganimeti. Demirhanede üretilemez.','Special expedition loot. Cannot be crafted.'):`${local('Üretim maliyeti','Crafting cost')}: ${costText}`} · ${local('Çantada','Owned')}: ${count} · ${local('Boşta','Spare')}: ${Math.max(0,free)}</p>`;
   }
   if(material)details=`<div class="bag-v212-detail-head"><span class="bag-v212-detail-art bag-v213-material-glyph material-${material.id}" aria-hidden="true">${material.glyph}</span><div><small>${local('KAYNAK · ÇANTA','RESOURCE · INVENTORY')}</small><h3>${displayMaterial(material).name}</h3><p>${displayMaterial(material).description}</p></div></div>
