@@ -27,7 +27,7 @@ export function shadowVictoryMarkup(report,regions=[]){
       <p>${esc(region)}${Number.isSafeInteger(report.turns)?' · '+n(report.turns)+' '+l('tur','turns'):''} · ${won?l('Ödüller gerçek oyuncu hesabına işlendi.','Rewards were recorded on your verified account.'):l('Kahramanlarını ve eşyalarını geliştirip tekrar dene.','Upgrade your heroes and equipment, then try again.')}</p>
       ${won&&Number.isSafeInteger(report.renown)&&report.renown>=0?
         `<div class="shadow-result-renown" aria-label="${l('Sunucu Sınır Ustalığı itibarı','Verified frontier renown')}">✦ +${n(report.renown)} ${l('itibar','renown')}
-         ${report.renown===0?'· ${l('Bu haftanın 100 itibar sınırına ulaştın','Weekly 100-renown cap reached')}':''}</div>`:''}
+         ${report.renown===0?'· '+l('Bu haftanın 100 itibar sınırına ulaştın','Weekly 100-renown cap reached'):''}</div>`:''}
       ${won?`<div class="shadow-reward-ledger" aria-label="${l('Kazanılan kaynaklar','Earned resources')}">
         ${loot.map(x=>`<span class="shadow-reward-resource" data-resource="${x.id}"><b>+${n(x.value)}</b><small>${label[x.id][getLocale()==='en'?1:0]}</small></span>`).join('')}
       </div>
