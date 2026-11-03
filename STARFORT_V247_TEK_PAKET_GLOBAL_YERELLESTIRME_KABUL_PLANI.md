@@ -89,3 +89,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - `index.html`: mevcut düğme eylemlerini değiştirmeden `data-i18n-aria-label` ve `data-i18n-title` bağlandı; `applyLocaleUI` artık yerel `title` alanlarını da günceller.
 - `locale-shell-v247.test.mjs`: 14 dil, Arapça RTL, erişilebilir etiketler ve değiştirilmemiş oyun eylemi alanları denetlenir.
 - Bu ekleme tüm dinamik bildirimlerin veya 14 dilin insan editörü tarafından doğrulandığı anlamına **gelmez**. v2.47 taslak ve global yayın kapısı kapalıdır.
+
+## v2.47 çalışma dalı — çok dilli hesap ve e-posta durumları
+
+- `locale-auth-messages-v247.js`: giriş, kayıt, sıfırlama, e-posta doğrulama, SMTP kota sınırı, geçersiz adres, hatalı şifre, bağlantı kesintisi ve sunucu hesabı durumlarına ait 16 bilinen hata/bilgi anahtarı ×14 dil. Önceki onaylanmamış e-posta uyarısı yanlış başarı vaat etmeden korunur.
+- `locale-v243.js`: bu mesajlar zaten kullanılan `t()` üzerinden ilgili dilde verilir; kullanıcı giriş akışına, Supabase doğrulamasına veya token saklama işlemine dokunulmadı.
+- `locale-auth-messages-v247.test.mjs`: 14 dilde tüm anahtarlar ve hata kodlarından çeviri kontrol edilir. Tanınmayan sunucu hata metinleri hâlâ kaynak dillerinde gelebilir; bu alan global yayın öncesi ayrıca kapatılmalıdır.

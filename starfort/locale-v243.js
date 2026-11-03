@@ -1,6 +1,7 @@
 /** STARFORT language preference. Display-only: never alters account, combat or UTC rewards. */
 import {LANGUAGE_META,EXTRA_TRANSLATIONS} from './locale-global-v244.js';
 import {SHELL_TRANSLATIONS} from './locale-shell-v247.js';
+import {AUTH_MESSAGES} from './locale-auth-messages-v247.js';
 export {LANGUAGE_META} from './locale-global-v244.js';
 export const LOCALE_KEY='starfort:language-v243';
 export const SUPPORTED_LOCALES=Object.freeze(LANGUAGE_META.map(x=>x.id));
@@ -109,7 +110,7 @@ const WORDS=Object.freeze({
 });
 export function t(key,parameters={}){
  const language=getLocale(),pair=WORDS[key],extra=EXTRA_TRANSLATIONS[language]?.[key];
- const string=SHELL_TRANSLATIONS[language]?.[key]??(language==='tr'?(pair?.[0]??key):extra??pair?.[1]??key);
+ const string=SHELL_TRANSLATIONS[language]?.[key]??AUTH_MESSAGES[language]?.[key]??(language==='tr'?(pair?.[0]??key):extra??pair?.[1]??key);
  return string.replace(/\{([a-zA-Z]+)\}/g,(_,field)=>String(parameters[field]??''));
 }
 export function formatNumber(value){
