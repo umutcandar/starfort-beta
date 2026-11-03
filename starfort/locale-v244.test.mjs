@@ -6,6 +6,7 @@ import {LANGUAGE_META,EXTRA_TRANSLATIONS,EXTRA_TRANSLATION_KEYS} from './locale-
 import {CORE_COMPLETION_TRANSLATIONS} from './locale-core-completion-v247.js';
 import {LOCALE_KEY,SUPPORTED_LOCALES,resolveLocale,normalizeLocale,setLocale,getLocale,t,formatNumber,getLocaleDirection,applyLocaleUI,languagePickerMarkup} from './locale-v243.js';
 import {shadowVoiceLines,shadowVoiceStatus} from './shadow-battle-director-v240.js';
+import {SHADOW_VOICE_NATIVE} from './locale-shadow-voice-v247.js';
 import {shadowFrontierMarkup} from './shadow-frontier-v238.js';
 import {SHADOW_STAGE_NATIVE} from './locale-shadow-stages-v247.js';
 import {bilingual} from './locale-unified-v247.js';
@@ -72,7 +73,7 @@ test('every extra language translates account controls and menu, falls back to E
    const report=shadowVictoryMarkup({won:true,stage:1,stars:3,turns:8,renown:10,reward:{gold:420}},[]);
    assert.ok(report.includes(bilingual('Gölge Sınırı Zaferi','Shadow Frontier Victory')),locale+' localized victory report');
    assert.ok(report.includes(bilingual('Altın','Gold')),'reward resources must follow the selected locale');
-   assert.match(shadowVoiceLines(1).enter,/roots/,'unsupported voice tracks fall back to English');
+   assert.equal(shadowVoiceLines(1).enter,SHADOW_VOICE_NATIVE[locale][0].enter,'boss voice caption follows selected native language');
    assert.equal(shadowVoiceStatus().caption,CORE_COMPLETION_TRANSLATIONS[locale]['audio.voiceNote']);
   }
  }finally{setLocale('tr');}

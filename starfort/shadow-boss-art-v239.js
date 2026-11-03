@@ -1,4 +1,6 @@
 import {getLocale} from './locale-v243.js';
+import {SHADOW_STAGE_NATIVE} from './locale-shadow-stages-v247.js';
+import {shadowPhaseTitle,shadowPhaseHint,shadowArtLabel} from './locale-shadow-voice-v247.js';
 /** STARFORT v2.39 original vector boss illustrations.
  * Static SVG geometry only; no remote images, external dependencies, or scripts.
  * Per-stage visual states are derived exclusively from authenticated battle snapshots.
@@ -57,11 +59,11 @@ const ENVIRONMENTS=[
 export function shadowBossArtwork(stage,{variant='card',wave=1,intent='strike',enraged=false}={}){
  const idx=SAFE_X(stage,1,4)-1,w=SAFE_X(wave,1,3);
  const key=STAGE_KEYS[idx];
- const bossName=(getLocale()==='tr'?['Diken Nöbetçisi','Oyuk Siren','Kül Fırtınası','Tutulma Hükümdarı']:['Thorn Sentinel','Hollow Siren','Ash Tempest','Eclipse Sovereign'])[idx];
+ const bossName=getLocale()==='tr'?['Diken Nöbetçisi','Oyuk Siren','Kül Fırtınası','Tutulma Hükümdarı'][idx]:SHADOW_STAGE_NATIVE[getLocale()]?.[idx]?.boss||['Thorn Sentinel','Hollow Siren','Ash Tempest','Eclipse Sovereign'][idx];
  const mode=variant==='battle'?'battle':variant==='reward'?'reward':'card';
  const style=(enraged&&idx===3)?'enraged':(INTENTS.includes(intent)?intent:'strike');
  const paint='sfb-v239-'+key+'-'+mode;
- return `<svg xmlns="http://www.w3.org/2000/svg" class="shadow-boss-art art-${key} boss-intent-${style} ${mode==='battle'?'art-combat':''}" viewBox="0 0 420 300" role="img" aria-label="${bossName} ${getLocale()==='tr'?'savaş illüstrasyonu':'battle illustration'}" focusable="false" preserveAspectRatio="xMidYMid meet">
+ return `<svg xmlns="http://www.w3.org/2000/svg" class="shadow-boss-art art-${key} boss-intent-${style} ${mode==='battle'?'art-combat':''}" viewBox="0 0 420 300" role="img" aria-label="${bossName} ${shadowArtLabel()}" focusable="false" preserveAspectRatio="xMidYMid meet">
  <defs><radialGradient id="${paint}-sky" cx="50%" cy="37%" r="75%">
   <stop offset="0%" stop-color="var(--boss-sky-core)"/><stop offset="100%" stop-color="var(--boss-sky-edge)"/></radialGradient>
   <linearGradient id="${paint}-core" x1="0" y1="0" x2="1" y2="1">
@@ -83,12 +85,12 @@ export function shadowBossArtwork(stage,{variant='card',wave=1,intent='strike',e
 }
 export function shadowBossPhase(stage,wave=1,hp=1,maxHp=1){
  const n=SAFE_X(stage,1,4),w=SAFE_X(wave,1,3),ratio=maxHp>0?Math.max(0,Math.min(1,hp/maxHp)):1;
- if(n===4&&w===3&&ratio<=.35)return {id:'eclipse-rage',title:'Tutulmanın Son Nefesi',hint:'Patron kritik canın altında öfkelenir: gelen hasar artar.',danger:'high'};
- if(n===4&&w===3&&ratio<=.68)return {id:'eclipse-rise',title:'Karanlık Taht Çatlıyor',hint:'Patronun saldırı niyeti değişti; gelecek hamleyi izle.',danger:'high'};
- const names=PHASE_LABELS[n-1];return {id:STAGE_KEYS[n-1]+'-phase-'+w,title:names[w-1],
-  hint:w===3?['Kalkanı Aldat hamlesiyle kır.','Can emmesine yüksek hasarla karşılık ver.',
-   'Ağır darbeleri Savun ile karşıla.','Son safhada yeteneklerini doğru zamanda kullan.'][n-1]
-   :'Bu dalga bittiğinde kalan canın bir kısmı yenilenir.',danger:w===3?'medium':'low'};
+ if(n===4&&w===3&&ratio<=.35)return {id:'eclipse-rage',title:shadowPhaseTitle(12,'Tutulmanın Son Nefesi'),hint:shadowPhaseHint(5,'Patron kritik canın altında öfkelenir: gelen hasar artar.'),danger:'high'};
+ if(n===4&&w===3&&ratio<=.68)return {id:'eclipse-rise',title:shadowPhaseTitle(13,'Karanlık Taht Çatlıyor'),hint:shadowPhaseHint(6,'Patronun saldırı niyeti değişti; gelecek hamleyi izle.'),danger:'high'};
+ const names=PHASE_LABELS[n-1];return {id:STAGE_KEYS[n-1]+'-phase-'+w,title:shadowPhaseTitle((n-1)*3+(w-1),names[w-1]),
+  hint:w===3?shadowPhaseHint(n-1,['Kalkanı Aldat hamlesiyle kır.','Can emmesine yüksek hasarla karşılık ver.',
+   'Ağır darbeleri Savun ile karşıla.','Son safhada yeteneklerini doğru zamanda kullan.'][n-1])
+   :shadowPhaseHint(4,'Bu dalga bittiğinde kalan canın bir kısmı yenilenir.'),danger:w===3?'medium':'low'};
 }
 /** Only actual server reward values are included; never calculate an invented drop. */
 export function shadowLootSummary(report){

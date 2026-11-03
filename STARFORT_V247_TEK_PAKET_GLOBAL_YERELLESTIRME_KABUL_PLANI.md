@@ -194,3 +194,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - `locale-team-hud-native-v247.js`: `team-view.js` içindeki **85 iki dilli sabit mesajın tamamı ×12 ek dil**, toplam 14 dilde takım savaşı ve arayüz etiketlerini gösterir.
 - Bot/gerçek rakip ayrımı, klan eşleşmesi şartları, sancak/kuşatma hedefleri, koçbaşı, bağlantı kesilmesi, maç kayıtları, kazançsız rekabet uyarıları ve telefon kontrol metinleri dahil.
 - Sözlük yalnızca `bilingual` gösterimine bağlandı; gerçek maç kuralları, 2v2/5v5 büyüklükleri, eylem kimlikleri, ağ işlemleri ve ödül yetkileri değişmedi. Kaynak birebir tarama testi eklendi.
+
+## v2.47 tek global paket — 4 patronun konuşmaları ve aşamaları
+
+- Dört Gölge Sınırı patronunun **16 özgün konuşma repliği**, 12 ek dilde yazıldı. Türkçe ve İngilizce eski metin korunur. 14 dil için tarayıcı TTS dil etiketi (`ar-SA`, `ja-JP`, `pt-BR` vb.) ve yerel dilde konuşma altyazısı sağlanır; cihazın uygun ses paketinin yüklü olması gerekir. Bunlar profesyonel kayıt değildir.
+- **14 aşama başlığı ve 7 savaş ipucu** için İngilizce ve 12 ek dil metinleri eklendi. 3 dalga, son patronun %68/%35 can eşiği, kanonik ID ve ödül mantığı değiştirilmedi. Patron görsellerinin erişilebilir açıklaması ve adı da seçilen dilde gösterilir.
+- 14 dil/4 patron altyazı testi, konuşma etiketi, aşama eşiği ve sunucu tarafındaki hasar/ödül kurallarının değişmemesi test kapsamına eklendi.
