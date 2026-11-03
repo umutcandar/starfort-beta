@@ -710,7 +710,7 @@ function renderSettings(){
      <button type="button" data-language="tr" aria-pressed="${getLocale()==='tr'}">Türkçe</button>
      <button type="button" data-language="en" aria-pressed="${getLocale()==='en'}">English</button>
     </div>${languagePickerMarkup()}<small>${t('settings.languageHelp')}</small>
-    <small>${getLocale()==='tr'?'Diğer oyun ekranları henüz tüm dillere çevrilmedi.':'Some game screens still use English while translation is in progress.'}</small></article></div>
+    <small>${getLocale()==='tr'?'Diğer oyun ekranları henüz tüm dillere çevrilmedi.':'Some game screens are not translated yet and may still appear in Turkish or English.'}</small></article></div>
     ${accountRecovering?'<div class="guild-panel"><h3>Şifreni güncelle</h3><input id="account-new-password" type="password" minlength="8" maxlength="100" autocomplete="new-password" placeholder="Yeni şifre"><button class="primary" data-account-action="password-update">Şifremi güncelle</button></div>':''}`;
 }
 async function accountAction(action){
