@@ -19,18 +19,26 @@ function saveSession(data,storage=globalThis.sessionStorage){
  return session;
 }
 export function explainAuthError(status,payload={}){
- const code=String(payload?.error_code||payload?.code||payload?.error||'').toLowerCase();
- if(status===429||code==='over_email_send_rate_limit')
+ // Provider details can contain unlocalized, user-controlled or sensitive text.
+ // Keep stable error codes for logic; show only our reviewed localized messages.
+ const code=String(payload?.error_code||payload?.code||payload?.error||'').trim().toLowerCase();
+ const detail=String(payload?.msg||payload?.message||payload?.error_description||'').trim().toLowerCase();
+ if(status===429||['over_email_send_rate_limit','over_request_rate_limit','email_rate_limit_exceeded'].includes(code))
   return t('auth.limit');
  if(code==='email_address_not_authorized')
   return t('auth.unauthorized');
  if(code==='email_address_invalid')
   return t('auth.badAddress');
- if(code==='email_not_confirmed')
+ if(code==='email_not_confirmed'||detail==='email not confirmed')
   return t('auth.notConfirmed');
- if(code==='invalid_credentials')
+ if(code==='invalid_credentials'||detail==='invalid login credentials')
   return t('auth.invalidCredentials');
- return payload?.msg||payload?.message||payload?.error_description||payload?.error||t('auth.failed');
+ if(code==='weak_password')
+  return t('auth.validation.password');
+ if(code==='validation_failed')
+  return t('auth.invalidForm');
+ // Unknown codes must not leak raw provider exceptions or fall back to English.
+ return t('auth.failed');
 }
 async function request(path,opts={},fetcher=fetch){
  let res,payload;
