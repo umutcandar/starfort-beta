@@ -1,5 +1,6 @@
 import {labyrinthStatus,MAZE_FLOORS} from './labyrinth.js';
 import {textKey as tx,longText as lt} from './locale-sections-v247.js';
+import {mazeGateText} from './locale-maze-native-v247.js';
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icons={entrance:'⌂',exit:'✧',guardian:'⚔',treasure:'▣',fountain:'✦',trap:'⚡',passage:'·'};
 const labels=()=>({entrance:lt('Giriş','Entrance'),exit:tx('exit'),guardian:tx('guardian'),treasure:lt('Ganimet sandığı','Treasure chest'),fountain:lt('Yıldız pınarı','Star spring'),trap:lt('Kadim tuzak','Ancient trap'),passage:lt('Koridor','Corridor')});
@@ -31,7 +32,7 @@ export function labyrinthMarkup(state){
       <aside class="maze-side">
         <span class="eyebrow">${tx('floor')} ${m.floor} · ${esc(zone.name)}</span>
         <h3>${m.completed?lt('Yıldızın Yeminini Tamamladın','You fulfilled the Star Oath'):!m.available?tx('labGate'):m.guardianDefeated?lt('Kapı Muhafızı Düştü','Gate guardian defeated'):tx('labExplore')}</h3>
-        <p>${m.completed?lt('Labirentin 16 katını da tamamladın. Kalenin altında saklanan yolu geri aldın.','All 16 floors cleared. You reclaimed the hidden path beneath the keep.'):!m.available?lt(`Bu katta ilerlemek için önce ${m.requiredChapters} ana hikâye bölümünü bitir.`,`Complete ${m.requiredChapters} main story chapters to unlock this floor.`):esc(zone.hint)}</p>
+        <p>${m.completed?lt('Labirentin 16 katını da tamamladın. Kalenin altında saklanan yolu geri aldın.','All 16 floors cleared. You reclaimed the hidden path beneath the keep.'):!m.available?mazeGateText(m.requiredChapters):esc(zone.hint)}</p>
         <div class="maze-mission"><span>${tx('labMission')}</span><b>${m.guardianDefeated?lt('Muhafızı yendin · çıkışa ulaş','Guardian defeated · reach the exit'):lt('Kat muhafızını bul ve yen','Find and defeat the floor guardian')}</b><small>${m.guardianDefeated?lt('Çıkış odasına giderek kat ödülünü al.','Reach the exit to claim the floor reward.'):lt('Sandıkları ve yıldız pınarlarını arayabilirsin. Her ödül yalnızca bir kez alınır.','Search for chests and star springs. Each reward can be claimed only once.')}</small></div>
         ${m.canFight?`<button class="primary maze-primary" data-labyrinth-fight ${battleActive?'disabled':''}>⚔ ${tx('labFight')}</button>`:''}
         ${m.canFinish?`<button class="primary maze-primary" data-labyrinth-complete>✦ ${m.floor===MAZE_FLOORS?lt('Son mühürü tamamla','Complete the final seal'):tx('labNext')}</button>`:''}

@@ -8,6 +8,7 @@ import {ARMORY_TRANSLATIONS} from './locale-armory-v246.js';
 import {OFFICIAL_TRANSLATIONS} from './locale-official-ui-v247.js';
 import {REALM_UI} from './locale-realm-ui-v247.js';
 import {AUTH_MESSAGES} from './locale-auth-messages-v247.js';
+import {MAZE_TRANSLATIONS} from './locale-maze-native-v247.js';
 import {SHELL_TRANSLATIONS} from './locale-shell-v247.js';
 import {WORLD_LANGUAGES} from './locale-world-v247.js';
 import {HERO_UI} from './locale-hero-ui-v247.js';
@@ -47,6 +48,7 @@ function glossary(language){
  for(const section of ['names','sets'])for(const [id,english] of Object.entries(enItems?.[section]||{})){
   const native=items?.[section]?.[id];if(typeof english==='string'&&typeof native==='string'&&!map.has(english))map.set(english,native);
  }
+ for(const [en,native] of Object.entries(MAZE_TRANSLATIONS[language]||{}))map.set(en,native);
  for(const [en,native] of Object.entries(UNIFIED_PACK[language]||{}))map.set(en,native);
  RANK_NAMES_EN.forEach((en,i)=>map.set(en,RANK_NAMES_NATIVE[language]?.[i]||en));
  caches.set(language,map);return map;
