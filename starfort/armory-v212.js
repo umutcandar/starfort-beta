@@ -55,7 +55,7 @@ export function armoryMarkup(state,heroId='aldren',filter='all',selectedId=null)
       <small>${slotName(slot)}</small>
       <div class="bag-v212-slot-art">${item?itemImage(item):`<span class="bag-v213-ghost-art" title="${local('Örnek görünüm · kuşanılmadı','Preview · not equipped')}">${itemImage(ghost)}</span>`}</div>
       <strong>${item?displayItem(item).name:a('emptySlot')}</strong>
-      ${item?`<button class="text-button" data-unequip="${slot}" ${busy?'disabled':''} >${a('unequip')}</button>`:'<span class="bag-v212-slot-hint">${a('selectItem')}</span>'}
+      ${item?`<button class="text-button" data-unequip="${slot}" ${busy?'disabled':''} >${a('unequip')}</button>`:`<span class="bag-v212-slot-hint">${a("selectItem")}</span>`}
     </div>`;
   }).join('');
   const roster=[...R.HEROES].sort((a,b)=>['aldren','mira','rovan','lyra','doran','vesper','eira'].indexOf(a.id)-['aldren','mira','rovan','lyra','doran','vesper','eira'].indexOf(b.id))
@@ -69,8 +69,8 @@ export function armoryMarkup(state,heroId='aldren',filter='all',selectedId=null)
       data-bag-item="${item.id}" aria-label="${displayItem(item).name}, ${rarityName(item.rarity)}, ${count} ${a('unit')}" aria-pressed="${selected?.id===item.id}">
       <span class="bag-v212-item-art">${itemImage(item)}</span>
       <span class="bag-v212-item-name">${displayItem(item).name}</span>
-      ${count?`<span class="bag-v212-count">×${count}</span>`:'<span class="bag-v213-lock" title="${local('Henüz kazanılmadı','Not obtained yet')}" aria-hidden="true">⌑</span>'}
-      ${mastery?`<span class="bag-v226-mastery">+${mastery} ${a('mastery')}</span>`:''}${equipped?'<span class="bag-v212-worn">${local('Takılı','Equipped')}</span>':''}
+      ${count?`<span class="bag-v212-count">×${count}</span>`:`<span class="bag-v213-lock" title="${local("Henüz kazanılmadı","Not obtained yet")}" aria-hidden="true">⌑</span>`}
+      ${mastery?`<span class="bag-v226-mastery">+${mastery} ${a('mastery')}</span>`:''}${equipped?`<span class="bag-v212-worn">${local("Takılı","Equipped")}</span>`:''}
     </button>`;
   }).join('');
   const materialCards=(filter==='all'||filter==='materials'||filter==='owned')?MATERIALS.map(item=>`<button class="bag-v212-item bag-v213-material ${material?.id===item.id?'selected':''}" data-bag-item="material:${item.id}" aria-pressed="${material?.id===item.id}" aria-label="${displayMaterial(item).name}, ${fmt(state.res[item.id]||0)} ${a('unit')}">
