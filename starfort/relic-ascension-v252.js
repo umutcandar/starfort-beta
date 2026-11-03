@@ -4,6 +4,7 @@
  * No daily-login streak; existing saves and unascended items remain valid.
  */
 import {getLocale,formatNumber} from './locale-v243.js';
+import {economyHorizonMarkup} from './economy-horizon-v253.js';
 export const ASCENSION_ITEMS=Object.freeze(['ember_guard','star_spear','guardian_seal','starbreaker']);
 export const ASCENSION_WEEKS=Object.freeze([2,5,9,14]);
 export const ASCENSION_MAX_RANK=4;
@@ -70,5 +71,5 @@ export function ascensionMarkup(state,itemId,displayResource=(x=>x)){
   '<button class="secondary" data-account-ascend="'+esc(itemId)+'"'+(status.canAscend?'':' disabled')+'>'+
     esc(status.next===null?ascensionText('complete'):ascensionText('forge')+' · '+status.next+'/4')+'</button>'+
   (status.reason&&status.reason!=='complete'?'<small class="relic-ascension-blocked">'+esc(ascensionText(status.reason))+'</small>':'')+
-  '<small>'+esc(ascensionText('allCopies'))+' · '+esc(ascensionText('serverOnly'))+'</small></section>';
+  '<small>'+esc(ascensionText('allCopies'))+' · '+esc(ascensionText('serverOnly'))+'</small></section>'+economyHorizonMarkup(state);
 }

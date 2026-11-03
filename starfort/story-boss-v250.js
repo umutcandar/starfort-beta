@@ -3,6 +3,7 @@
  */
 import {getLocale} from './locale-v243.js';
 import {bossRelicText} from './boss-relic-v251.js';
+import {comboText} from './boss-combo-v253.js';
 import {officialText as official} from './locale-official-ui-v247.js';
 const KEYS=['boss','phase','prelude','pressure','lastStand','guard','shield','drain','strike','verified'];
 const COPY={
@@ -27,21 +28,21 @@ export const BOSS_V250_TRANSLATIONS=Object.freeze(Object.fromEntries(Object.entr
 const text=key=>BOSS_V250_TRANSLATIONS[getLocale()]?.[key]??BOSS_V250_TRANSLATIONS.en[key];
 export function bossV250Phase(mission){
  if(!mission)return null;
- const story=mission.mode==='story'&&[2,3].includes(mission.balanceVersion)&&
+ const story=mission.mode==='story'&&[2,3,4].includes(mission.balanceVersion)&&
    Number.isInteger(mission.stage)&&mission.stage>=4&&mission.stage<=8&&mission.wave===3;
- const weekly=mission.mode==='boss'&&mission.balanceVersion===3&&mission.stage===4&&mission.wave===1;
+ const weekly=mission.mode==='boss'&&mission.balanceVersion>=3&&mission.stage===4&&mission.wave===1;
  if(!story&&!weekly)return null;
  const max=Number(mission.enemyMaxHp),hp=Number(mission.enemyHp);
  if(!Number.isFinite(max)||max<=0||!Number.isFinite(hp)||hp<0||hp>max)return null;
  const phase=hp<=max*.33?3:hp<=max*.67?2:1;
- const intent=['crush','shield','drain','strike','sunder'].includes(mission.enemyIntent)?mission.enemyIntent:'strike';
+ const intent=['crush','shield','drain','strike','sunder','eclipse'].includes(mission.enemyIntent)?mission.enemyIntent:'strike';
  return Object.freeze({phase,intent,stage:mission.stage,ratio:hp/max,weekly});
 }
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function bossV250Markup(mission){
  const state=bossV250Phase(mission);if(!state)return '';
  const phaseLabel=text(['prelude','pressure','lastStand'][state.phase-1]);
- const hint=state.intent==='sunder'?bossRelicText('sunderHint'):text({crush:'guard',shield:'shield',drain:'drain',strike:'strike'}[state.intent]);
+ const hint=state.intent==='eclipse'?comboText('hint'):state.intent==='sunder'?bossRelicText('sunderHint'):text({crush:'guard',shield:'shield',drain:'drain',strike:'strike'}[state.intent]);
  const heading=state.weekly?official('Haftalık ortak dünya patronu','Weekly community world boss'):text('boss');
  return '<aside class="story-boss-v250 phase-'+state.phase+'" aria-label="'+esc(heading)+'">'+
  '<div><span class="eyebrow">⚔ '+esc(heading)+' · '+esc(text('phase'))+' '+state.phase+' / 3</span>'+

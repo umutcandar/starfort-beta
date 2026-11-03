@@ -62,7 +62,7 @@ test('active v2 battles still validate and new server v3 Sunder is accepted only
  const legacy=mission({balanceVersion:2,enemyIntent:'crush'});
  assert.equal(validateAccountSnapshot({...source(),mission:legacy}).mission.balanceVersion,2);
  for(const changed of [
-  {balanceVersion:2},{balanceVersion:undefined},{balanceVersion:4},{balanceVersion:'3'},
+  {balanceVersion:2},{balanceVersion:undefined},{balanceVersion:5},{balanceVersion:'3'},
   {mode:'story',wave:2},{mode:'veteran',wave:1,waves:1},{mode:'act2'},
   {mode:'maze',wave:1,waves:1}
  ])assert.throws(()=>validateAccountSnapshot({...source(),mission:mission(changed)}),/bozuk|geçersiz/i,JSON.stringify(changed));
