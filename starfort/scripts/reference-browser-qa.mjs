@@ -344,11 +344,11 @@ try{
   if(regionsReady)break;await sleep(100);
  }
  assert.ok(regionsReady,'Four post-Act-II shadow regions were not rendered');
- assert.equal(await evaluate("document.querySelector('[data-shadow-start=1]')?.disabled"),false,
+ assert.equal(await evaluate("document.querySelectorAll('[data-shadow-start]')[0]?.disabled"),false,
   'First frontier stage still locked for qualifying account');
- assert.equal(await evaluate("document.querySelector('[data-shadow-start=2]')?.disabled"),true,
+ assert.equal(await evaluate("document.querySelectorAll('[data-shadow-start]')[1]?.disabled"),true,
   'Second frontier stage bypassed its Act II gate');
- await evaluate("document.querySelector('[data-shadow-start=1]').click()");
+ await evaluate("document.querySelectorAll('[data-shadow-start]')[0].click()");
  let shadowBattle=false;
  for(let i=0;i<100;i++){
   shadowBattle=await evaluate("!!document.querySelector('.shadow-active-battle')&&!!document.querySelector('[data-shadow-move=feint]')&&!!document.querySelector('[data-shadow-move=rally]')");
