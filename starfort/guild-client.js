@@ -21,7 +21,14 @@ async function rpc(route,token,data){
     body:JSON.stringify({route,data:data||{}})
   });
   if(!r.ok)throw new Error('Supabase hesabına bağlanılamadı.');
-  const {status,body}=await r.json();
+  let {status,body}=await r.json();
+  if(route==='me'&&status===404&&/komutan adı/i.test(String(body?.error||''))){
+    // A verified email account is already the player's only identity. Create
+    // its optional clan profile automatically, exactly once, through the same
+    // auth.uid-linked RPC. No second login/name form or legacy token.
+    const safeName='Komutan-'+active.user.id.replace(/-/g,'').slice(0,8);
+    return rpc('register',null,{name:safeName});
+  }
   if(body?.player)localPlayer=body.player;
   if(status>=300)throw new Error(body?.error||'Sunucuda işlem gerçekleştirilemedi.');
   return body;
