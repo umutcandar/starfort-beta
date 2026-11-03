@@ -2,7 +2,7 @@
 import {SUPABASE_URL,SUPABASE_KEY} from './online-config.js';
 import {freshAccountSession} from './account-auth.js';
 import {textKey as tx,longText as lt} from './locale-sections-v247.js';
-import {formatNumber} from './locale-v243.js';
+import {formatNumber,getLocale} from './locale-v243.js';
 export const PREMIUM_COSMETICS=Object.freeze([
  {id:'castle-aurora',name:'Kutup Işığı Hisarı',kind:'castle',price:200,detail:'Köyün üzerinde kutup ışıkları renkleri.'},
  {id:'castle-ember',name:'Kor Hisarı',kind:'castle',price:200,detail:'Kale çevresine bakır ve kor teması.'},
@@ -35,7 +35,7 @@ const PREMIUM_DISPLAY_EN={
  'castle-dawn':['Dawn Keep','Free season victory reward.'],'victory-constellation':['Constellation Victory','Free season victory reward.'],
  'crystals100':['Star Spark','A crystal pack planned for a future release.'], 'crystals500':['Celestial Chest','A crystal pack planned for a future release.'],'crystals1200':['Royal Treasury','A crystal pack planned for a future release.']
 };
-export const displayPremiumItem=x=>!x?x:({...x,name:lt(x.name,PREMIUM_DISPLAY_EN[x.id]?.[0]||x.name),detail:lt(x.detail,PREMIUM_DISPLAY_EN[x.id]?.[1]||x.detail)});
+export const displayPremiumItem=x=>!x||getLocale()==='tr'?x:({...x,name:lt(x.name,PREMIUM_DISPLAY_EN[x.id]?.[0]||x.name),detail:lt(x.detail,PREMIUM_DISPLAY_EN[x.id]?.[1]||x.detail)});
 const displayPremiumKind=kind=>lt(kindNames[kind],({castle:'Keep',cape:'Cape',banner:'Banner',victory:'Victory'})[kind]||kind);
 const esc=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const allowed=new Map(PREMIUM_ALL_ITEMS.map(x=>[x.id,x.kind]));
