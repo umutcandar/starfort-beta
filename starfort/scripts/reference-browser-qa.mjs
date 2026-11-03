@@ -59,6 +59,14 @@ try{
  await evaluate("document.querySelector('[data-language=en]').click()");
  assert.equal(await evaluate("document.documentElement.lang==='en'&&document.querySelector('#gate-title').textContent==='Build your kingdom'"),true,'English account gate missing');
  assert.equal(await evaluate("document.querySelector('[data-language=en]').getAttribute('aria-pressed')"),'true');
+ const chooseLanguage=code=>evaluate(`(()=>{const p=document.querySelector('[data-language-picker]');p.value='${code}';p.dispatchEvent(new Event('change',{bubbles:true}));return document.documentElement.lang;})()`);
+ assert.equal(await evaluate("document.querySelectorAll('#account-gate option').length"),14,'Global language menu must have 14 choices');
+ assert.equal(await chooseLanguage('es'),'es');
+ assert.equal(await evaluate("document.querySelector('#gate-title').textContent==='Construye tu reino'&&document.body.classList.contains('account-locked')"),true);
+ assert.equal(await chooseLanguage('ar'),'ar');
+ assert.equal(await evaluate("document.documentElement.dir==='rtl'&&document.querySelector('#gate-title').textContent==='ابنِ مملكتك'"),true);
+ assert.equal(await chooseLanguage('ja'),'ja');
+ assert.equal(await evaluate("document.querySelector('#gate-title').textContent==='自分の王国を築こう'"),true);
  await evaluate("document.querySelector('[data-language=tr]').click()");
  assert.equal(await evaluate("document.documentElement.lang==='tr'&&document.querySelector('#gate-title').textContent==='Kendi krallığını kur'"),true,'Turkish fallback missing');
  assert.equal(await evaluate("localStorage.getItem('starfort:language-v243')"),'tr');
