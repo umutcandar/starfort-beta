@@ -15,6 +15,7 @@ import {REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS} from '../locale-rewards-v245.js
 import {ITEM_DISPLAY_EN} from '../locale-items-v246.js';
 import {ITEMS} from '../equipment.js';
 import {SHARED_TRANSLATIONS,SHARED_KEYS} from '../locale-sections-v247.js';
+import {TEAM_TRANSLATIONS,TEAM_KEYS} from '../locale-team-v247.js';
 const root=resolve(fileURLToPath(new URL('../',import.meta.url)));
 const watch=[
  {file:'armory-v212.js',strict:true},
@@ -53,7 +54,7 @@ function checkPack(pack,keys,name){
  }
  return problems;
 }
-const problems=[...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared')];
+const problems=[...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team')];
 for(const item of ITEMS)if(!ITEM_DISPLAY_EN[item.id]?.name?.trim()||!ITEM_DISPLAY_EN[item.id]?.description?.trim())problems.push('Missing English item: '+item.id);
 for(const key of Object.keys(ITEM_DISPLAY_EN))if(!ITEMS.some(item=>item.id===key))problems.push('Orphaned English item: '+key);
 for(const f of auditFiles)if(f.strict&&f.candidateVisibleTurkishFragments>0)problems.push(f.file+': visible untranslated Turkish fragments');
@@ -80,7 +81,8 @@ const summary={
  supportedLanguages:localeSet,
  verifiedPacks:{
   armory:{keysPerLanguage:ARMORY_KEYS.length,languages:localeSet.length},
-  sharedNavigation:{keysPerLanguage:SHARED_KEYS.length,languages:localeSet.length}, 
+  sharedNavigation:{keysPerLanguage:SHARED_KEYS.length,languages:localeSet.length},
+  teamBattle:{keysPerLanguage:TEAM_KEYS.length,languages:localeSet.length}, 
   dailyRewards:{keysPerLanguage:REWARD_MESSAGE_KEYS.length,languages:localeSet.length},
   gearEnglishFallback:{translated:ITEMS.filter(x=>Boolean(ITEM_DISPLAY_EN[x.id])).length,canonical:ITEMS.length}
  },
