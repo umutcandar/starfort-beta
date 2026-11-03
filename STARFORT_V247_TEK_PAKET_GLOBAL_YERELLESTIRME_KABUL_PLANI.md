@@ -152,3 +152,8 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - Ayrıca 4 adet görev sayacı adı (`Expedition victory`, `Hero training`, `Equipment crafted`, `Labyrinth floor`) ve 3 kalıcı komutan unvanı yeni 12 dil karşılıklarıyla eklendi. Tek resmi sefer sözlüğü artık **129 metin ×12 ek dil**; Türkçe/İngilizce kaynaklar aynı kalır.
 - `locale-official-ui-v247.test.mjs` tüm doğrudan sabit iki dilli metinleri oyun dosyasından **kaynak taramasıyla** bulur, 12 dilde eşleşmeyen anahtar varsa GitHub CI hata verir. Dinamik sunucu hata kodları, `mission.lastAction` ve gömülü başka modlarda `local()` dışı kurulan cümleler ayrıca incelenmelidir.
 - Hesap kilidi, savaş/ödül otoritesi, kimlikler ve ekonomi değişmez. Global tek sürüm hâlâ QA incelemesi bekler.
+
+## v2.47 bütünleşik mağaza yerelleştirmesi
+
+- `locale-premium-store-native-v247.js` 18 mağaza arayüzü ve ödeme yapılmadığını belirten açıklamaları 12 ek dilde kapsar. `locale-unified-v247.js` üzerinden gerçek sunucu mağaza ekranına bağlandı.
+- Premium ödeme ve fiyatlandırma aktif edilmedi. `locale-premium-store-native-v247.test.mjs` gerçek görünümü ve 14 dil sözlüğünü denetler.
