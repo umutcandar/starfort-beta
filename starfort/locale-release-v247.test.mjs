@@ -1,0 +1,52 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+const cwd=fileURLToPath(new URL('.',import.meta.url));
+const run=(flag)=>spawnSync(process.execPath,['scripts/i18n-coverage.mjs',flag],{cwd,encoding:'utf8',maxBuffer:4*1024*1024});
+test('all implemented 14-language dictionaries pass technical coverage and core narrative is present',()=>{
+ const process=run('--check');
+ assert.equal(process.status,0,process.stderr||process.stdout.slice(-4000));
+ const report=JSON.parse(process.stdout);
+ assert.deepEqual(report.errors,[]);
+ assert.equal(report.verifiedPacks.firstActNarrative.nativeAdditionalLocales,12);
+ assert.equal(report.verifiedPacks.secondActNarrative.nativeAdditionalLocales,12);
+ assert.equal(report.verifiedPacks.secondActNarrative.operations,24);
+ assert.equal(report.verifiedPacks.heroNativeNarrative.additionalLocales,12);
+ assert.equal(report.verifiedPacks.heroNativeNarrative.heroes,9);
+ assert.equal(report.verifiedPacks.itemNativeNarrative.items,19);
+ assert.equal(report.verifiedPacks.premiumNativeCatalog.items,15);
+ assert.equal(report.verifiedPacks.warfrontDoctrines.languages,14);
+ assert.deepEqual(report.missingNativeNarrativeLocales,[]);
+ assert.equal(report.releaseReady,false);
+});
+test('a partially localized product cannot pass the global release gate',()=>{
+ const process=run('--release-check');
+ assert.equal(process.status,1,'The release gate must fail while native language review and UI coverage are outstanding');
+ const report=JSON.parse(process.stdout);
+ assert.equal(report.pendingHumanReviewLocales.length,14);
+ assert.equal(report.sourceCoverage.fullyTranslatedInto14Languages,false);
+ assert.ok(report.sourceCoverage.totalUserFacingModules>0);
+ assert.equal(report.sourceCoverage.needsLocalizationReview,0,'Active source modules have no unresolved static Turkish/locale import flags');
+ assert.ok(report.sourceCoverage.retiredLegacyExcluded.includes('battle-view.js'),'Retired guest battle stays excluded only while account-only boundary remains active');
+ assert.match(report.caveat,/NOT full-game translation/);
+ assert.equal(report.releaseReady,false);
+});
+
+test('v2.47 unified beta build metadata, single 14-language picker and account-only entry stay consistent',()=>{
+ const pkg=JSON.parse(readFileSync(new URL('./package.json',import.meta.url),'utf8'));
+ const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
+ assert.match(pkg.version,/^2\.47\.\d+-beta\.\d+$/);
+ const label='v'+pkg.version.replace(/-beta\.\d+$/,'')+' Beta';
+ assert.ok(html.includes('<title>Starfort '+label),'HTML title must identify the shipped beta');
+ assert.ok(html.includes('>'+label+'</span>'),'HUD version badge must identify the shipped beta');
+ assert.doesNotMatch(html,/v2\.46\.0 Beta/,'Outdated build labels are forbidden');
+ const selector=html.match(/<select data-language-picker[^>]*>([\s\S]*?)<\/select>/)?.[1];
+ assert.ok(selector,'Language picker must be present on account gate');
+ const languages=[...selector.matchAll(/<option value="([^"]+)"/g)].map(m=>m[1]);
+ assert.equal(languages.length,14,'All 14 supported locales must ship together');
+ assert.equal(new Set(languages).size,14,'Duplicate locale choices are forbidden');
+ assert.match(html,/<body class="account-locked">/);
+ assert.match(html,/id="starfort-gate-form"/);
+});

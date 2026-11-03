@@ -17,3 +17,33 @@
 :root[dir="rtl"] .account-gate-panel,:root[dir="rtl"] .guild-panel{text-align:start}
 :root[dir="rtl"] input[type="email"]{direction:ltr;text-align:start}
 @media(max-width:420px){.language-tools{justify-content:center}.language-tools .language-switch{width:100%}.language-select-label select{width:min(100%,320px)}.language-tools .language-select-label{width:100%;justify-content:center}}
+
+
+/* v2.47 global verified-campaign: keep long localized labels readable on phones.
+   Geographical map coordinates and canonical click actions are not mirrored. */
+.server-expedition :is(button,h2,h3,strong,small),
+.official-realm-map :is(button,h3,strong,small),
+.commander-chronicle :is(button,strong,p){
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
+:root[dir="rtl"] :is(.server-expedition,.official-realm-map,.commander-chronicle,.caravan-market){
+  direction:rtl;
+  text-align:start;
+}
+:root[dir="rtl"] .realm-map-canvas{direction:ltr}
+:root[dir="rtl"] .official-tactical-briefing{
+  border-left:1px solid #8caab67e;
+  border-right:3px solid #dbbb7e;
+}
+:root[dir="rtl"] .second-act-boss-phase{
+  border-left:1px solid #af7460;
+  border-right:4px solid #e2a876;
+}
+:root[lang="ar"] :is(.server-expedition,.official-realm-map,.commander-chronicle) .eyebrow{letter-spacing:normal;line-height:1.6}
+:root:is([lang="ja"],[lang="ko"],[lang="zh-CN"]) :is(.server-expedition,.official-realm-map,.commander-chronicle){line-break:auto;word-break:normal}
+@media(max-width:510px){
+ .server-expedition :is(.server-progress-header,.server-stage-card,.server-moves,.server-mode-actions){min-width:0}
+ .server-expedition .server-stage-card button{flex:1 1 100%;max-width:none}
+ .official-realm-map :is(.realm-map-actions,.realm-map-details){min-width:0}
+}

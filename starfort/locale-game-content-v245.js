@@ -2,6 +2,9 @@
  * Untranslated non-Turkish content deliberately falls back to English.
  */
 import {getLocale} from './locale-v243.js';
+import {bilingual} from './locale-unified-v247.js';
+import {worldBuilding,worldStage,worldResource} from './locale-world-v247.js';
+import {storyOperationNative,storyChapterNative} from './locale-story-v247.js';
 export const BUILDING_DISPLAY_EN=Object.freeze({
  "keep": {
   "name": "Star Keep",
@@ -199,24 +202,24 @@ export const REALM_DISPLAY_EN=Object.freeze({
  }
 });
 const international=()=>getLocale()!=='tr';
-export const local=(tr,en)=>international()?en:tr;
+export const local=(tr,en)=>bilingual(tr,en);
 export function displayBuilding(building){
  if(!building||!international())return building;
- return {...building,...(BUILDING_DISPLAY_EN[building.id]||{})};
+ return {...building,...(worldBuilding(building.id)||BUILDING_DISPLAY_EN[building.id]||{})};
 }
 export function displayStage(stage){
  if(!stage||!international())return stage;
- return {...stage,...(STAGE_DISPLAY_EN[stage.id]||{})};
+ return {...stage,...(STAGE_DISPLAY_EN[stage.id]||{}),...(worldStage(stage.id)||{}),...(storyChapterNative(stage.id)?{description:storyChapterNative(stage.id)}:{})};
 }
 export function displayOperation(operation){
  if(!operation||!international())return operation;
- return {...operation,...(OPERATION_DISPLAY_EN[operation.id]||{})};
+ return {...operation,...(storyOperationNative(operation.id)||OPERATION_DISPLAY_EN[operation.id]||{})};
 }
 export function displayRealm(realm){
  if(!realm||!international())return realm;
  return {...realm,...(REALM_DISPLAY_EN[realm.chapter]||{})};
 }
-export const displayResource=id=>local(({gold:'Altın',wood:'Kereste',stone:'Taş',aether:'Yıldız özü'})[id]||id,({gold:'Gold',wood:'Timber',stone:'Stone',aether:'Star essence'})[id]||id);
+export const displayResource=id=>worldResource(id)||local(({gold:'Altın',wood:'Kereste',stone:'Taş',aether:'Yıldız özü'})[id]||id,({gold:'Gold',wood:'Timber',stone:'Stone',aether:'Star essence'})[id]||id);
 
 /** Translate only presentation units, never their underlying economic values. */
 export function displayBuildingUnit(unit){

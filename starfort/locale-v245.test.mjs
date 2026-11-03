@@ -112,14 +112,14 @@ test('Second Act English content covers all eight regions and 24 operations with
    }
   }
   assert.equal(operations,24);
-  assert.equal(secondActGateMessage('Önce sekiz ana hikâye bölgesini tamamla.'),'Complete all eight main story regions first.');
+  assert.equal(secondActGateMessage('Önce sekiz ana hikâye bölgesini tamamla.'),"Terminez d'abord les huit régions de l'histoire principale.", 'French second-act gate now uses native French instead of English fallback');
  }finally{setLocale('tr');}
 });
 test('unverified account loading screen follows international fallback without bypassing auth',()=>{
  try{
   setLocale('ja');
   const html=accountExpeditionMarkup(null,null);
-  assert.match(html,/Server expeditions/);
+  assert.match(html,/サーバー遠征/);
   assert.match(html,/data-village-refresh/);
   assert.doesNotMatch(html,/data-account-stage/);
   setLocale('tr');assert.match(accountExpeditionMarkup(null,null),/Sunucu seferleri/);
@@ -130,7 +130,7 @@ test('building workshop for a real state preserves server action IDs with Englis
  try{
   setLocale('en');
   const html=buildingWorkshopMarkup(state,'keep',{icon:()=>'<i></i>',now:clock});
-  assert.match(html,/Village Upgrade Center/);
+  assert.ok(html.includes(local('Köy Geliştirme Merkezi','Village Upgrade Center')),'building workshop heading now uses native language');
   assert.match(html,/Star Keep/);
   assert.match(html,/SERVER ECONOMY|LOCAL TRIAL/);
   assert.match(html,/data-close-building/);

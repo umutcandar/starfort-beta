@@ -1,5 +1,7 @@
 /** v2.45 hero localization, preserving server IDs and gameplay stats. */
 import {getLocale} from './locale-v243.js';
+import {heroTitle,heroAbilityName,heroRole} from './locale-hero-ui-v247.js';
+import {nativeHeroLore,nativeHeroAbilityDescription} from './locale-hero-lore-v247.js';
 export const HERO_DISPLAY_EN=Object.freeze({
  "aldren": {
   "title": "Ash Warden",
@@ -59,14 +61,14 @@ export const HERO_DISPLAY_EN=Object.freeze({
 export function displayHero(hero){
  if(!hero||getLocale()==='tr')return hero;
  const content=HERO_DISPLAY_EN[hero.id]||{};
- return {...hero,title:content.title||hero.title,description:content.lore||hero.description};
+ return {...hero,title:heroTitle(hero.id)||content.title||hero.title,description:nativeHeroLore(hero.id)||content.lore||hero.description};
 }
 export function displayHeroLore(heroId,original){
- return getLocale()==='tr'?original:HERO_DISPLAY_EN[heroId]?.lore||original;
+ return getLocale()==='tr'?original:nativeHeroLore(heroId)||HERO_DISPLAY_EN[heroId]?.lore||original;
 }
 export function displayHeroAbility(heroId,original){
  if(!original||getLocale()==='tr')return original;
  const content=HERO_DISPLAY_EN[heroId];
- return content?{...original,name:content.ability,description:content.abilityDescription}:original;
+ return content?{...original,name:heroAbilityName(heroId)||content.ability,description:nativeHeroAbilityDescription(heroId)||content.abilityDescription}:original;
 }
-export const displayHeroRole=role=>getLocale()==='tr'?({tank:'Koruyucu',mage:'Büyücü',ranger:'Okçu',healer:'Şifacı',fighter:'Savaşçı',assassin:'Suikastçı'})[role]||role:({tank:'Guardian',mage:'Mage',ranger:'Ranger',healer:'Healer',fighter:'Fighter',assassin:'Assassin'})[role]||role;
+export const displayHeroRole=role=>heroRole(role)||(getLocale()==='tr'?({tank:'Koruyucu',mage:'Büyücü',ranger:'Okçu',healer:'Şifacı',fighter:'Savaşçı',assassin:'Suikastçı'})[role]||role:({tank:'Guardian',mage:'Mage',ranger:'Ranger',healer:'Healer',fighter:'Fighter',assassin:'Assassin'})[role]||role);

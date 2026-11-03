@@ -67,10 +67,11 @@ test('each selected language produces its own inventory headings without changin
    assert.deepEqual(equipmentStats(state,hero),originalPower);
   }
   setLocale('es');
-  assert.match(armoryMarkup(state,hero,'owned','iron_sword'),/Oath Sword/,'untranslated item lore falls back to English');
+  assert.match(armoryMarkup(state,hero,'owned','iron_sword'),/Espada del Juramento/,'gear names now have native Spanish translations');
+  assert.match(armoryMarkup(state,hero,'owned','iron_sword'),/Una espada de acero equilibrada/,'Spanish item lore now renders natively');
   setLocale('ar');
   assert.match(armoryMarkup(state,hero,'materials','material:gold'),/مخزوني/);
-  assert.match(armoryMarkup(state,hero,'materials','material:gold'),/Gold/,'materials use English fallback until full translated names exist');
+  assert.match(armoryMarkup(state,hero,'materials','material:gold'),/الذهب/,'material names are now native Arabic');
  }finally{setLocale('tr');}
 });
 test('English hero and inventory UI do not localize canonical action identifiers',()=>{
@@ -79,7 +80,7 @@ test('English hero and inventory UI do not localize canonical action identifiers
   setLocale('ja');
   const ui=armoryMarkup(state,'aldren','owned','iron_sword');
   assert.match(ui,/持ち物と装備/);
-  assert.match(ui,/Oath Sword/);
+  assert.match(ui,/誓いの剣/,'Japanese inventory item name is translated');
   assert.match(ui,/data-equip="iron_sword"/);
   assert.match(ui,/data-unequip="weapon"|data-equip="iron_sword"/);
   assert.equal(previewGearDifference(state,'aldren','iron_sword').attack,4);

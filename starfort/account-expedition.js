@@ -1,6 +1,7 @@
 import {STAGES,ITEMS,HEROES,teamPower} from './rules.js';
 import {formatNumber} from './locale-v243.js';
-import {local,displayStage,displayOperation,displayResource} from './locale-game-content-v245.js';
+import {displayStage,displayOperation,displayResource} from './locale-game-content-v245.js';
+import {officialText as local} from './locale-official-ui-v247.js';
 import {displaySecondAct,displaySecondActOperation} from './locale-act-two-v245.js';
 import {secondActMarkup} from './second-act-view.js';
 import {chronicleMarkup} from './commander-chronicle.js';

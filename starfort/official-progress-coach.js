@@ -4,6 +4,11 @@ import {STAGES,teamPower} from './rules.js';
 import {SECOND_ACT} from './second-act.js';
 import {officialServerTeamPower} from './official-server-team-power.js';
 import {chronicleState} from './commander-chronicle.js';
+import {getLocale} from './locale-v243.js';
+import {displayStage} from './locale-game-content-v245.js';
+import {displaySecondAct} from './locale-act-two-v245.js';
+import {displayChronicleRank} from './commander-chronicle.js';
+import {goalNative,goalChrome} from './locale-goals-v247.js';
 export const OFFICIAL_STAGE_THRESHOLDS=Object.freeze([250,310,380,450,540,650,780,920]);
 export function isoWeek(now=Date.now()){
  const d=new Date(now);if(!Number.isFinite(d.getTime()))return null;
@@ -28,7 +33,7 @@ export function officialStoryReadiness(view,account,stage){
  if((account?.mazeFloor||0)<gate.maze)missing.push({kind:'maze',value:account?.mazeFloor||0,required:gate.maze,label:'Labirent '+gate.maze+'. kat'});
  return {ok:missing.length===0,missing};
 }
-export function officialNextGoal(view,account,now=Date.now()){
+function canonicalOfficialNextGoal(view,account,now=Date.now()){
  if(!account)return {id:'loading',title:'Komutan hesabı doğrulanıyor',detail:'Kayıtların alınması için sunucu bağlantısını yenile.',action:'campaign',label:'Tekrar dene'};
  const mission=account.mission;
  if(mission)return {id:'mission',title:'Önce devam eden savaşı tamamla',detail:'Aktif seferin sunucuda kayıtlı. Sayfa yenilense de komut vermeye devam edebilirsin.',action:'campaign',label:'Savaşa dön'};
@@ -73,7 +78,30 @@ export function officialNextGoal(view,account,now=Date.now()){
  if(view?.construction)return {id:'build',title:'Köy ustası çalışıyor',detail:'İnşaatının durumunu ve tamamlandığında kazandığın bina bonusunu kontrol et.',action:'keep',label:'Köye git'};
  return {id:'long-game',title:'Kuzeyin koruyucusu',detail:'Ekipmanlarını +5 ustalığa taşı, köyünü seviye 20’ye geliştir ve haftalık dünya patronuna katkı yap.',action:'armory',label:'Ekipmanı güçlendir'};
 }
+function localizedGoal(original,view,account){
+ if(getLocale()==='tr')return original;
+ const count=account?.cleared?.length||0;
+ const stage=STAGES[Math.min(7,count)];
+ const nextChapter=Array.isArray(account?.act2Cleared)?SECOND_ACT[Math.min(7,account.act2Cleared.length)]:null;
+ const readiness=original.id.startsWith('gate-')?officialStoryReadiness(view,account,stage?.id):null;
+ const gate=readiness?.missing?.[0];
+ const rank=original.id.startsWith('chronicle-')?chronicleState(account)?.next:null;
+ const stars=Object.values(account?.campaignStars||{}).reduce((n,v)=>n+v,0);
+ const medals=Object.values(account?.veteranMedals||{}).reduce((n,v)=>n+v,0);
+ const parameters={stage:displayStage(stage)?.name||'',chapter:displaySecondAct(nextChapter)?.name||'',
+  current:gate?.value??0,required:gate?.required??0,recommended:original.id==='act2-training'?nextChapter?.recommendedPower:OFFICIAL_STAGE_THRESHOLDS[count],
+  threshold:nextChapter?Math.ceil(nextChapter.recommendedPower*.7):0,cleared:count,index:(account?.act2Cleared?.length||0)+1,
+  floor:(account?.mazeFloor||0)+1,stars,medals,rank:rank?displayChronicleRank(rank)||rank.name:'',
+  wins:rank?.wins||0,gold:rank?.gold||0,aether:rank?.aether||0,
+  remaining:rank?Math.max(0,rank.wins-(account?.counters?.win||0)):0};
+ const localized=goalNative(original.id,parameters);
+ return localized?{...original,...localized}:original;
+}
+/** All decisions remain based exclusively on trusted server-derived view/account. */
+export function officialNextGoal(view,account,now=Date.now()){
+ return localizedGoal(canonicalOfficialNextGoal(view,account,now),view,account);
+}
 export function officialNextGoalMarkup(goal){
  const e=s=>String(s).replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
- return `<section class="official-next-goal" aria-label="Sıradaki doğrulanmış hedef"><div><span class="eyebrow">✦ KOMUTANIN SONRAKİ ADIMI · SUNUCU KAYDI</span><h3>${e(goal.title)}</h3><p>${e(goal.detail)}</p></div><button class="secondary" data-view="${e(goal.action)}">${e(goal.label)}</button></section>`;
+ return `<section class="official-next-goal" aria-label="${e(goalChrome('aria'))}"><div><span class="eyebrow">✦ ${e(goalChrome('eyebrow'))}</span><h3>${e(goal.title)}</h3><p>${e(goal.detail)}</p></div><button class="secondary" data-view="${e(goal.action)}">${e(goal.label)}</button></section>`;
 }

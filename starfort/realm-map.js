@@ -1,5 +1,6 @@
 import {STAGES} from './rules.js';
-import {local,displayRealm,displayStage} from './locale-game-content-v245.js';
+import {displayRealm,displayStage} from './locale-game-content-v245.js';
+import {realmText as local} from './locale-realm-ui-v247.js';
 export const REALMS=Object.freeze([
  {chapter:1,zone:'Kül Sınırı',biome:'ashen',x:9,y:76,icon:'⚔',lore:'Kül akıncılarının geçitleri'},
  {chapter:2,zone:'Kırık İnanç',biome:'ruins',x:26,y:59,icon:'✟',lore:'Unutulmuş şapel harabeleri'},

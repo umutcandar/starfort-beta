@@ -67,6 +67,26 @@ try{
  assert.equal(await evaluate("document.documentElement.dir==='rtl'&&document.querySelector('#gate-title').textContent==='ابنِ مملكتك'"),true);
  assert.equal(await chooseLanguage('ja'),'ja');
  assert.equal(await evaluate("document.querySelector('#gate-title').textContent==='自分の王国を築こう'"),true);
+ // International mobile regression: inspect every supported language, RTL and
+ // script shaping before login; this cannot bypass the authenticated gate.
+ await cdp('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:2,mobile:true});
+ for(const lang of ['tr','en','es','pt-BR','fr','de','it','ru','ar','hi','id','ja','ko','zh-CN']){
+  assert.equal(await chooseLanguage(lang),lang);
+  const layout=await evaluate(`(()=>{const gate=document.querySelector('.account-gate-panel'),rect=gate.getBoundingClientRect(),title=document.querySelector('#gate-title');
+   return {language:document.documentElement.lang,direction:document.documentElement.dir,scroll:document.documentElement.scrollWidth,
+    width:innerWidth,left:rect.left,right:rect.right,title:title.textContent.trim(),
+    inputs:document.querySelectorAll('#starfort-gate-form input').length,
+    locked:document.body.classList.contains('account-locked'),inert:document.querySelector('.app').inert};})()`);
+  assert.equal(layout.language,lang,'mobile language switch: '+lang);
+  assert.equal(layout.direction,lang==='ar'?'rtl':'ltr','mobile direction: '+lang);
+  assert.ok(layout.locked&&layout.inert&&layout.inputs===2,'no guest or account bypass: '+lang);
+  assert.ok(layout.title.length>0,'missing native login heading: '+lang);
+  assert.ok(layout.left>=-2&&layout.right<=layout.width+2,'account gate clipped: '+lang+' '+JSON.stringify(layout));
+  assert.ok(layout.scroll<=layout.width+2,'horizontal page overflow: '+lang+' '+JSON.stringify(layout));
+  if(lang==='ar')await shot('starfort-390x844-arabic-rtl.png');
+  if(lang==='ja')await shot('starfort-390x844-japanese.png');
+ }
+ await cdp('Emulation.setDeviceMetricsOverride',{width:1536,height:864,deviceScaleFactor:1,mobile:false});
  await evaluate("document.querySelector('[data-language=tr]').click()");
  assert.equal(await evaluate("document.documentElement.lang==='tr'&&document.querySelector('#gate-title').textContent==='Kendi krallığını kur'"),true,'Turkish fallback missing');
  assert.equal(await evaluate("localStorage.getItem('starfort:language-v243')"),'tr');
@@ -153,6 +173,54 @@ try{
  const mobileSignedIn=await evaluate("({viewport:innerWidth,scroll:document.documentElement.scrollWidth,locked:document.querySelector('.app').inert})");
  assert.equal(mobileSignedIn.locked,false,'Mobile authenticated app locked');
  assert.ok(mobileSignedIn.scroll<=mobileSignedIn.viewport+5,'Mobile authenticated app horizontal overflow: '+JSON.stringify(mobileSignedIn));
+ // v2.47: verify all fourteen languages in the *unlocked* account-owned village,
+ // not only in the account gate. A synthetic server session owns these screens.
+ for(const lang of ['tr','en','es','pt-BR','fr','de','it','ru','ar','hi','id','ja','ko','zh-CN']){
+  assert.equal(await chooseLanguage(lang),lang,'authenticated language switch: '+lang);
+  await sleep(60);
+  const ui=await evaluate(`(()=>{
+   const app=document.querySelector('.app');
+   const items=[...app.querySelectorAll('[data-view],button[aria-label]')].filter(x=>x.getClientRects().length);
+   return {language:document.documentElement.lang,direction:document.documentElement.dir,
+    scroll:document.documentElement.scrollWidth,viewport:innerWidth,locked:app.inert,
+    navigable:items.length,missingLabels:items.filter(x=>!x.textContent.trim()&&!x.getAttribute('aria-label')).length};
+  })()`);
+  assert.equal(ui.language,lang,'authenticated document language: '+lang);
+  assert.equal(ui.direction,lang==='ar'?'rtl':'ltr','authenticated direction: '+lang);
+  assert.equal(ui.locked,false,'switching language must not lock a verified account: '+lang);
+  assert.ok(ui.navigable>0,'no accessible controls in authenticated village: '+lang);
+  assert.equal(ui.missingLabels,0,'blank accessible village control: '+lang);
+  assert.ok(ui.scroll<=ui.viewport+5,'authenticated village mobile overflow: '+lang+' '+JSON.stringify(ui));
+  if(lang==='ar')await shot('starfort-390x844-authenticated-arabic.png');
+  if(lang==='ja')await shot('starfort-390x844-authenticated-japanese.png');
+ }
+ assert.equal(await chooseLanguage('tr'),'tr');
+ // A global game must not pass merely by translating its login and village.
+ // Exercise the six active account-owned navigation surfaces in every language.
+ for(const lang of ['tr','en','es','pt-BR','fr','de','it','ru','ar','hi','id','ja','ko','zh-CN']){
+  assert.equal(await chooseLanguage(lang),lang);
+  for(const view of ['keep','expedition','heroes','armory','guild','shop']){
+   const clicked=await evaluate(`(()=>{const b=document.querySelector('.nav-item[data-view="${view}"]');if(!b)return false;b.click();return true;})()`);
+   assert.equal(clicked,true,'missing account navigation: '+view);
+   await sleep(55);
+   const panel=await evaluate(`(()=>{
+    const b=document.querySelector('.nav-item[data-view="${view}"]');
+    const nav=[...document.querySelectorAll('.nav-item')].map(x=>({name:x.textContent.trim(),aria:x.getAttribute('aria-label')}));
+    return {lang:document.documentElement.lang,dir:document.documentElement.dir,
+     width:innerWidth,scroll:document.documentElement.scrollWidth,locked:document.querySelector('.app').inert,
+     active:b?.classList.contains('active'),nav};})()`);
+   assert.equal(panel.locked,false,'unexpected logout: '+lang+' / '+view);
+   assert.equal(panel.lang,lang,'wrong language: '+lang+' / '+view);
+   assert.equal(panel.dir,lang==='ar'?'rtl':'ltr','wrong RTL setting: '+lang+' / '+view);
+   assert.ok(panel.active,'navigation failed: '+lang+' / '+view);
+   assert.ok(panel.nav.every(x=>x.name&&x.aria),'blank navigation label: '+lang+' / '+view);
+   assert.ok(panel.scroll<=panel.width+5,'authenticated '+view+' mobile overflow in '+lang+': '+JSON.stringify(panel));
+  }
+ }
+ await chooseLanguage('tr');
+ await evaluate("document.querySelector('.nav-item[data-view=keep]').click()");
+ console.log('PASS v2.47: six authenticated mobile views x 14 languages (84 navigation checks)');
+ console.log('PASS v2.47: all 14 languages, RTL and overflow in authenticated 390px village');
  console.log('PASS synthetic server responses: desktop login, persistent reload, 390px authenticated mobile game');
  // The actual callback parser must accept the token from a confirmed email link.
  await evaluate("sessionStorage.clear()");

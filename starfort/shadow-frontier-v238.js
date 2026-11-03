@@ -7,6 +7,9 @@ import {shadowVictoryMarkup} from './shadow-rewards-v239.js';
 import {shadowAtmosphereParticles,shadowVoiceStatus} from './shadow-battle-director-v240.js';
 import {shadowMasterySnapshot,shadowMasteryMarkup} from './shadow-mastery-v241.js';
 import {getLocale,formatNumber} from './locale-v243.js';
+import {bilingual} from './locale-unified-v247.js';
+import {localizedShadowStage} from './locale-shadow-stages-v247.js';
+import {disciplineText as dt} from './locale-shadow-discipline-v247.js';
 export const SHADOW_STAGES=Object.freeze([
  Object.freeze({id:1,name:'Diken Nöbetçisi',region:'Karanlık Geçit',boss:'Diken Nöbetçisi',
   unlock:2,description:'Yaşayan surların bekçisi. Son dalgada kalkanı sürekli onarır.',
@@ -36,23 +39,10 @@ const STAGE_EN=Object.freeze([
  {region:'Burnt Cliffs',boss:'Ash Tempest',name:'Ash Tempest',description:'Heavy strikes shatter the front line.',tip:'Defend against heavy attacks and Rally to recover.'},
  {region:'Dark Throne',boss:'Eclipse Sovereign',name:'Eclipse Sovereign',description:'Three phases of eclipse, with fierce attacks at low health.',tip:'Save your strongest ability for the final phase.'}
 ]);
-const local=(tr,en)=>getLocale()!=='tr'?en:tr;
-const displayStage=id=>getLocale()!=='tr'?STAGE_EN[id-1]:SHADOW_STAGES[id-1];
-const PHASE_NAMES_EN=[
- ['Sleeping Roots','Thorn Watch','Living Ramparts'],
- ['Silent Shores','Song of the Void','Life-Stealing Melody'],
- ['Ash Wind','Ring of Fire','Crimson Storm'],
- ['Faded Throne','Eclipse Gate','Sovereign Awakening']
-];
-function displayPhase(phase,stage,wave){
- if(!phase||getLocale()==='tr')return phase;
- if(phase.id==='eclipse-rage')return {...phase,title:'Eclipse\'s Last Breath',hint:'The boss becomes enraged at critical health: incoming damage increases.'};
- if(phase.id==='eclipse-rise')return {...phase,title:'The Dark Throne Cracks',hint:'The boss changed its attack pattern. Watch its next move.'};
- const title=PHASE_NAMES_EN[stage-1]?.[wave-1]||phase.title;
- const hint=wave===3?['Use Feint to break its shield.','Strike hard against its life drain.','Defend against heavy attacks.','Time your skills carefully in the final phase.'][stage-1]:
-  'Some lost health is restored when the wave ends.';
- return {...phase,title,hint};
-}
+const local=(tr,en)=>bilingual(tr,en);
+const displayStage=id=>getLocale()==='tr'?SHADOW_STAGES[id-1]:localizedShadowStage(id-1,STAGE_EN[id-1]);
+// shadowBossPhase already returns the locale-appropriate title and hint.
+const displayPhase=phase=>phase;
 const stageMap=new Map(SHADOW_STAGES.map(x=>[x.id,x]));
 const heroMap=new Map(HEROES.map(x=>[x.id,x]));
 const itemMap=new Map(ITEMS.map(x=>[x.id,x]));
@@ -112,23 +102,23 @@ export async function shadowRequest(action,{target=null,aux=null,requestId=null,
  return {identity:session.user.id,snapshot:validateShadowSnapshot(payload)};
 }
 export function heroDisciplinesMarkup(front,account,resources={},busy=false){
- if(!front||!account)return '<section class="shadow-discipline"><h3>Kahraman Uzmanlığı</h3><p>Sunucu uzmanlık kaydı yükleniyor.</p></section>';
+ if(!front||!account)return `<section class="shadow-discipline"><h3>${dt('heroTitle')}</h3><p>${dt('loading')}</p></section>`;
  const paths=front.heroPaths||{},war=!!front.battle||!!account.mission;
- return `<section class="shadow-discipline" aria-label="Kahraman uzmanlık ağacı">
-  <div class="shadow-section-head"><span class="eyebrow">KALICI UZMANLIK · 3 RÜTBE</span>
-   <h3>Kahraman Disiplinleri</h3><p>Kahramanların Hücum veya Muhafız yolunu seçer. Yön değiştirmek mümkün değil; iki yol da yalnızca resmî Gölge Sınırı seferlerinde etkilidir.</p></div>
+ return `<section class="shadow-discipline" aria-label="${dt('treeAria')}">
+  <div class="shadow-section-head"><span class="eyebrow">${dt('rankHeader')}</span>
+   <h3>${dt('disciplineTitle')}</h3><p>${dt('disciplineSummary')}</p></div>
   <div class="shadow-disciplines">${HEROES.filter(h=>(account.heroes||{})[h.id]).map(h=>{
     const path=paths[h.id],rank=path?.rank||0,next=HERO_TRAINING[rank];
     const affordable=next&&resources.gold>=next.gold&&resources.aether>=next.aether&&resources.stone>=next.stone;
     const unlocked=next&&(account.heroes[h.id]||0)>=next.level&&account.cleared.length>=next.story&&account.act2Cleared.length>=next.act2;
     const choices=path?HERO_DISCIPLINES.filter(x=>x.id===path.path):HERO_DISCIPLINES;
     return `<article class="shadow-hero">
-      <div class="shadow-hero-title"><img src="assets/${h.id}.webp" alt=""><strong>${esc(h.name)}</strong><small>Seviye ${account.heroes[h.id]} · Rütbe ${rank}/3</small></div>
-      ${choices.map(d=>`<div class="shadow-discipline-branch"><b>${d.icon} ${esc(d.name)}</b><small>${esc(d.description)}</small>
+      <div class="shadow-hero-title"><img src="assets/${h.id}.webp" alt=""><strong>${esc(h.name)}</strong><small>${dt('level')} ${account.heroes[h.id]} · ${dt('rank')} ${rank}/3</small></div>
+      ${choices.map(d=>`<div class="shadow-discipline-branch"><b>${d.icon} ${esc(dt(d.id==='assault'?'assaultName':'wardenName'))}</b><small>${esc(dt(d.id==='assault'?'assaultDesc':'wardenDesc'))}</small>
        <button class="${rank?'secondary':'primary'}" data-shadow-train="${h.id}" data-shadow-path="${d.id}"
-        ${!next||!unlocked||!affordable||war||busy?'disabled':''}>${rank>=3?'En yüksek rütbe':!unlocked?'Seviye / bölge kilitli':!affordable?'Kaynak eksik':rank?'Rütbe '+(rank+1)+' eğit':'Yolu seç'}
+        ${!next||!unlocked||!affordable||war||busy?'disabled':''}>${rank>=3?dt('rankMax'):!unlocked?dt('locked'):!affordable?dt('noResources'):rank?dt('trainRank',{rank:rank+1}):dt('choosePath')}
        </button></div>`).join('')}
-      ${next?`<small class="shadow-training-cost">Sonraki rütbe: ${num(next.gold)} altın · ${num(next.aether)} yıldız özü · ${num(next.stone)} taş · Kahraman SV ${next.level}</small>`:'<small class="shadow-training-cost">✦ Uzmanlık tamamlandı</small>'}
+      ${next?`<small class="shadow-training-cost">${dt('nextRank')}: ${num(next.gold)} ${dt('gold')} · ${num(next.aether)} ${dt('aether')} · ${num(next.stone)} ${dt('stone')} · ${dt('heroLevel')} ${next.level}</small>`:`<small class="shadow-training-cost">${dt('completed')}</small>`}
      </article>`;
    }).join('')}</div></section>`;
 }

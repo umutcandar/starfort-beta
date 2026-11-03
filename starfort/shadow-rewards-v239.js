@@ -1,12 +1,13 @@
 /** v2.39: transparent server-only victory ledger, loot preview and reward replay presentation. */
 import {ITEMS} from './rules.js';
 import {getLocale,formatNumber} from './locale-v243.js';
+import {bilingual} from './locale-unified-v247.js';
 import {shadowBossArtwork,shadowLootSummary} from './shadow-boss-art-v239.js';
 const ITEMS_BY_ID=new Map(ITEMS.map(x=>[x.id,x]));
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label={gold:['Altın','Gold'],wood:['Kereste','Timber'],stone:['Taş','Stone'],aether:['Yıldız Özü','Star essence']};
 const regionsEn=['Dark Pass','Whispering Shores','Burnt Cliffs','Dark Throne'];
-const l=(tr,en)=>getLocale()!=='tr'?en:tr;
+const l=(tr,en)=>bilingual(tr,en);
 const rarity={common:['Yaygın','Common'],epic:['Destansı','Epic'],legendary:['Efsanevi','Legendary']};
 const n=x=>formatNumber(Number(x));
 export function shadowVictoryMarkup(report,regions=[]){
@@ -29,11 +30,11 @@ export function shadowVictoryMarkup(report,regions=[]){
         `<div class="shadow-result-renown" aria-label="${l('Sunucu Sınır Ustalığı itibarı','Verified frontier renown')}">✦ +${n(report.renown)} ${l('itibar','renown')}
          ${report.renown===0?'· '+l('Bu haftanın 100 itibar sınırına ulaştın','Weekly 100-renown cap reached'):''}</div>`:''}
       ${won?`<div class="shadow-reward-ledger" aria-label="${l('Kazanılan kaynaklar','Earned resources')}">
-        ${loot.map(x=>`<span class="shadow-reward-resource" data-resource="${x.id}"><b>+${n(x.value)}</b><small>${label[x.id][getLocale()!=='tr'?1:0]}</small></span>`).join('')}
+        ${loot.map(x=>`<span class="shadow-reward-resource" data-resource="${x.id}"><b>+${n(x.value)}</b><small>${l(...label[x.id])}</small></span>`).join('')}
       </div>
       ${item?`<div class="shadow-rare-loot" data-loot-id="${esc(item.id)}">
         <span class="shadow-loot-symbol" aria-hidden="true">✧</span>
-        <span><small>${l('İLK ZAFER GANİMETİ','FIRST-CLEAR LOOT')} · ${(rarity[item.rarity]||['Özel','Special'])[getLocale()!=='tr'?1:0]}</small><strong>${esc(item.name)}</strong>
+        <span><small>${l('İLK ZAFER GANİMETİ','FIRST-CLEAR LOOT')} · ${l(...(rarity[item.rarity]||['Özel','Special']))}</small><strong>${esc(item.name)}</strong>
           <small>${esc(item.description)}</small></span>
         <button class="secondary" data-shadow-open-armory>${l('Çantada incele','View in inventory')}</button>
       </div>`:'<p class="shadow-repeat-note">${report.converted===true?l("Ekipman için 20 adet çanta sınırına ulaşıldı; ödül 36 Yıldız Özü’ne dönüştürüldü.","Inventory is at the 20-item cap. The item reward was converted to 36 Star essence."):l("Kaynaklar sunucuda hesaplandı. Bu sefer için ilk-zafer ekipmanı verilmedi.","Resources were calculated on the server. No first-clear equipment was granted for this replay.")}</p>'}`:''}
