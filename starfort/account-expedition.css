@@ -153,3 +153,5 @@
 :root[dir="rtl"] .long-road summary,:root[dir="rtl"] .long-road-focus,:root[dir="rtl"] .long-road-goal{text-align:start}
 @media(max-width:760px){.long-road-goals{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){.long-road-goals{grid-template-columns:1fr}.long-road-goal{padding:9px 11px}.long-road-body{padding-inline:12px}.long-road summary{padding-inline:12px}}
+
+.realm-veteran-complete{display:inline-flex;align-items:center;min-height:40px;padding:9px 11px;color:#b9dfcb;border:1px solid #77af956e;border-radius:8px;font-size:11px;font-weight:600;overflow-wrap:anywhere}
