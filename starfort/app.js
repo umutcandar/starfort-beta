@@ -21,6 +21,7 @@ import { createBattleRunner } from './battle-runner.js';
 import {exportSave,importSave} from './backup.js';
 import {createSaveGuard} from './save-guard.js';
 import {guildRequest,guildOnline,guildMatchHistory,GUILD_TOKEN_KEY} from './guild-client.js';
+import {fm,firstMinuteGuide} from './first-minutes-v255.js';
 import {guildText as gt} from './locale-guild-v247.js';
 import {textKey as tx,longText as lt} from './locale-sections-v247.js';
 import {mountTraining} from './tactics-view.js';
@@ -83,10 +84,12 @@ let premiumOwner=null,premiumSnapshot=null,premiumBusy=false,premiumGeneration=0
 let warfrontOwner=null,warfrontSnapshot=null,warfrontBusy=false,warfrontGeneration=0;
 let shadowOwner=null,shadowSnapshot=null,shadowBusy=false,shadowGeneration=0,shadowReportDismissedAt=null;
 let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
+let victoryVisible=false;
 let cloudSaveInfo=null,cloudSaveBusy=false;
 let accountBackupInfo=null,accountBusy=false,accountSyncInfo={status:'disconnected'},accountRecovering=false;
 let syncConflictDetails=null,confirmationEmail='',signupPending=false;
-const authRedirect=()=>location.protocol==='https:'?location.origin+location.pathname:'https://umutcandar.github.io/starfort-beta/starfort/';
+const authRedirect=()=> 'https://starfort-online-beta.onrender.com/starfort/';
+// Supabase Auth Site URL + allowed redirects must also contain the canonical address.
 async function refreshSocialLoginButtons(){
  const providers=await accountSocialAvailability();
  for(const button of document.querySelectorAll('[data-social-login]')){
@@ -142,8 +145,9 @@ function notify(message) {
     const gateStatus=$('#account-gate-status');
     if(gateStatus){gateStatus.textContent=message;gateStatus.dataset.error='1';}
   }
-  const el = $('#toast'); el.textContent = message; el.classList.add('show'); clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+  const el=$('#toast');if(!el)return;
+  el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{el.classList.remove('show');el.textContent='';},2800);
 }
 function result(action, success) { if (!action.ok) { notify(action.error); return false; } if (success) notify(success); persist(); render(); return true; }
 let villageSnapshot=null,villageOwner=null,villageBusy=false,villageGeneration=0;
@@ -222,6 +226,8 @@ function acceptAccountProgress(response){
  const prevCombat=accountProgressOwner===response.identity?accountProgressSnapshot?.mission:null;
   lastCombatDelta=officialBattleDelta(prevCombat,response.account.mission);
   accountProgressOwner=response.identity;accountProgressSnapshot=response.account;
+  const gateStatus=$('#account-gate-status');
+  if(gateStatus){delete gateStatus.dataset.error;gateStatus.textContent=fm('recovery');}
  return acceptVillage({identity:response.identity,snapshot:validateVillageSnapshot(response.data)});
 }
 async function refreshShadow(){
@@ -333,7 +339,7 @@ async function premiumAction(action,item=null){
  }catch(error){notify('Yıldız Hazinesi: '+error.message);await refreshPremium();}
  finally{premiumBusy=false;if(activeView==='shop')renderShop();}
 }
-async function refreshVillage({preserve=false}={}){
+async function refreshVillage({preserve=false,silent=false}={}){
  const uid=accountSession()?.user?.id;
  if(!uid){villageGeneration++;premiumGeneration++;warfrontGeneration++;shadowGeneration++;shadowOwner=null;shadowSnapshot=null;shadowReportDismissedAt=null;shadowDirector.dispose();warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();return false;}
  const gen=++villageGeneration;
@@ -352,7 +358,23 @@ async function refreshVillage({preserve=false}={}){
    }
   }catch(error){if(gen===villageGeneration&&$('#reward-dialog')?.open)notify('Ödül takvimi: '+error.message);}
   return ok;
- }catch(error){if(gen===villageGeneration){notify('Hesap ilerlemesi: '+error.message);render();}return false;}
+  }catch(error){if(gen===villageGeneration){if(!silent)notify('Hesap ilerlemesi: '+error.message);render();}return false;}
+}
+async function refreshVillageOnSignIn(){
+ const owner=accountSession()?.user?.id;
+ for(const delay of [0,350,950,1800]){
+  if(!owner||accountSession()?.user?.id!==owner)return false;
+  if(delay)await new Promise(resolve=>setTimeout(resolve,delay));
+  const ready=await refreshVillage({preserve:delay!==0,silent:true});
+  if(ready&&accountReady()){
+   const toast=$('#toast');if(toast){toast.classList.remove('show');toast.textContent='';}
+   return true;
+  }
+  const status=$('#account-gate-status');
+  if(status){delete status.dataset.error;status.textContent=fm('retrying');}
+ }
+ if(accountSession()?.user?.id===owner)notify('Sunucu bağlantısı kurulamadı. Bağlantını kontrol edip yeniden dene.');
+ return false;
 }
 async function accountProgressAction(action,target=null,aux=null){
  if(villageBusy||!accountReady())return;
@@ -794,12 +816,12 @@ document.addEventListener('submit',async event=>{
      const info=await accountSignUp(email,password,undefined,authRedirect());
      signupPending=info.needsConfirmation;confirmationEmail=email;
       notify(t(info.needsConfirmation?'auth.confirm':'auth.created'));
-     if(accountSession()){await refreshVillage();}
+     if(accountSession()){await refreshVillageOnSignIn();}
    }else{
      await accountSignIn(email,password);
      signupPending=false;confirmationEmail='';
-     notify(t('auth.signedIn'));
-     await refreshVillage();if(activeView==='guild')void refreshGuild();
+     const gate=$('#account-gate-status');if(gate){delete gate.dataset.error;gate.textContent=fm('recovery');}
+     await refreshVillageOnSignIn();if(accountReady()&&activeView==='guild')void refreshGuild();
    }
  }catch(error){notify('Hesap: '+error.message);}
  finally{accountBusy=false;syncAccountGate();if(villageSignedIn()){activeView='keep';render();}else if(activeView==='settings')renderSettings();}
@@ -1080,7 +1102,7 @@ function dispatch(action) {
   if(button.hasAttribute('data-gate-reset')){void accountAction('reset-request');return;}
   if(button.hasAttribute('data-gate-password-update')){void accountAction('password-update');return;}
   if(button.hasAttribute('data-gate-resend')){void accountAction('resend-confirmation');return;}
-  if(button.hasAttribute('data-gate-refresh')){void refreshVillage({preserve:false});return;}
+  if(button.hasAttribute('data-gate-refresh')){void refreshVillageOnSignIn();return;}
   if(button.hasAttribute('data-gate-logout')){void accountAction('logout');return;}
   if(!accountReady()){syncAccountGate();return notify(t('auth.locked'));}
   if(ACCOUNT_ONLY&&isLegacyOnlyAction(button))return notify('Misafir ve yerel deneme özellikleri kaldırıldı. Resmî seferleri kullan.');
@@ -1353,7 +1375,7 @@ void refreshSocialLoginButtons();
        if(accountRecovering){notify('Kurtarma bağlantısı onaylandı. Şimdi yeni şifreni yaz.');return;}
        notify(callback.type==='oauth'?t('auth.socialSuccess'):'E-posta hesabın doğrulandı. Bulut ilerlemen kontrol ediliyor.');
      }
-     if(accountSession())await refreshVillage();
+     if(accountSession())await refreshVillageOnSignIn();
      syncAccountGate();
  }catch(error){notify(error.message||t('auth.socialFailed'));syncAccountGate();}
 })();
