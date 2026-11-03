@@ -1,7 +1,7 @@
 import {textKey as tx,longText as lt} from './locale-sections-v247.js';
 import {formatNumber,getLocale} from './locale-v243.js';
 import {CARAVAN_TRANSLATIONS} from './locale-caravan-v247.js';
-const caravanText=(key,values={})=>String((CARAVAN_TRANSLATIONS[getLocale()]??CARAVAN_TRANSLATIONS.en).ui[key]).replace(/\\{(\\w+)\\}/g,(_,id)=>String(values[id]??''));
+const caravanText=(key,values={})=>String((CARAVAN_TRANSLATIONS[getLocale()]??CARAVAN_TRANSLATIONS.en).ui[key]).replace(/\{(\w+)\}/g,(_,id)=>String(values[id]??''));
 import {displayResource} from './locale-game-content-v245.js';
 /** STARFORT Kervan Pazarı — published trade terms match the trusted SQL.
  * These are illustrative offers only. Resource mutation lives in sfb_village_api. */
