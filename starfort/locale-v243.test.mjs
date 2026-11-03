@@ -14,7 +14,7 @@ const account=()=>({heroes:{aldren:10,lyra:10,rovan:10},team:['aldren','lyra','r
 test('browser language detection defaults to English internationally and keeps Turkish users in Turkish',()=>{
  assert.equal(resolveLocale(null,['en-US','tr-TR']),'en');
  assert.equal(resolveLocale(null,['tr-TR','en-US']),'tr');
- assert.equal(resolveLocale(null,['fr-FR']),'en');
+ assert.equal(resolveLocale(null,['fr-FR']),'fr');
  assert.equal(resolveLocale('tr',['en-US']),'tr');
  assert.equal(resolveLocale('en',['tr-TR']),'en');
  assert.equal(resolveLocale('zz',['tr-TR']),'tr');
@@ -31,7 +31,8 @@ test('language switch changes only display state, preserves IDs and server-autho
   assert.equal(t('nav.expedition'),'Expeditions');
   assert.equal(t('resource.aether'),'Star essence');
   assert.equal(formatNumber(12345),'12,345');
-  assert.equal(setLocale('ru'),'en','unsupported locales must not be stored');
+  assert.equal(setLocale('ru'),'ru','Russian is supported');
+  assert.equal(setLocale('xx'),'ru','unknown locales must not be stored');
   assert.equal(setLocale('tr'),'tr');
   assert.equal(formatNumber(12345),'12.345');
   assert.equal(t('gate.title'),'Kendi krallığını kur');
