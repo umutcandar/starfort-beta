@@ -28,7 +28,10 @@ test('interactive world map has 8 geographic regions, 24 stars and 24 veteran ch
  const markup=realmMapMarkup(account,{selected:2});
  assert.equal((markup.match(/data-realm-select=/g)||[]).length,8);
  assert.match(markup,/data-realm-mission="2"/);
- assert.match(markup,/data-account-veteran="2:3"/);
+ assert.doesNotMatch(markup,/data-account-veteran="2:3"/,'maxed veteran tier must not offer a pointless replay');
+ assert.match(markup,/realm-veteran-complete/);
+ const replayable=realmMapMarkup({...account,veteranMedals:{...account.veteranMedals,2:2}},{selected:2});
+ assert.match(replayable,/data-account-veteran="2:3"/,'unfinished tier 3 must remain available');
  assert.match(markup,/realm-map-trails/);
  assert.match(markup,/Kırık Şapel/);
  assert.match(markup,/aria-pressed="true"/);

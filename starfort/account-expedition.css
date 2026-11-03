@@ -127,3 +127,31 @@
 .server-moves [data-account-turn=feint]{border-color:#9c8bc9;color:#e1d5fb}
 .server-moves [data-account-turn=rally]{border-color:#7cae8e;color:#c4f3d0}
 @media(max-width:500px){.server-moves button{flex:1 1 calc(50% - 6px);min-width:0;white-space:normal}.server-moves [data-account-abandon]{flex-basis:100%}}
+
+/* v2.49: read-only long-horizon objectives, designed to stay compact on mobile. */
+.long-road{border:1px solid #997b507d;background:linear-gradient(135deg,#233a40,#111e2c);border-radius:11px;overflow:hidden}
+.long-road summary{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:60px;padding:13px 17px;cursor:pointer;list-style:none}
+.long-road summary::-webkit-details-marker{display:none}
+.long-road summary:focus-visible{outline:2px solid #dfc48f;outline-offset:-3px}
+.long-road summary>span:first-child{display:grid;gap:5px;min-width:0}
+.long-road summary b{font:700 clamp(17px,2vw,23px)/1.25 Georgia,serif;color:#ffe4a9;overflow-wrap:anywhere}
+.long-road summary small,.long-road-arrow{color:#bad0ce;font-size:11px}
+.long-road[open] .long-road-arrow{transform:rotate(180deg)}
+.long-road-body{padding:0 17px 18px;display:grid;gap:14px}
+.long-road-body>p{color:#c4d1cf;font-size:12px;line-height:1.6;margin:0}
+.long-road-focus{display:grid;gap:7px;padding:12px 14px;background:#263e4399;border:1px solid #9d865c8a;border-radius:8px}
+.long-road-focus>span{font-size:10px;letter-spacing:.03em;color:#c8d8d6}
+.long-road-focus strong{font-size:13px;line-height:1.5;color:#ffdf9b;overflow-wrap:anywhere}
+.long-road-goals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.long-road-goal{background:#142a35;border:1px solid #53727b81;border-radius:8px;padding:11px;min-width:0;display:grid;gap:9px}
+.long-road-goal.complete{border-color:#60a69080;background:#18352f}
+.long-road-goal>div{display:flex;justify-content:space-between;gap:8px;align-items:start}
+.long-road-goal strong{font-size:11px;line-height:1.4;color:#dfe8dc;overflow-wrap:anywhere}
+.long-road-goal span{color:#eccc8c;font-size:11px;white-space:nowrap}
+.long-road-goal progress{display:block;width:100%;height:7px;accent-color:#b9d8a8}
+.long-road-note{font-size:10px;line-height:1.5;color:#a8bcb9}
+:root[dir="rtl"] .long-road summary,:root[dir="rtl"] .long-road-focus,:root[dir="rtl"] .long-road-goal{text-align:start}
+@media(max-width:760px){.long-road-goals{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.long-road-goals{grid-template-columns:1fr}.long-road-goal{padding:9px 11px}.long-road-body{padding-inline:12px}.long-road summary{padding-inline:12px}}
+
+.realm-veteran-complete{display:inline-flex;align-items:center;min-height:40px;padding:9px 11px;color:#b9dfcb;border:1px solid #77af956e;border-radius:8px;font-size:11px;font-weight:600;overflow-wrap:anywhere}

@@ -1,6 +1,7 @@
 import {STAGES} from './rules.js';
 import {displayRealm,displayStage} from './locale-game-content-v245.js';
 import {realmText as local} from './locale-realm-ui-v247.js';
+import {longRoadWord} from './long-horizon-v249.js';
 export const REALMS=Object.freeze([
  {chapter:1,zone:'Kül Sınırı',biome:'ashen',x:9,y:76,icon:'⚔',lore:'Kül akıncılarının geçitleri'},
  {chapter:2,zone:'Kırık İnanç',biome:'ruins',x:26,y:59,icon:'✟',lore:'Unutulmuş şapel harabeleri'},
@@ -26,7 +27,7 @@ export function routeToNextRealm(account){
 }
 export function realmMapMarkup(account,options={}){
  const nodes=realmMapModel(account);
- const active=account?.mission||null;
+ const active=account?.mission||options.busy||null;
  const selected=Number.isInteger(options.selected)?options.selected:routeToNextRealm(account).chapter;
  const focus=nodes.find(n=>n.chapter===selected)||nodes[0];
  const escaped=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -38,7 +39,7 @@ export function realmMapMarkup(account,options={}){
    </div>
    <div class="realm-map-details"><div><span class="eyebrow">${local('BÖLGE','REGION')} ${String(focus.chapter).padStart(2,'0')} · ${escaped(displayRealm(focus).zone)}</span><strong>${escaped(displayStage(STAGES[focus.chapter-1]).name)}</strong><small>${escaped(displayRealm(focus).lore)}</small></div>
    <div class="realm-map-rating"><span class="server-star-row">${'★'.repeat(focus.stars)}${'☆'.repeat(3-focus.stars)}</span><small>${local('Usta mührü','Veteran seals')}: ${focus.medal}/3</small></div>
-   <div class="realm-map-actions"><button class="primary" data-realm-mission="${focus.chapter}" ${!focus.unlocked||active?'disabled':''}>${focus.cleared?local('Yeniden savaş','Battle again'):local('Bölgeye saldır','Attack region')}</button>${focus.cleared?`<button class="secondary" data-account-veteran="${focus.chapter}:${Math.min(3,focus.medal+1)}" ${active?'disabled':''}>${local('Usta','Veteran')} ${Math.min(3,focus.medal+1)} ${local('savaşı','battle')}</button>`:''}</div>
+   <div class="realm-map-actions"><button class="primary" data-realm-mission="${focus.chapter}" ${!focus.unlocked||active?'disabled':''}>${focus.cleared?local('Yeniden savaş','Battle again'):local('Bölgeye saldır','Attack region')}</button>${focus.cleared?(focus.medal>=3?`<span class="realm-veteran-complete">✓ ${longRoadWord('done')}</span>`:`<button class="secondary" data-account-veteran="${focus.chapter}:${Math.min(3,focus.medal+1)}" ${active?'disabled':''}>${local('Usta','Veteran')} ${Math.min(3,focus.medal+1)} ${local('savaşı','battle')}</button>`):''}</div>
    </div>
   </div>`;
 }
