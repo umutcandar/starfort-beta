@@ -20,7 +20,12 @@ test('localized account status and known provider error codes preserve outcomes'
  try{for(const language of SUPPORTED_LOCALES){setLocale(language);
   for(const key of AUTH_MESSAGE_KEYS)assert.equal(t(key),AUTH_MESSAGES[language][key]);
   for(const [status,code,key] of codes)assert.equal(explainAuthError(status,{error_code:code}),t(key));
-  assert.equal(explainAuthError(403,{message:'provider-detail'}),'provider-detail');
+  assert.equal(explainAuthError(403,{message:'provider-detail'}),t('auth.failed'));
+  assert.equal(explainAuthError(503,{message:'<script>alert(1)</script> Internal SQL secret'}),t('auth.failed'));
+  assert.equal(explainAuthError(400,{error_code:'weak_password'}),t('auth.validation.password'));
+  assert.equal(explainAuthError(400,{error_code:'validation_failed'}),t('auth.invalidForm'));
+  assert.equal(explainAuthError(429,{error_code:'over_request_rate_limit'}),t('auth.limit'));
+  assert.equal(explainAuthError(400,{message:'Invalid login credentials'}),t('auth.invalidCredentials'));
  }}finally{setLocale('tr');}
 });
 
