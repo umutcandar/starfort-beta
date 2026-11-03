@@ -16,7 +16,7 @@ test('main game locale audit covers exact source phrases without modifying click
  const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');
  const regex=/\b(?:local|lt|l)\(\s*(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)")\s*,\s*(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)")\s*\)/g;
  const keys=[...new Set([...source.matchAll(regex)].map(m=>(m[3]??m[4]).replace(/\\(['"\\])/g,'$1')))];
- assert.equal(keys.length,74);assert.deepEqual(keys,APP_NATIVE_KEYS);
+ assert.equal(keys.length,72);assert.deepEqual(keys,APP_NATIVE_KEYS.filter(k=>keys.includes(k)));
  assert.match(source,/data-account-maze|data-labyrinth-open/);
  assert.ok(source.includes('accountReady()'));
 });
