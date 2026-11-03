@@ -730,7 +730,7 @@ begin
  end if;
  return reply;
 end;
-$function$
+$function$;
 
 revoke all on function public.sfb_starfort_progress(text,text,text,uuid) from public,anon,authenticated;
 grant execute on function public.sfb_starfort_progress(text,text,text,uuid) to authenticated;
