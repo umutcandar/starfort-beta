@@ -144,6 +144,24 @@ try{
   assert.equal((await snap()).mission.lastAction,'guard');
   metrics.browser={eclipseHint:hint.slice(0,240),counter:'guard',dispatched:true};
   pass('Used visible Guard to counter a version-4 Eclipse intent',metrics.browser);
+  const v5={...mission,mode:'act2',balanceVersion:5,stage:8,wave:3,waves:3,turn:21,waveTurn:9};
+  await seed({mission:v5,cleared:[1,2,3,4,5,6,7,8],act2Cleared:[1,2,3,4,5,6,7]});
+  assert.ok(await click('.nav-item[data-view=expedition]'));
+  await wait('!!document.querySelector(".official-tactical-briefing")','new Act II rating');
+  const v5Score=await evaluate('document.querySelector(".official-tactical-briefing").textContent.trim()');
+  assert.ok(v5Score.includes('3★'),'Version5 Act II did not display its achievable 3-star target');
+  assert.equal(await evaluate('document.querySelector("[data-account-turn=skill]")'),null,
+   'Unlimited generic skill attack is still in the combat HUD');
+  assert.ok(await evaluate('!!document.querySelector("[data-account-turn=\"skill:lyra\"]")'),
+   'Cooldown-governed hero ability disappeared');
+  await screenshot('act2-3star-v5');
+  await seed({mission:{...v5,balanceVersion:4}});
+  assert.ok(await click('.nav-item[data-view=expedition]'));
+  await wait('!!document.querySelector(".official-tactical-briefing")','legacy Act II rating');
+  const v4Score=await evaluate('document.querySelector(".official-tactical-briefing").textContent.trim()');
+  assert.ok(v4Score.includes('2★'),'Legacy v4 fight must retain its original rating threshold');
+  metrics.browser.v5ThreeStars=true;metrics.browser.v4LegacyTwoStars=true;metrics.browser.infiniteSkillButtonRemoved=true;
+  pass('Verified server-versioned 3-star preview and removal of infinite generic skill',metrics.browser);
   const shadows=[];
   for(let stage=1;stage<=8;stage++)for(const ratio of [.75,1,1.25]){
    const power=Math.round(recommendedActTwoPower(stage)*ratio);
@@ -159,7 +177,8 @@ try{
    spamStars3:spam.filter(x=>x.stars===3).length,
    stage1:shadows.filter(x=>x.stage===1),stage8:shadows.filter(x=>x.stage===8)};
   if(metrics.actTwoShadow.tacticalStars3===0&&metrics.actTwoShadow.threeStarsAt24>0)
-   warn('high','18-turn 3-star threshold blocks tactical Act II play at baseline power',metrics.actTwoShadow);
+   pass('Regression reproduced: old 18-turn gate blocked 3-stars; new v5 24-turn gate admits them',
+    {old:0,new:metrics.actTwoShadow.threeStarsAt24,fix:'new v5 encounters only'});
   if(metrics.actTwoShadow.spamWins>=metrics.actTwoShadow.tacticalWins)
    warn('high','Old Act II shadow model does not reward tactics enough',metrics.actTwoShadow);
   pass('48 strategy-vs-spam simulated Act II fights (not production SQL)',metrics.actTwoShadow);
