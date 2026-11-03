@@ -57,8 +57,13 @@ export function longRoadStatus(account,now=Date.now()){
  let focus;
  if(story<8)focus={id:'story',stage:story+1};
  else if(act2<8)focus={id:'act2',stage:act2+1};
- else if(storyStars<24)focus={id:'storyStars',...nextStar(account.cleared,account.campaignStars),stage:nextStar(account.cleared,account.campaignStars)?.id};
- else if(act2Stars<24)focus={id:'act2Stars',...nextStar(account.act2Cleared,account.act2Stars),stage:nextStar(account.act2Cleared,account.act2Stars)?.id};
+ else if(storyStars<24){
+  const target=nextStar(account.cleared,account.campaignStars);
+  focus={id:'storyStars',stage:target?.id,stars:target?.stars};
+ }else if(act2Stars<24){
+  const target=nextStar(account.act2Cleared,account.act2Stars);
+  focus={id:'act2Stars',stage:target?.id,stars:target?.stars};
+ }
  else if(veteran<24){
   const id=Array.from({length:8},(_,i)=>i+1).find(id=>clamp(account.veteranMedals?.[id],3)<3);
   focus={id:'veteran',stage:id,tier:clamp(account.veteranMedals?.[id],3)+1};
