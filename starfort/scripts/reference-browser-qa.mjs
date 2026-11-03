@@ -173,6 +173,29 @@ try{
  const mobileSignedIn=await evaluate("({viewport:innerWidth,scroll:document.documentElement.scrollWidth,locked:document.querySelector('.app').inert})");
  assert.equal(mobileSignedIn.locked,false,'Mobile authenticated app locked');
  assert.ok(mobileSignedIn.scroll<=mobileSignedIn.viewport+5,'Mobile authenticated app horizontal overflow: '+JSON.stringify(mobileSignedIn));
+ // v2.47: verify all fourteen languages in the *unlocked* account-owned village,
+ // not only in the account gate. A synthetic server session owns these screens.
+ for(const lang of ['tr','en','es','pt-BR','fr','de','it','ru','ar','hi','id','ja','ko','zh-CN']){
+  assert.equal(await chooseLanguage(lang),lang,'authenticated language switch: '+lang);
+  await sleep(60);
+  const ui=await evaluate(`(()=>{
+   const app=document.querySelector('.app');
+   const items=[...app.querySelectorAll('[data-view],button[aria-label]')].filter(x=>x.getClientRects().length);
+   return {language:document.documentElement.lang,direction:document.documentElement.dir,
+    scroll:document.documentElement.scrollWidth,viewport:innerWidth,locked:app.inert,
+    navigable:items.length,missingLabels:items.filter(x=>!x.textContent.trim()&&!x.getAttribute('aria-label')).length};
+  })()`);
+  assert.equal(ui.language,lang,'authenticated document language: '+lang);
+  assert.equal(ui.direction,lang==='ar'?'rtl':'ltr','authenticated direction: '+lang);
+  assert.equal(ui.locked,false,'switching language must not lock a verified account: '+lang);
+  assert.ok(ui.navigable>0,'no accessible controls in authenticated village: '+lang);
+  assert.equal(ui.missingLabels,0,'blank accessible village control: '+lang);
+  assert.ok(ui.scroll<=ui.viewport+5,'authenticated village mobile overflow: '+lang+' '+JSON.stringify(ui));
+  if(lang==='ar')await shot('starfort-390x844-authenticated-arabic.png');
+  if(lang==='ja')await shot('starfort-390x844-authenticated-japanese.png');
+ }
+ assert.equal(await chooseLanguage('tr'),'tr');
+ console.log('PASS v2.47: all 14 languages, RTL and overflow in authenticated 390px village');
  console.log('PASS synthetic server responses: desktop login, persistent reload, 390px authenticated mobile game');
  // The actual callback parser must accept the token from a confirmed email link.
  await evaluate("sessionStorage.clear()");
