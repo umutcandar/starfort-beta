@@ -7,7 +7,8 @@ import {BOSS_RELIC_ITEMS,BOSS_RELIC_KEYS,BOSS_RELIC_TRANSLATIONS,
 import {bossV250Phase,bossV250Markup} from './story-boss-v250.js';
 import {validateAccountSnapshot} from './account-progression.js';
 import {accountExpeditionMarkup} from './account-expedition.js';
-import {createState} from './rules.js';
+import {createState,ITEMS} from './rules.js';
+import {displayItem} from './locale-items-v246.js';
 
 const NOW=Date.UTC(2026,10,3,19);
 const WEEK='2026-45';
@@ -84,7 +85,7 @@ test('authenticated world-boss UI previews only the deterministic server-week it
  const acc=validateAccountSnapshot(source()),view=createState(NOW);
  const page=accountExpeditionMarkup(view,acc,NOW);
  assert.match(page,/boss-relic-preview/);
- assert.match(page,/ember_guard|Kor Muhafızı|Köz Muhafızı/); // Native item name can vary
+ assert.ok(page.includes(displayItem(ITEMS.find(x=>x.id==='ember_guard')).name));
  assert.match(page,/data-account-boss/);
  const active=validateAccountSnapshot({...source(),mission:mission({mode:'boss',stage:4,wave:1,waves:1,waveTurn:8,turn:8})});
  const activeHtml=accountExpeditionMarkup(view,active,NOW);
