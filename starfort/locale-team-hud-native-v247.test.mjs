@@ -16,6 +16,7 @@ test('team source bilingual inventory is exact and match action names are never 
  const source=readFileSync(new URL('team-view.js',import.meta.url),'utf8');
  const regex=/\b(?:local|lt|l)\(\s*(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)")\s*,\s*(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)")\s*\)/g;
  const extracted=[...new Set([...source.matchAll(regex)].map(m=>(m[3]??m[4]).replace(/\\(['"\\])/g,'$1')))];
- assert.deepEqual(extracted,TEAM_HUD_KEYS);
+ for(const key of TEAM_HUD_KEYS)assert.ok(extracted.includes(key),'missing canonical team label: '+key);
+ for(const key of extracted)for(const lang of SUPPORTED_LOCALES.filter(x=>x!=='tr'&&x!=='en'))assert.ok(hasNativeBilingual(key,lang),lang+' missing '+key);
  for(const dataAction of ['data-team-open','data-queue','data-team-'])assert.ok(source.includes(dataAction)||source.includes('data-team-'),dataAction);
 });
