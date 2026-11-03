@@ -56,3 +56,15 @@
 .relic-ascension .relic-ascension-blocked{color:#ffca98}
 .bag-v252-ascension{display:inline-block;padding:2px 6px;border-radius:6px;background:#ae8b448a;color:#fff1c8;font-size:10px;font-weight:700}
 @media(max-width:490px){.relic-ascension{padding:11px}.relic-ascension-facts{grid-template-columns:1fr}.relic-ascension-head strong{font-size:15px}}
+
+/* v2.53: read-only 90/180-day economic horizon under server relic ascension. */
+.economy-horizon-v253{margin-top:10px;padding:10px 12px;border:1px solid #afc4a455;border-radius:9px;background:#1c2a3378;min-width:0}
+.economy-horizon-v253 summary{color:#e8d6b0;font-weight:700;font-size:12px;cursor:pointer;line-height:1.5}
+.economy-horizon-v253 p,.economy-horizon-v253 small{display:block;color:#c6d3d2;font-size:11px;line-height:1.6;margin:9px 0}
+.economy-horizon-v253 .economy-horizon-goal{color:#f4d6a2}
+.economy-horizon-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+.economy-horizon-v253 table{width:100%;min-width:575px;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums}
+.economy-horizon-v253 th,.economy-horizon-v253 td{padding:7px 6px;border-bottom:1px solid #71827a50;text-align:start;color:#cddcde;white-space:nowrap}
+.economy-horizon-v253 th{font-weight:650;color:#e9d8b4}
+.economy-horizon-v253 td.ok{color:#c1e4b7}.economy-horizon-v253 td.short{color:#f0b49b}
+@media(max-width:510px){.economy-horizon-v253{padding:8px}.economy-horizon-v253 summary{font-size:11px}}
