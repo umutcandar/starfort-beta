@@ -27,7 +27,7 @@ test('original training and reward bilingual strings can never silently regress 
 test('unreleased purchases remain disabled even in 14 localized concept screens',()=>{
  try{for(const lang of SUPPORTED_LOCALES){setLocale(lang);
   const html=premiumCatalogMarkup();
-  assert.ok(html.includes(bilingual('Gelecekteki eşyalar için tasarım fikirleridir.','These are concept designs for possible future PvE gear. They grant no items and charge no money in this version.'))||html.includes(bilingual('Satın alımlar henüz açık değil','Purchases not yet available')),lang);
+  assert.ok(html.includes(bilingual('Gelecekte ücretli sunulabilecek güçlü PvE ekipmanları. Bu sürümde örnek tasarım ve istatistiklerdir; eşya verilmez, para çekilmez.','These are concept designs for possible future PvE gear. They grant no items and charge no money in this version.'))||html.includes(bilingual('Satın alma henüz açık değil','Purchases not yet available')),lang);
   assert.doesNotMatch(html,/data-payment|data-checkout|payment-url/i);
  }}finally{setLocale('tr');}
 });
