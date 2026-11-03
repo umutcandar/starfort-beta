@@ -1,5 +1,7 @@
 import * as R from './rules.js';
 import {getLocale,setLocale,t,formatNumber,applyLocaleUI,languagePickerMarkup} from './locale-v243.js';
+import {local,displayBuilding,displayStage,displayResource} from './locale-game-content-v245.js';
+import {rewardText} from './locale-rewards-v245.js';
 import {ACCOUNT_ONLY,isLegacyOnlyAction,normalizeOnlineView} from './account-only.js';
 import {createGameAudio} from './audio.js';
 import {createShadowBattleDirector,shadowCombatEffects} from './shadow-battle-director-v240.js';
@@ -394,8 +396,8 @@ function renderNav() {
 }
 function renderPicker() {
   const v=villageView();
-  $('#building-picker').innerHTML = R.BUILDINGS.map(building => `<button class="building-choice ${selectedBuilding === building.id ? 'active' : ''}" data-building="${building.id}" aria-label="${building.name}, seviye ${v.buildings[building.id]}">${svg(building.id)}<span>${building.name.replace('Karaorman ', '').replace('Yıldız ', '').replace('Kor ', '').replace('Aytaşı ', '')}</span></button>`).join('');
-  $('#keep-caption').textContent = getLocale()==='en'?`Keep level ${v.buildings.keep}`:`Kale seviyesi ${v.buildings.keep}`;
+  $('#building-picker').innerHTML = R.BUILDINGS.map(building => `<button class="building-choice ${selectedBuilding === building.id ? 'active' : ''}" data-building="${building.id}" aria-label="${displayBuilding(building).name}, ${local('seviye','level')} ${v.buildings[building.id]}">${svg(building.id)}<span>${local(building.name.replace('Karaorman ', '').replace('Yıldız ', '').replace('Kor ', '').replace('Aytaşı ', ''),displayBuilding(building).name)}</span></button>`).join('');
+  $('#keep-caption').textContent = local(`Kale seviyesi ${v.buildings.keep}`,`Keep level ${v.buildings.keep}`);
   for (const building of R.BUILDINGS) {
     let label = cityLabelNodes.get(building.id);
     if (!label) {
@@ -404,20 +406,20 @@ function renderPicker() {
       $('#city-labels').append(label); cityLabelNodes.set(building.id, label);
     }
     label.querySelector('.city-label-level').textContent = v.buildings[building.id];
-    label.querySelector('.city-label-name').textContent = building.name.replace('Karaorman ', '').replace('Yıldız Rasathanesi', 'Rasathane').replace('Kor ', '').replace('Keresteliği','Kerestelik').replace('Demirhanesi','Demirhane');
+    label.querySelector('.city-label-name').textContent = local(building.name.replace('Karaorman ', '').replace('Yıldız Rasathanesi', 'Rasathane').replace('Kor ', '').replace('Keresteliği','Kerestelik').replace('Demirhanesi','Demirhane'),displayBuilding(building).name);
     label.classList.toggle('selected', selectedBuilding === building.id);
-    label.setAttribute('aria-label', `${building.name}, seviye ${v.buildings[building.id]}, geliştirmeyi aç`);
+    label.setAttribute('aria-label', `${displayBuilding(building).name}, ${local('seviye','level')} ${v.buildings[building.id]}, ${local('geliştirmeyi aç','open upgrades')}`);
   }
   renderCityProduction();
   const online=villageSignedIn(),cal=online?(dailyOwner===accountSession()?.user?.id?dailySnapshot:null):R.dailyRewardState(state,Date.now());
-  $('#daily-status').textContent=!cal?(getLocale()==='en'?'28-day calendar':'28 Günlük Takvim'):cal.available?(getLocale()==='en'?`Day ${cal.nextDay} · Chest ready`:cal.nextDay+'. Gün · Sandık Hazır'):(getLocale()==='en'?`Day ${cal.displayDay} · Claimed`:cal.displayDay+'. Gün · Alındı');
+  $('#daily-status').textContent=!cal?(rewardText('repeating')):cal.available?(local(cal.nextDay+'. Gün · Sandık Hazır',rewardText('day',{day:cal.nextDay})+' · '+rewardText('sourceChest'))):(local(cal.displayDay+'. Gün · Alındı',rewardText('day',{day:cal.displayDay})+' · '+rewardText('opened')));
   $('#daily-reward').classList.toggle('ready',!!cal?.available);
   $('#daily-reward').disabled=false;
 }
 function renderCityProduction() {
   const gain = R.production(villageView(),constructionUiNow());
   const total = Object.values(gain).reduce((sum, n) => sum+n, 0);
-  $('#city-production').textContent = villageSignedIn()&&!villageSnapshot?(getLocale()==='en'?'Verifying server resources':'Sunucu kaynakları doğrulanıyor'):total ? Object.entries(gain).filter(([,n])=>n).map(([id,n])=>`${number(n)} ${t('resource.'+id)}`).join(' · ') : t('world.production');
+  $('#city-production').textContent = villageSignedIn()&&!villageSnapshot?(local('Sunucu kaynakları doğrulanıyor','Verifying server resources')):total ? Object.entries(gain).filter(([,n])=>n).map(([id,n])=>`${number(n)} ${t('resource.'+id)}`).join(' · ') : t('world.production');
   $('.city-collect').classList.toggle('ready', total > 0 &&(!villageSignedIn()||!!villageSnapshot));
   $('.city-collect').disabled=villageSignedIn()&&!villageSnapshot;
   renderConstructionBanner();
@@ -429,19 +431,19 @@ function renderConstructionBanner(){
   if(!job)return;
   banner.dataset.building=job.id;
   banner.classList.toggle('ready',job.ready);
-  const name=R.BUILDINGS.find(b=>b.id===job.id)?.name||'Yapı';
+  const name=displayBuilding(R.BUILDINGS.find(b=>b.id===job.id))?.name||local('Yapı','Building');
   const minutes=Math.ceil(job.remainingMs/60000);
-  const time=minutes>=1440?Math.ceil(minutes/1440)+' gün':minutes>=60?Math.ceil(minutes/60)+' saat':Math.max(1,minutes)+' dk';
-  banner.querySelector('strong').textContent=job.ready?'✓ İnşaat tamamlandı':'⚒ İnşaat sürüyor';
-  $('#construction-caption').textContent=name+' · '+(job.ready?'Dokunup tamamla':time+' kaldı');
+  const time=minutes>=1440?Math.ceil(minutes/1440)+local(' gün',' days'):minutes>=60?Math.ceil(minutes/60)+local(' saat',' hours'):Math.max(1,minutes)+local(' dk',' min');
+  banner.querySelector('strong').textContent=job.ready?local('✓ İnşaat tamamlandı','✓ Construction complete'):local('⚒ İnşaat sürüyor','⚒ Under construction');
+  $('#construction-caption').textContent=name+' · '+(job.ready?local('Dokunup tamamla','Tap to complete'):time+local(' kaldı',' remaining'));
 }
 function costHtml(cost, reward=false, wallet='server') {
  const balance=wallet==='practice'?state.res:villageView().res;
- return Object.entries(cost||{}).map(([id,amount])=>`<span class="cost ${!reward&&balance[id]<amount?'short':''}" title="${resourceName[id]}">${svg(resourceIcon[id])}${reward?'+':''}${number(amount)}</span>`).join('');
+ return Object.entries(cost||{}).map(([id,amount])=>`<span class="cost ${!reward&&balance[id]<amount?'short':''}" title="${t('resource.'+id)}">${svg(resourceIcon[id])}${reward?'+':''}${number(amount)}</span>`).join('');
 }
 
 function buildingProduction() {
-  return `<div class="production-box"><div class="production-top"><strong>${villageSignedIn()?'Sunucu köyü':'Yerel köy'} üretimi</strong><small>24 saate kadar</small></div><div class="cost-list" id="production-gain">${costHtml(R.production(villageView(),constructionUiNow()), true)}</div><button class="secondary wide" data-collect ${villageSignedIn()&&!villageSnapshot?'disabled':''}>Biriken kaynakları topla</button></div>`;
+  return `<div class="production-box"><div class="production-top"><strong>${villageSignedIn()?local('Sunucu köyü','Server village'):local('Yerel köy','Local village')} üretimi</strong><small >${local('24 saate kadar','Up to 24 hours')}</small></div><div class="cost-list" id="production-gain">${costHtml(R.production(villageView(),constructionUiNow()), true)}</div><button class="secondary wide" data-collect ${villageSignedIn()&&!villageSnapshot?'disabled':''} >${local('Biriken kaynakları topla','Collect accumulated resources')}</button></div>`;
 }
 
 function heroCard(hero) {
@@ -516,7 +518,7 @@ function renderQuest() {
   }
   const chapter=CHAPTERS[stage.id-1];
   const power=R.teamPower(state),gear=R.itemById(R.FIRST_CLEAR_LOOT[stage.id]),gate=R.stageRequirements(state,stage,power);
-  const rewards=Object.entries(stage.reward).map(([id,amount])=>`<span class="quest-reward-token" title="${resourceName[id]}">${svg(resourceIcon[id])}<b>${number(amount)}</b></span>`).join('');
+  const rewards=Object.entries(stage.reward).map(([id,amount])=>`<span class="quest-reward-token" title="${t('resource.'+id)}">${svg(resourceIcon[id])}<b>${number(amount)}</b></span>`).join('');
   questEl.innerHTML=`<button class="quest-dismiss" type="button" data-quest-close aria-label="Sefer kartını kapat" title="Kapat">×</button><div class="quest-crown"><span aria-hidden="true">✦</span>Sıradaki Sefer</div>
     <div class="quest-layout">
       <div class="quest-illustration" aria-hidden="true"><span>✧</span></div>
