@@ -3,7 +3,7 @@ import {freshAccountSession} from './account-auth.js';
 import {HEROES,ITEMS} from './rules.js';
 const HERO_IDS=new Set(HEROES.map(h=>h.id)),ITEM_IDS=new Map(ITEMS.map(x=>[x.id,x]));
 const COUNTERS=['win','hero','forge','maze','rift','veteran'];
-const MOVES=['strike','guard','skill'];
+const MOVES=['strike','guard','skill','feint','rally'];
 export const ACCOUNT_ACTIONS=['get','hero','forge','equip','unequip','team','enhance','mission_start','mission_turn','mission_abandon','contract','chronicle_claim','title','boss_claim'];
 const safeNumber=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
 const object=x=>x&&typeof x==='object'&&!Array.isArray(x);
@@ -48,7 +48,10 @@ export function validateAccountSnapshot(data){
   (safeNumber(m.waves,1,3)&& (m.waves===1||['story','act2'].includes(m.mode)&&m.waves===3)&&
    safeNumber(m.wave,1,m.waves)&&safeNumber(m.waveTurn,0,multiWave?36:14)&&
    m.waveTurn<=m.turn);
- if(m!==null&&(!object(m)||!waveValid|| (m.enemyIntent!==undefined&&!['strike','crush','shield','drain'].includes(m.enemyIntent))||!['story','act2','veteran','rift','maze','boss'].includes(m.mode)||!safeNumber(m.stage,1,8)||
+ if(m!==null&&(!object(m)||!waveValid||
+  (m.doctrine!==undefined&&!['none','assault','bulwark','recon'].includes(m.doctrine))||
+  (m.lastRallyTurn!==undefined&&(!safeNumber(m.lastRallyTurn,0,36)||m.lastRallyTurn>m.turn))||
+  (m.enemyIntent!==undefined&&!['strike','crush','shield','drain'].includes(m.enemyIntent))||!['story','act2','veteran','rift','maze','boss'].includes(m.mode)||!safeNumber(m.stage,1,8)||
  !safeNumber(m.turn,0,multiWave?36:14)||!safeNumber(m.enemyHp,0,100000)||!safeNumber(m.playerHp,0,100000)||
  !safeNumber(m.lastTurnAt,1e12,2e13)|| (m.cooldowns!==undefined&&(!object(m.cooldowns)||!Object.entries(m.cooldowns).every(([id,next])=>HERO_IDS.has(id)&&safeNumber(next,1,multiWave?40:20))))))throw Error('Sunucu sefer kaydı bozuk.');
  return {heroes:{...heroes},inventory:{...inventory},loadouts:structuredClone(loadouts),team:[...team],
