@@ -8,7 +8,8 @@ export function actTwoEnemyMaxHp(stage,wave,power){
  const base=(110+stage*45)*difficulty;
  return Math.round(Math.max(base*[1,1.25,1.50][wave-1],capped*[1.20,1.55,1.90][wave-1]));
 }
-export function simulateActTwoBattle({stage,power,policy='tactical'}={}){
+export function simulateActTwoBattle({stage,power,policy='tactical',threeStarTurnLimit=18}={}){
+ if(!Number.isInteger(threeStarTurnLimit)||threeStarTurnLimit<1||threeStarTurnLimit>36)throw Error('Invalid rating threshold');
  const maxTurns=36,maxHp=Math.round(130+power*.6);
  let playerHp=maxHp,wave=1,turn=0,intent='strike',enemyHp=actTwoEnemyMaxHp(stage,1,power),enemyMaxHp=enemyHp;
  const nextReady={lyra:1,rovan:1};
@@ -66,6 +67,6 @@ export function simulateActTwoBattle({stage,power,policy='tactical'}={}){
   if(enemyHp===0&&wave===3)break;
  }
  const won=enemyHp===0&&playerHp>0;
- const stars=!won?0:playerHp>=maxHp*.7&&turn<=18?3:playerHp>=maxHp*.3?2:1;
+ const stars=!won?0:playerHp>=maxHp*.7&&turn<=threeStarTurnLimit?3:playerHp>=maxHp*.3?2:1;
  return Object.freeze({stage,power,won,stars,turns:turn,playerHp,maxHp,wave,enemyHp,history});
 }

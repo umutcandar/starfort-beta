@@ -59,13 +59,14 @@ test('reject invalid inventory, duplicate gear, ownerless heroes, fake missions 
 test('authenticated RPC transmits action IDs only, never client levels, damage, rewards or currency',async()=>{
  const uid=login();let received;
  const fetcher=async(url,opts)=>{received={url,opts};return {ok:true,json:async()=>source()}};
- const got=await accountProgressRequest('mission_turn',{target:null,aux:'skill',requestId:'22222222-2222-4222-8222-222222222222',fetcher});
+ const got=await accountProgressRequest('mission_turn',{target:null,aux:'skill:lyra',requestId:'22222222-2222-4222-8222-222222222222',fetcher});
  assert.equal(got.identity,uid);
  assert.match(received.url,/\/rest\/v1\/rpc\/sfb_starfort_progress$/);
  assert.equal(received.opts.headers.Authorization,'Bearer qa-token');
  const args=JSON.parse(received.opts.body);
  assert.deepEqual(Object.keys(args).sort(),['p_action','p_aux','p_request_id','p_target']);
- assert.equal(args.p_action,'mission_turn');assert.equal(args.p_aux,'skill');
+ assert.equal(args.p_action,'mission_turn');assert.equal(args.p_aux,'skill:lyra');
+ await assert.rejects(accountProgressRequest('mission_turn',{aux:'skill',fetcher}),/Geçersiz savaş hamlesi/);
  assert.ok(!JSON.stringify(args).includes('damage'));
  await assert.rejects(accountProgressRequest('mission_turn',{aux:'instant-win',fetcher}));
  await assert.rejects(accountProgressRequest('grant-gold',{fetcher}));
@@ -85,7 +86,8 @@ test('authenticated expedition renders server-only eight chapters, turn controls
  account.mission=mission;
  const battle=accountExpeditionMarkup(state,account,NOW+4000);
  assert.match(battle,/data-account-turn="strike"/);
- assert.match(battle,/data-account-turn="skill"/);
+ assert.match(battle,/data-account-turn="skill:lyra"/);
+ assert.doesNotMatch(battle,/data-account-turn="skill"/);
  assert.match(battle,/data-account-abandon/);
  assert.match(battle,/CANLI SUNUCU MUHAREBESİ/);
  account.mission=null;account.lastReport={won:true,mode:'story',stage:1,stars:3,turns:3,reward:{gold:120}};

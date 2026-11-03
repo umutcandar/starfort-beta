@@ -68,7 +68,7 @@ test('new server mission snapshot is accepted but forged/unknown versions are re
  assert.equal(validateAccountSnapshot(snapshot(mission())).mission.balanceVersion,2);
  const legacy=mission({balanceVersion:undefined});
  assert.equal(validateAccountSnapshot(snapshot(legacy)).mission.balanceVersion,undefined);
- for(const version of [-1,0,5,1.5,'2',null])
+ for(const version of [-1,0,6,1.5,'2',null])
   assert.throws(()=>validateAccountSnapshot(snapshot(mission({balanceVersion:version}))),/sürümü/);
 });
 test('server patch applies new HP strictly to new high-level story bosses and new weekly bosses',()=>{
