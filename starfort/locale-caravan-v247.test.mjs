@@ -31,6 +31,9 @@ test('all translations preserve server trade policy, caps, costs and rewards',()
    const offer=state.offers[index];assert.equal(offer.id,route.id);assert.deepEqual(offer.cost,route.cost);assert.deepEqual(offer.reward,route.reward);
   }
   assert.equal(CARAVAN_DAILY_LIMIT,2);
+  const locked={...v,buildings:{keep:1}};
+  const lockedHtml=caravanMarkup(locked,NOW);
+  assert.ok(lockedHtml.includes(CARAVAN_TRANSLATIONS[lang].ui.keepRequired.replace('{level}','2')),lang+' level interpolation');
   assert.equal(JSON.stringify(CARAVAN_ROUTES),original);assert.equal(JSON.stringify(v),initial);
  }}finally{setLocale('tr');}
 });
