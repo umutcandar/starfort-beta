@@ -81,19 +81,19 @@ export function mountArena(root){
   function message(){
     const status=snapshot.status,room=snapshot.room;
     const wasLive=root.classList.contains('sf-battle-live');root.classList.toggle('sf-battle-live',status==='active');document.body.classList.toggle('sf-combat-running',status==='active');if(wasLive!==(status==='active'))requestAnimationFrame(resizeCanvas);let title='',detail='';
-    if(error){title='BAĞLANTI HATASI';detail=error;}
-    else if(status==='interrupted'){title='MAÇ OTURUMU İPTAL';detail=snapshot.message||'Sunucu yeniden başladı. Yenilgi veya ödül yazılmadı; yeni maça girebilirsin.';}
-    else if(status==='idle'){title='ARENA HAZIR';detail='Hemen denemek için Botla Savaş (Tek Başına) düğmesine bas. Gerçek oyuncuyla oynamak için Rakip Ara.';}
-    else if(status==='waiting'){title='RAKİP BEKLENİYOR';detail='Gerçek oyuncu bekleniyor. Tek başına denemek istersen Botla Savaş düğmesine bas; bekleme kuyruğundan çıkıp botla hemen eşleşirsin.';}
+    if(error){title=lt('BAĞLANTI HATASI','CONNECTION ERROR');detail=error;}
+    else if(status==='interrupted'){title=lt('MAÇ OTURUMU İPTAL','MATCH INTERRUPTED');detail=snapshot.message||lt('Sunucu yeniden başladı. Yenilgi veya ödül yazılmadı; yeni maça girebilirsin.','The server restarted. No defeat or reward was recorded; you can start a new match.');}
+    else if(status==='idle'){title=lt('ARENA HAZIR','ARENA READY');detail=lt('Hemen denemek için Botla Savaş (Tek Başına) düğmesine bas. Gerçek oyuncuyla oynamak için Rakip Ara.','Start a bot match right away or search for a real opponent.');}
+    else if(status==='waiting'){title=lt('RAKİP BEKLENİYOR','WAITING FOR OPPONENT');detail=lt('Gerçek oyuncu bekleniyor. Tek başına denemek istersen Botla Savaş düğmesine bas; bekleme kuyruğundan çıkıp botla hemen eşleşirsin.','Waiting for a real player. Select bot training to leave the queue and start immediately.');}
     else if(status==='ended'){
-      title=room?.winner===null?'BERABERE':room?.winner===snapshot.you?'ZAFER':'MAĞLUBİYET';
-      detail=room?.reason==='disconnect'?'Rakip bağlantıyı kaybetti.':room?.reason==='forfeit'?'Bir oyuncu düellodan ayrıldı.':'Yeni maç için Botla Savaş düğmesine basabilir veya Çık ile gerçek oyuncu arayabilirsin.';
+      title=room?.winner===null?lt('BERABERE','DRAW'):room?.winner===snapshot.you?tx('victory'):lt('MAĞLUBİYET','DEFEAT');
+      detail=room?.reason==='disconnect'?lt('Rakip bağlantıyı kaybetti.','Opponent disconnected.'):room?.reason==='forfeit'?lt('Bir oyuncu düellodan ayrıldı.','A player forfeited the duel.'):lt('Yeni maç için Botla Savaş düğmesine basabilir veya Çık ile gerçek oyuncu arayabilirsin.','Start another bot match or exit to search for a real player.');
     }
-    if(status==='ended'&&!room?.isPractice&&receiptRecovery.pending)detail+=' · Maç kaydı sunucuya yeniden gönderiliyor.';
+    if(status==='ended'&&!room?.isPractice&&receiptRecovery.pending)detail+=' · '+lt('Maç kaydı sunucuya yeniden gönderiliyor.','Resending the match receipt to the server.');
     const el=$('#arena-message');el.hidden=status==='active'&&!error;
     el.innerHTML=title?`<b>${esc(title)}</b><p>${esc(detail)}</p>`:'';
-    $('#arena-connection').textContent=error?'Bağlantı kesildi':({idle:'Arena hazır',interrupted:'Maç oturumu iptal',waiting:'Eşleşme bekleniyor',active:'Canlı düello sürüyor',ended:'Maç tamamlandı'})[status]||'Hazırlanıyor';
-    $('#arena-match').textContent=room?`${room.isPractice?'BOT ('+trainingLabel(room.botDifficulty)+') · ':''}${room.players.map(p=>p.name).join(' ⚔ ')} · ${Math.max(0,Math.ceil(120-room.elapsed))} sn kaldı`:'Sunuculu 1v1 · bot antrenmanı veya gerçek oyuncu';
+    $('#arena-connection').textContent=error?lt('Bağlantı kesildi','Disconnected'):({idle:lt('Arena hazır','Arena ready'),interrupted:lt('Maç oturumu iptal','Match interrupted'),waiting:lt('Eşleşme bekleniyor','Matchmaking'),active:lt('Canlı düello sürüyor','Live duel in progress'),ended:lt('Maç tamamlandı','Match finished')})[status]||lt('Hazırlanıyor','Preparing');
+    $('#arena-match').textContent=room?`${room.isPractice?'BOT ('+trainingLabel(room.botDifficulty)+') · ':''}${room.players.map(p=>p.name).join(' ⚔ ')} · ${Math.max(0,Math.ceil(120-room.elapsed))} ${lt('sn kaldı','sec left')}` :lt('Sunuculu 1v1 · bot antrenmanı veya gerçek oyuncu','Server 1v1 · bot training or real players');
     const you=room?.players.find(p=>p.id===snapshot.you),enemy=room?.players.find(p=>p.id!==snapshot.you);
     const hud=$('#arena-live-hud');hud.hidden=!(room&&(status==='active'||status==='ended'));
     if(you&&enemy){
@@ -108,8 +108,8 @@ export function mountArena(root){
     $('[data-arena-leave]').disabled=!token||(status==='idle'&& !error)||busy;
     const me=room?.players.find(p=>p.id===snapshot.you);
     if(status==='ended'&&room&&rewarded!==room.id){rewarded=room.id;if(room.isPractice)window.dispatchEvent(new CustomEvent('starfort:practice-result',{detail:{won:room.winner===snapshot.you,mode:'duel',matchId:room.id,difficulty:room.botDifficulty||botDifficulty}}));}
-    $('[data-arena-burst] small').textContent=me&&me.burstReady>0?`${me.burstReady.toFixed(1)} sn`: 'Q · 8 sn';
-    $('[data-arena-dash] small').textContent=me&&me.dashReady>0?`${me.dashReady.toFixed(1)} sn`: 'Space · 5 sn';
+    $('[data-arena-burst] small').textContent=me&&me.burstReady>0?`${me.burstReady.toFixed(1)} ${lt('sn','sec')}`: `Q · 8 ${lt('sn','sec')}`;
+    $('[data-arena-dash] small').textContent=me&&me.dashReady>0?`${me.dashReady.toFixed(1)} ${lt('sn','sec')}`: `Space · 5 ${lt('sn','sec')}`;
   }
   function draw(time){paint(time);raf=requestAnimationFrame(draw);}
   let epoch=0;
