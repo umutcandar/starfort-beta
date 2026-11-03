@@ -217,3 +217,12 @@ export function displayRealm(realm){
  return {...realm,...(REALM_DISPLAY_EN[realm.chapter]||{})};
 }
 export const displayResource=id=>local(({gold:'Altın',wood:'Kereste',stone:'Taş',aether:'Yıldız özü'})[id]||id,({gold:'Gold',wood:'Timber',stone:'Stone',aether:'Star essence'})[id]||id);
+
+/** Translate only presentation units, never their underlying economic values. */
+export function displayBuildingUnit(unit){
+ if(!international()||typeof unit!=='string')return unit;
+ const fixed={'% köy üretim bonusu':'% village production bonus','% takım saldırısı':'% party attack','% takım canı':'% party health'};
+ if(fixed[unit])return fixed[unit];
+ const match=/^(Altın|Kereste|Taş|Yıldız özü) \/ dk$/.exec(unit);
+ return match?displayResource(({Altın:'gold',Kereste:'wood',Taş:'stone','Yıldız özü':'aether'})[match[1]])+' / min':unit;
+}
