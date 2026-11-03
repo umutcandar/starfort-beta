@@ -55,30 +55,35 @@ export function shadowAtmosphereParticles(stage){
 export function shadowVoiceStatus({audio=false,voice=false}={}){
  return {audio:Boolean(audio),voice:Boolean(voice&&audio),caption:'Seslendirme tarayıcının Türkçe ses sentezine bağlıdır; profesyonel kayıt değildir.'};
 }
-function createVoice(storage){
+function createVoice(storage,onSpeechState=()=>{}){
  const key='starfort:shadow-voice-v240',lang='tr-TR';
- let enabled=false;
+ let enabled=false,current=null;
  try{enabled=storage?.getItem(key)==='1';}catch{}
  const canSpeak=()=>typeof speechSynthesis!=='undefined'&&typeof SpeechSynthesisUtterance!=='undefined';
+ const cancel=()=>{current=null;onSpeechState(false);if(canSpeak())try{speechSynthesis.cancel();}catch{}};
  const speak=(stage,key,active)=>{
   if(!enabled||!active||!canSpeak())return false;
   const text=shadowVoiceLines(stage)[key];
   if(!text)return false;
   try{
-   speechSynthesis.cancel();
+   cancel();
    const utterance=new SpeechSynthesisUtterance(text);
    utterance.lang=lang;utterance.rate=[.73,.82,.87,.72][stage-1]||.8;
    utterance.pitch=[.55,.9,.65,.45][stage-1]||.7;utterance.volume=.7;
    const turkish=speechSynthesis.getVoices().find(x=>x.lang?.toLowerCase().startsWith('tr'));
    if(turkish)utterance.voice=turkish;
+   current=utterance;
+   utterance.onstart=()=>{if(current===utterance)onSpeechState(true);};
+   const finish=()=>{if(current===utterance){current=null;onSpeechState(false);}};
+   utterance.onend=finish;utterance.onerror=finish;
    speechSynthesis.speak(utterance);
    return true;
-  }catch{return false;}
+  }catch{cancel();return false;}
  };
  return {get enabled(){return enabled},get available(){return canSpeak()},
   set(value){enabled=Boolean(value);try{storage?.setItem(key,enabled?'1':'0')}catch{}
-   if(!enabled&&canSpeak())speechSynthesis.cancel();return enabled;},
-  speak,cancel(){if(canSpeak())speechSynthesis.cancel();}};
+   if(!enabled)cancel();return enabled;},
+  speak,cancel};
 }
 function synthSound(audioActive){
  let ctx=null,out=null,disposed=false,ambientTimer=null,ambientStage=0,ambientBeat=0;
@@ -158,12 +163,16 @@ export function createShadowBattleDirector({
  audioActive=()=>false,
  reduceMotion=()=>typeof window!=='undefined'&&window.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true
 }={}){
- const voice=createVoice(storage),synth=synthSound(audioActive);
- let stage=1,root=null,model=null,lastLine=null,disposed=false,quality3D=true;
+ let stage=1,root=null,model=null,lastLine=null,disposed=false,quality3D=true,speaking=false;
+ const voice=createVoice(storage,active=>{
+  speaking=Boolean(active);model?.speak?.(speaking);
+  const scene=root?.querySelector('.shadow-battle-illustration');
+  if(scene)scene.dataset.shadowSpeaking=String(speaking);
+ }),synth=synthSound(audioActive);
  try{quality3D=storage?.getItem('starfort:shadow-render-v240')!=='2d'}catch{}
  function stopModel(){model?.destroy();model=null;root=null;}
  function mount(container,battle){
-  stopModel();if(disposed||!container||!battle){synth.stopAmbient();return false;}
+  voice.cancel();stopModel();if(disposed||!container||!battle){synth.stopAmbient();return false;}
   root=container;stage=stageOk(battle.stage)?battle.stage:1;
   synth.startAmbient(stage);
   const canvas=root.querySelector('[data-shadow-3d-canvas]');
@@ -196,7 +205,7 @@ export function createShadowBattleDirector({
   }
   return list.map(x=>x.type);
  }
- return {mount,play,unlock(){return synth.unlock()},get quality3D(){return quality3D},
+ return {mount,play,unlock(){return synth.unlock()},get speaking(){return speaking},get quality3D(){return quality3D},
   toggleQuality(){quality3D=!quality3D;
    try{storage?.setItem('starfort:shadow-render-v240',quality3D?'3d':'2d')}catch{}
    return quality3D;},get voiceEnabled(){return voice.enabled},

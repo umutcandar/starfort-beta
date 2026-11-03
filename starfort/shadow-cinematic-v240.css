@@ -7,6 +7,7 @@
   filter:drop-shadow(0 12px 14px #02070a80)}
 .shadow-battle-illustration.has-real-webgl .shadow-svg-backdrop{opacity:.19}
 .shadow-battle-illustration.has-real-webgl .shadow-boss-webgl{opacity:1}
+.shadow-battle-illustration[data-shadow-speaking="true"].has-real-webgl .shadow-boss-webgl{filter:drop-shadow(0 12px 14px #02070a80) drop-shadow(0 0 10px #eec28f65)}
 .shadow-ambient-motes{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
 .shadow-ambient-motes i{position:absolute;left:var(--mote-x);top:var(--mote-y);width:var(--mote-size);height:var(--mote-size);border-radius:100%;background:var(--boss-accent,#f5bf76);opacity:.32;box-shadow:0 0 13px var(--boss-accent,#ffd59c)}
 .shadow-battle-illustration[data-shadow-scene="1"]{--boss-accent:#a5d188}
