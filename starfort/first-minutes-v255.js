@@ -27,12 +27,32 @@ export function firstMinuteGuide(account){
   lines.map(s=>'<li>'+s+'</li>').join('')+'</ol><p>'+fm('battleTip')+'</p>'+
   '<button class="primary" data-guide-first-stage>'+fm('step2')+'</button></details>';
 }
-export function labeledBattleAction(s){
- const k=String(s||'').toLowerCase();
- if(['strike','guard','feint','rally'].includes(k))
-  return ({strike:{tr:'Saldır',en:'Attack'},guard:{tr:'Savun',en:'Guard'},
-   feint:{tr:'Aldat',en:'Feint'},rally:{tr:'Toparlan',en:'Rally'}}[k][getLocale()==='tr'?'tr':'en']);
- if(k.startsWith('skill:'))return getLocale()==='tr'?'Kahraman yeteneği':'Hero skill';
- if(k==='skill')return getLocale()==='tr'?'Yetenek':'Skill';
- return s;
+const COMBAT_L10N={
+ tr:['Saldır','Savun','Aldat','Toparlan','Kahraman yeteneği','Dalga','başladı','Çantayı aç'],
+ en:['Attack','Guard','Feint','Rally','Hero skill','Wave','began','Open bag'],
+ es:['Atacar','Defender','Finta','Reagrupar','Habilidad','Oleada','comenzó','Abrir bolsa'],
+ 'pt-BR':['Atacar','Defender','Finta','Reagrupar','Habilidade','Onda','começou','Abrir bolsa'],
+ fr:['Attaque','Garde','Feinte','Ralliement','Compétence','Vague','commencée','Ouvrir le sac'],
+ de:['Angriff','Abwehren','Finte','Sammeln','Heldenfähigkeit','Welle','begonnen','Beutel öffnen'],
+ it:['Attacco','Difesa','Finta','Raduno','Abilità eroe','Ondata','iniziata','Apri borsa'],
+ ru:['Атака','Защита','Обман','Сбор','Навык героя','Волна','началась','Открыть сумку'],
+ ar:['هجوم','دفاع','مراوغة','تجمع','مهارة البطل','موجة','بدأت','افتح الحقيبة'],
+ hi:['हमला','रक्षा','छल','पुनर्गठन','नायक कौशल','लहर','शुरू हुई','बैग खोलें'],
+ id:['Serang','Bertahan','Tipuan','Pulihkan','Keahlian pahlawan','Gelombang','dimulai','Buka tas'],
+ ja:['攻撃','防御','フェイント','再集結','英雄スキル','ウェーブ','開始','バッグを開く'],
+ ko:['공격','방어','속임수','재정비','영웅 기술','웨이브','시작','가방 열기'],
+ 'zh-CN':['攻击','防御','佯攻','集结','英雄技能','波次','开始','打开背包']
+};
+export const bagAction=()=>COMBAT_L10N[getLocale()]?.[7]??COMBAT_L10N.en[7];
+export function labeledBattleAction(value){
+ const original=String(value??''),language=getLocale();
+ const copy=COMBAT_L10N[language]??COMBAT_L10N.en;
+ const action=['strike','guard','feint','rally'].indexOf(original.toLowerCase());
+ if(action>=0)return copy[action];
+ if(original.toLowerCase().startsWith('skill:')||original.toLowerCase()==='skill')return copy[4];
+ const m=/^Dalga (\d+) başladı$/.exec(original);
+ if(m)return copy[5]+' '+m[1]+' '+copy[6];
+ return original;
 }
+export const auditCombatLanguages=languages=>languages.flatMap(lang=>
+ (!Array.isArray(COMBAT_L10N[lang])||COMBAT_L10N[lang].length!==8||COMBAT_L10N[lang].some(x=>!x?.trim())?[lang+'.battleActions']:[]));
