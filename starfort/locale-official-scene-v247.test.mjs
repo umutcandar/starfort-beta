@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SUPPORTED_LOCALES,setLocale} from './locale-v243.js';
-import {SCENE_KEYS,OFFICIAL_SCENE_TEXT,sceneText,sceneMood,sceneBossAbility,auditSceneCopy} from './locale-official-scene-v247.js';
+import {SCENE_KEYS,OFFICIAL_SCENE_TEXT,sceneText,sceneMood,sceneBossAbility,sceneStageEnemy,auditSceneCopy} from './locale-official-scene-v247.js';
 import {officialCombatScene} from './official-combat-scene.js';
 import {createState} from './rules.js';
 const t=Date.UTC(2026,10,3,12);
@@ -11,6 +11,7 @@ test('all scene headings, biomes and Act II boss powers are translated in 14 lan
  for(const lang of SUPPORTED_LOCALES){assert.equal(Object.keys(OFFICIAL_SCENE_TEXT[lang]).length,28);}
  try{for(const lang of SUPPORTED_LOCALES){setLocale(lang);
   assert.ok(sceneMood(1).trim()&&sceneBossAbility(1).trim());
+  assert.ok(sceneStageEnemy(1).trim()&&sceneStageEnemy(8).trim());
   assert.equal(sceneText('actorSkill',{hero:'Aldren'}).includes('Aldren'),true);
  }}finally{setLocale('tr');}
 });

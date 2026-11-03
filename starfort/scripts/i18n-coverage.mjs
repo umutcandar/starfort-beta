@@ -137,7 +137,7 @@ const summary={
   nativeTrainingAndShadowRewards:{fixedPhrases:AUXILIARY_KEYS.length,additionalLocales:12},
   shadowFrontierMastery:{fixedPhrases:SHADOW_HUD_KEYS.length,additionalLocales:12},
   bossVoiceAndPhase:{stages:4,voiceLinesPerStage:4,additionalLocales:12,phaseTitles:14,phaseHints:7,ttsLocaleTags:14},
-  officialCombatScene:{uiKeys:SCENE_KEYS.length,biomeMoods:8,bossAbilities:8,languages:14},
+  officialCombatScene:{uiKeys:SCENE_KEYS.length,biomeMoods:8,bossAbilities:8,storyEnemyNames:8,languages:14},
   villageClanHeroShell:{fixedPhrases:APP_NATIVE_KEYS.length,additionalLocales:12},
   teamBattleHud:{fixedPhrases:TEAM_HUD_KEYS.length,additionalLocales:12},
   verifiedExpeditionCore:{translatedLabelsPerAdditionalLanguage:OFFICIAL_KEYS.length,additionalLanguages:12,literalPairsCovered:122,dynamicNamesCovered:7},

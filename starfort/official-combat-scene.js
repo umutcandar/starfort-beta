@@ -7,7 +7,7 @@ import {chapterAtmosphere} from './battle-atmosphere.js';
 import {getLocale} from './locale-v243.js';
 import {displayStage} from './locale-game-content-v245.js';
 import {displaySecondAct} from './locale-act-two-v245.js';
-import {sceneText,sceneMood,sceneBossAbility} from './locale-official-scene-v247.js';
+import {sceneText,sceneMood,sceneBossAbility,sceneStageEnemy} from './locale-official-scene-v247.js';
 const rects={aldren:[1,0,560],lyra:[1,560,525],rovan:[1,1085,451],mira:[2,0,575],doran:[2,575,565],vesper:[2,1140,396],eira:[3,0,505],raider:['enemies',0,512],caster:['enemies',512,528],boss:['enemies',1040,496]};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function officialSpriteStyle(id){
@@ -40,6 +40,6 @@ export function officialCombatScene(game,mission,report=null){
   <div class="official-weapon-flash" aria-hidden="true"></div><div class="official-impact-ring" aria-hidden="true"></div>
   ${bossAbility?.active?`<div class="act2-ability-banner" aria-label="${esc(sceneText('bossAbility'))}">${bossAbility.icon} ${esc(sceneBossAbility(bossAbility.stage))} · ${esc(sceneText(bossAbility.counter==='guard'?'shield':'specialAbility'))}</div>`:''}
   <div class="official-action-caption" role="status">${esc(lastLabel)}</div>
-  <div class="official-arena-foot"><span>${esc(act2?displaySecondAct(act2.stage)?.boss:sceneText('enemyBoss'))}</span><span>${esc(sceneText('power'))} ${Number(mission.power||0).toLocaleString(getLocale())} · ${mission.turn} ${esc(sceneText('moves'))}</span></div>
+  <div class="official-arena-foot"><span>${esc(act2?displaySecondAct(act2.stage)?.boss:sceneStageEnemy(stage.id))}</span><span>${esc(sceneText('power'))} ${Number(mission.power||0).toLocaleString(getLocale())} · ${mission.turn} ${esc(sceneText('moves'))}</span></div>
  </section>`;
 }
