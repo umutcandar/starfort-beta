@@ -169,3 +169,13 @@
 .story-boss-v250.phase-3{border-color:#d87e70a6;background:linear-gradient(120deg,#443044,#1b2334)}
 .story-boss-v250.phase-3 .story-boss-v250-track i.active{background:#cc7566}
 @media(max-width:520px){.story-boss-v250{padding:11px;gap:8px}.story-boss-v250 strong{font-size:15px}.story-boss-v250-track i{width:8px;height:27px}}
+
+/* v2.51: guaranteed weekly equipment and counterable armor-sunder announcement. */
+.boss-relic-preview{display:grid;gap:6px;margin:13px 0;padding:12px 14px;border:1px solid #d9b77791;border-radius:9px;background:linear-gradient(135deg,#3a3244,#20333d);min-width:0}
+.boss-relic-preview span{font-size:11px;color:#efcf9c}
+.boss-relic-preview strong{font:700 16px/1.4 Georgia,serif;color:#ffe1a9;overflow-wrap:anywhere}
+.boss-relic-preview small{font-size:10px;line-height:1.6;color:#c3d5d2;overflow-wrap:anywhere}
+.boss-loot-delivered{display:block;margin-top:10px;color:#f5dfa4;font-size:12px;font-weight:700}
+.server-enemy-intent.intent-sunder{border-color:#f0aa7588;background:linear-gradient(135deg,#442d38,#1c283e)}
+.server-enemy-intent.intent-sunder .intent-symbol{color:#ffd09b}
+@media(max-width:510px){.boss-relic-preview{padding:10px 11px}.boss-relic-preview strong{font-size:14px}}
