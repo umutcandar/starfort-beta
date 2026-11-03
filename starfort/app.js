@@ -1076,7 +1076,7 @@ async function runBuildingAction(mode,id,button){
  finally{constructionRequestPending=false;button.disabled=false;if($('#building-dialog').open)renderBuildingDialog();}
 }
 async function accountAutoEquip(heroId){
- if(villageBusy||!accountProgressSnapshot)return;
+ if(villageBusy||!accountReady()||!accountProgressSnapshot)return;
  const candidate=villageView();
  const draft=structuredClone({heroes:candidate.heroes,inventory:candidate.inventory,loadouts:candidate.loadouts,battle:null});
  const optimized=R.autoEquipHero(draft,heroId);
@@ -1084,11 +1084,32 @@ async function accountAutoEquip(heroId){
  const original=accountProgressSnapshot.loadouts[heroId]||{},desired=draft.loadouts[heroId]||{};
  const changes=['weapon','armor','relic'].filter(slot=>original[slot]!==desired[slot]);
  if(!changes.length)return notify('Mevcut donanım rolüne uygun.');
- for(const slot of changes){
-  if(original[slot])await accountProgressAction('unequip',heroId,slot);
- }
- for(const slot of changes){
-  if(desired[slot])await accountProgressAction('equip',heroId,desired[slot]);
+ const owner=accountSession().user.id;
+ villageBusy=true;
+ try{
+  // One lock over every authenticated RPC: no intermediate render can cause
+  // a second click to race the first, or skip armor/weapon/relic slots.
+  for(const slot of changes){
+   if(original[slot]){
+    const response=await accountProgressRequest('unequip',{target:heroId,aux:slot});
+    if(response.identity!==owner||accountSession()?.user?.id!==owner)throw Error('Hesap oturumu değişti.');
+    acceptAccountProgress(response);
+   }
+  }
+  for(const slot of changes){
+   if(desired[slot]){
+    const response=await accountProgressRequest('equip',{target:heroId,aux:desired[slot]});
+    if(response.identity!==owner||accountSession()?.user?.id!==owner)throw Error('Hesap oturumu değişti.');
+    acceptAccountProgress(response);
+   }
+  }
+  notify('✦ '+(getLocale()==='tr'?'Tüm uygun ekipman yuvaları güncellendi.':'All eligible gear slots updated.'));
+ }catch(error){
+  notify('Çanta: '+error.message);
+ }finally{
+  villageBusy=false;
+  await refreshVillage({preserve:true,silent:true});
+  render();
  }
 }
 function dispatch(action) {
