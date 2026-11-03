@@ -1,4 +1,6 @@
 import {STAGES,ITEMS,HEROES,teamPower} from './rules.js';
+import {formatNumber} from './locale-v243.js';
+import {local,displayStage,displayOperation,displayResource} from './locale-game-content-v245.js';
 import {secondActMarkup} from './second-act-view.js';
 import {chronicleMarkup} from './commander-chronicle.js';
 import {secondActMission} from './second-act.js';
@@ -10,14 +12,14 @@ import {officialNextGoal,officialNextGoalMarkup,officialStoryReadiness} from './
 import {warfrontMarkup} from './warfront-v237.js';
 import {shadowFrontierMarkup,SHADOW_STAGES} from './shadow-frontier-v238.js';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const n=v=>new Intl.NumberFormat('tr-TR').format(v);
-const names={win:'Sefer zaferi',hero:'Kahraman eğitimi',forge:'Ekipman üretimi',maze:'Labirent katı'};
+const n=v=>formatNumber(Number(v));
+const names={win:['Sefer zaferi','Expedition victory'],hero:['Kahraman eğitimi','Hero training'],forge:['Ekipman üretimi','Equipment crafted'],maze:['Labirent katı','Labyrinth floor']};
 function progressBadges(account){
- const pieces=[['win','Sefer'],['hero','Kahraman'],['forge','Demirhane'],['maze','Labirent'],['rift','Yarık'],['veteran','Usta']];
+ const pieces=[['win',local('Sefer','Expedition')],['hero',local('Kahraman','Hero')],['forge',local('Demirhane','Forge')],['maze',local('Labirent','Labyrinth')],['rift',local('Yarık','Rift')],['veteran',local('Usta','Veteran')]];
  return pieces.map(([k,label])=>`<span><b>${n(account.counters[k]||0)}</b><small>${label}</small></span>`).join('');
 }
 export function accountExpeditionMarkup(game,account,now=Date.now(),selectedRealm=null,combatDelta=null,warfront=null,shadow=null,shadowHiddenAt=null,shadowSound={}){
- if(!account)return `<section class="guild-panel server-expedition"><h2>Sunucu seferleri</h2><p>Hesap ilerlemesi doğrulanıyor. Yerel kayıtlar buraya aktarılmaz.</p><button class="secondary" data-village-refresh>Yeniden bağlan</button></section>`;
+ if(!account)return `<section class="guild-panel server-expedition"><h2>${local('Sunucu seferleri','Server expeditions')}</h2><p>${local('Hesap ilerlemesi doğrulanıyor. Yerel kayıtlar buraya aktarılmaz.','Verifying server progress. Local saves are never imported into verified progression.')}</p><button class="secondary" data-village-refresh>${local('Yeniden bağlan','Reconnect')}</button></section>`;
  const cleared=new Set(account.cleared),mission=account.mission,report=account.lastReport;
  const anyMission=mission||shadow?.battle;
  const next=Math.min(8,cleared.size+1);
@@ -26,18 +28,18 @@ export function accountExpeditionMarkup(game,account,now=Date.now(),selectedReal
   const readiness=officialStoryReadiness(game,account,stage.id);
   const operations=STORY_OPERATIONS[stage.id];
   const progress=done?3:mission?.mode==='story'&&mission.stage===stage.id?operationStatus(mission)?.wave-1||0:0;
-  const nodes=`<ol class="story-operation-list" aria-label="Üç görevli hikâye rotası">${operations.map((op,i)=>`<li class="${i<progress?'complete':i===progress&&open?'current':'pending'}"><span>${i<progress?'✓':i+1}</span><div><strong>${esc(op.title)}</strong><small>${esc(op.objective)}</small></div></li>`).join('')}</ol>`;
-  return `<article class="server-stage-card ${done?'complete':''}"><div><small>BÖLGE ${stage.id.toString().padStart(2,'0')} · ${done?'TEMİZLENDİ':open?'AÇIK':'KİLİTLİ'}</small><h3>${esc(stage.name)}</h3><span aria-label="${stars} yıldız" class="server-star-row">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</span><p>${esc(stage.description)}</p>${nodes}<small>Önerilen takım gücü: ${n(stage.recommendedPower)}</small>${open&&!done&&!readiness.ok?`<small class="official-stage-gate">Eksik: ${readiness.missing.map(x=>esc(x.label)+' ('+x.value+'/'+x.required+')').join(' · ')}</small>`:''}</div>
-  <button class="${done?'secondary':'primary'}" data-account-stage="${stage.id}" ${!open||anyMission||!readiness.ok?'disabled':''}>${anyMission?'Savaş sürüyor':done?'Yeniden sefer':'⚔ Sunucu seferine gir'}</button></article>`;
+  const nodes=`<ol class="story-operation-list" aria-label="${local('Üç görevli hikâye rotası','Three-operation story route')}">${operations.map((op,i)=>`<li class="${i<progress?'complete':i===progress&&open?'current':'pending'}"><span>${i<progress?'✓':i+1}</span><div><strong>${esc(displayOperation(op).title)}</strong><small>${esc(displayOperation(op).objective)}</small></div></li>`).join('')}</ol>`;
+  return `<article class="server-stage-card ${done?'complete':''}"><div><small>${local('BÖLGE','REGION')} ${stage.id.toString().padStart(2,'0')} · ${done?local('TEMİZLENDİ','CLEARED'):open?local('AÇIK','AVAILABLE'):local('KİLİTLİ','LOCKED')}</small><h3>${esc(displayStage(stage).name)}</h3><span aria-label="${stars} ${local('yıldız','stars')}" class="server-star-row">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</span><p>${esc(displayStage(stage).description)}</p>${nodes}<small>${local('Önerilen takım gücü','Recommended party power')}: ${n(stage.recommendedPower)}</small>${open&&!done&&!readiness.ok?`<small class="official-stage-gate">${local('Eksik','Missing')}: ${readiness.missing.map(x=>esc(x.label)+' ('+x.value+'/'+x.required+')').join(' · ')}</small>`:''}</div>
+  <button class="${done?'secondary':'primary'}" data-account-stage="${stage.id}" ${!open||anyMission||!readiness.ok?'disabled':''}>${anyMission?local('Savaş sürüyor','Battle in progress'):done?local('Yeniden sefer','Replay expedition'):local('⚔ Sunucu seferine gir','⚔ Start server expedition')}</button></article>`;
  }).join('');
  const wait=mission?Math.max(0,3000-(now-mission.lastTurnAt)):0;
  const heroAbilities=mission?(game.team||[]).map(id=>HEROES.find(h=>h.id===id)).filter(Boolean).map(hero=>{
   const until=Math.max(0,(mission.cooldowns?.[hero.id]||0)-(mission.turn+1));
-  return `<button class="official-hero-ability" data-account-turn="skill:${hero.id}" ${wait||until?'disabled':''} title="${esc(hero.skill)}"><img src="assets/${hero.id}.webp" alt=""><span><b>${esc(hero.name)}</b><small>${until?'Yenileniyor · '+until+' tur':esc(hero.role==='healer'?'Şifa':hero.role==='tank'?'Siper':'Özel saldırı')}</small></span></button>`;
+  return `<button class="official-hero-ability" data-account-turn="skill:${hero.id}" ${wait||until?'disabled':''} title="${esc(hero.skill)}"><img src="assets/${hero.id}.webp" alt=""><span><b>${esc(hero.name)}</b><small>${until?local('Yenileniyor · ','Cooldown · ')+until+local(' tur',' turns'):esc(hero.role==='healer'?local('Şifa','Heal'):hero.role==='tank'?local('Siper','Guard'):local('Özel saldırı','Special attack'))}</small></span></button>`;
  }).join(''):'';
- const campaignHeader=`<header class="server-progress-header"><div><span class="eyebrow">KOMUTAN HESABI · DOĞRULANMIŞ SEFERLER</span><h2>Kuzey Seferleri</h2><p>Gerçek kaynaklar, savaş sonucu ve ganimet sunucuda hesaplanır. Yerel kayıt veya değiştirilmiş savaş ekranı ödül kazandıramaz.</p></div><div class="official-server-actions"><button class="secondary" data-village-refresh aria-label="Sunucu savaşını yeniden doğrula">↻ Sunucuyu yenile</button><button class="secondary" data-shadow-jump>🌘 Gölge Sınırı'na git</button><button class="secondary" data-close-view>Köye dön</button></div></header>`;
+ const campaignHeader=`<header class="server-progress-header"><div><span class="eyebrow">${local('KOMUTAN HESABI · DOĞRULANMIŞ SEFERLER','COMMANDER ACCOUNT · VERIFIED EXPEDITIONS')}</span><h2>${local('Kuzey Seferleri','Northern Expeditions')}</h2><p>${local('Gerçek kaynaklar, savaş sonucu ve ganimet sunucuda hesaplanır. Yerel kayıt veya değiştirilmiş savaş ekranı ödül kazandıramaz.','Real resources, battle outcomes and loot are calculated on the server. Local saves or modified combat screens cannot grant rewards.')}</p></div><div class="official-server-actions"><button class="secondary" data-village-refresh aria-label="${local('Sunucu savaşını yeniden doğrula','Revalidate server battle')}">↻ ${local('Sunucuyu yenile','Refresh server')}</button><button class="secondary" data-shadow-jump>🌘 ${local("Gölge Sınırı'na git",'Go to Shadow Frontier')}</button><button class="secondary" data-close-view>${local('Köye dön','Back to village')}</button></div></header>`;
  const deltaUi=mission&&combatDelta&&!combatDelta.initial&&combatDelta.turn===mission.turn?
-  `<div class="official-damage-summary" role="status"><span>⚔ Sunucu hasarı: <b>${n(combatDelta.damage)}</b></span><span>🛡 Alınan hasar: <b>${n(combatDelta.received)}</b></span><small>Doğrulanmış ${n(combatDelta.turn)}. tur</small></div>`:'';
+  `<div class="official-damage-summary" role="status"><span>⚔ ${local('Sunucu hasarı','Server damage')}: <b>${n(combatDelta.damage)}</b></span><span>🛡 ${local('Alınan hasar','Damage taken')}: <b>${n(combatDelta.received)}</b></span><small>${local('Doğrulanmış','Verified')} ${n(combatDelta.turn)}. ${local('tur','turn')}</small></div>`:'';
  const operation=operationStatus(mission),act2Mission=secondActMission(mission),act2Boss=actTwoBossStatus(mission);
  const intent=mission?.enemyIntent||'strike';
  const nextAttack={strike:{icon:'⚔',name:'Normal Saldırı',hint:'Normal hasar. İstersen saldırıya geç.'},crush:{icon:'☄',name:'Ağır Darbe',hint:'Siper komutunu kullan: ağır darbeyi büyük ölçüde engellersin.'},shield:{icon:'🛡',name:'Kalkan Savunması',hint:'Özel kahraman yetenekleri düşmanın kalkanını deler. ◈ Aldat da kalkanı aşar.'},drain:{icon:'☾',name:'Can Emme',hint:'Düşman hasar verdiğinde kendini iyileştirir. Güçlü saldırıya yönel.'}}[intent];
