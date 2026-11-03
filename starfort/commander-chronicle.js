@@ -1,5 +1,6 @@
 import {textKey as tx,longText as lt} from './locale-sections-v247.js';
-import {formatNumber} from './locale-v243.js';
+import {formatNumber,getLocale} from './locale-v243.js';
+const rankLabel=()=>tx('chronicleRank').toLocaleUpperCase(getLocale());
 /** Komutan Kroniği — 30 long-horizon milestones based solely on trusted server victories.
  * The RPC verifies each reward; this view only describes remaining progress. */
 const sigils=['Kor','Cam','Göktaşı','Diken','Kül','Gece','Fırtına','Şafak','Yıldız','Ebedî'];
@@ -33,12 +34,12 @@ export function chronicleMarkup(account){
  return `<section class="commander-chronicle" aria-label="${lt('Komutan Kroniği, kalıcı zafer rütbeleri','Commander Chronicle, permanent victory ranks')}">
   <header><div><span class="eyebrow">${lt('UZUN VADELİ HESAP GELİŞİMİ · SUNUCU DOĞRULAMALI','LONG-TERM ACCOUNT PROGRESSION · SERVER-VERIFIED')}</span><h3>✦ ${tx('chronicleTitle')}</h3>
   <p>${lt('30 kalıcı rütbe, giderek büyüyen zafer hedefleri. Her rütbenin sandığı yalnızca bir kez açılır; bütün kaynaklar sunucu kasasına işlenir.','30 permanent ranks with increasing victory targets. Each rank chest can be claimed once; all resources go to your verified account.')}</p></div>
-  <strong class="chronicle-current-rank">${status.claimed}<small>/ 30 ${tx('chronicleRank')}</small></strong></header>
+  <strong class="chronicle-current-rank">${status.claimed}<small>/ 30 ${rankLabel()}</small></strong></header>
   <div class="chronicle-journey"><span>${lt('Doğrulanmış zafer','Verified victories')}: <b>${formatNumber(status.wins)}</b></span>
   <span>${next?tx('chronicleNext')+': '+esc(displayChronicleRank(next)):lt('Bütün rütbeler tamamlandı','All ranks completed')}</span></div>
   <div class="chronicle-track" role="progressbar" aria-valuemin="0" aria-valuemax="${next?.wins||status.wins}" aria-valuenow="${Math.min(status.wins,next?.wins||status.wins)}" aria-label="${lt('Sonraki rütbeye zafer ilerlemesi','Progress toward next victory rank')}"><i style="width:${pct}%"></i></div>
   <div class="chronicle-cards">${upcoming.map(m=>`<article class="chronicle-rank ${status.wins>=m.wins?'ready':''}">
-   <span class="eyebrow">${tx('chronicleRank')} ${String(m.rank).padStart(2,'0')}</span><strong>${esc(displayChronicleRank(m))}</strong>
+   <span class="eyebrow">${rankLabel()} ${String(m.rank).padStart(2,'0')}</span><strong>${esc(displayChronicleRank(m))}</strong>
    <small>${status.wins>=m.wins?'✓ '+tx('complete'):formatNumber(status.wins)+' / '+formatNumber(m.wins)+' '+lt('zafer','wins')}</small>
    <p>${tx('warChest')} · ${formatNumber(m.gold)} ${lt('altın','Gold')} + ${m.aether} ${lt('yıldız özü','Star essence')}</p>
    <button class="${m.rank===status.claimed+1?'primary':'secondary'}" data-account-chronicle="${m.rank}"
