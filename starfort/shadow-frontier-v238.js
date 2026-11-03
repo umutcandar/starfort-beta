@@ -40,21 +40,8 @@ const STAGE_EN=Object.freeze([
 ]);
 const local=(tr,en)=>bilingual(tr,en);
 const displayStage=id=>getLocale()==='tr'?SHADOW_STAGES[id-1]:localizedShadowStage(id-1,STAGE_EN[id-1]);
-const PHASE_NAMES_EN=[
- ['Sleeping Roots','Thorn Watch','Living Ramparts'],
- ['Silent Shores','Song of the Void','Life-Stealing Melody'],
- ['Ash Wind','Ring of Fire','Crimson Storm'],
- ['Faded Throne','Eclipse Gate','Sovereign Awakening']
-];
-function displayPhase(phase,stage,wave){
- if(!phase||getLocale()==='tr')return phase;
- if(phase.id==='eclipse-rage')return {...phase,title:'Eclipse\'s Last Breath',hint:'The boss becomes enraged at critical health: incoming damage increases.'};
- if(phase.id==='eclipse-rise')return {...phase,title:'The Dark Throne Cracks',hint:'The boss changed its attack pattern. Watch its next move.'};
- const title=PHASE_NAMES_EN[stage-1]?.[wave-1]||phase.title;
- const hint=wave===3?['Use Feint to break its shield.','Strike hard against its life drain.','Defend against heavy attacks.','Time your skills carefully in the final phase.'][stage-1]:
-  'Some lost health is restored when the wave ends.';
- return {...phase,title,hint};
-}
+// shadowBossPhase already returns the locale-appropriate title and hint.
+const displayPhase=phase=>phase;
 const stageMap=new Map(SHADOW_STAGES.map(x=>[x.id,x]));
 const heroMap=new Map(HEROES.map(x=>[x.id,x]));
 const itemMap=new Map(ITEMS.map(x=>[x.id,x]));
