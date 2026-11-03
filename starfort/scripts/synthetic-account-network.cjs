@@ -56,12 +56,39 @@
   if(path.startsWith('/auth/v1/token?grant_type=refresh_token'))return ok(authResponse());
   if(path==='/auth/v1/user'&&options.method==='GET')return ok({id:ID,email:mail});
   if(path.startsWith('/auth/v1/logout'))return ok({});
+  if(path.includes('/rest/v1/rpc/sfb_account_api')){
+   const route=payload.route,profileKey='__starfort_qa_guild_profile';
+   const linked=(()=>{try{return JSON.parse(sessionStorage.getItem(profileKey))}catch{return null}})();
+   if(route==='status')return ok({status:200,body:{ok:true,online:true}});
+   if(route==='me')return ok(linked?{status:200,body:{player:linked,guild:null,guilds:[]}}:
+     {status:404,body:{error:'Önce bu e-posta hesabına komutan adı oluştur.'}});
+   if(route==='register'&&typeof payload.data?.name==='string'){
+    const player={id:'qa-commander-1',name:payload.data.name};
+    sessionStorage.setItem(profileKey,JSON.stringify(player));
+    return ok({status:201,body:{player,guild:null,guilds:[]}});
+   }
+   return ok({status:404,body:{error:'Unknown QA guild route'}});
+  }
   if(path.includes('/rest/v1/rpc/sfb_starfort_progress')){
    if(!String(options.headers?.Authorization||'').startsWith('Bearer qa.synthetic.'))return ok({message:'unauthorized'},401);
    const d=read(),a=payload.p_action;
    d.serverNow=now();
+   // Reproduce the first-login transient error reported by real players.
+   // The production client must retry automatically, without a manual button.
+   if(a==='get'&&!sessionStorage.getItem('__starfort_qa_first_get_failure')){
+    sessionStorage.setItem('__starfort_qa_first_get_failure','1');
+    return ok({message:'Temporary game service unavailable'},503);
+   }
    if(a!=='get')d.revision++;
    d.applied=a;
+   if(a==='equip'&&d.heroes[payload.p_target]){
+    const slot=({iron_sword:'weapon',ward_mail:'armor',lunar_charm:'relic',ember_guard:'armor',star_spear:'weapon',guardian_seal:'relic',starbreaker:'weapon'})[payload.p_aux];
+    if(!slot||!(d.inventory[payload.p_aux]>0))return ok({message:'Equipment unavailable'},400);
+    d.loadouts[payload.p_target]??={};d.loadouts[payload.p_target][slot]=payload.p_aux;
+   }
+   if(a==='unequip'&&d.heroes[payload.p_target]&&d.loadouts[payload.p_target]){
+    delete d.loadouts[payload.p_target][payload.p_aux];
+   }
    if(a==='hero'&&d.heroes[payload.p_target]&&d.res.gold>=60){
     d.heroes[payload.p_target]++;d.res.gold-=60;d.counters.hero++;
    }
@@ -69,7 +96,7 @@
     const f=warfrontRead();
     if(f.pending){f.revision++;warfrontWrite({...f,pending:null});}
 
-    d.mission={mode:'story',stage:1,wave:1,waves:3,turn:0,waveTurn:0,tier:0,floor:0,
+    d.mission={mode:'story',balanceVersion:6,stage:1,wave:1,waves:3,turn:0,waveTurn:0,tier:0,floor:0,
      startedAt:now(),lastTurnAt:now()-5000,power:268,enemyHp:130,enemyMaxHp:130,
      playerHp:420,playerMaxHp:420,enemyIntent:'strike',lastAction:'Başladı',cooldowns:{},doctrine:f.pending||'none',lastRallyTurn:0};
    }
