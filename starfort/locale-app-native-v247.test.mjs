@@ -18,5 +18,5 @@ test('main game locale audit covers exact source phrases without modifying click
  const keys=[...new Set([...source.matchAll(regex)].map(m=>(m[3]??m[4]).replace(/\\(['"\\])/g,'$1')))];
  assert.equal(keys.length,74);assert.deepEqual(keys,APP_NATIVE_KEYS);
  assert.match(source,/data-account-maze|data-labyrinth-open/);
- assert.match(source,/accountReady\\(\\)/);
+ assert.ok(source.includes('accountReady()'));
 });
