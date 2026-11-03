@@ -103,6 +103,7 @@ test('boss phases have telegraphed counters, fair star threshold and no repeat-f
  assert.match(sql,/u uuid:=auth\.uid\(\)/);
  assert.match(sql,/where user_id=u for update/);
  assert.match(sql,/where user_id=u and request_id=p_request_id/);
+ assert.match(sql,/\$function\$;\s*revoke all on function public\.sfb_starfort_progress/,'DDL must end with a semicolon before GRANT and REVOKE');
  assert.match(sql,/revoke all on function public\.sfb_starfort_progress/);
  assert.match(sql,/grant execute on function public\.sfb_starfort_progress.*to authenticated/);
 });
