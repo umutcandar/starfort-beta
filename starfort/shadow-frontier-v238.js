@@ -9,6 +9,7 @@ import {shadowMasterySnapshot,shadowMasteryMarkup} from './shadow-mastery-v241.j
 import {getLocale,formatNumber} from './locale-v243.js';
 import {bilingual} from './locale-unified-v247.js';
 import {localizedShadowStage} from './locale-shadow-stages-v247.js';
+import {disciplineText as dt} from './locale-shadow-discipline-v247.js';
 export const SHADOW_STAGES=Object.freeze([
  Object.freeze({id:1,name:'Diken Nöbetçisi',region:'Karanlık Geçit',boss:'Diken Nöbetçisi',
   unlock:2,description:'Yaşayan surların bekçisi. Son dalgada kalkanı sürekli onarır.',
@@ -101,23 +102,23 @@ export async function shadowRequest(action,{target=null,aux=null,requestId=null,
  return {identity:session.user.id,snapshot:validateShadowSnapshot(payload)};
 }
 export function heroDisciplinesMarkup(front,account,resources={},busy=false){
- if(!front||!account)return '<section class="shadow-discipline"><h3>Kahraman Uzmanlığı</h3><p>Sunucu uzmanlık kaydı yükleniyor.</p></section>';
+ if(!front||!account)return `<section class="shadow-discipline"><h3>${dt('heroTitle')}</h3><p>${dt('loading')}</p></section>`;
  const paths=front.heroPaths||{},war=!!front.battle||!!account.mission;
- return `<section class="shadow-discipline" aria-label="Kahraman uzmanlık ağacı">
-  <div class="shadow-section-head"><span class="eyebrow">KALICI UZMANLIK · 3 RÜTBE</span>
-   <h3>Kahraman Disiplinleri</h3><p>Kahramanların Hücum veya Muhafız yolunu seçer. Yön değiştirmek mümkün değil; iki yol da yalnızca resmî Gölge Sınırı seferlerinde etkilidir.</p></div>
+ return `<section class="shadow-discipline" aria-label="${dt('treeAria')}">
+  <div class="shadow-section-head"><span class="eyebrow">${dt('rankHeader')}</span>
+   <h3>${dt('disciplineTitle')}</h3><p>${dt('disciplineSummary')}</p></div>
   <div class="shadow-disciplines">${HEROES.filter(h=>(account.heroes||{})[h.id]).map(h=>{
     const path=paths[h.id],rank=path?.rank||0,next=HERO_TRAINING[rank];
     const affordable=next&&resources.gold>=next.gold&&resources.aether>=next.aether&&resources.stone>=next.stone;
     const unlocked=next&&(account.heroes[h.id]||0)>=next.level&&account.cleared.length>=next.story&&account.act2Cleared.length>=next.act2;
     const choices=path?HERO_DISCIPLINES.filter(x=>x.id===path.path):HERO_DISCIPLINES;
     return `<article class="shadow-hero">
-      <div class="shadow-hero-title"><img src="assets/${h.id}.webp" alt=""><strong>${esc(h.name)}</strong><small>Seviye ${account.heroes[h.id]} · Rütbe ${rank}/3</small></div>
-      ${choices.map(d=>`<div class="shadow-discipline-branch"><b>${d.icon} ${esc(d.name)}</b><small>${esc(d.description)}</small>
+      <div class="shadow-hero-title"><img src="assets/${h.id}.webp" alt=""><strong>${esc(h.name)}</strong><small>${dt('level')} ${account.heroes[h.id]} · ${dt('rank')} ${rank}/3</small></div>
+      ${choices.map(d=>`<div class="shadow-discipline-branch"><b>${d.icon} ${esc(dt(d.id==='assault'?'assaultName':'wardenName'))}</b><small>${esc(dt(d.id==='assault'?'assaultDesc':'wardenDesc'))}</small>
        <button class="${rank?'secondary':'primary'}" data-shadow-train="${h.id}" data-shadow-path="${d.id}"
-        ${!next||!unlocked||!affordable||war||busy?'disabled':''}>${rank>=3?'En yüksek rütbe':!unlocked?'Seviye / bölge kilitli':!affordable?'Kaynak eksik':rank?'Rütbe '+(rank+1)+' eğit':'Yolu seç'}
+        ${!next||!unlocked||!affordable||war||busy?'disabled':''}>${rank>=3?dt('rankMax'):!unlocked?dt('locked'):!affordable?dt('noResources'):rank?dt('trainRank',{rank:rank+1}):dt('choosePath')}
        </button></div>`).join('')}
-      ${next?`<small class="shadow-training-cost">Sonraki rütbe: ${num(next.gold)} altın · ${num(next.aether)} yıldız özü · ${num(next.stone)} taş · Kahraman SV ${next.level}</small>`:'<small class="shadow-training-cost">✦ Uzmanlık tamamlandı</small>'}
+      ${next?`<small class="shadow-training-cost">${dt('nextRank')}: ${num(next.gold)} ${dt('gold')} · ${num(next.aether)} ${dt('aether')} · ${num(next.stone)} ${dt('stone')} · ${dt('heroLevel')} ${next.level}</small>`:`<small class="shadow-training-cost">${dt('completed')}</small>`}
      </article>`;
    }).join('')}</div></section>`;
 }

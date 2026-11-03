@@ -212,3 +212,7 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - `locale-app-static-a/b/c-v247.js` ve `locale-app-static-v247.js`: ana oyun `app.js` içinde **69 farklı Türkçe sabit metin, 72 ekrandaki kullanım yeri** tek tek çevrilip İngilizce ve 12 ek dilde karşılığı verildi. Kapsam: köy üretimi, sefer, günlük/haftalık görevler, 28 günlük sezon, 16 katlı labirent, savaş eğitimi, hikâye arşivi, mağaza için gerçek satış yapılmadığı uyarısı, şifre güncelleme.
 - Doğal dil adları `Türkçe` seçeneğinde **özellikle kendi dilinde bırakıldı**. Bu, yanlışlıkla çevirilmemesi gereken dil seçici metnidir.
 - `locale-app-static-v247.test.mjs` HTML kaynak taramasıyla bu 72 kullanım yerini, dillerin 69/69 doluluğunu ve bağlanan sözlük ile kanonik UI eylemleri arasındaki ayrımı doğrular. Sunucu kimlikleri, savaş, üretim, ödeme ve ödüller değişmedi.
+
+## v2.47 kalıcı kahraman disiplinleri — 14 dil
+
+- Gölge Sınırı kahraman uzmanlık panelindeki 23 görünür metin; Hücum/Muhafız yolları, üç rütbe, sunucu yükleme, kilit/eksik kaynak, seviye, mücevher/altın maliyeti ve geri alınamaz yol seçimi 14 dilde. `assault`/`warden` sunucu kimlikleri ile altın/yıldız özü maliyetleri değişmez.
