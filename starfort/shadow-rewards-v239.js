@@ -22,6 +22,9 @@ export function shadowVictoryMarkup(report,regions=[]){
       <h3>${esc(won?'Gölge Sınırı Zaferi':report.abandoned?'Seferden Çekildin':'Sınır Direndi')}</h3>
       <div class="shadow-result-stars" aria-label="${stars} yıldız kazanıldı">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
       <p>${esc(region)}${Number.isSafeInteger(report.turns)?' · '+n(report.turns)+' tur':''} · ${won?'Ödüller gerçek oyuncu hesabına işlendi.':'Kahramanlarını ve eşyalarını geliştirip tekrar dene.'}</p>
+      ${won&&Number.isSafeInteger(report.renown)&&report.renown>=0?
+        `<div class="shadow-result-renown" aria-label="Sunucu Sınır Ustalığı itibarı">✦ +${n(report.renown)} itibar
+         ${report.renown===0?'· Bu haftanın 100 itibar sınırına ulaştın':''}</div>`:''}
       ${won?`<div class="shadow-reward-ledger" aria-label="Kazanılan kaynaklar">
         ${loot.map(x=>`<span class="shadow-reward-resource" data-resource="${x.id}"><b>+${n(x.value)}</b><small>${label[x.id]}</small></span>`).join('')}
       </div>

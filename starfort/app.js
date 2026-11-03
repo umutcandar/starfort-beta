@@ -237,10 +237,11 @@ async function shadowAction(action,target=null,aux=null){
   if(action==='turn'&&!shadowSnapshot.battle&&shadowSnapshot.lastReport?.won)
     notify('★ Gölge Sınırı zaferi! '+shadowSnapshot.lastReport.stars+' yıldız · Ganimet sunucuda kaydedildi.');
   else if(action==='train')notify('✦ Kahramanın kalıcı uzmanlık rütbesi yükseldi.');
+  else if(action==='claim_mastery')notify('✦ Sınır Ustalığı ödülün sunucuda kasana eklendi.');
   else if(action==='start')notify('⚔ Yeni sınır seferi başladı.');
   else if(action==='abandon')notify('Gölge Sınırı seferinden çekildin.');
   if(action==='turn'&&!shadowSnapshot.battle)shadowReportDismissedAt=null;
-  if(action==='train'||action==='turn'&&!shadowSnapshot.battle){
+  if(action==='train'||action==='claim_mastery'||action==='turn'&&!shadowSnapshot.battle){
    await refreshVillage({preserve:true});
    if(action==='turn')void refreshWarfront();
   }
