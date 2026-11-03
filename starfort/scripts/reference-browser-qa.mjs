@@ -275,6 +275,36 @@ try{
  assert.ok(mobileFront.scroll<=mobileFront.w+6,'Mobile warfront overflow '+JSON.stringify(mobileFront));
  console.log('PASS v2.37: authenticated warfront, supply debit/refund, true server-bounty UX and mobile 390px layout');
 
+ // Active combat stays above logistics: five commands and selected server doctrine.
+ await evaluate("document.querySelector('[data-warfront-target=bulwark]').click()");
+ let bulwarkReady=false;
+ for(let i=0;i<70;i++){
+  bulwarkReady=await evaluate("document.querySelector('.warfront-pending')?.textContent.includes('Siper Garnizonu')===true");
+  if(bulwarkReady)break;await sleep(100);
+ }
+ assert.ok(bulwarkReady,'Defensive doctrine could not be prepared');
+ await evaluate("document.querySelector('[data-account-stage=\"1\"]').click()");
+ let battleReady=false;
+ for(let i=0;i<85;i++){
+  battleReady=await evaluate("!!document.querySelector('.server-mission')&&!!document.querySelector('[data-account-turn=feint]')&&!!document.querySelector('[data-account-turn=rally]')");
+  if(battleReady)break;await sleep(100);
+ }
+ assert.ok(battleReady,'A tactical mission did not open after selecting a supply doctrine');
+ assert.equal(await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot')).mission.doctrine"),'bulwark','Prepared server doctrine was not consumed by mission');
+ assert.equal(await evaluate("document.querySelector('.server-mission').compareDocumentPosition(document.querySelector('.warfront-shell'))&4"),4,'Mission commands must be before logistics panel');
+ const mobileBattle=await evaluate("({w:innerWidth,scroll:document.documentElement.scrollWidth,buttons:document.querySelectorAll('[data-account-turn]').length})");
+ assert.ok(mobileBattle.buttons>=5,'Tactical battle does not have all action controls');
+ assert.ok(mobileBattle.scroll<=mobileBattle.w+6,'Mobile tactical battle overflow '+JSON.stringify(mobileBattle));
+ await evaluate("document.querySelector('[data-account-turn=feint]').click()");
+ let feintWorked=false;
+ for(let i=0;i<75;i++){
+  feintWorked=await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot')).mission?.turn===1");
+  if(feintWorked)break;await sleep(100);
+ }
+ assert.ok(feintWorked,'New feint turn not sent to authoritative combat RPC');
+ console.log('PASS v2.37 combat: warfront bulwark consumed, new feint/rally controls, battle prioritization and mobile 390px');
+
+
 
 
 }finally{
