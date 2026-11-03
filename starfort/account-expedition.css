@@ -184,3 +184,35 @@
 .server-enemy-intent.intent-eclipse{border:1px solid #d8acffab;background:linear-gradient(112deg,#3b274a,#1e3147);box-shadow:inset 0 0 28px #974ec326}
 .server-enemy-intent.intent-eclipse .intent-symbol{color:#ebc7ff;filter:drop-shadow(0 0 7px #af72e8)}
 .story-boss-v250.phase-3:has(+ .official-tactical-briefing) {border-color:#b99cc6}
+
+/* v2.55: battle takes visual priority; clear hits and an actual victory moment. */
+.server-expedition>.server-mission{order:-1;border:2px solid #e9bb79;padding:clamp(12px,2.5vw,24px);box-shadow:0 16px 44px #0008}
+.server-mission .official-combat-scene{min-height:420px;box-shadow:inset 0 0 28px #07132299,0 10px 20px #0007}
+.server-mission .official-fighter{max-width:165px;filter:drop-shadow(0 15px 12px #02070de8)}
+.server-mission .official-impact-ring{filter:drop-shadow(0 0 12px #f8cf84);opacity:1}
+.server-mission .official-weapon-flash{filter:drop-shadow(0 0 9px #f6a969);opacity:1}
+.server-mission .official-damage-summary{display:flex;flex-wrap:wrap;gap:9px;align-items:center;border:1px solid #e5b96b;background:#302d2d;color:#ffdd9e;padding:12px;border-radius:9px;font-size:13px;font-weight:750}
+.server-mission .server-moves{position:relative;z-index:2;margin-top:12px}
+.server-mission .server-moves button{min-height:48px;min-width:104px}
+.server-mission-result.celebration{position:fixed;z-index:3000;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:min(540px,calc(100vw - 22px));max-height:88dvh;overflow-y:auto;box-shadow:0 0 0 120vmax #03101edf,0 30px 100px #000f,0 0 65px #f8c46d52;border:2px solid #f5d38c;border-radius:18px;padding:clamp(19px,4vw,36px);text-align:center;background:radial-gradient(ellipse at 50% 0%,#c5914c66,transparent 65%),linear-gradient(145deg,#294339,#101e32);animation:sf-victory-arrive .28s ease-out both}
+.server-mission-result.celebration>strong{display:block;font:800 clamp(30px,7vw,46px)/1.14 Georgia,serif;letter-spacing:.04em;color:#ffe9b7;text-shadow:0 2px 20px #cda66d6d}
+.server-mission-result.celebration .victory-crown{display:block;font-size:41px;letter-spacing:.18em;color:#f4d58c;margin-bottom:14px}
+.server-mission-result.celebration>p{font-size:14px;line-height:1.65}
+.victory-prizes{border:1px solid #dfc38a69;border-radius:10px;background:#091e2ca8;padding:13px;margin:16px 0}
+.victory-prizes h3{font-size:13px;color:#ffe4aa;margin:0 0 10px}
+.victory-prizes ul{list-style:none;display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:0;padding:0}
+.victory-prizes li{background:#204139;border:1px solid #92be9f;border-radius:7px;padding:8px 12px;color:#d9eedb;font-size:12px}
+.victory-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-top:16px}
+.victory-actions button{min-height:44px;flex:1 1 150px}
+.sf-first-guide{padding:15px 20px;background:linear-gradient(125deg,#355045,#1c2d42);border:1px solid #a9bb8c;border-radius:13px;color:#e9ebdf}
+.sf-first-guide summary{font-weight:800;color:#ffe5a8;cursor:pointer}
+.sf-first-guide p{font-size:12px;line-height:1.6;margin:12px 0;color:#d4e1da}
+.sf-first-guide ol{display:grid;gap:7px;padding-left:20px;font-size:12px;line-height:1.55}
+.sf-first-guide button{margin-top:8px;min-height:42px}
+.sf-bot-entry{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;border:1px solid #537b86;border-radius:10px;background:#182b3b}
+.sf-bot-entry strong{color:#ffe0a4;font:700 17px Georgia,serif}
+.sf-bot-entry p{font-size:11px;color:#c4d4da;line-height:1.6;margin:6px 0 0}
+.sf-bot-entry button{white-space:nowrap;min-height:42px}
+@keyframes sf-victory-arrive{from{opacity:0;transform:translate(-50%,-44%) scale(.94)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@media(max-width:650px){.server-mission .official-combat-scene{min-height:305px}.server-mission .official-fighter{max-width:105px}.server-mission .server-moves button{flex:1 1 40%}.sf-bot-entry{flex-direction:column;align-items:stretch}}
+@media(prefers-reduced-motion:reduce){.server-mission-result.celebration{animation:none}}
