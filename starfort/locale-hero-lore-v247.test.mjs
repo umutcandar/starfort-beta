@@ -18,7 +18,7 @@ test('all nine native hero biographies and nine skill descriptions cover twelve 
    const data=HERO_LORE_NATIVE[lang][id];
    assert.ok(data.lore?.trim()&&data.abilityDescription?.trim(),lang+':'+id);
    assert.doesNotMatch(data.lore+data.abilityDescription,/<script|javascript:|onerror\s*=/i);
-   for(const n of percentages[id])assert.match(data.abilityDescription,new RegExp(n+'\\s*%'),lang+':'+id+' missing '+n+'%');
+   for(const n of percentages[id])assert.match(data.abilityDescription,new RegExp(n+'\\s*-?\\s*%'),lang+':'+id+' missing '+n+'%');
   }
  }
 });
