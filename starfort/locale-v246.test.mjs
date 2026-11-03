@@ -68,7 +68,7 @@ test('each selected language produces its own inventory headings without changin
   }
   setLocale('es');
   assert.match(armoryMarkup(state,hero,'owned','iron_sword'),/Espada del Juramento/,'gear names now have native Spanish translations');
-  assert.match(armoryMarkup(state,hero,'owned','iron_sword'),/A balanced steel sword/,'item lore uses English fallback while full descriptions remain in translation backlog');
+  assert.match(armoryMarkup(state,hero,'owned','iron_sword'),/Una espada de acero equilibrada/,'Spanish item lore now renders natively');
   setLocale('ar');
   assert.match(armoryMarkup(state,hero,'materials','material:gold'),/مخزوني/);
   assert.match(armoryMarkup(state,hero,'materials','material:gold'),/الذهب/,'material names are now native Arabic');
