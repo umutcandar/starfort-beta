@@ -114,3 +114,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - `commander-chronicle.js`: 30 kanonik rütbenin kimlikleri ve adımları, `rank ** 2 * 2` zafer eşiği, altın/yıldız özü değerleri ve `data-account-chronicle` eylemleri korunur. Yalnızca görünen adlar/metinler yerelleştirilir.
 - `locale-chronicle-v247.test.mjs`: 14 dil × 30 görünen unvanı, arayüz metinlerini, tamamlanma durumunu ve ekonomi değişmezliğini denetler.
 - Dil editörü onayı ve tüm modların bitirilmesi sürümden önce hâlâ zorunludur.
+
+## v2.47 çalışma dalı — 3 kervan rotasının tam yerel metinleri
+
+- `locale-caravan-v247.js`: **3 kervan rotasının adı/açıklaması ve 10 arayüz/koşul metni 14 dilde**. Günlük hak, kalenin seviye şartı, depo dolu, kaynak yetersiz, UTC reset uyarıları kapsandı.
+- `kingdom-caravan.js`: yalnızca metin sunumu değişir; `wood/stone/aether` rota kimlikleri, 2 günlük hak, `cost`, `reward`, sunucu RPC ve UTC kısıtları aynı kalır.
+- `locale-caravan-v247.test.mjs`: 14 dilde tüm rota isimleri, buton durumları, 2 günlük takas sınırı, seviye ve ekonomi değişmezliği denetlenir.

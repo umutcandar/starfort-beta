@@ -1,5 +1,7 @@
 import {textKey as tx,longText as lt} from './locale-sections-v247.js';
-import {formatNumber} from './locale-v243.js';
+import {formatNumber,getLocale} from './locale-v243.js';
+import {CARAVAN_TRANSLATIONS} from './locale-caravan-v247.js';
+const caravanText=(key,values={})=>String((CARAVAN_TRANSLATIONS[getLocale()]??CARAVAN_TRANSLATIONS.en).ui[key]).replace(/\\{(\\w+)\\}/g,(_,id)=>String(values[id]??''));
 import {displayResource} from './locale-game-content-v245.js';
 /** STARFORT Kervan Pazarı — published trade terms match the trusted SQL.
  * These are illustrative offers only. Resource mutation lives in sfb_village_api. */
@@ -16,7 +18,7 @@ export const CARAVAN_ROUTES=Object.freeze([
 ]);
 export const CARAVAN_DAILY_LIMIT=2;
 export const CARAVAN_LABELS_EN=Object.freeze({wood:['Blackwood Timber Caravan','Haul timber to the walls in exchange for gold and stone.'],stone:['Moonstone Mason Guild','Send stonemasons to strengthen the keep walls.'],aether:['Stargazer Expedition','Trade surplus resources for rare Star essence.']});
-export const displayCaravanRoute=o=>!o?o:({...o,name:lt(o.name,CARAVAN_LABELS_EN[o.id]?.[0]||o.name),description:lt(o.description,CARAVAN_LABELS_EN[o.id]?.[1]||o.description)});
+export const displayCaravanRoute=o=>!o?o:({...o,name:getLocale()==='tr'?o.name:(CARAVAN_TRANSLATIONS[getLocale()]??CARAVAN_TRANSLATIONS.en).routes[o.id]?.name||o.name,description:getLocale()==='tr'?o.description:(CARAVAN_TRANSLATIONS[getLocale()]??CARAVAN_TRANSLATIONS.en).routes[o.id]?.description||o.description});
 export function caravanStatus(village,now=Date.now()){
  const day=new Date(now).toISOString().slice(0,10),claimed=village?.tradeDay===day?village.tradeRoutes||[]:[];
  const balance=village?.res||{},castle=village?.buildings?.keep||1;
@@ -42,14 +44,14 @@ export function caravanMarkup(village,now=Date.now(),{missing={}}={}){
  const recommendation=caravanRecommendation(village,missing,now);
  const labels=Object.fromEntries(['gold','wood','stone','aether'].map(id=>[id,displayResource(id)]));
  const fmt=o=>Object.entries(o).map(([id,n])=>formatNumber(n)+' '+labels[id]).join(' · ');
- return `<section class="caravan-market" aria-label="${lt('Kervan pazarı ve günlük kaynak takası','Caravan market and daily resource trades')}">
- <div class="caravan-head"><div><span class="eyebrow">✦ ${lt('KRALLIK LOJİSTİĞİ · SUNUCU TAKASI','KINGDOM LOGISTICS · VERIFIED TRADING')}</span><h3>${tx('carTitle')}</h3><p>${lt('Hangi malzemenin eksik olduğuna sen karar ver. Günlük en fazla iki ayrı ticaret tamamlanır. Teklifler ücretsiz kaynak üretmez.','Choose which resource you need. You can complete up to two different trades per day. Trades do not create free resources.')}</p></div>
- <strong class="caravan-quota">${status.remaining}<small>/ ${status.limit} ${lt('HAK','TRADES')}</small></strong></div>
+ return `<section class="caravan-market" aria-label="${caravanText('aria')}">
+ <div class="caravan-head"><div><span class="eyebrow">✦ ${caravanText('eyebrow')}</span><h3>${tx('carTitle')}</h3><p>${caravanText('intro')}</p></div>
+ <strong class="caravan-quota">${status.remaining}<small>/ ${status.limit} ${caravanText('trades')}</small></strong></div>
  <div class="caravan-routes">${status.offers.map(o=>`<article class="caravan-route ${o.available?'ready':''} ${recommendation===o.id?'recommended':''}">
   <div class="caravan-symbol" aria-hidden="true">${o.icon}</div><strong>${esc(displayCaravanRoute(o).name)}${recommendation===o.id?' · '+tx('carRecommended'):''}</strong><p>${esc(displayCaravanRoute(o).description)}</p>
   <div class="caravan-exchange"><small>${tx('carCost')}</small><span>${fmt(o.cost)}</span><small>${tx('carGain')}</small><b>${fmt(o.reward)}</b></div>
-  <button class="${o.available?'primary':'secondary'}" data-caravan-trade="${o.id}" ${o.available?'':'disabled'}>${o.claimed?lt('Bugün yapıldı','Already traded today'):!o.unlocked?lt('Kale seviye ','Keep level ')+o.unlock+lt(' gerekli',' required'):status.remaining===0?lt('Günlük hak bitti','Daily trades used'):o.capped?lt('Depo dolu','Storage full'):!o.affordable?lt('Kaynak yetersiz','Insufficient resources'):tx('carSend')}</button>
+  <button class="${o.available?'primary':'secondary'}" data-caravan-trade="${o.id}" ${o.available?'':'disabled'}>${o.claimed?caravanText('done'):!o.unlocked?caravanText('keepRequired',{level:o.unlock}):status.remaining===0?caravanText('dailyUsed'):o.capped?caravanText('storageFull'):!o.affordable?caravanText('insufficient'):tx('carSend')}</button>
   </article>`).join('')}</div>
- <small class="caravan-note">${lt('Takaslar sunucuda kaynak ve günlük sınır doğrulanarak işlenir. Aynı ticaret aynı gün ikinci kez yapılamaz. Haklar UTC gün değişiminde yenilenir.','The server checks balances and daily limits. Each trade is available only once per UTC day; allowances reset at 00:00 UTC.')}</small>
+ <small class="caravan-note">${caravanText('note')}</small>
  </section>`;
 }
