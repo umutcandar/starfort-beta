@@ -15,8 +15,9 @@ test('all 14 languages use native world-map descriptions and preserve eight cano
   assert.ok(html.includes(realmText('Yıldız Yolu · Kuzey Kıtası','Star Road · Northern Continent')),lang);
   assert.equal((html.match(/data-realm-select=/g)||[]).length,8);
   assert.match(html,/data-realm-mission=\"2\"/);
-  assert.match(html,/data-account-veteran=\"1:3\"/);
-  assert.match(html,/★{3}/);
+  const cleared=realmMapMarkup(account,{selected:1});
+  assert.match(cleared,/data-account-veteran=\"1:3\"/);
+  assert.match(cleared,/★{3}/);
   assert.equal(JSON.stringify(account),state);
   assert.equal(JSON.stringify(realmMapModel(account)),model);
  }}finally{setLocale('tr');}
