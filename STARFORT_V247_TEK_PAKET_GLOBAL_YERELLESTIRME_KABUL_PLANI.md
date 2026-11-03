@@ -82,3 +82,10 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 8. Bu PR taslaktan çıkarılıp **tek v2.47 final sürümü** olarak birleştirilecek.
 
 **Not:** Yukarıdaki geliştirme listesi bir gelecek vaadi değil; mevcut tek paketin denetim ve yapılacak işler sınırını gösterir. Şu anda 14 dilde eksiksiz yerelleştirme tamamlanmış değildir.
+
+## v2.47 çalışma dalı — erişilebilir sabit ekran paketi
+
+- `locale-shell-v247.js`: 23 sabit arayüz erişilebilirlik etiketi ve açıklaması **14 dilde**. Üst menü, kaynaklar, kahraman kısayolu, harita/zoom, inşaat, sefer, günlük ödül, kayıt yedeği ve yönetim panelleri dahildir.
+- `index.html`: mevcut düğme eylemlerini değiştirmeden `data-i18n-aria-label` ve `data-i18n-title` bağlandı; `applyLocaleUI` artık yerel `title` alanlarını da günceller.
+- `locale-shell-v247.test.mjs`: 14 dil, Arapça RTL, erişilebilir etiketler ve değiştirilmemiş oyun eylemi alanları denetlenir.
+- Bu ekleme tüm dinamik bildirimlerin veya 14 dilin insan editörü tarafından doğrulandığı anlamına **gelmez**. v2.47 taslak ve global yayın kapısı kapalıdır.

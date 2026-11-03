@@ -10,6 +10,7 @@ import {readFileSync,readdirSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {SUPPORTED_LOCALES} from '../locale-v243.js';
+import {SHELL_KEYS,SHELL_TRANSLATIONS,auditShellTranslations} from '../locale-shell-v247.js';
 import {ARMORY_TRANSLATIONS,ARMORY_KEYS} from '../locale-armory-v246.js';
 import {REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS} from '../locale-rewards-v245.js';
 import {ITEM_DISPLAY_EN} from '../locale-items-v246.js';
@@ -65,7 +66,7 @@ function checkPack(pack,keys,name){
  }
  return problems;
 }
-const problems=[...auditActOne(),...auditActTwo(),...auditHeroLore(),...auditItemLore(),...auditPremiumNative(),...auditWarfrontDoctrine(),...checkPack(ACT_TWO_GATES,ACT_TWO_GATE_KEYS,'act2-gates'),...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
+const problems=[...auditShellTranslations(localeSet),...auditActOne(),...auditActTwo(),...auditHeroLore(),...auditItemLore(),...auditPremiumNative(),...auditWarfrontDoctrine(),...checkPack(ACT_TWO_GATES,ACT_TWO_GATE_KEYS,'act2-gates'),...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
 for(const locale of localeSet){
  const itemNames=ITEM_NAMES[locale];
  if(!itemNames||Object.keys(itemNames.names||{}).length!==19||Object.keys(itemNames.sets||{}).length!==3)problems.push(locale+': incomplete native item and set names');
@@ -107,6 +108,7 @@ const summary={
  verifiedPacks:{
   armory:{keysPerLanguage:ARMORY_KEYS.length,languages:localeSet.length},
   sharedNavigation:{keysPerLanguage:SHARED_KEYS.length,languages:localeSet.length},
+  accessibleStaticShell:{keysPerLanguage:SHELL_KEYS.length,languages:localeSet.length},
   teamBattle:{keysPerLanguage:TEAM_KEYS.length,languages:localeSet.length},
   guild:{keysPerLanguage:GUILD_KEYS.length,languages:localeSet.length},
   trainingEvents:{keysPerLanguage:TRAINING_EVENT_KEYS.length,languages:localeSet.length},
