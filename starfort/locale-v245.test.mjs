@@ -112,7 +112,7 @@ test('Second Act English content covers all eight regions and 24 operations with
    }
   }
   assert.equal(operations,24);
-  assert.equal(secondActGateMessage('Önce sekiz ana hikâye bölgesini tamamla.'),'Complete all eight main story regions first.');
+  assert.equal(secondActGateMessage('Önce sekiz ana hikâye bölgesini tamamla.'),"Terminez d'abord les huit régions de l'histoire principale.", 'French second-act gate now uses native French instead of English fallback');
  }finally{setLocale('tr');}
 });
 test('unverified account loading screen follows international fallback without bypassing auth',()=>{
