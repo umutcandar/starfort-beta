@@ -8,6 +8,10 @@ import {ARMORY_TRANSLATIONS} from './locale-armory-v246.js';
 import {OFFICIAL_TRANSLATIONS} from './locale-official-ui-v247.js';
 import {REALM_UI} from './locale-realm-ui-v247.js';
 import {AUTH_MESSAGES} from './locale-auth-messages-v247.js';
+import {SHELL_TRANSLATIONS} from './locale-shell-v247.js';
+import {WORLD_LANGUAGES} from './locale-world-v247.js';
+import {HERO_UI} from './locale-hero-ui-v247.js';
+import {ITEM_NAMES} from './locale-item-names-v247.js';
 export const UNIFIED_KEYS=Object.freeze(["Star Duel","Shadow Frontier","Frontier Mastery","Landscape mode recommended.","MATCH INTERRUPTED","CONNECTION ERROR","Cinematic 2.5D · main game","3D development preview","Connecting…","Disconnected","Matchmaking","Boss HP","WAVE","renown","FIRST-CLEAR LOOT"]);
 export const UNIFIED_PACK=Object.freeze({"es":{"Star Duel":"Duelo Estelar","Shadow Frontier":"Frontera Sombría","Frontier Mastery":"Maestría de la Frontera","Landscape mode recommended.":"Se recomienda modo horizontal.","MATCH INTERRUPTED":"PARTIDA INTERRUMPIDA","CONNECTION ERROR":"ERROR DE CONEXIÓN","Cinematic 2.5D · main game":"Cinemática 2.5D · juego principal","3D development preview":"Vista previa 3D en desarrollo","Connecting…":"Conectando…","Disconnected":"Desconectado","Matchmaking":"Buscando partida","Boss HP":"Vida del jefe","WAVE":"OLEADA","renown":"renombre","FIRST-CLEAR LOOT":"BOTÍN DE PRIMERA VICTORIA"},"pt-BR":{"Star Duel":"Duelo Estelar","Shadow Frontier":"Fronteira Sombria","Frontier Mastery":"Maestria da Fronteira","Landscape mode recommended.":"Recomenda-se modo paisagem.","MATCH INTERRUPTED":"PARTIDA INTERROMPIDA","CONNECTION ERROR":"ERRO DE CONEXÃO","Cinematic 2.5D · main game":"Cinemático 2.5D · jogo principal","3D development preview":"Prévia 3D em desenvolvimento","Connecting…":"Conectando…","Disconnected":"Desconectado","Matchmaking":"Buscando partida","Boss HP":"Vida do chefe","WAVE":"ONDA","renown":"renome","FIRST-CLEAR LOOT":"SAQUE DA PRIMEIRA VITÓRIA"},"fr":{"Star Duel":"Duel des Étoiles","Shadow Frontier":"Frontière des Ombres","Frontier Mastery":"Maîtrise des Frontières","Landscape mode recommended.":"Mode paysage recommandé.","MATCH INTERRUPTED":"PARTIE INTERROMPUE","CONNECTION ERROR":"ERREUR DE CONNEXION","Cinematic 2.5D · main game":"Cinématique 2.5D · jeu principal","3D development preview":"Aperçu 3D en développement","Connecting…":"Connexion…","Disconnected":"Déconnecté","Matchmaking":"Recherche d'adversaire","Boss HP":"PV du boss","WAVE":"VAGUE","renown":"renommée","FIRST-CLEAR LOOT":"BUTIN DE PREMIÈRE VICTOIRE"},"de":{"Star Duel":"Sternenduell","Shadow Frontier":"Schattenfront","Frontier Mastery":"Grenzmeisterschaft","Landscape mode recommended.":"Querformat empfohlen.","MATCH INTERRUPTED":"SPIEL UNTERBROCHEN","CONNECTION ERROR":"VERBINDUNGSFEHLER","Cinematic 2.5D · main game":"Kinematisches 2,5D · Hauptspiel","3D development preview":"3D-Entwicklungsvorschau","Connecting…":"Verbinden…","Disconnected":"Getrennt","Matchmaking":"Gegner wird gesucht","Boss HP":"Boss-LP","WAVE":"WELLE","renown":"Ruhm","FIRST-CLEAR LOOT":"BEUTE BEIM ERSTEN SIEG"},"it":{"Star Duel":"Duello Stellare","Shadow Frontier":"Frontiera delle Ombre","Frontier Mastery":"Maestria della Frontiera","Landscape mode recommended.":"Modalità orizzontale consigliata.","MATCH INTERRUPTED":"PARTITA INTERROTTA","CONNECTION ERROR":"ERRORE DI CONNESSIONE","Cinematic 2.5D · main game":"Cinematica 2.5D · gioco principale","3D development preview":"Anteprima 3D in sviluppo","Connecting…":"Connessione…","Disconnected":"Disconnesso","Matchmaking":"Ricerca avversario","Boss HP":"PV del boss","WAVE":"ONDATA","renown":"fama","FIRST-CLEAR LOOT":"BOTTINO PRIMA VITTORIA"},"ru":{"Star Duel":"Звёздная дуэль","Shadow Frontier":"Теневая Граница","Frontier Mastery":"Мастерство Границы","Landscape mode recommended.":"Рекомендуется альбомная ориентация.","MATCH INTERRUPTED":"МАТЧ ПРЕРВАН","CONNECTION ERROR":"ОШИБКА СОЕДИНЕНИЯ","Cinematic 2.5D · main game":"Кинематографичный 2.5D · основная игра","3D development preview":"Предпросмотр 3D-разработки","Connecting…":"Подключение…","Disconnected":"Отключено","Matchmaking":"Поиск противника","Boss HP":"Здоровье босса","WAVE":"ВОЛНА","renown":"слава","FIRST-CLEAR LOOT":"ДОБЫЧА ЗА ПЕРВУЮ ПОБЕДУ"},"ar":{"Star Duel":"المبارزة النجمية","Shadow Frontier":"حدود الظلال","Frontier Mastery":"إتقان الحدود","Landscape mode recommended.":"يوصى بالوضع الأفقي.","MATCH INTERRUPTED":"انقطعت المباراة","CONNECTION ERROR":"خطأ في الاتصال","Cinematic 2.5D · main game":"مشهد سينمائي 2.5D · اللعبة الأساسية","3D development preview":"معاينة تطوير ثلاثية الأبعاد","Connecting…":"جارٍ الاتصال…","Disconnected":"غير متصل","Matchmaking":"البحث عن مباراة","Boss HP":"صحة الزعيم","WAVE":"موجة","renown":"الشهرة","FIRST-CLEAR LOOT":"غنيمة النصر الأول"},"hi":{"Star Duel":"तारा द्वंद्व","Shadow Frontier":"छाया सीमांत","Frontier Mastery":"सीमांत महारत","Landscape mode recommended.":"लैंडस्केप मोड बेहतर है।","MATCH INTERRUPTED":"मैच बाधित","CONNECTION ERROR":"कनेक्शन त्रुटि","Cinematic 2.5D · main game":"सिनेमैटिक 2.5D · मुख्य खेल","3D development preview":"3D विकास पूर्वावलोकन","Connecting…":"कनेक्ट हो रहा है…","Disconnected":"डिस्कनेक्ट","Matchmaking":"मैच खोज रहा है","Boss HP":"बॉस की सेहत","WAVE":"लहर","renown":"प्रतिष्ठा","FIRST-CLEAR LOOT":"पहली जीत की लूट"},"id":{"Star Duel":"Duel Bintang","Shadow Frontier":"Perbatasan Bayangan","Frontier Mastery":"Penguasaan Perbatasan","Landscape mode recommended.":"Mode lanskap disarankan.","MATCH INTERRUPTED":"PERTANDINGAN TERPUTUS","CONNECTION ERROR":"KESALAHAN KONEKSI","Cinematic 2.5D · main game":"Sinematik 2.5D · game utama","3D development preview":"Pratinjau pengembangan 3D","Connecting…":"Menghubungkan…","Disconnected":"Terputus","Matchmaking":"Mencari pertandingan","Boss HP":"HP bos","WAVE":"GELOMBANG","renown":"kemasyhuran","FIRST-CLEAR LOOT":"JARAHAN KEMENANGAN PERTAMA"},"ja":{"Star Duel":"星の決闘","Shadow Frontier":"影の辺境","Frontier Mastery":"辺境マスタリー","Landscape mode recommended.":"横向き画面を推奨します。","MATCH INTERRUPTED":"対戦が中断されました","CONNECTION ERROR":"接続エラー","Cinematic 2.5D · main game":"シネマティック2.5D · メインゲーム","3D development preview":"3D開発プレビュー","Connecting…":"接続中…","Disconnected":"切断されました","Matchmaking":"マッチング中","Boss HP":"ボスのHP","WAVE":"ウェーブ","renown":"名声","FIRST-CLEAR LOOT":"初回勝利の戦利品"},"ko":{"Star Duel":"별의 결투","Shadow Frontier":"그림자 변경","Frontier Mastery":"변경 숙련","Landscape mode recommended.":"가로 모드를 권장합니다.","MATCH INTERRUPTED":"경기가 중단됨","CONNECTION ERROR":"연결 오류","Cinematic 2.5D · main game":"시네마틱 2.5D · 메인 게임","3D development preview":"3D 개발 미리보기","Connecting…":"연결 중…","Disconnected":"연결 끊김","Matchmaking":"매칭 중","Boss HP":"보스 HP","WAVE":"웨이브","renown":"명성","FIRST-CLEAR LOOT":"첫 승리 전리품"},"zh-CN":{"Star Duel":"星辰决斗","Shadow Frontier":"暗影边境","Frontier Mastery":"边境精通","Landscape mode recommended.":"建议横屏游玩。","MATCH INTERRUPTED":"比赛中断","CONNECTION ERROR":"连接错误","Cinematic 2.5D · main game":"电影式2.5D · 主游戏","3D development preview":"3D开发预览","Connecting…":"连接中…","Disconnected":"已断开","Matchmaking":"正在匹配","Boss HP":"首领生命值","WAVE":"波次","renown":"声望","FIRST-CLEAR LOOT":"首胜战利品"}});
 export const RANK_NAMES_EN=Object.freeze(["Apprentice Watcher","Frontier Scout","Thorn Hunter","Night Guide","Siren Breaker","Ash Warden","Eclipse Hunter","Star Sentinel","Summit Guardian","Darkness Splitter","Frontier Legend","Dawn Vanguard"]);
@@ -19,11 +23,29 @@ function glossary(language){
  const map=new Map();
  for(const [en,native] of Object.entries(OFFICIAL_TRANSLATIONS[language]||{}))map.set(en,native);
  for(const [en,native] of Object.entries(REALM_UI[language]||{}))if(!map.has(en))map.set(en,native);
- for(const pack of [SHARED_TRANSLATIONS,TEAM_TRANSLATIONS,GUILD_TRANSLATIONS,REWARD_TRANSLATIONS,ARMORY_TRANSLATIONS]){
+ for(const pack of [SHARED_TRANSLATIONS,TEAM_TRANSLATIONS,GUILD_TRANSLATIONS,REWARD_TRANSLATIONS,ARMORY_TRANSLATIONS,SHELL_TRANSLATIONS,AUTH_MESSAGES]){
   for(const [key,en] of Object.entries(pack.en||{})){
    const native=pack[language]?.[key];
    if(typeof en==='string'&&typeof native==='string'&&!en.includes('{')&&!map.has(en))map.set(en,native);
   }
+ }
+ const enWorld=WORLD_LANGUAGES.en,world=WORLD_LANGUAGES[language];
+ for(const section of ['buildings','stages','resources']){
+  for(const [id,english] of Object.entries(enWorld?.[section]||{})){
+   const native=world?.[section]?.[id];
+   if(typeof english==='string'&&typeof native==='string'&&!map.has(english))map.set(english,native);
+   else if(english&&typeof english==='object'&&native&&typeof native==='object'){
+    for(const [field,v] of Object.entries(english))if(typeof v==='string'&&typeof native[field]==='string'&&!map.has(v))map.set(v,native[field]);
+   }
+  }
+ }
+ const enHeroes=HERO_UI.en,heroes=HERO_UI[language];
+ for(const section of ['titles','abilities','roles'])for(const [id,english] of Object.entries(enHeroes?.[section]||{})){
+  const native=heroes?.[section]?.[id];if(typeof english==='string'&&typeof native==='string'&&!map.has(english))map.set(english,native);
+ }
+ const enItems=ITEM_NAMES.en,items=ITEM_NAMES[language];
+ for(const section of ['names','sets'])for(const [id,english] of Object.entries(enItems?.[section]||{})){
+  const native=items?.[section]?.[id];if(typeof english==='string'&&typeof native==='string'&&!map.has(english))map.set(english,native);
  }
  for(const [en,native] of Object.entries(UNIFIED_PACK[language]||{}))map.set(en,native);
  RANK_NAMES_EN.forEach((en,i)=>map.set(en,RANK_NAMES_NATIVE[language]?.[i]||en));
@@ -31,6 +53,10 @@ function glossary(language){
 }
 export function bilingual(tr,en){
  const l=getLocale();return l==='tr'?tr:l==='en'?en:glossary(l).get(en)??en;
+}
+export function hasNativeBilingual(english,language=getLocale()){
+ if(language==='tr'||language==='en')return true;
+ return glossary(language).has(english);
 }
 export function shadowRankName(index){
  if(!Number.isInteger(index)||index<0||index>=12)return null;

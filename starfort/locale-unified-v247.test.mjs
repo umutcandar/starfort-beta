@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {SUPPORTED_LOCALES,setLocale} from './locale-v243.js';
-import {bilingual,shadowRankName,localizeServerError,UNIFIED_KEYS,UNIFIED_PACK,RANK_NAMES_EN,AUTH_ERROR_CODES,auditUnified} from './locale-unified-v247.js';
+import {bilingual,hasNativeBilingual,shadowRankName,localizeServerError,UNIFIED_KEYS,UNIFIED_PACK,RANK_NAMES_EN,AUTH_ERROR_CODES,auditUnified} from './locale-unified-v247.js';
 import {longText} from './locale-sections-v247.js';
 import {local} from './locale-game-content-v245.js';
 import {SHADOW_MASTERY_TITLES,SHADOW_MASTERY_THRESHOLDS,shadowRankFromXp} from './shadow-mastery-v241.js';
@@ -48,4 +48,11 @@ test('every referenced gameplay renderer uses the display-only bridge',()=>{
   assert.match(readFileSync(new URL(name,import.meta.url),'utf8'),/locale-unified-v247/);
  }
  assert.doesNotMatch(readFileSync(new URL('locale-unified-v247.js',import.meta.url),'utf8'),/supabase[.]from[(]|p_action:|localStorage[.]setItem[(]/);
+});
+
+test('native coverage audit distinguishes valid loanwords from missing English fallbacks',()=>{
+ assert.equal(hasNativeBilingual('Star Duel','de'),true);
+ assert.equal(hasNativeBilingual('Never translated unrecognized English','de'),false);
+ assert.equal(hasNativeBilingual('Hero','en'),true);
+ assert.equal(hasNativeBilingual('Hero','tr'),true);
 });

@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {SUPPORTED_LOCALES,setLocale} from '../locale-v243.js';
-import {bilingual} from '../locale-unified-v247.js';
+import {hasNativeBilingual} from '../locale-unified-v247.js';
 const dir=fileURLToPath(new URL('../',import.meta.url));
 const files=['app.js','account-expedition.js','realm-map.js','arena-view.js','team-view.js','shadow-frontier-v238.js','shadow-mastery-v241.js','shadow-rewards-v239.js','labyrinth-view.js','building-workshop.js','warfront-v237.js','kingdom-caravan.js','premium-store.js','premium-catalog.js','guild-client.js','tactics-view.js','official-progress-coach.js'];
 const re=/\b(?:local|lt|l)\(\s*(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)")\s*,\s*(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)")\s*\)/g;
@@ -16,7 +16,7 @@ try{for(const name of files){
  const missing={};
  for(const locale of SUPPORTED_LOCALES.filter(x=>x!=='tr'&&x!=='en')){
   setLocale(locale);
-  missing[locale]=unique.filter(x=>bilingual('',x.english)===x.english);
+  missing[locale]=unique.filter(x=>!hasNativeBilingual(x.english,locale));
  }
  const untranslated=unique.filter(x=>Object.values(missing).some(arr=>arr.some(y=>y.english===x.english)));
  results.push({file:name,literalPairs:entries.length,uniqueEnglishStrings:unique.length,missingInSomeLanguages:untranslated.length,
