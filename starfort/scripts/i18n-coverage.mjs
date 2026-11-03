@@ -37,6 +37,7 @@ import {ARMORY_TRANSLATIONS,ARMORY_KEYS} from '../locale-armory-v246.js';
 import {REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS} from '../locale-rewards-v245.js';
 import {ITEM_DISPLAY_EN} from '../locale-items-v246.js';
 import {ITEMS} from '../equipment.js';
+import {ACCOUNT_ONLY,isLegacyOnlyAction} from '../account-only.js';
 import {SHARED_TRANSLATIONS,SHARED_KEYS} from '../locale-sections-v247.js';
 import {TEAM_TRANSLATIONS,TEAM_KEYS} from '../locale-team-v247.js';
 import {GUILD_TRANSLATIONS,GUILD_KEYS} from '../locale-guild-v247.js';
@@ -68,9 +69,14 @@ const watch=[
  {file:'guild-client.js'}
 ];
 const pattern=/>[^<>{}\n]*[ğüşöçıİĞÜŞÖÇ][^<>{}\n]*</gu;
+// A '>' before a JS comparison (e.g. minutes=>minutes===null) is not an HTML text node.
+// Do not hide real visible Turkish markup or unreviewed dynamic strings.
+const visibleTurkishMatches=code=>[...code.matchAll(pattern)].filter(m=>m[0]!=='>Türkçe<'&&!/^>\s*[A-Za-z_$][\w$]*\s*===/.test(m[0]));
+const retiredLegacyBattle=ACCOUNT_ONLY&&isLegacyOnlyAction({dataset:{battleSpeed:'1'},hasAttribute:()=>false});
+const retiredLegacyModules=retiredLegacyBattle?['battle-view.js']:[];
 const auditFiles=watch.map(({file,strict=false})=>{
  const code=readFileSync(resolve(root,file),'utf8');
- const candidates=[...code.matchAll(pattern)].filter(m=>m[0]!=='>Türkçe<').map(m=>({
+ const candidates=visibleTurkishMatches(code).map(m=>({
   line:code.slice(0,m.index).split('\n').length,
   fragment:m[0].slice(0,120)
  }));
@@ -103,17 +109,17 @@ for(const f of auditFiles)if(f.strict&&f.candidateVisibleTurkishFragments>0)prob
 // This is a conservative inventory of modules containing user-facing HTML.
 // It does not confuse an English fallback with a fully translated native-language string.
 const modules=readdirSync(root).filter(file=>file.endsWith('.js'));
-const userFacingModules=modules.filter(file=>{
+const userFacingModules=modules.filter(file=>!retiredLegacyModules.includes(file)).filter(file=>{
  const content=readFileSync(resolve(root,file),'utf8');
  return /(?:innerHTML|return\s*`<(?:section|header|div|article|button)|aria-label=|role=\"status\")/.test(content);
 }).map(file=>{
  const code=readFileSync(resolve(root,file),'utf8');
  const localized=/locale-|\bt\('.*?'\)/.test(code);
- const rawTurkish=[...code.matchAll(pattern)].filter(m=>m[0]!=='>Türkçe<').length;
+ const rawTurkish=visibleTurkishMatches(code).length;
  return {file,localized,rawTurkishCandidates:rawTurkish};
 });
 const needsLocalizationReview=userFacingModules.filter(m=>!m.localized||m.rawTurkishCandidates>0);
-const partialSourceCoverage={totalUserFacingModules:userFacingModules.length,needsLocalizationReview:needsLocalizationReview.length,
+const partialSourceCoverage={totalUserFacingModules:userFacingModules.length,needsLocalizationReview:needsLocalizationReview.length,retiredLegacyExcluded:retiredLegacyModules,
  examples:needsLocalizationReview.slice(0,30),fullyTranslatedInto14Languages:false};
 // Structured content coverage is distinct from complete live-UI translation and human linguistic QA.
 const structuredNarrativeLocales=new Set(['tr','en',...localeSet.filter(lang=>
