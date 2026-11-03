@@ -67,10 +67,11 @@ test('each selected language produces its own inventory headings without changin
    assert.deepEqual(equipmentStats(state,hero),originalPower);
   }
   setLocale('es');
-  assert.match(armoryMarkup(state,hero,'owned','iron_sword'),/Oath Sword/,'untranslated item lore falls back to English');
+  assert.match(armoryMarkup(state,hero,'owned','iron_sword'),/Espada del Juramento/,'gear names now have native Spanish translations');
+  assert.match(armoryMarkup(state,hero,'owned','iron_sword'),/A balanced steel sword/,'item lore uses English fallback while full descriptions remain in translation backlog');
   setLocale('ar');
   assert.match(armoryMarkup(state,hero,'materials','material:gold'),/مخزوني/);
-  assert.match(armoryMarkup(state,hero,'materials','material:gold'),/Gold/,'materials use English fallback until full translated names exist');
+  assert.match(armoryMarkup(state,hero,'materials','material:gold'),/الذهب/,'material names are now native Arabic');
  }finally{setLocale('tr');}
 });
 test('English hero and inventory UI do not localize canonical action identifiers',()=>{
