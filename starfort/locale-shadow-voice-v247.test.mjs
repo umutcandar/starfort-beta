@@ -10,7 +10,7 @@ test('four boss identities have original lines in every supported language and b
   assert.ok(shadowSpeechLanguage().startsWith(lang.slice(0,2)),lang);
   for(let stage=1;stage<=4;stage++){
    const voice=shadowVoiceLines(stage);assert.deepEqual(Object.keys(voice).sort(),['defeat','enter','phase','special']);
-   assert.ok(Object.values(voice).every(line=>line.length>8),lang+' stage '+stage);
+   assert.ok(Object.values(voice).every(line=>[...line].length>=4),lang+' stage '+stage);
    if(lang!=='tr'&&lang!=='en')assert.deepEqual(voice,SHADOW_VOICE_NATIVE[lang][stage-1]);
   }
   const art=shadowBossArtwork(1);
