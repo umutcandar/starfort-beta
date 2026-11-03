@@ -119,3 +119,11 @@
 .chronicle-complete{color:#fbe1a5;font:700 18px Georgia,serif;grid-column:1/-1}
 @media(max-width:850px){.chronicle-cards{grid-template-columns:1fr}.commander-chronicle>header{align-items:start}}
 @media(prefers-reduced-motion:reduce){.chronicle-track i{transition:none}}
+
+/* v2.37 tactical decision briefing and five distinct PvE commands */
+.official-tactical-briefing{display:grid;gap:5px;padding:11px 14px;margin:10px 0;border:1px solid #8caab67e;border-left:3px solid #dbbb7e;background:linear-gradient(135deg,#283c47bc,#193142cd);border-radius:9px}
+.official-tactical-briefing strong{font-size:12px;color:#ffdfaa;line-height:1.5}
+.official-tactical-briefing small{font-size:10px;color:#c9dfe4;line-height:1.55}
+.server-moves [data-account-turn=feint]{border-color:#9c8bc9;color:#e1d5fb}
+.server-moves [data-account-turn=rally]{border-color:#7cae8e;color:#c4f3d0}
+@media(max-width:500px){.server-moves button{flex:1 1 calc(50% - 6px);min-width:0;white-space:normal}.server-moves [data-account-abandon]{flex-basis:100%}}
