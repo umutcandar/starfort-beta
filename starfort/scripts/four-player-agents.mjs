@@ -152,7 +152,7 @@ try{
   assert.ok(v5Score.includes('3★'),'Version5 Act II did not display its achievable 3-star target');
   assert.equal(await evaluate('document.querySelector("[data-account-turn=skill]")'),null,
    'Unlimited generic skill attack is still in the combat HUD');
-  assert.ok(await evaluate('!!document.querySelector("[data-account-turn=\"skill:lyra\"]")'),
+  assert.ok(await evaluate('Array.from(document.querySelectorAll("[data-account-turn]")).some(x=>x.dataset.accountTurn==="skill:lyra")'),
    'Cooldown-governed hero ability disappeared');
   await screenshot('act2-3star-v5');
   await seed({mission:{...v5,balanceVersion:4}});
