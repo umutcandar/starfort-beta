@@ -304,6 +304,69 @@ try{
  assert.ok(feintWorked,'New feint turn not sent to authoritative combat RPC');
  console.log('PASS v2.37 combat: warfront bulwark consumed, new feint/rally controls, battle prioritization and mobile 390px');
 
+ // Account-bound Shadow Frontier: simulate an advanced player only in isolated browser memory.
+ // No production users, achievements or Supabase rows are touched by this fixture.
+ await evaluate(`(()=>{
+  const d=JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot'));
+  d.mission=null;d.cleared=[1,2,3,4,5,6,7,8];d.act2Cleared=[1,2];
+  d.heroes={aldren:15,lyra:15,rovan:15};
+  d.res={gold:15000,wood:12000,stone:12000,aether:5000};
+  sessionStorage.setItem('__starfort_qa_snapshot',JSON.stringify(d));
+ })()`);
+ await cdp('Page.reload',{ignoreCache:true});
+ let advancedReady=false;
+ for(let i=0;i<120;i++){
+  advancedReady=await evaluate("document.readyState==='complete'&&!document.body.classList.contains('account-locked')&&!!document.querySelector('[data-view=heroes]')");
+  if(advancedReady)break;await sleep(100);
+ }
+ assert.ok(advancedReady,'Advanced synthetic account did not restore');
+ await evaluate("document.querySelector('[data-view=heroes]').click()");
+ let heroTree=false;
+ for(let i=0;i<100;i++){
+  heroTree=await evaluate("!!document.querySelector('.shadow-disciplines')&&!!document.querySelector('[data-shadow-train=aldren][data-shadow-path=assault]')");
+  if(heroTree)break;await sleep(100);
+ }
+ assert.ok(heroTree,'Authenticated hero mastery tree did not mount');
+ const goldBefore=await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot')).res.gold");
+ await evaluate("document.querySelector('[data-shadow-train=aldren][data-shadow-path=assault]').click()");
+ let mastered=false;
+ for(let i=0;i<100;i++){
+  mastered=await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_shadow')||'{}').heroPaths?.aldren?.rank===1");
+  if(mastered)break;await sleep(100);
+ }
+ assert.ok(mastered,'Server-backed hero discipline was not granted');
+ assert.equal(goldBefore-(await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot')).res.gold")),250,
+  'Hero discipline did not spend 250 gold in synthetic RPC');
+ await evaluate("document.querySelector('[data-view=expedition]').click()");
+ let regionsReady=false;
+ for(let i=0;i<100;i++){
+  regionsReady=await evaluate("!!document.querySelector('.shadow-stage-grid')&&document.querySelectorAll('.shadow-stage').length===4");
+  if(regionsReady)break;await sleep(100);
+ }
+ assert.ok(regionsReady,'Four post-Act-II shadow regions were not rendered');
+ assert.equal(await evaluate("document.querySelector('[data-shadow-start=1]')?.disabled"),false,
+  'First frontier stage still locked for qualifying account');
+ assert.equal(await evaluate("document.querySelector('[data-shadow-start=2]')?.disabled"),true,
+  'Second frontier stage bypassed its Act II gate');
+ await evaluate("document.querySelector('[data-shadow-start=1]').click()");
+ let shadowBattle=false;
+ for(let i=0;i<100;i++){
+  shadowBattle=await evaluate("!!document.querySelector('.shadow-active-battle')&&!!document.querySelector('[data-shadow-move=feint]')&&!!document.querySelector('[data-shadow-move=rally]')");
+  if(shadowBattle)break;await sleep(100);
+ }
+ assert.ok(shadowBattle,'New shadow battle was not playable');
+ const shadowMobile=await evaluate("({width:innerWidth,scroll:document.documentElement.scrollWidth,regions:document.querySelectorAll('.shadow-stage').length})");
+ assert.ok(shadowMobile.scroll<=shadowMobile.width+6,'Mobile Shadow Frontier horizontal overflow '+JSON.stringify(shadowMobile));
+ await evaluate("document.querySelector('[data-shadow-move=feint]').click()");
+ let turn=0;
+ for(let i=0;i<100;i++){
+  turn=await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_shadow')||'{}').battle?.turn||0");
+  if(turn===1)break;await sleep(100);
+ }
+ assert.equal(turn,1,'Shadow Frontier feint was not sent to its trusted RPC');
+ console.log('PASS v2.38: advanced account hero path debit/lock, 4 frontier cards, new battle, feint RPC and 390px layout');
+
+
 
 
 
