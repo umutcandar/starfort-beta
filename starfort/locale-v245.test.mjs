@@ -130,7 +130,7 @@ test('building workshop for a real state preserves server action IDs with Englis
  try{
   setLocale('en');
   const html=buildingWorkshopMarkup(state,'keep',{icon:()=>'<i></i>',now:clock});
-  assert.match(html,/Village Upgrade Center/);
+  assert.ok(html.includes(local('Köy Geliştirme Merkezi','Village Upgrade Center')),'building workshop heading now uses native language');
   assert.match(html,/Star Keep/);
   assert.match(html,/SERVER ECONOMY|LOCAL TRIAL/);
   assert.match(html,/data-close-building/);

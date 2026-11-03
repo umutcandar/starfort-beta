@@ -161,3 +161,8 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 ## v2.47 birleşik Cephe Karargâhı yerelleştirmesi
 
 - 25 sabit ikmal/ganimet/tekrar seferi mesajı ve bunların 12 ek dildeki karşılıkları `locale-warfront-native-v247.js` ile tamamlandı. Sunucu baskın kazanımları ve ikmal maliyetleri aynı kaldı.
+
+## v2.47 — 91/91 bina yükseltme metni, 14 dil
+
+- `locale-building-native-v247.js` ve `locale-building-advanced-v247.js` gerçek `building-workshop.js` içindeki 91 farklı sabit iki dilli ifadeyi 12 ek dilde karşılar; Türkçe/İngilizce korunur. İnşaat süreleri, malzeme eksikleri, 20 seviye, ustalık mimarisi, sunucu yetkisi ve yıldız koşulları dahildir.
+- `locale-unified-v247.js` sözlüğe bağlanır; inşaat ekonomisine ve sunucu eylem adlarına dokunulmaz. `locale-building-native-v247.test.mjs` kaynak koddan birebir 91 ifadeyi tarayarak çeviri kapsamını doğrular.
