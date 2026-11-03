@@ -136,13 +136,14 @@ export function createShadowBattleDirector({
  reduceMotion=()=>typeof window!=='undefined'&&window.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true
 }={}){
  const voice=createVoice(storage),synth=synthSound(audioActive);
- let stage=1,root=null,model=null,lastLine=null,disposed=false;
+ let stage=1,root=null,model=null,lastLine=null,disposed=false,quality3D=true;
+ try{quality3D=storage?.getItem('starfort:shadow-render-v240')!=='2d'}catch{}
  function stopModel(){model?.destroy();model=null;root=null;}
  function mount(container,battle){
   stopModel();if(disposed||!container||!battle)return false;
   root=container;stage=stageOk(battle.stage)?battle.stage:1;
   const canvas=root.querySelector('[data-shadow-3d-canvas]');
-  if(!canvas)return false;
+  if(!canvas||!quality3D)return false;
   model=createShadow3D(canvas,{stage,reduceMotion:reduceMotion()});
   if(model.ok){
    canvas.closest('.shadow-battle-illustration')?.classList.add('has-real-webgl');
@@ -171,7 +172,10 @@ export function createShadowBattleDirector({
   }
   return list.map(x=>x.type);
  }
- return {mount,play,unlock(){return synth.unlock()},get voiceEnabled(){return voice.enabled},
+ return {mount,play,unlock(){return synth.unlock()},get quality3D(){return quality3D},
+  toggleQuality(){quality3D=!quality3D;
+   try{storage?.setItem('starfort:shadow-render-v240',quality3D?'3d':'2d')}catch{}
+   return quality3D;},get voiceEnabled(){return voice.enabled},
   get voiceAvailable(){return voice.available},get lastLine(){return lastLine},
   toggleVoice(){return voice.set(!voice.enabled)},cancelVoice(){voice.cancel();},
   dispose(){stopModel();voice.cancel();},destroy(){disposed=true;stopModel();voice.cancel();synth.destroy();}};
