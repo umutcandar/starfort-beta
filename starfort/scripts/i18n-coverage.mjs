@@ -20,6 +20,7 @@ import {GUILD_TRANSLATIONS,GUILD_KEYS} from '../locale-guild-v247.js';
 import {TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS} from '../locale-training-v247.js';
 import {WORLD_LANGUAGES} from '../locale-world-v247.js';
 import {HERO_UI} from '../locale-hero-ui-v247.js';
+import {ITEM_NAMES} from '../locale-item-names-v247.js';
 const root=resolve(fileURLToPath(new URL('../',import.meta.url)));
 const watch=[
  {file:'armory-v212.js',strict:true},
@@ -60,6 +61,8 @@ function checkPack(pack,keys,name){
 }
 const problems=[...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
 for(const locale of localeSet){
+ const itemNames=ITEM_NAMES[locale];
+ if(!itemNames||Object.keys(itemNames.names||{}).length!==19||Object.keys(itemNames.sets||{}).length!==3)problems.push(locale+': incomplete native item and set names');
  const heroes=HERO_UI[locale];
  if(!heroes||Object.keys(heroes.titles||{}).length!==9||Object.keys(heroes.abilities||{}).length!==9||Object.keys(heroes.roles||{}).length!==6)problems.push(locale+': incomplete hero content');
  const world=WORLD_LANGUAGES[locale];
@@ -96,7 +99,8 @@ const summary={
   guild:{keysPerLanguage:GUILD_KEYS.length,languages:localeSet.length},
   trainingEvents:{keysPerLanguage:TRAINING_EVENT_KEYS.length,languages:localeSet.length},
   world:{buildings:7,storyChapters:8,resources:4,languages:localeSet.length},
-  heroContent:{titles:9,abilities:9,roles:6,languages:localeSet.length}, 
+  heroContent:{titles:9,abilities:9,roles:6,languages:localeSet.length},
+  itemNames:{items:19,sets:3,languages:localeSet.length}, 
   dailyRewards:{keysPerLanguage:REWARD_MESSAGE_KEYS.length,languages:localeSet.length},
   gearEnglishFallback:{translated:ITEMS.filter(x=>Boolean(ITEM_DISPLAY_EN[x.id])).length,canonical:ITEMS.length}
  },
