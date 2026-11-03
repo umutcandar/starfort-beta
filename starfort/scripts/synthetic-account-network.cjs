@@ -34,6 +34,10 @@
   dailyClaimed:false,weeklyClaimed:false,chestsClaimed:0,nextChestWins:3,lastLoot:null});
  const warfrontRead=()=>{try{return JSON.parse(sessionStorage.getItem('__starfort_qa_warfront'))||warfrontInitial()}catch{return warfrontInitial()}};
  const warfrontWrite=d=>{sessionStorage.setItem('__starfort_qa_warfront',JSON.stringify(d));return d;};
+ const shadowInitial=()=>({ok:true,source:'server-shadow',revision:1,heroPaths:{},cleared:[],
+  stars:{},battle:null,lastReport:null,applied:'get'});
+ const shadowRead=()=>{try{return JSON.parse(sessionStorage.getItem('__starfort_qa_shadow'))||shadowInitial()}catch{return shadowInitial()}};
+ const shadowWrite=d=>{sessionStorage.setItem('__starfort_qa_shadow',JSON.stringify(d));return d;};
  const realFetch=window.fetch.bind(window);
  window.fetch=(input,options={})=>{
   const url=String(input?.url||input);
@@ -114,6 +118,54 @@
    }
    d.nextChestWins=d.chestsClaimed<4?[3,8,15,24][d.chestsClaimed]:24+(d.chestsClaimed-3)*12;
    return ok(warfrontWrite({...d,applied:a}));
+  }
+  if(path.includes('/rest/v1/rpc/sfb_shadow_api')){
+   if(!String(options.headers?.Authorization||'').startsWith('Bearer qa.synthetic.'))return ok({message:'unauthorized'},401);
+   const d=shadowRead(),v=read(),a=payload.p_action;
+   if(a==='train'){
+    const h=payload.p_target,style=payload.p_aux,rank=(d.heroPaths[h]?.rank||0)+1;
+    if(!v.heroes[h]||!['assault','warden'].includes(style)||d.heroPaths[h]&&d.heroPaths[h].path!==style||
+       rank>3||v.heroes[h]<[0,3,6,10][rank]||
+       v.cleared.length<[0,2,6,8][rank]||v.act2Cleared.length<(rank===3?2:0))
+       return ok({message:'Uzmanlık için seviye veya bölüm gerekiyor.'},400);
+    const c={gold:250*rank*rank,aether:45*rank*rank,stone:25*rank};
+    if(Object.entries(c).some(([k,n])=>(v.res[k]||0)<n))return ok({message:'Kaynaklar yetersiz.'},400);
+    Object.entries(c).forEach(([k,n])=>v.res[k]-=n);
+    d.heroPaths[h]={path:style,rank};d.revision++;v.revision++;write(v);
+   }
+   if(a==='start'){
+    const stage=Number(payload.p_target);
+    if(d.battle||v.mission||!Number.isInteger(stage)||stage<1||stage>4||
+       v.act2Cleared.length<stage*2||stage>d.cleared.length+1)
+      return ok({message:'Sınır seferi henüz açılmadı.'},400);
+    d.battle={mode:'shadow',stage,wave:1,waves:3,turn:0,waveTurn:0,power:760,
+      playerHp:580,playerMaxHp:580,enemyHp:240,enemyMaxHp:240,enemyIntent:'strike',
+      attackRanks:Object.values(d.heroPaths).filter(x=>x.path==='assault').reduce((n,x)=>n+x.rank,0),
+      wardRanks:Object.values(d.heroPaths).filter(x=>x.path==='warden').reduce((n,x)=>n+x.rank,0),
+      lastTurnAt:now()-5000,lastRallyTurn:0,cooldowns:{},lastAction:'Başladı'};
+    d.lastReport=null;d.revision++;
+   }
+   if(a==='turn'){
+    if(!d.battle)return ok({message:'Aktif savaş yok.'},400);
+    d.battle.turn++;d.battle.waveTurn++;d.battle.lastAction=payload.p_aux;
+    d.battle.lastTurnAt=now()-5000;d.battle.enemyHp=Math.max(0,d.battle.enemyHp-250);
+    if(d.battle.enemyHp===0){
+      if(d.battle.wave<3){d.battle.wave++;d.battle.waveTurn=0;d.battle.enemyHp=240;d.battle.enemyMaxHp=240;}
+      else{
+       const stage=d.battle.stage;const first=!d.cleared.includes(stage);
+       d.lastReport={won:true,stage,stars:3,turns:d.battle.turn,
+         reward:{gold:420,wood:200,stone:210,aether:60},item:first?'grave_seal':null,at:now()};
+       if(first){d.cleared.push(stage);v.inventory.grave_seal=(v.inventory.grave_seal||0)+1;}
+       d.stars[String(stage)]=3;v.counters.win++;v.revision++;
+       v.res.gold+=420;write(v);d.battle=null;
+      }
+    }
+    d.revision++;
+   }
+   if(a==='abandon'){if(!d.battle)return ok({message:'Aktif savaş yok.'},400);
+     d.battle=null;d.lastReport={won:false,abandoned:true,at:now()};d.revision++;
+   }
+   return ok(shadowWrite({...d,applied:a}));
   }
   if(path.includes('/rest/v1/rpc/sfb_premium_api')){
    if(!String(options.headers?.Authorization||'').startsWith('Bearer qa.synthetic.'))return ok({message:'unauthorized'},401);
