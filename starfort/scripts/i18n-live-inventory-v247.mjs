@@ -27,5 +27,6 @@ const report={auditedAt:'v2.47 candidate',supportedLanguages:SUPPORTED_LOCALES,
  uniquePerModule:results.reduce((n,x)=>n+x.uniqueEnglishStrings,0),
  untranslatedPerModule:results.reduce((n,x)=>n+x.missingInSomeLanguages,0),
  entries:results,notes:'This is an exact-literal bilingual scan. Template strings, RPC-provided text, sound scripts and unpaired Turkish markup need independent review.'};
-console.log(JSON.stringify(report,null,2));
+if(process.argv.includes('--summary'))console.log(JSON.stringify({scannedModules:report.scannedModules,bilingualLiterals:report.bilingualLiterals,uniquePerModule:report.uniquePerModule,untranslatedPerModule:report.untranslatedPerModule,byModule:report.entries.map(({file,uniqueEnglishStrings,missingInSomeLanguages})=>({file,uniqueEnglishStrings,missingInSomeLanguages}))},null,2));
+else console.log(JSON.stringify(report,null,2));
 if(process.argv.includes('--release-check')&&report.untranslatedPerModule>0)process.exitCode=1;
