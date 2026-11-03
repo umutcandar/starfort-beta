@@ -200,3 +200,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - Dört Gölge Sınırı patronunun **16 özgün konuşma repliği**, 12 ek dilde yazıldı. Türkçe ve İngilizce eski metin korunur. 14 dil için tarayıcı TTS dil etiketi (`ar-SA`, `ja-JP`, `pt-BR` vb.) ve yerel dilde konuşma altyazısı sağlanır; cihazın uygun ses paketinin yüklü olması gerekir. Bunlar profesyonel kayıt değildir.
 - **14 aşama başlığı ve 7 savaş ipucu** için İngilizce ve 12 ek dil metinleri eklendi. 3 dalga, son patronun %68/%35 can eşiği, kanonik ID ve ödül mantığı değiştirilmedi. Patron görsellerinin erişilebilir açıklaması ve adı da seçilen dilde gösterilir.
 - 14 dil/4 patron altyazı testi, konuşma etiketi, aşama eşiği ve sunucu tarafındaki hasar/ödül kurallarının değişmemesi test kapsamına eklendi.
+
+## v2.47 tek global paket — gerçek savaşın 2D/3D sahnesi
+
+- `locale-official-scene-v247.js`: doğrulanmış sunucu savaş sahnesinin **28 erişilebilir/görünür komut etiketini**, **8 atmosfer açıklamasını** ve **8 ikinci perde patron yeteneği adını** 14 dilde sağlar.
+- `official-combat-scene.js`: sefer, 1–3 yıldız, labirent, usta, yarık, patron ve 2D/3D geçiş ekranlarının canlı kullanıcı ifadeleri yerel dilde gösterilir. Yerelleştirilmiş ikinci perde hikâyesi/bölge/operasyon içeriği kullanılır. NPC başlıklarında Türkçe özel olmayan rol unvanlarının yabancı dildeki karşılıkları ve yerelleştirilmiş operasyon adı gösterilir.
+- Eylem `data-official-render-toggle`, gerçek sunucu görev durumu, güç, tur, hasar ve ödüllere dokunulmaz. 14 dilde kaynak-snapshot değişmezliği ve erişilebilirlik testi eklenmiştir.
