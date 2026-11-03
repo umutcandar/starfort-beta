@@ -8,7 +8,7 @@ import {displayHero,displayHeroLore,displayHeroAbility,displayHeroRole} from './
 import {ACCOUNT_ONLY,isLegacyOnlyAction,normalizeOnlineView} from './account-only.js';
 import {createGameAudio} from './audio.js';
 import {createShadowBattleDirector,shadowCombatEffects} from './shadow-battle-director-v240.js';
-import {loadAccountSession,accountSession,accountSignIn,accountSignUp,accountSignOut,accountBackup,accountRequestPasswordReset,accountAcceptAuthHash,accountResendConfirmation,accountUpdatePassword} from './account-auth.js';
+import {loadAccountSession,accountSession,accountSignIn,accountSignUp,accountSignOut,accountBackup,accountRequestPasswordReset,accountAcceptAuthHash,accountResendConfirmation,accountUpdatePassword,accountSocialAvailability,accountBeginSocialLogin,accountAcceptSocialCallback} from './account-auth.js';
 import {createAccountSync} from './account-sync.js';
 import {makeRecoveryPoint,recoveryPoints,loadRecoveryPoint} from './recovery-points.js';
 import {progressionSummary} from './save-summary.js';
@@ -87,6 +87,17 @@ let cloudSaveInfo=null,cloudSaveBusy=false;
 let accountBackupInfo=null,accountBusy=false,accountSyncInfo={status:'disconnected'},accountRecovering=false;
 let syncConflictDetails=null,confirmationEmail='',signupPending=false;
 const authRedirect=()=>location.protocol==='https:'?location.origin+location.pathname:'https://umutcandar.github.io/starfort-beta/starfort/';
+async function refreshSocialLoginButtons(){
+ const providers=await accountSocialAvailability();
+ for(const button of document.querySelectorAll('[data-social-login]')){
+  const name=button.dataset.socialLogin;
+  const enabled=providers.checked&&providers[name]===true;
+  button.disabled=!enabled;
+  button.setAttribute('aria-disabled',String(!enabled));
+  button.setAttribute('data-i18n-title',enabled?(name==='google'?'gate.google':'gate.apple'):'auth.socialUnavailable');
+  button.title=t(enabled?(name==='google'?'gate.google':'gate.apple'):'auth.socialUnavailable');
+ }
+}
 const accountSync=createAccountSync({
  fetchRemote:()=>accountBackup('get'),saveRemote:(saved,revision)=>accountBackup('save',{state:saved,revision}),
  readLocal:()=>state,validateLocal:saved=>importSave(exportSave(saved)),
@@ -1059,6 +1070,13 @@ async function accountAutoEquip(heroId){
 function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
   if(button.dataset.language){setLocale(button.dataset.language);render();return;}
+  if(button.hasAttribute('data-social-login')){
+    if(button.disabled||accountBusy||villageSignedIn())return;
+    accountBusy=true;
+    try{accountBeginSocialLogin(button.dataset.socialLogin,authRedirect());}
+    catch(error){accountBusy=false;notify(error.message||t('auth.socialFailed'));}
+    return;
+  }
   if(button.hasAttribute('data-gate-reset')){void accountAction('reset-request');return;}
   if(button.hasAttribute('data-gate-password-update')){void accountAction('password-update');return;}
   if(button.hasAttribute('data-gate-resend')){void accountAction('resend-confirmation');return;}
@@ -1319,18 +1337,21 @@ try {
 $('#recenter').addEventListener('click', () => { activeView = 'keep'; questPanelExpanded=false; scene?.overview(); render(); });
 // Historic local battles are not resumed in the account-only release.
 render();
+void refreshSocialLoginButtons();
 (async()=>{
  try{
-   const callback=await accountAcceptAuthHash(location.hash,()=>history.replaceState(null,'',location.pathname+location.search));
+   const callback=await accountAcceptSocialCallback(location.search,location.hash,
+     ()=>history.replaceState(null,'',location.pathname))
+     ||await accountAcceptAuthHash(location.hash,()=>history.replaceState(null,'',location.pathname+location.search));
      if(callback){
        accountRecovering=callback.type==='recovery';signupPending=false;confirmationEmail='';
-       activeView='settings';render();
+       activeView=callback.type==='oauth'?'keep':'settings';render();
        if(accountRecovering){notify('Kurtarma bağlantısı onaylandı. Şimdi yeni şifreni yaz.');return;}
-       notify('E-posta hesabın doğrulandı. Bulut ilerlemen kontrol ediliyor.');
+       notify(callback.type==='oauth'?t('auth.socialSuccess'):'E-posta hesabın doğrulandı. Bulut ilerlemen kontrol ediliyor.');
      }
      if(accountSession())await refreshVillage();
      syncAccountGate();
- }catch(error){notify('Kurtarma: '+error.message);}
+ }catch(error){notify(error.message||t('auth.socialFailed'));syncAccountGate();}
 })();
 setInterval(()=>{if(accountSession()&&!document.hidden&&!villageBusy)void refreshVillage({preserve:true});},60000);
 setInterval(() => { const pending = $('#production-gain'); if (pending) pending.innerHTML = costHtml(R.production(villageView(),constructionUiNow()), true); renderCityProduction(); }, 3000);
