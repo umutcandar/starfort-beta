@@ -193,6 +193,28 @@ try{
    'Confirmed user must not be forced to sign up for guild a second time');
  await evaluate("document.querySelector('.nav-item[data-view=keep]').click()");
  console.log('PASS beta.9: guild auto profile uses existing authenticated account, no second sign-up');
+ // The actual upgrade CTA must be fully reachable on a phone after scrolling,
+ // even when buildings render a tall 20-level architecture comparison.
+ assert.equal(await evaluate("(()=>{const b=document.querySelector('.building-choice[data-building=farm]');if(!b)return false;b.click();return true;})()"),true);
+ let modalVisible=false;
+ for(let i=0;i<70;i++){
+  modalVisible=await evaluate("!!document.querySelector('#building-dialog')?.open&&!!document.querySelector('.ws-upgrade-button')");
+  if(modalVisible)break;await sleep(100);
+ }
+ assert.ok(modalVisible,'Building upgrade panel did not open');
+ const upgrade=await evaluate(`(()=>{
+  const d=document.querySelector('#building-dialog');d.scrollTop=d.scrollHeight;
+  const b=d.querySelector('.ws-actions .ws-upgrade-button'),r=b?.getBoundingClientRect();
+  if(!r)return {available:false};
+  const middle=document.elementFromPoint(r.left+r.width/2,Math.min(innerHeight-6,r.top+r.height/2));
+  return {available:true,top:r.top,bottom:r.bottom,viewport:innerHeight,
+    visible:r.bottom<=innerHeight+3&&r.top>=-3,
+    reachable:middle===b||b.contains(middle)};
+ })()`);
+ assert.ok(upgrade.visible&&upgrade.reachable,'Clipped or unclickable upgrade button: '+JSON.stringify(upgrade));
+ await shot('starfort-390x844-upgrade-action-beta9.png');
+ await evaluate("document.querySelector('[data-close-building]').click()");
+ console.log('PASS beta.9: upgrade action fully scrollable and clickable on 390px mobile');
  assert.ok(mobileSignedIn.scroll<=mobileSignedIn.viewport+5,'Mobile authenticated app horizontal overflow: '+JSON.stringify(mobileSignedIn));
  // v2.47: verify all fourteen languages in the *unlocked* account-owned village,
  // not only in the account gate. A synthetic server session owns these screens.
