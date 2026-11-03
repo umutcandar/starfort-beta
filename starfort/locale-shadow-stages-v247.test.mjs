@@ -18,7 +18,7 @@ test('live Shadow Frontier cards show correct non-English bosses but keep canoni
   for(let i=0;i<4;i++){const stage=localizedShadowStage(i,{region:'Fallback region',boss:'Fallback boss',name:'Fallback boss'});
    if(lang==='tr')assert.ok(html.includes(SHADOW_STAGES[i].boss));
    else if(lang==='en')assert.ok(html.includes('Thorn Sentinel')||html.includes('Eclipse Sovereign'));
-   else {assert.ok(html.includes(stage.boss),lang+':'+i);assert.ok(html.includes(stage.region),lang+':'+i);}
+   else {assert.ok(html.includes(stage.boss.replaceAll("'",'&#39;')),lang+':'+i);assert.ok(html.includes(stage.region.replaceAll("'",'&#39;')),lang+':'+i);}
   }
   assert.equal(JSON.stringify(base),state);assert.equal(JSON.stringify(acc),account);
  }}finally{setLocale('tr');}
