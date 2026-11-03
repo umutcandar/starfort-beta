@@ -1,5 +1,6 @@
 /** v2.45 Second Act language-independent IDs, English fallback presentation. */
 import {getLocale} from './locale-v243.js';
+import {nativeSecondRegion,nativeSecondOperation,nativeSecondGate} from './locale-act2-v247.js';
 export const SECOND_ACT_DISPLAY_EN=Object.freeze({
  "1": {
   "name": "Crimson Horizon",
@@ -190,19 +191,20 @@ export function displaySecondAct(region){
  if(!region||getLocale()==='tr')return region;
  const localized=SECOND_ACT_DISPLAY_EN[region.id];
  if(!localized)return region;
- return {...region,...localized,operations:region.operations?.map((op,i)=>({...op,...localized.operations[i]}))||[]};
+ const native=nativeSecondRegion(region.id);
+ return {...region,...localized,...(native?{name:native.name,zone:native.zone,lore:native.lore,boss:native.boss}:{}),operations:region.operations?.map((op,i)=>({...op,...localized.operations[i],...(native?.operations[op.id]||{})}))||[]};
 }
 export function displaySecondActOperation(operation){
  if(!operation||getLocale()==='tr')return operation;
  const [region,index]=String(operation.id||'').split('-').map(Number);
  const localized=SECOND_ACT_DISPLAY_EN[region]?.operations[index-1];
- return localized?{...operation,...localized}:operation;
+ return localized?{...operation,...localized,...(nativeSecondOperation(operation.id)||{})}:operation;
 }
 export function secondActGateMessage(reason){
  if(getLocale()==='tr')return reason;
- if(reason==='Bilinmeyen ikinci perde bölgesi.')return 'Unknown Act II region.';
- if(reason==='Önce sekiz ana hikâye bölgesini tamamla.')return 'Complete all eight main story regions first.';
- if(reason==='Önce ikinci perdenin önceki bölgesini bitir.')return 'Finish the previous Act II region first.';
+ if(reason==='Bilinmeyen ikinci perde bölgesi.')return nativeSecondGate('unknown');
+ if(reason==='Önce sekiz ana hikâye bölgesini tamamla.')return nativeSecondGate('mainStory');
+ if(reason==='Önce ikinci perdenin önceki bölgesini bitir.')return nativeSecondGate('priorRegion');
  const power=/^Gerekli güç (\d+)\. Kahraman ve ekipmanı geliştir\.$/.exec(reason||'');
- return power?'Required power: '+power[1]+'. Upgrade heroes and equipment.':reason;
+ return power?nativeSecondGate('power',{power:power[1]}):reason;
 }
