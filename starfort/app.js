@@ -1088,6 +1088,10 @@ function dispatch(action) {
     activeView = normalizeOnlineView(button.dataset.view); render(); if(activeView==='guild')refreshGuild(); if(activeView==='shop')void refreshPremium(); return;
   }
   if (button.dataset.building) { openBuilding(button.dataset.building); return; }
+  if(button.hasAttribute('data-warfront-open')){
+    if($('#building-dialog').open)$('#building-dialog').close();
+    activeView='campaign';questPanelExpanded=true;render();void refreshWarfront();return;
+  }
   if(button.hasAttribute('data-workshop-expedition')){
     $('#building-dialog').close();
     activeView='campaign';questPanelExpanded=true;render();
