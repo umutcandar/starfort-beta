@@ -115,7 +115,7 @@ export function warfrontMarkup(front,game={},mission=null,{busy=false}={}){
  <span class="warfront-record">${NUM(front.wins)}<small>${lt('GERÇEK ZAFER','VERIFIED WINS')}</small></span></header>
  <div class="warfront-section-title"><b>01 · ${tx('warSupply')}</b><span>${lt('İsteğe bağlı; yalnızca bir sonraki sefer için','Optional · Applies to the next expedition only')}</span></div>
  <div class="warfront-options">${options}</div>
- ${pending?`<div class="warfront-pending"><span>🛡 ${tx('ready')}: <b>${esc(displayWarfrontDoctrine(pending).name)}</b> · ${lt('bir sonraki sefer başladığında tüketilir.','consumed when the next expedition starts.')}</span>
+ ${pending?`<div class="warfront-pending"><span>🛡 ${lt('Hazır ikmal','Ready supplies')}: <b>${esc(displayWarfrontDoctrine(pending).name)}</b> · ${lt('bir sonraki sefer başladığında tüketilir.','consumed when the next expedition starts.')}</span>
  <button class="secondary" data-warfront-action="cancel" ${busy||mission?'disabled':''}>${tx('cancel')} · ${lt('malzemeleri iade al','refund resources')}</button></div>`:''}
  ${missionLabel?`<p class="warfront-current">${lt('Sürmekte olan savaş doktrini','Active battle doctrine')}: <b>${esc(missionLabel)}</b></p>`:''}
  <div class="warfront-section-title"><b>02 · ${tx('warChest')}</b><span>${lt('Garantili eşya · rastgele ödül yok','Guaranteed item · No random loot')}</span></div>
