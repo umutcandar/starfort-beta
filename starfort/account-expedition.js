@@ -7,6 +7,7 @@ import {STORY_OPERATIONS,operationStatus} from './story-operations.js';
 import {officialCombatScene} from './official-combat-scene.js';
 import {realmMapMarkup} from './realm-map.js';
 import {officialNextGoal,officialNextGoalMarkup,officialStoryReadiness} from './official-progress-coach.js';
+import {warfrontMarkup} from './warfront-v237.js';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const n=v=>new Intl.NumberFormat('tr-TR').format(v);
 const names={win:'Sefer zaferi',hero:'Kahraman eğitimi',forge:'Ekipman üretimi',maze:'Labirent katı'};
@@ -14,7 +15,7 @@ function progressBadges(account){
  const pieces=[['win','Sefer'],['hero','Kahraman'],['forge','Demirhane'],['maze','Labirent'],['rift','Yarık'],['veteran','Usta']];
  return pieces.map(([k,label])=>`<span><b>${n(account.counters[k]||0)}</b><small>${label}</small></span>`).join('');
 }
-export function accountExpeditionMarkup(game,account,now=Date.now(),selectedRealm=null,combatDelta=null){
+export function accountExpeditionMarkup(game,account,now=Date.now(),selectedRealm=null,combatDelta=null,warfront=null){
  if(!account)return `<section class="guild-panel server-expedition"><h2>Sunucu seferleri</h2><p>Hesap ilerlemesi doğrulanıyor. Yerel kayıtlar buraya aktarılmaz.</p><button class="secondary" data-village-refresh>Yeniden bağlan</button></section>`;
  const cleared=new Set(account.cleared),mission=account.mission,report=account.lastReport;
  const next=Math.min(8,cleared.size+1);
@@ -46,13 +47,14 @@ export function accountExpeditionMarkup(game,account,now=Date.now(),selectedReal
  <div class="server-health"><div><strong>Takımın</strong><span>${n(mission.playerHp)} / ${n(mission.playerMaxHp)}</span><progress max="${mission.playerMaxHp}" value="${mission.playerHp}"></progress></div><div><strong>${esc(mission.mode==='boss'?'Kadim Hükümdar':act2Mission?.stage.boss||STAGES[mission.stage-1]?.enemyName||'Muhafız')}</strong><span>${n(mission.enemyHp)} / ${n(mission.enemyMaxHp)}</span><progress max="${mission.enemyMaxHp}" value="${mission.enemyHp}"></progress></div></div>
  <p class="server-combat-hint">Son hamle: ${esc(mission.lastAction)} · Rakibin saldırısı ve hasar hesabı sunucuda. <span data-server-wait>${wait?'Yaklaşık '+Math.ceil(wait/1000)+' sn bekle.':'Komut verebilirsin.'}</span></p>
  <div class="official-hero-ability-strip" aria-label="Sunucu doğrulamalı kahraman yetenekleri">${heroAbilities}</div>
- <div class="server-moves"><button class="primary" data-account-turn="strike" ${wait?'disabled':''}>⚔ Saldır</button><button class="secondary" data-account-turn="guard" ${wait?'disabled':''}>🛡 Savun</button><button class="secondary" data-account-turn="skill" ${wait?'disabled':''}>✦ Yetenek</button><button class="text-button" data-account-abandon>Çekil</button></div></article>`:'';
+ <div class="server-moves"><button class="primary" data-account-turn="strike" ${wait?'disabled':''}>⚔ Saldır</button><button class="secondary" data-account-turn="guard" ${wait?'disabled':''}>🛡 Savun</button><button class="secondary" data-account-turn="skill" ${wait?'disabled':''}>✦ Yetenek</button><button class="secondary" data-account-turn="feint" ${wait?'disabled':''} title="Kalkanı deler; diğer niyetlerde daha az hasar verir">◈ Aldat</button><button class="secondary" data-account-turn="rally" ${wait||mission.lastRallyTurn&&(mission.turn+1)-mission.lastRallyTurn<4?'disabled':''} title="Az hasar vererek takımın en fazla %16 canını iyileştirir. Dört tur bekleme.">♡ Toparlan</button><button class="text-button" data-account-abandon>Çekil</button></div></article>`:'';
  const resultUi=!mission&&report?`<article class="server-mission-result ${report.won?'win':'loss'}"><strong>${report.won?'★ SUNUCU ZAFERİ':'SEFER TAMAMLANAMADI'} ${report.stars?' · '+'★'.repeat(report.stars):''}</strong><p>${report.won?esc(report.mode==='act2'?secondActMission({mode:'act2',stage:report.stage})?.stage.name||'Yeni Sefer':STAGES[report.stage-1]?.name||'Sefer')+' · '+report.turns+' turda kazanıldı. Kaynaklar sunucu kasasına işlendi.':report.abandoned?'Komutan geri çekildi. Yeni bir sefer başlatabilirsin.':'Savaş kaybedildi. Takımını geliştirerek yeniden dene.'}</p>${report.won?`<small>${Object.entries(report.reward||{}).map(([id,value])=>n(value)+' '+esc(id)).join(' · ')}</small>`:''}</article>`:'';
  const rankTitles=[['Sınır Nöbetçisi',5],['Yıldız Ustası',20],['Kuzey Muhafızı',40]];
  const count=Object.values(account.counters).reduce((a,b)=>a+b,0);
  return `<section class="server-expedition">${campaignHeader}
   ${officialNextGoalMarkup(officialNextGoal(game,account,now))}
   <div class="server-summary"><div><b>${cleared.size} / 8</b><small>Hikâye bölgesi</small></div><div><b>${Object.values(account.campaignStars).reduce((a,b)=>a+b,0)} / 24</b><small>Sefer yıldızı</small></div><div><b>${n(teamPower(game))}</b><small>Sunucu takım gücü</small></div><div><b>${n(account.mazeFloor)} / 16</b><small>Labirent</small></div></div>
+  ${warfrontMarkup(warfront,game,mission)}
   ${missionUi}${resultUi}
   ${realmMapMarkup(account,{selected:selectedRealm})}
   ${(() => {const b=account.worldBoss||{week:"",goal:4500,damage:0,victories:0,claimed:false};const ready=account.cleared.length>=4,complete=b.damage>=b.goal;return `<section class="official-world-boss" aria-label="Haftalık ortak dünya patronu"><div class="official-boss-emblem">☄</div><div class="official-boss-info"><span class="eyebrow">HAFTALIK ORTAK DÜNYA PATRONU · ${esc(b.week||"Yıldız Savaşı")}</span><h3>Küllerin Kadim Hükümdarı</h3><p>Her gerçek oyuncunun doğrulanmış zaferi dünya patronuna hasar verir. Ortak hedefe katkı yapanlar ödülü bir kez alabilir.</p><div class="boss-week-progress"><span style="width:${Math.round(Math.min(1,b.damage/b.goal)*100)}%"></span></div><small>${n(b.damage)} / ${n(b.goal)} ortak hasar · ${n(b.victories)} galibiyet · ${ready?"Sefer açık":"4 hikâye bölgesi gerekli"}</small></div><div class="official-boss-actions"><button class="primary" data-account-boss ${!ready||mission||account.bossWeek===b.week?"disabled":""}>${account.bossWeek===b.week?"Bu hafta tamamlandı":"Dünya patronuna saldır"}</button><button class="secondary" data-account-boss-claim ${!complete||b.claimed||account.bossWeek!==b.week?"disabled":""}>${b.claimed?"Ortak ödül alındı":"Ortak ödül sandığı"}</button></div></section>`})()}
