@@ -12,10 +12,10 @@ v2.43–v2.46 arasında dil seçici 14 dil oldu, ancak 12 ek dilde çoğu hikây
 |---|---|---|
 | Hesap / şifre sıfırlama | v2.44'ten beri 14 dil beta | Tüm doğrulama ve sunucu hata durumlarının 14 dilde tam kontrolü |
 | Navigasyon / ayarlar | v2.44 çekirdeği | Menü, ipucu, erişilebilirlik ve durum bildirimlerinin denetlenmesi |
-| Köy / 7 bina / inşaat 20 seviye | v2.45 İngilizce içerik | 12 ek dil, tüm mimari aşamalar ve dinamik ipuçları |
-| Kahramanlar / 9 karakter / yetenekler | v2.45 İngilizce içerik | 12 ek dil, ekran okuyucu ve grafik alt metinleri |
-| Envanter / 19 eşya / 4 kaynak | v2.46 düğmeler 14 dilde, lore EN | Eşya açıklamaları, setler ve ustalık metinleri 12 ek dilde |
-| Ana hikâye 8 bölge / 24 görev | v2.45 İngilizce yedek | 12 ek dilde bölüm/görev açıklamaları |
+| Köy / 7 bina / inşaat 20 seviye | v2.47: 7 bina adı ve açıklaması, 4 kaynak adı **14 dilde** | Dinamik inşaat ipuçları, kaynak hata mesajları ve görsel alt metinlerinin kalan 12 dilde denetimi |
+| Kahramanlar / 9 karakter / yetenekler | v2.47: 9 unvan, 9 yetenek adı ve 6 sınıf **14 dilde** | 9 kahramanın uzun hikâyesi, yetenek açıklamaları ve grafik alt metinleri 12 dilde eksik |
+| Envanter / 19 eşya / 4 kaynak | v2.47: 19 gerçek eşya adı, 3 set, 4 kaynak **14 dilde**; 34 kontrol metni v2.46'da | 19 eşyanın uzun anlatımı, ustalık durumlarının kalan 12 dilde çevrilmesi |
+| Ana hikâye 8 bölge / 24 görev | v2.47: 8 ana hikâye bölge adı **14 dilde** | Bölge açıklamaları ve 24 operasyonun ad/açıklamaları diğer 12 dilde hâlâ İngilizce yedek |
 | İkinci perde 8 bölge / 24 görev | v2.45 İngilizce yedek | 12 ek dilde bölüm/görev açıklamaları ve özel yetenekler |
 | Labirent / 16 kat | v2.47 taslak: 14 dil ortak etiketler, uzun metin EN | Oda, görev, çevresel olaylar ve dinamik olay metinleri |
 | Günlük ödül 28 günlük döngü | v2.45: 39 anahtar ×14 | Yerel tarih biçimi, gün uzunluğu, UTC ve RTL testleri |
@@ -24,8 +24,8 @@ v2.43–v2.46 arasında dil seçici 14 dil oldu, ancak 12 ek dilde çoğu hikây
 | 30 kalıcı Komutan Kroniği rütbesi | v2.47 taslak: arayüz 14 dil, rütbe EN | 30 unvanın bütün dillerde tutarlı terminolojisi |
 | Premium vitrin / 8 kozmetik / 4 ücretsiz ödül | v2.47 taslak, ödemeler kapalı | 12 dilde ürün adı/açıklaması, ödeme yok durumunun hukukî kontrolü |
 | Arena 1v1 / bot / canlı eşleşme | v2.47 taslak: giriş ve bir kısım durum mesajı | Bütün bekleme/yeniden bağlantı/maç sonucu, grafik ve dokunmatik kontroller |
-| Takım arena / 2v2 / 5v5 / kuşatma | Başka dilde metinler kısmen eksik | Eşleşme, takım emirleri, minimap, sonuc ekranları ve ipuçları |
-| Lonca / ittifak / parti / baskın | Büyük ölçüde Türkçe | Tam üyelik, davet, sohbet, sıralama, baskın ve hata akışları |
+| Takım arena / 2v2 / 5v5 / kuşatma | v2.47: 33 takım komut/başlık etiketi **14 dilde**, maç yaşam döngüsü ve HUD EN yedekli | 12 dilde uzun açıklamalar, objektif kartları, minimap ve tüm dinamik bildirimler |
+| Lonca / ittifak / parti / baskın | v2.47: 33 ittifak/üyelik/savaş odası/baskın/sohbet etiketi **14 dilde**, ekran açıklamaları EN yedekli | Sunucu kaynaklı hatalar, davet kodu akışı, yerel sıralama, tüm anlatılar |
 | Sezon / haftalık yarık / görevler | Karışık Türkçe ve İngilizce | Tüm tekrar eden hedefler, sayaçlar, rütbeler ve erişilebilirlik |
 | Hikâye günlüğü / dünya yazıları | Çoğunlukla Türkçe | Bölüm anlatıları, sinematikler, görev sonuçları, 14 dilde sesli anlatım (hakları uygun sesler) |
 | Hata, ağ, sunucu ve güvenlik metinleri | Bazı EN yedekler | Güvenilir, oyuncuya gösterilen hata kodlarına dayalı 14 dilde açıklamalar |
@@ -34,9 +34,24 @@ v2.43–v2.46 arasında dil seçici 14 dil oldu, ancak 12 ek dilde çoğu hikây
 ## v2.47'de kodlanmaya başlanan ortak yapı
 
 - `locale-sections-v247.js`: **60 ortak ekran anahtarı ×14 gerçek dil**.
+- `locale-team-v247.js`: **33 takım savaş komutu ×14**; `locale-guild-v247.js`: **33 ittifak/klan metni ×14**; `locale-training-v247.js`: **10 canlı eğitim olay bildirimi ×14**.
+- `locale-world-v247.js`: **7 bina adı ve 7 açıklama + 8 bölüm adı + 4 kaynak adı ×14**.
+- `locale-hero-ui-v247.js`: **9 kahraman unvanı + 9 özel yetenek adı + 6 sınıf adı ×14**.
+- `locale-item-names-v247.js`: **19 gerçek ekipman + 3 set adı ×14**, ekonomik ID ve özellikler aynı.
+- `tactics-view.js`, `team-view.js`, `app.js` içindeki ittifak salonu görünümü de ortak çeviri katmanlarını kullanmaya başladı.
 - `labyrinth-view.js`, `kingdom-caravan.js`, `warfront-v237.js`, `premium-store.js`, `premium-catalog.js`, `commander-chronicle.js`, `arena-view.js`: çeviri erişimini oyun kurallarından ayırmaya başlayan refaktör.
-- `locale-v247.test.mjs`: gerçek arayüzlerde 14 dil ve değişmeyen kimlik / maliyet / ödül testleri.
+- `locale-v247.test.mjs` ile birlikte `locale-team-v247.test.mjs`, `locale-guild-v247.test.mjs`, `locale-training-v247.test.mjs`, `locale-world-v247.test.mjs`, `locale-hero-ui-v247.test.mjs` ve `locale-item-names-v247.test.mjs` ayrı kapsam ve kanonik kimlik testleri yapıyor.
 - `scripts/i18n-coverage.mjs`: kaynak dosyalarını tarar; yeni sözlükleri ve riskli görünür Türkçe parçalarını raporlar. `--release-check` tamamlanmadığı sürece hata vermelidir.
+
+
+## 3 Kasım 2026 — birleşik sürümde yapılan ek çalışmalar
+
+- 14 dilde doğrulanan temel sözlükler: 39 günlük ödül, 34 envanter, 60 ortak menü, 33 takım savaşı, 33 ittifak ve 10 eğitim bildirimi = **209 anahtar/dil**. Bazı anahtarlar farklı modlarda aynı anlamı paylaşır; bu sayı oyunun bütün görünür metinleri demek değildir.
+- Kanonik içeriklerde ek karşılıklar: **7 bina adı + 7 açıklama + 8 bölge adı + 4 kaynak + 9 kahraman unvanı + 9 yetenek adı + 6 sınıf + 19 ekipman adı + 3 set adı**, toplam 72 içerik alanı/dil.
+- Yeni sözlüklerin toplam doğrulanan alanı **281/dil**, 14 dilde 3.934 metin değeri. Bunlar tamamen yerelleştirilmiş bir oyunla eşdeğer değildir. 48 hikâye operasyonunun uzun metinleri, diğer perdeler, premium ürün anlatıları, PvP sunucu bildirimleri ve bazı erişilebilirlik ipuçları halen eksiktir.
+- Gözden geçirilen dosyalarda `data-guild-action`, `data-team-order`, `data-caravan-trade`, `data-premium-action` ve kaydedilen savaş/ödül kimlikleri değiştirilmedi.
+- **Kapalı tutulan yayın kriteri:** `node scripts/i18n-coverage.mjs --release-check` tüm diller ve ekranlar tamamlanana kadar başarısız olmalıdır. Normal `--check` mevcut 14 dilli sözlüklerin teknik tutarlılığını denetler.
+- Ürünün tamamında kalan eski Türkçe ifadelerin sıfırlandığı henüz kanıtlanmadı. Ayrıntılı çeviri raporu hâlâ eksik ekranlar bulur.
 
 ## Tek yayın için zorunlu geçiş koşulları
 
