@@ -3,6 +3,7 @@ import {SUPABASE_URL,SUPABASE_KEY} from './online-config.js';
 import {freshAccountSession} from './account-auth.js';
 import {textKey as tx,longText as lt} from './locale-sections-v247.js';
 import {formatNumber,getLocale} from './locale-v243.js';
+import {nativePremiumItem} from './locale-premium-v247.js';
 export const PREMIUM_COSMETICS=Object.freeze([
  {id:'castle-aurora',name:'Kutup Işığı Hisarı',kind:'castle',price:200,detail:'Köyün üzerinde kutup ışıkları renkleri.'},
  {id:'castle-ember',name:'Kor Hisarı',kind:'castle',price:200,detail:'Kale çevresine bakır ve kor teması.'},
@@ -35,7 +36,7 @@ const PREMIUM_DISPLAY_EN={
  'castle-dawn':['Dawn Keep','Free season victory reward.'],'victory-constellation':['Constellation Victory','Free season victory reward.'],
  'crystals100':['Star Spark','A crystal pack planned for a future release.'], 'crystals500':['Celestial Chest','A crystal pack planned for a future release.'],'crystals1200':['Royal Treasury','A crystal pack planned for a future release.']
 };
-export const displayPremiumItem=x=>!x||getLocale()==='tr'?x:({...x,name:lt(x.name,PREMIUM_DISPLAY_EN[x.id]?.[0]||x.name),detail:lt(x.detail,PREMIUM_DISPLAY_EN[x.id]?.[1]||x.detail)});
+export const displayPremiumItem=x=>!x||getLocale()==='tr'?x:({...x,name:nativePremiumItem(x.id)?.name||lt(x.name,PREMIUM_DISPLAY_EN[x.id]?.[0]||x.name),detail:nativePremiumItem(x.id)?.detail||lt(x.detail,PREMIUM_DISPLAY_EN[x.id]?.[1]||x.detail)});
 const displayPremiumKind=kind=>lt(kindNames[kind],({castle:'Keep',cape:'Cape',banner:'Banner',victory:'Victory'})[kind]||kind);
 const esc=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const allowed=new Map(PREMIUM_ALL_ITEMS.map(x=>[x.id,x.kind]));
@@ -114,8 +115,8 @@ export function premiumStoreMarkup(data,{loading=false,busy=false}={}){
   <div class="premium-wallet"><strong>${formatNumber(data.crystals)} ✦</strong><small>${lt('Yıldız Kristali','Star Crystals')}</small><small>${data.owned.length} ${lt('görünüm','appearances')}</small></div></header>
   <div class="premium-payment-lock"><b>${lt('Gerçek para ödemeleri henüz kapalı','Real-money payments are disabled')}</b><p>${lt('Kristal paketleri, VIP ve premium sezon bileti hazırlanıyor. Ödeme sağlayıcısı bağlanmadan bakiye yüklenmez, para çekilmez.','Crystal packs, VIP and the premium season pass are planned. No money is charged or added without a verified payment provider.')}</p></div>
   <div class="premium-packages">${CRYSTAL_PACKS.map(o=>`<div><strong>${esc(displayPremiumItem(o).name)}</strong><span>${o.crystals} ✦</span><button disabled class="secondary" >${tx('soon')}</button></div>`).join('')}
-    <div><strong >VIP · 30 ${lt('gün','days')}</strong><span>${lt('Özel hesap çerçevesi','Special profile frame')}</span><button disabled class="secondary">Yakında</button></div>
-    <div><strong>${lt('Sezon Bileti','Season Pass')}</strong><span>${lt('Premium kozmetik yolu','Premium cosmetic rewards')}</span><button disabled class="secondary">Yakında</button></div></div>
+    <div><strong >VIP · 30 ${lt('gün','days')}</strong><span>${lt('Özel hesap çerçevesi','Special profile frame')}</span><button disabled class="secondary">${tx('soon')}</button></div>
+    <div><strong>${lt('Sezon Bileti','Season Pass')}</strong><span>${lt('Premium kozmetik yolu','Premium cosmetic rewards')}</span><button disabled class="secondary">${tx('soon')}</button></div></div>
   <div class="premium-live-subhead"><h3>${tx('premiumCollection')}</h3><p>${lt('Kristal bakiyesi yalnızca doğrulanmış ödeme ile oluşabilir. Eşyalar bir kez alınır ve hesabında kalır.','Crystals can be added only through verified payment. Cosmetics are permanently owned once unlocked.')}</p></div>
   <div class="premium-live-grid">${itemRows}</div>
   <section class="premium-season"><div class="premium-season-head"><div><span class="eyebrow">${lt('AYLIK YOLCULUK · ÜCRETSİZ İLERLEME','MONTHLY JOURNEY · FREE PROGRESSION')}</span>
