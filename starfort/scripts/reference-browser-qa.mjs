@@ -169,7 +169,8 @@ try{
  assert.equal(await evaluate("sessionStorage.getItem('__starfort_qa_first_get_failure')"),'1',
    'The first production-style 503 must recover automatically without clicking manual retry');
  assert.equal(await evaluate("!!document.querySelector('.village, .server-expedition, .app')"),true);
- console.log('PASS beta.9: temporary initial server failure resolved automatically after real synthetic login');
+ assert.equal(await evaluate("!!document.querySelector('.sf-first-guide')&&!!document.querySelector('[data-guide-first-stage]')"),true,'First-time village must show a three-step guide immediately');
+ console.log('PASS beta.9: temporary initial server failure resolved automatically after real synthetic login and village guide');
  await cdp('Page.navigate',{url:origin});
  let persists=false;
  for(let i=0;i<100;i++){
