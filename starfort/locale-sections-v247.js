@@ -1,5 +1,6 @@
 /** v2.47 unified game navigation terminology for 14 locales; display-only. */
 import {getLocale,SUPPORTED_LOCALES} from './locale-v243.js';
+import {bilingual} from './locale-unified-v247.js';
 export const SHARED_KEYS=Object.freeze(["back","refresh","retry","ready","locked","complete","claimed","claim","start","cancel","victory","wins","level","floor","guardian","exit","reward","resources","attack","defend","battle","daily","weekly","server","progress","free","owned","empty","soon","equip","unequip","yes","no","labTitle","labSubtitle","labMap","labMission","labExplore","labGate","labFight","labNext","carTitle","carSend","carCost","carGain","carRecommended","warTitle","warChest","warSupply","premiumTitle","premiumCollection","premiumSeason","chronicleTitle","chronicleRank","chronicleNext","botMatch","liveMatch","guildTitle","alliance","team"]);
 export const SHARED_TRANSLATIONS=Object.freeze({
  "tr": {
@@ -875,7 +876,7 @@ export const textKey=(key,values={})=>{
  const locale=getLocale(),str=SHARED_TRANSLATIONS[locale]?.[key]??SHARED_TRANSLATIONS.en[key]??key;
  return str.replace(/\{(\w+)\}/g,(_,id)=>String(values[id]??''));
 };
-export const longText=(tr,en)=>getLocale()==='tr'?tr:en;
+export const longText=(tr,en)=>bilingual(tr,en);
 export function auditSharedTranslations(){
  return SUPPORTED_LOCALES.flatMap(lang=>SHARED_KEYS.filter(key=>!SHARED_TRANSLATIONS[lang]?.[key]).map(key=>lang+'.'+key));
 }

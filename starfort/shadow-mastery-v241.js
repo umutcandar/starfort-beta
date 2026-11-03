@@ -1,4 +1,5 @@
 import {getLocale,formatNumber} from './locale-v243.js';
+import {bilingual,shadowRankName} from './locale-unified-v247.js';
 /** STARFORT v2.41 — 12-rank seasonal independent, replay-safe Shadow Mastery.
  * UI previews are constant; award/XP/account ownership always come from Supabase.
  */
@@ -9,8 +10,8 @@ export const SHADOW_MASTERY_TITLES=Object.freeze([
  'Zirve Koruyucusu','Karanlık Yarıcı','Sınır Efsanesi','Şafak Öncüsü'
 ]);
 const EN_TITLES=Object.freeze(['Apprentice Watcher','Frontier Scout','Thorn Hunter','Night Guide','Siren Breaker','Ash Warden','Eclipse Hunter','Star Sentinel','Summit Guardian','Darkness Splitter','Frontier Legend','Dawn Vanguard']);
-const l=(tr,en)=>getLocale()!=='tr'?en:tr;
-const name=i=>l(SHADOW_MASTERY_TITLES[i],EN_TITLES[i]);
+const l=(tr,en)=>bilingual(tr,en);
+const name=i=>getLocale()==='tr'?SHADOW_MASTERY_TITLES[i]:shadowRankName(i);
 export const SHADOW_MASTERY_WEEKLY_LIMIT=100;
 const safe=(v,lo,hi)=>Number.isSafeInteger(v)&&v>=lo&&v<=hi;
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

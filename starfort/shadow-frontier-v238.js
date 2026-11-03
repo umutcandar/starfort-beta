@@ -7,6 +7,7 @@ import {shadowVictoryMarkup} from './shadow-rewards-v239.js';
 import {shadowAtmosphereParticles,shadowVoiceStatus} from './shadow-battle-director-v240.js';
 import {shadowMasterySnapshot,shadowMasteryMarkup} from './shadow-mastery-v241.js';
 import {getLocale,formatNumber} from './locale-v243.js';
+import {bilingual} from './locale-unified-v247.js';
 export const SHADOW_STAGES=Object.freeze([
  Object.freeze({id:1,name:'Diken Nöbetçisi',region:'Karanlık Geçit',boss:'Diken Nöbetçisi',
   unlock:2,description:'Yaşayan surların bekçisi. Son dalgada kalkanı sürekli onarır.',
@@ -36,7 +37,7 @@ const STAGE_EN=Object.freeze([
  {region:'Burnt Cliffs',boss:'Ash Tempest',name:'Ash Tempest',description:'Heavy strikes shatter the front line.',tip:'Defend against heavy attacks and Rally to recover.'},
  {region:'Dark Throne',boss:'Eclipse Sovereign',name:'Eclipse Sovereign',description:'Three phases of eclipse, with fierce attacks at low health.',tip:'Save your strongest ability for the final phase.'}
 ]);
-const local=(tr,en)=>getLocale()!=='tr'?en:tr;
+const local=(tr,en)=>bilingual(tr,en);
 const displayStage=id=>getLocale()!=='tr'?STAGE_EN[id-1]:SHADOW_STAGES[id-1];
 const PHASE_NAMES_EN=[
  ['Sleeping Roots','Thorn Watch','Living Ramparts'],

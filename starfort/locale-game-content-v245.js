@@ -2,6 +2,7 @@
  * Untranslated non-Turkish content deliberately falls back to English.
  */
 import {getLocale} from './locale-v243.js';
+import {bilingual} from './locale-unified-v247.js';
 import {worldBuilding,worldStage,worldResource} from './locale-world-v247.js';
 import {storyOperationNative,storyChapterNative} from './locale-story-v247.js';
 export const BUILDING_DISPLAY_EN=Object.freeze({
@@ -201,7 +202,7 @@ export const REALM_DISPLAY_EN=Object.freeze({
  }
 });
 const international=()=>getLocale()!=='tr';
-export const local=(tr,en)=>international()?en:tr;
+export const local=(tr,en)=>bilingual(tr,en);
 export function displayBuilding(building){
  if(!building||!international())return building;
  return {...building,...(worldBuilding(building.id)||BUILDING_DISPLAY_EN[building.id]||{})};
