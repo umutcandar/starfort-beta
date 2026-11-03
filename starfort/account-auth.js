@@ -1,4 +1,5 @@
 import {SUPABASE_URL,SUPABASE_KEY} from './online-config.js';
+import {t} from './locale-v243.js';
 const KEY='starfort:account-session';
 let session=null;
 export const accountSession=()=>session;
@@ -20,21 +21,21 @@ function saveSession(data,storage=globalThis.sessionStorage){
 export function explainAuthError(status,payload={}){
  const code=String(payload?.error_code||payload?.code||payload?.error||'').toLowerCase();
  if(status===429||code==='over_email_send_rate_limit')
-  return 'E-posta gönderim sınırına ulaşıldı. Yeni bir onay bağlantısı istemeden önce daha sonra tekrar dene; hesabın varsa giriş yapmayı deneyebilirsin.';
+  return t('auth.limit');
  if(code==='email_address_not_authorized')
-  return 'Bu e-posta adresine doğrulama gönderilemiyor. E-posta hizmeti yöneticisi tarafından yapılandırılmalı.';
+  return t('auth.unauthorized');
  if(code==='email_address_invalid')
-  return 'E-posta adresi sağlayıcı tarafından geçersiz bulundu. Gerçek ve kullanılabilir bir e-posta adresi gir.';
+  return t('auth.badAddress');
  if(code==='email_not_confirmed')
-  return 'Hesabın e-posta doğrulaması bekliyor. Gelen kutunu ve gereksiz klasörünü kontrol et.';
+  return t('auth.notConfirmed');
  if(code==='invalid_credentials')
-  return 'E-posta veya şifre hatalı. Bilgilerini kontrol et; gerekirse şifre sıfırlamayı kullan.';
- return payload?.msg||payload?.message||payload?.error_description||payload?.error||'Hesap işlemi başarısız.';
+  return t('auth.invalidCredentials');
+ return payload?.msg||payload?.message||payload?.error_description||payload?.error||t('auth.failed');
 }
 async function request(path,opts={},fetcher=fetch){
  let res,payload;
  try {res=await fetcher(SUPABASE_URL+path,{...opts,signal:AbortSignal.timeout(12000),headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json',...(opts.headers||{})}});payload=await res.json();}
- catch{throw Error('Sunucuya bağlanılamadı. Yerel kayıt değişmedi.');}
+ catch{throw Error(t('auth.connection'));}
  if(!res.ok)throw Error(explainAuthError(res.status,payload));
  return payload;
 }
