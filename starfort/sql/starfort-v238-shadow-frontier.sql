@@ -27,6 +27,7 @@ create or replace function public.sfb_shadow_api(
  p_action text,p_target text default null,p_aux text default null,p_request_id uuid default null
 ) returns jsonb language plpgsql security definer set search_path=''
 as $fn$
+#variable_conflict use_variable
 declare
  uid uuid:=auth.uid();
  t timestamptz:=clock_timestamp();
