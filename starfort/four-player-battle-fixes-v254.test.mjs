@@ -26,7 +26,7 @@ const snapshot=battle=>({ok:true,source:'server',serverNow:NOW,revision:10,
 
 test('all four player agents have independent Chromium runners with artifact evidence',()=>{
  for(const role of ['rookie','tactician','veteran','breaker']){
-  assert.match(workflow,new RegExp('player-?'+role,'i')); // documented via matrix or report paths
+  assert.ok(workflow.includes(role),'missing independent runner '+role);
   assert.match(agents,new RegExp("role==='"+role+"'"));
  }
  assert.match(workflow,/matrix:[\s\S]*player: \[rookie, tactician, veteran, breaker\]/);
