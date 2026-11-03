@@ -1,5 +1,7 @@
 import {SUPABASE_URL,SUPABASE_KEY} from './online-config.js';
 import {freshAccountSession} from './account-auth.js';
+import {formatNumber} from './locale-v243.js';
+import {rewardText as rt,rewardMilestoneLabel,rewardItemLabel} from './locale-rewards-v245.js';
 export const CALENDAR_DAYS=28;
 export const MILESTONES=Object.freeze({
  7:Object.freeze({label:'Ay Işığı Sandığı',item:'lunar_charm',extra:{gold:200,wood:90,stone:90,aether:20}}),
@@ -50,26 +52,26 @@ export async function calendarRequest(action,{fetcher=fetch,requestId=null}={}){
  if(!response.ok)throw Error(data?.message||'Günlük ödül sunucusu işlemi reddetti.');
  return {identity:session.user.id,calendar:calendarFromServer(data),claim:data.granted||null};
 }
-const num=n=>Number(n).toLocaleString('tr-TR');
+const num=n=>formatNumber(Number(n));
 const shortReward=(r,detail=false)=>detail?
-  `<span>🪙 ${num(r.gold)} altın</span><span>🪵 ${num(r.wood)} kereste</span><span>🪨 ${num(r.stone)} taş</span><span>✦ ${num(r.aether)} yıldız özü</span>`:
+  `<span>🪙 ${num(r.gold)} ${rt('gold')}</span><span>🪵 ${num(r.wood)} ${rt('wood')}</span><span>🪨 ${num(r.stone)} ${rt('stone')}</span><span>✦ ${num(r.aether)} ${rt('aether')}</span>`:
   `🪙 ${num(r.gold)} · ✦ ${num(r.aether)}`;
 export function rewardCalendarMarkup(calendar,{online=false,loading=false}={}){
- if(loading||!calendar)return `<div class="reward-sheet"><button type="button" class="reward-close" data-reward-close aria-label="Kapat">×</button><h2>Yıldız Sandıkları</h2><p>Sunucudaki ödül takvimi doğrulanıyor.</p><button class="secondary" data-reward-retry>Yeniden bağlan</button></div>`;
+ if(loading||!calendar)return `<div class="reward-sheet"><button type="button" class="reward-close" data-reward-close aria-label="${rt('close')}">×</button><h2>${rt('heading')}</h2><p>${rt('loading')}</p><button class="secondary" data-reward-retry>${rt('retry')}</button></div>`;
  const selected=calendar.displayDay,rec=rewardForDay(selected),current=calendar.claimCount%28;
  const completed=calendar.available?current:current||28;
  const cells=Array.from({length:28},(_,i)=>{
   const day=i+1,r=rewardForDay(day),milestone=MILESTONES[day],past=calendar.available?day<=current:day<=completed;
   const active=day===selected;
-  return `<div class="reward-day ${past?'collected':''} ${active?'active':''} ${milestone?'milestone':''}" aria-label="${day}. gün; ${milestone?.label||'Günlük kaynak sandığı'}; ${past?'alındı':active?'sıradaki':'gelecek'}"><div class="reward-day-top"><small>GÜN ${day}</small>${past?'<span aria-label="Alındı">✓</span>':''}</div><div class="reward-day-icon">${milestone?(day===28?'👑':day===21?'💎':day===14?'🔥':'🌙'):'✦'}</div><strong>${milestone?milestone.label:'Kaynak Sandığı'}</strong><small class="reward-day-amount">✦ ${num(r.aether)} · 🪙 ${num(r.gold)}</small></div>`;
+  return `<div class="reward-day ${past?'collected':''} ${active?'active':''} ${milestone?'milestone':''}" aria-label="${rt('day',{day})}; ${rewardMilestoneLabel(milestone?day:null)}; ${past?rt('opened'):active?rt('today'):rt('upcoming')}"><div class="reward-day-top"><small>${rt('day',{day})}</small>${past?'<span aria-label="${rt('opened')}">✓</span>':''}</div><div class="reward-day-icon">${milestone?(day===28?'👑':day===21?'💎':day===14?'🔥':'🌙'):'✦'}</div><strong>${milestone?rewardMilestoneLabel(day):rt('sourceChest')}</strong><small class="reward-day-amount">✦ ${num(r.aether)} · 🪙 ${num(r.gold)}</small></div>`;
  }).join('');
- const next=rewardForDay(calendar.nextDay),itemText=rec.item?`<div class="reward-item"><strong>🎁 ${REWARD_ITEMS[rec.item]}</strong><small>Eşya envanterine eklenir; sınır doluysa +250 yıldız özü alırsın.</small></div>`:'';
- return `<div class="reward-sheet"><button class="reward-close" type="button" data-reward-close aria-label="Ödül penceresini kapat">×</button>
- <div class="reward-sheet-header"><span class="eyebrow">STARFORT · 28 GÜNLÜK TEKRARLANAN TAKVİM</span><h2>✦ Yıldız Sandıkları</h2><p>Her gün yeni bir sandık. Kaçırdığın günler ilerlemeni silmez; kaldığın sandıktan devam edersin.</p></div>
- <div class="reward-summary"><div><strong>${calendar.displayDay} / 28</strong><small>Bu döngünün günü</small></div><div><strong>${calendar.cycle}. Döngü</strong><small>28 gün bitince yenilenir</small></div><div><strong>🔥 ${calendar.streak}</strong><small>Aralıksız giriş serisi</small></div><div><strong>${online?'🛡 Sunucu':'🎮 Deneme'}</strong><small>${online?'Gerçek hesap ödülü':'Yalnızca yerel kayıt'}</small></div></div>
+ const next=rewardForDay(calendar.nextDay),itemText=rec.item?`<div class="reward-item"><strong>🎁 ${rewardItemLabel(rec.item)}</strong><small>${rt('inventory')}</small></div>`:'';
+ return `<div class="reward-sheet"><button class="reward-close" type="button" data-reward-close aria-label="${rt('close')}">×</button>
+ <div class="reward-sheet-header"><span class="eyebrow">${rt('repeating')}</span><h2>✦ ${rt('heading')}</h2><p>${rt('intro')}</p></div>
+ <div class="reward-summary"><div><strong>${calendar.displayDay} / 28</strong><small>${rt('day',{day:calendar.displayDay})}</small></div><div><strong>${rt('cycle',{cycle:calendar.cycle})}</strong><small>${rt('cycleRepeat')}</small></div><div><strong>🔥 ${calendar.streak}</strong><small>${rt('streak')}</small></div><div><strong>${rt(online?'server':'demo')}</strong><small>${rt(online?'serverReward':'localOnly')}</small></div></div>
  <div class="reward-progress" role="progressbar" aria-valuemin="0" aria-valuemax="28" aria-valuenow="${completed}"><span style="width:${Math.round(completed/28*100)}%"></span></div>
  <div class="reward-grid">${cells}</div>
- <section class="reward-today"><div class="reward-today-copy"><span class="eyebrow">${calendar.available?'BUGÜNÜN ÖDÜLÜ':'BUGÜN ALINDI'} · GÜN ${selected}</span><h3>${MILESTONES[selected]?.label||'Günlük Kaynak Sandığı'}</h3><div class="reward-breakdown">${shortReward(rec,true)}</div>${itemText}<p class="reward-next">Sıradaki ${calendar.nextDay}. gün: ${shortReward(next)}${next.item?' · 🎁 '+REWARD_ITEMS[next.item]:''}</p></div><button class="primary reward-claim" data-reward-claim ${calendar.available?'':'disabled'}>${calendar.available?'✦ Bugünkü sandığı aç':'✓ Bugünün ödülü alındı'}</button></section>
- <p class="reward-footer">Gün UTC 00.00'da yenilenir. Bir günü kaçırırsan kaldığın yerden devam edersin; yalnızca aralıksız giriş serisi sıfırlanır. ${online?'Ödüller sunucuda hesaplanır ve hesabına işlenir.':'Bu takvim çevrimdışı denemedir ve sunucu hesabına aktarılmaz.'}</p>
+ <section class="reward-today"><div class="reward-today-copy"><span class="eyebrow">${rt(calendar.available?'today':'claimedToday')} · ${rt('day',{day:selected})}</span><h3>${rewardMilestoneLabel(selected)}</h3><div class="reward-breakdown">${shortReward(rec,true)}</div>${itemText}<p class="reward-next">${rt('next',{day:calendar.nextDay})} ${shortReward(next)}${next.item?' · 🎁 '+rewardItemLabel(next.item):''}</p></div><button class="primary reward-claim" data-reward-claim ${calendar.available?'':'disabled'}>${rt(calendar.available?'openChest':'claimed')}</button></section>
+ <p class="reward-footer">${rt('utc')} ${rt(online?'serverFooter':'offlineFooter')}</p>
  </div>`;
 }
