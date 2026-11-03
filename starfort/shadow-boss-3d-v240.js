@@ -224,7 +224,7 @@ export function createShadow3D(canvas,{stage=1,reduceMotion=false}={}){
   }
   if(!reduced)raf=requestAnimationFrame(frame);
  }
- const onLost=e=>{e.preventDefault();visible=false;stop();};
+ const onLost=e=>{e.preventDefault();visible=false;stop();canvas.closest('.shadow-battle-illustration')?.classList.remove('has-real-webgl');};
  canvas.addEventListener('webglcontextlost',onLost);
  if(typeof IntersectionObserver==='function'){
   observer=new IntersectionObserver(entries=>{visible=entries[0]?.isIntersecting!==false;
