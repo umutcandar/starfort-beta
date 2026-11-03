@@ -133,3 +133,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - Gerçek sunucu seferindeki **29 yeni savaş ifadesi** (4 düşman niyeti, 4 hamle tavsiyesi, tahmini 1–3 yıldız derecesi uyarısı, yetenek bekleme ve son vuruş bilgileri, yenilgi/geri çekilme) 12 ek dilde tamamlandı.
 - `locale-official-ui-v247.js` artık toplam **75 temel/doğrulanmış savaş mesajı ×12 ek dil** içerir. Oturum/Türkçe ve İngilizce kuralı aynı kalır. Oyun içi ödüller ve hasar hâlâ sunucuda hesaplanır.
 - Bazı uzun dünya patronu anlatımları, istemci dışı hata kodları, seslendirme ve 14 dilde ekran ekran insan QA devam eder.
+
+## v2.47 çalışma dalı — gerçek sunucu dünya haritasının 14 dili
+
+- `locale-realm-ui-v247.js`: gerçek oyuncu hesabındaki 8 bölge/24 yıldız/24 usta kademesi dünya haritasında kullanılan **13 görünür/erişilebilir arayüz ifadesinin 12 ek dili**. Bölge başlıkları ve hikâye isimleri mevcut yerelleştirilmiş içerik sözlüğünden gelir.
+- `realm-map.js`: harita iğneleri, ekran açıklamaları ve **yeniden savaş / bölgeye saldır / usta savaşı** eylem adları seçilen dilde. `data-realm-select`, `data-realm-mission`, `data-account-veteran`, koordinatlar, yıldız sayıları, kilit mantığı değişmez.
+- 14 dilde harita render'ı, 8 bölge ve eylem kimliği ile 1–3 yıldız değerleri `locale-realm-ui-v247.test.mjs` içinde doğrulanır. Bu değişiklik sunucu ekonomisini etkilemez.
