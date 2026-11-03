@@ -1,10 +1,11 @@
 import {SUPABASE_URL,SUPABASE_KEY} from './online-config.js';
 import {freshAccountSession} from './account-auth.js';
 import {HEROES,ITEMS} from './rules.js';
+import {ASCENSION_ITEMS} from './relic-ascension-v252.js';
 const HERO_IDS=new Set(HEROES.map(h=>h.id)),ITEM_IDS=new Map(ITEMS.map(x=>[x.id,x]));
 const COUNTERS=['win','hero','forge','maze','rift','veteran'];
 const MOVES=['strike','guard','skill','feint','rally'];
-export const ACCOUNT_ACTIONS=['get','hero','forge','equip','unequip','team','enhance','mission_start','mission_turn','mission_abandon','contract','chronicle_claim','title','boss_claim'];
+export const ACCOUNT_ACTIONS=['get','hero','forge','equip','unequip','team','enhance','ascend','mission_start','mission_turn','mission_abandon','contract','chronicle_claim','title','boss_claim'];
 const safeNumber=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
 const object=x=>x&&typeof x==='object'&&!Array.isArray(x);
 export function validateAccountSnapshot(data){
@@ -31,6 +32,11 @@ export function validateAccountSnapshot(data){
  if(!object(data.contractClaims)||!Array.isArray(data.titles)||data.titles.length>16)throw Error('Sunucu görev/unvan verisi bozuk.');
  const upgrades=data.itemUpgrades||{};
  if(!object(upgrades)||!Object.keys(upgrades).every(k=>ITEM_IDS.has(k)&&safeNumber(upgrades[k],1,5)&&inventory[k]>0))throw Error('Eşya ustalığı verisi bozuk.');
+ const ascensions=data.relicAscensions??{},bossSeals=data.bossSeals??0;
+ if(!object(ascensions)||!safeNumber(bossSeals,0,10000)||
+    !Object.entries(ascensions).every(([id,level])=>
+      ASCENSION_ITEMS.includes(id)&&safeNumber(level,1,4)&&inventory[id]>0&&upgrades[id]===5))
+  throw Error('Sunucu yıldız işleme verisi bozuk.');
  const boss=data.worldBoss||null;
  if(boss!==null&&(!object(boss)||typeof boss.week!=='string'||boss.week.length>12||
   !safeNumber(boss.goal,1,1e9)||!safeNumber(boss.damage,0,boss.goal)||!safeNumber(boss.victories,0,1e8)||typeof boss.claimed!=='boolean'))
@@ -60,7 +66,7 @@ export function validateAccountSnapshot(data){
  return {heroes:{...heroes},inventory:{...inventory},loadouts:structuredClone(loadouts),team:[...team],
   cleared:[...cleared],campaignStars:{...stars},act2Cleared:[...act2Cleared],act2Stars:{...act2Stars},veteranMedals:{...(data.veteranMedals||{})},
   mazeFloor:data.mazeFloor,riftWeek:data.riftWeek,mission:m?{...m}:null,lastReport:data.lastReport?{...data.lastReport}:null,
-  counters:{...data.counters},contractClaims:{...data.contractClaims},titles:[...data.titles],itemUpgrades:{...upgrades},bossWeek:data.bossWeek??null,worldBoss:boss?{...boss}:null};
+  counters:{...data.counters},contractClaims:{...data.contractClaims},titles:[...data.titles],itemUpgrades:{...upgrades},relicAscensions:{...ascensions},bossSeals,bossWeek:data.bossWeek??null,worldBoss:boss?{...boss}:null};
 }
 export async function accountProgressRequest(action,{target=null,aux=null,requestId=null,fetcher=fetch}={}){
  if(!ACCOUNT_ACTIONS.includes(action))throw Error('Tanımsız hesap işlemi.');
@@ -85,7 +91,7 @@ export async function accountProgressRequest(action,{target=null,aux=null,reques
 export function accountServerView(state,account){
  if(!account)return state;
  return {...state,heroes:Object.fromEntries(Object.entries(account.heroes).map(([id,level])=>[id,{level}])),
-  inventory:{...account.inventory},loadouts:structuredClone(account.loadouts),itemUpgrades:{...account.itemUpgrades},team:[...account.team],
+  inventory:{...account.inventory},loadouts:structuredClone(account.loadouts),itemUpgrades:{...account.itemUpgrades},relicAscensions:{...account.relicAscensions},bossSeals:account.bossSeals,team:[...account.team],
   cleared:[...account.cleared],campaignStars:{...account.campaignStars},act2Cleared:[...(account.act2Cleared||[])],act2Stars:{...(account.act2Stars||{})},veteranMedals:{...account.veteranMedals},
   serverMission:account.mission,serverReport:account.lastReport,serverCounters:{...account.counters},
   serverTitles:[...account.titles],serverRiftWeek:account.riftWeek,serverMazeFloor:account.mazeFloor,serverContractClaims:{...account.contractClaims}};
