@@ -7,6 +7,7 @@ import {textKey as tx,longText as lt} from './locale-sections-v247.js';
 import {formatNumber} from './locale-v243.js';
 import {displayResource} from './locale-game-content-v245.js';
 import {displayItem} from './locale-items-v246.js';
+import {nativeWarfrontDoctrine} from './locale-warfront-v247.js';
 export const WARFRONT_DOCTRINES=Object.freeze([
  Object.freeze({id:'assault',name:'Hücum Taburu',icon:'⚔',cost:Object.freeze({gold:70,wood:50}),
   summary:'%12 daha fazla hasar; %6 daha fazla gelen hasar.',focus:'Hızlı biten savaşlarda üç yıldız için risk al.'}),
@@ -29,11 +30,10 @@ export const WARFRONT_DAILY_REWARD=Object.freeze({gold:160,wood:75,stone:65,aeth
 export const WARFRONT_WEEKLY_REWARD=Object.freeze({gold:580,wood:250,stone:210,aether:50});
 const NUM=n=>formatNumber(Number(n));
 const DOCTRINE_EN={assault:['Assault Battalion','12% more damage, 6% more incoming damage.','Take risks to earn three stars in fast battles.'],bulwark:['Shield Garrison','10% more starting health, 22% less incoming damage.','Survive against challenging bosses.'],recon:['Star Recon Corps','25% bonus damage to the Feint action.','Counter enemies who rely on shields.']};
-export const displayWarfrontDoctrine=d=>!d?d:({...d,name:lt(d.name,DOCTRINE_EN[d.id]?.[0]||d.name),summary:lt(d.summary,DOCTRINE_EN[d.id]?.[1]||d.summary),focus:lt(d.focus,DOCTRINE_EN[d.id]?.[2]||d.focus)});
+export const displayWarfrontDoctrine=d=>!d?d:({...d,...(nativeWarfrontDoctrine(d.id)||{name:lt(d.name,DOCTRINE_EN[d.id]?.[0]||d.name),summary:lt(d.summary,DOCTRINE_EN[d.id]?.[1]||d.summary),focus:lt(d.focus,DOCTRINE_EN[d.id]?.[2]||d.focus)})});
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const itemsById=new Map(ITEMS.map(x=>[x.id,x]));
-const names=Object.fromEntries(['gold','wood','stone','aether'].map(id=>[id,displayResource(id)]));
-const prizeLabel=prize=>Object.entries(prize).map(([id,amount])=>NUM(amount)+' '+names[id]).join(' · ');
+const prizeLabel=prize=>Object.entries(prize).map(([id,amount])=>NUM(amount)+' '+displayResource(id)).join(' · ');
 export const warfrontChestTarget=chestsClaimed=>chestsClaimed<4?[3,8,15,24][chestsClaimed]:24+(chestsClaimed-3)*12;
 export const warfrontChestPrize=chestsClaimed=>WARFRONT_LOOT[chestsClaimed<4?chestsClaimed:4+((chestsClaimed-4)%4)];
 const safe=(n,max)=>Number.isSafeInteger(n)&&n>=0&&n<=max;
