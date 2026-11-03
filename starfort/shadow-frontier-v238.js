@@ -104,7 +104,7 @@ export function heroDisciplinesMarkup(front,account,resources={},busy=false){
      </article>`;
    }).join('')}</div></section>`;
 }
-export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false,{hiddenReportAt=null,audioEnabled=false,voiceEnabled=false}={}){
+export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false,{hiddenReportAt=null,audioEnabled=false,voiceEnabled=false,render3D=true}={}){
  if(!front||!account)return '<section class="shadow-frontier"><h3>🌘 Gölge Sınırı</h3><p>Yeni sefer ve kahraman uzmanlıkları sunucuda doğrulanıyor.</p><button class="secondary" data-shadow-refresh>Yenile</button></section>';
  const b=front.battle,report=front.lastReport;
  const intentHelp={
@@ -138,6 +138,7 @@ export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false,{hi
        <p>${esc(intentHelp[b.enemyIntent]||'Düşmanın hamlesini izle.')}</p>
        <small>Patron canı: %${Math.round(b.enemyHp/b.enemyMaxHp*100)} · ${b.enemyIntent==='crush'?'Ağır Darbe':b.enemyIntent==='shield'?'Kalkan':b.enemyIntent==='drain'?'Can Emme':'Saldırı'}</small>
        <div class="shadow-av-controls" aria-label="Patron savaş ses ayarları">
+         <button class="secondary" data-shadow-render-toggle aria-pressed="${render3D}" title="Gerçek 3D model veya hafif 2D çizim kullan">${render3D?'🧊 3D model':'▤ 2D çizim'}</button>
          <button class="secondary" data-shadow-audio-toggle aria-pressed="${sound.audio}">${sound.audio?'🔊 Ses açık':'🔈 Sesi aç'}</button>
          <button class="secondary" data-shadow-voice-toggle aria-pressed="${sound.voice}" ${!sound.audio?'disabled':''} title="${esc(sound.caption)}">${sound.voice?'🎙 Seslendirme açık':'🎙 Seslendirmeyi aç'}</button>
        </div>
