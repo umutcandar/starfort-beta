@@ -10,7 +10,7 @@ test('cloud beta accepts invite code, rejects outsiders, serves game and support
  const dir=await mkdtemp(path.join(tmpdir(),'starfort-cloud-test-'));
  const secret='SadeceTestIcinRastgeleGucluKod!!';
  const child=spawn(process.execPath,['guild-server.mjs'],{
-  cwd:process.cwd(),env:{...process.env,STARFORT_TEST_CODE:secret,STARFORT_DATA_DIR:dir,STARFORT_HOST:'0.0.0.0',PORT:'0'},
+  cwd:process.cwd(),env:{...process.env,STARFORT_TEST_CODE:secret,STARFORT_DATA_DIR:dir,STARFORT_HOST:'0.0.0.0',PORT:'0',RENDER_GIT_COMMIT:'f'.repeat(40)},
   stdio:['ignore','pipe','pipe']});
  let output='';
  try{
@@ -20,6 +20,8 @@ test('cloud beta accepts invite code, rejects outsiders, serves game and support
   }));
   const status=await fetch(`${base}/api/status`);assert.equal(status.status,200);
   const info=await status.json();assert.equal(info.inviteOnly,true);
+  assert.equal(info.commit,'f'.repeat(40),'deployment must show the exact Render git commit');
+  assert.equal(info.version,JSON.parse((await import('node:fs')).readFileSync(new URL('./package.json',import.meta.url),'utf8')).version);
   const page=await fetch(`${base}/starfort/`);assert.equal(page.status,200);assert.match(await page.text(),/STARFORT/i);
   const reject=await fetch(`${base}/api/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'TesterOne'})});
   assert.equal(reject.status,403);assert.equal((await reject.json()).code,'INVITE_REQUIRED');
