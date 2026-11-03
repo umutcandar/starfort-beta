@@ -138,7 +138,7 @@ test('new v4 Eclipse intent accepts only verified late-story, advanced Act II, o
   mission({mode:'act2',stage:5,wave:3,waves:3})
  ])assert.equal(validateAccountSnapshot(account(pass)).mission.balanceVersion,4);
  for(const bad of [
-  mission({balanceVersion:3}),mission({balanceVersion:2}),mission({balanceVersion:6}),
+  mission({balanceVersion:3}),mission({balanceVersion:2}),mission({balanceVersion:7}),
   mission({balanceVersion:'4'}),mission({stage:5}),
   mission({mode:'act2',stage:4}),mission({mode:'veteran',stage:7,wave:1,waves:1}),
   mission({mode:'boss',stage:5,wave:1,waves:1})

@@ -45,7 +45,7 @@ test('new v5 missions are validated; old v1-v4 saves remain admissible',()=>{
  assert.equal(validateAccountSnapshot(snapshot(active({balanceVersion:3,enemyIntent:'crush'}))).mission.balanceVersion,3);
  assert.equal(validateAccountSnapshot(snapshot(active({balanceVersion:2,enemyIntent:'shield'}))).mission.balanceVersion,2);
  assert.equal(validateAccountSnapshot(snapshot(active({balanceVersion:1,enemyIntent:'strike'}))).mission.balanceVersion,1);
- assert.throws(()=>validateAccountSnapshot(snapshot(active({balanceVersion:6}))),/sürümü/);
+ assert.throws(()=>validateAccountSnapshot(snapshot(active({balanceVersion:7}))),/sürümü/);
  assert.throws(()=>validateAccountSnapshot(snapshot(active({balanceVersion:3}))),/bozuk/);
  assert.equal(bossV250Phase(active({mode:'story',stage:7})).phase,3);
  assert.equal(bossV250Phase(active({mode:'boss',stage:4,wave:1,waves:1})).weekly,true);

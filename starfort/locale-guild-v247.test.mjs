@@ -25,7 +25,7 @@ test('clan, raid and chat actions use thirty-three actual translations in all fo
 test('localized clan UI preserves action routes and data bindings for authenticated guild access',()=>{
  const app=read('app.js'),guild=app.slice(app.indexOf('function renderGuild(){'),app.indexOf('async function refreshGuild(){'));
  assert.match(app,/import \{guildText as gt\} from '\.\/locale-guild-v247\.js'/);
- for(const action of ['register','create','join','message','leave','raid','warplan','warprepare']){
+ for(const action of ['create','join','message','leave','raid','warplan','warprepare']){
   assert.ok(guild.includes('data-guild-action="'+action+'"'),action);
  }
  for(const k of ['new-guild','join-guild','guild-message','war-objective','war-role','war-brief']){

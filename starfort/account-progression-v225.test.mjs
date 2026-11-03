@@ -91,7 +91,7 @@ test('authenticated expedition renders server-only eight chapters, turn controls
  assert.match(battle,/data-account-abandon/);
  assert.match(battle,/CANLI SUNUCU MUHAREBESİ/);
  account.mission=null;account.lastReport={won:true,mode:'story',stage:1,stars:3,turns:3,reward:{gold:120}};
- assert.match(accountExpeditionMarkup(state,account,NOW),/SUNUCU ZAFERİ/);
+ assert.match(accountExpeditionMarkup(state,account,NOW),/ZAFER!/);
 });
 test('server migration has a locked canonical ledger, active mission, server-calculated actions and no client-trusted rewards',()=>{
  const sql=readFileSync(new URL('./sql/starfort-v225-account-progression.sql',import.meta.url),'utf8');

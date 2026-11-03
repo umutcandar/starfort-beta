@@ -28,7 +28,7 @@ export const BOSS_V250_TRANSLATIONS=Object.freeze(Object.fromEntries(Object.entr
 const text=key=>BOSS_V250_TRANSLATIONS[getLocale()]?.[key]??BOSS_V250_TRANSLATIONS.en[key];
 export function bossV250Phase(mission){
  if(!mission)return null;
- const story=mission.mode==='story'&&[2,3,4,5].includes(mission.balanceVersion)&&
+ const story=mission.mode==='story'&&[2,3,4,5,6].includes(mission.balanceVersion)&&
    Number.isInteger(mission.stage)&&mission.stage>=4&&mission.stage<=8&&mission.wave===3;
  const weekly=mission.mode==='boss'&&mission.balanceVersion>=3&&mission.stage===4&&mission.wave===1;
  if(!story&&!weekly)return null;

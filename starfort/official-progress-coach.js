@@ -40,7 +40,7 @@ function canonicalOfficialNextGoal(view,account,now=Date.now()){
  const cleared=account.cleared.length;
  const equipped=Object.values(account.loadouts||{}).reduce((sum,slots)=>sum+Object.values(slots||{}).filter(Boolean).length,0);
  const power=teamPower(view);
- if(!equipped&&account.inventory?.iron_sword)return {id:'equip',title:'İlk kahramanını donat',detail:'Çantandaki başlangıç kılıcını kuşan. Eşya, sunucu savaş gücünü kalıcı artırır.',action:'armory',label:'Cephaneliğe git'};
+ if(!equipped&&account.inventory?.iron_sword)return {id:'equip',title:'İlk kahramanını donat',detail:'Çantandaki başlangıç kılıcını kuşan. Eşya, sunucu savaş gücünü kalıcı artırır.',action:'armory',label:'Çantaya git'};
  if(cleared<8){
   const stage=STAGES[cleared],required=OFFICIAL_STAGE_THRESHOLDS[cleared];
   const readiness=officialStoryReadiness(view,account,stage.id);
@@ -49,7 +49,7 @@ function canonicalOfficialNextGoal(view,account,now=Date.now()){
    const action=next.kind==='maze'?'expedition':next.kind==='forge'?'keep':'armory';
    return {id:'gate-'+next.kind,title:stage.name+' · '+next.label+' gerekli',
      detail:`Şu an ${next.value}/${next.required}. Diğer bölgeye geçmeden önce ${next.kind==='forge'?'Demirhaneni yükselt':next.kind==='maze'?'Labirent muhafızlarını yen':'daha fazla ekipman kuşan'}. Bu şart sunucu tarafından da doğrulanır.`,
-     action,label:next.kind==='maze'?'Labirenti aç':next.kind==='forge'?'Köyü aç':'Cephaneliğe git'};
+     action,label:next.kind==='maze'?'Labirenti aç':next.kind==='forge'?'Köyü aç':'Çantaya git'};
   }
   if(power<required*.7)return {id:'train',title:stage.name+' için takımını güçlendir',detail:`Yeni bölgenin önerilen gücü ${required}. Kahraman eğitimleri veya ekipmanlarla hazır ol; resmî sunucu asgari gücü kontrol eder.`,action:'heroes',label:'Kahramanları eğit'};
   return {id:'story',title:'Sıradaki sefer: '+stage.name,detail:`${cleared}/8 bölge tamamlandı. Bu seferde yeni hikâye, ganimet ve kalıcı 1–3 yıldız kazanabilirsin.`,action:'expedition',label:'Seferi aç'};

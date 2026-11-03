@@ -1,5 +1,6 @@
 /** Building upgrade command center: authored from the existing game state. */
 import {buildingUpgradePlan,buildingRoadmap} from './building-planner.js';
+import {fm} from './first-minutes-v255.js';
 import {getLocale} from './locale-v243.js';
 import {local,displayBuilding,displayBuildingUnit,displayResource} from './locale-game-content-v245.js';
 import {caravanMarkup} from './kingdom-caravan.js';
@@ -24,7 +25,7 @@ export function buildingWorkshopMarkup(state,selectedId,{icon,number=nice,now=Da
  const numberLabel=n=>number(Number(n.toFixed?.(2)??n));
  const resources=Object.entries(cost).map(([id,required])=>{
    const held=state.res[id],usable=available[id],short=missing[id],fraction=Math.min(100,Math.round(usable/required*100));
-   return `<div class="ws-resource ${short?'short':'enough'}"><div class="ws-resource-icon">${icon(resourceIcons[id])}</div><div class="ws-resource-info"><div class="ws-resource-line"><b>${displayResource(id)}</b><strong>${number(usable)} <small>/ ${number(required)}</small></strong></div><div class="ws-bar"><i style="width:${fraction}%"></i></div><small>${short?local('Eksik ','Missing ')+number(short):usable>held?local('Bekleyen üretim dahil hazır','Ready including pending production'):local('Yeterli kaynak var','Enough resources')}</small></div></div>`;
+   return `<div class="ws-resource ${short?'short':'enough'}"><div class="ws-resource-icon">${icon(resourceIcons[id])}</div><div class="ws-resource-info"><div class="ws-resource-line"><b>${displayResource(id)}</b><strong><small>${fm('owned')}:</small> ${number(usable)} <small>· ${fm('needed')}:</small> ${number(required)}</strong></div><div class="ws-bar"><i style="width:${fraction}%"></i></div><small>${short?local('Eksik ','Missing ')+number(short):usable>held?local('Bekleyen üretim dahil hazır','Ready including pending production'):local('Yeterli kaynak var','Enough resources')}</small></div></div>`;
  }).join('');
  const actions=status==='claim'? `<button class="primary ws-upgrade-button" data-finish-building>✓ ${local('İnşaatı tamamla','Finish construction')} · ${local('Seviye','Level')} ${nextLevel}</button>`:
    status==='offline'? `<button class="secondary ws-upgrade-button" disabled>${local('Sunucu köyüne bağlanılıyor','Connecting to server village')}</button>`:

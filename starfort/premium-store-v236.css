@@ -45,3 +45,7 @@ body[data-premium-victory="victory-sky"] .server-star-row{filter:drop-shadow(0 0
 body[data-premium-victory="victory-constellation"] .server-star-row{filter:drop-shadow(0 0 8px #cfb5ff)}
 @media(max-width:1000px){.premium-live-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.premium-packages{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px){.premium-live{padding:10px;gap:14px}.premium-live-head,.premium-season-head{gap:9px}.premium-wallet{min-width:94px;padding:9px}.premium-wallet strong{font-size:20px}.premium-packages{grid-template-columns:repeat(2,minmax(0,1fr))}.premium-live-grid,.premium-season-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.premium-live-item,.premium-season-tier{padding:9px}.premium-season{padding:10px}#premium-wear-badge{max-width:95px}}
+
+/* v2.55: disabled shop actions must not resemble purchasable/claimable offers. */
+.premium-live button:disabled,.premium-season button:disabled,.premium-packages button:disabled{cursor:not-allowed!important;opacity:.46!important;filter:grayscale(.8);border-style:dashed!important;box-shadow:none!important;transform:none!important}
+.premium-live-item .premium-availability,.premium-season-tier .premium-availability{display:block;color:#c3c9d0;font-size:11px;line-height:1.5;margin:6px 0}

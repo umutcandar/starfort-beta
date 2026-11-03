@@ -17,9 +17,9 @@ import {localizeServerError} from './locale-unified-v247.js';
 import {displayHero} from './locale-heroes-v245.js';
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-export function mountArena(root){
+export function mountArena(root,verifiedGame=null){
   const token=accountSession()?.access_token||localStorage.getItem(GUILD_TOKEN_KEY)||'';
-  const saved=R.restoreState(localStorage.getItem(R.STORAGE_KEY));
+  const saved=accountSession()&&verifiedGame?.serverVillage?verifiedGame:R.restoreState(localStorage.getItem(R.STORAGE_KEY));
   const heroes=Object.entries(ARENA_HERO_STYLES).filter(([id])=>saved.heroes[id]);
   let heroId=heroes.some(([id])=>id===localStorage.getItem('starfort:arena-hero'))?localStorage.getItem('starfort:arena-hero'):heroes[0]?.[0]||'aldren';
   const policy=battleExperience(window.location,getPreferredBattleMode(localStorage),window.matchMedia?.('(pointer:coarse)').matches||false);
