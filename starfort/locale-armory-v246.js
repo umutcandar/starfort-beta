@@ -23,7 +23,7 @@ export const ARMORY_TRANSLATIONS=Object.freeze({
   "equip": "Kuşan",
   "unequip": "Çıkar",
   "craft": "Üret",
-  "autoEquip": "Otomatik kuşan",
+  "autoEquip": "Rolüne göre otomatik kuşan",
   "selectedDetails": "Seçili ekipman ayrıntıları",
   "noItems": "Bu filtrede eşya bulunamadı.",
   "emptySlot": "Boş slot",
