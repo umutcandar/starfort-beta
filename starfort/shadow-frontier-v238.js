@@ -36,8 +36,8 @@ const STAGE_EN=Object.freeze([
  {region:'Burnt Cliffs',boss:'Ash Tempest',name:'Ash Tempest',description:'Heavy strikes shatter the front line.',tip:'Defend against heavy attacks and Rally to recover.'},
  {region:'Dark Throne',boss:'Eclipse Sovereign',name:'Eclipse Sovereign',description:'Three phases of eclipse, with fierce attacks at low health.',tip:'Save your strongest ability for the final phase.'}
 ]);
-const local=(tr,en)=>getLocale()==='en'?en:tr;
-const displayStage=id=>getLocale()==='en'?STAGE_EN[id-1]:SHADOW_STAGES[id-1];
+const local=(tr,en)=>getLocale()!=='tr'?en:tr;
+const displayStage=id=>getLocale()!=='tr'?STAGE_EN[id-1]:SHADOW_STAGES[id-1];
 const stageMap=new Map(SHADOW_STAGES.map(x=>[x.id,x]));
 const heroMap=new Map(HEROES.map(x=>[x.id,x]));
 const itemMap=new Map(ITEMS.map(x=>[x.id,x]));
@@ -120,7 +120,7 @@ export function heroDisciplinesMarkup(front,account,resources={},busy=false){
 export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false,{hiddenReportAt=null,audioEnabled=false,voiceEnabled=false,render3D=true}={}){
  if(!front||!account)return `<section class="shadow-frontier"><h3>🌘 ${local('Gölge Sınırı','Shadow Frontier')}</h3><p>${local('Yeni sefer ve kahraman uzmanlıkları sunucuda doğrulanıyor.','Verifying advanced expeditions and hero paths on the server.')}</p><button class="secondary" data-shadow-refresh>${local('Yenile','Refresh')}</button></section>`;
  const b=front.battle,report=front.lastReport;
- const intentHelp=getLocale()==='en'?{
+ const intentHelp=getLocale()!=='tr'?{
   strike:'Normal attack: strike hard or recover.',
   crush:'☄ Heavy hit incoming: Defend to reduce damage.',
   shield:'🛡 Enemy shield: use Feint or a hero skill.',

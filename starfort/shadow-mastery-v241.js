@@ -9,7 +9,7 @@ export const SHADOW_MASTERY_TITLES=Object.freeze([
  'Zirve Koruyucusu','Karanlık Yarıcı','Sınır Efsanesi','Şafak Öncüsü'
 ]);
 const EN_TITLES=Object.freeze(['Apprentice Watcher','Frontier Scout','Thorn Hunter','Night Guide','Siren Breaker','Ash Warden','Eclipse Hunter','Star Sentinel','Summit Guardian','Darkness Splitter','Frontier Legend','Dawn Vanguard']);
-const l=(tr,en)=>getLocale()==='en'?en:tr;
+const l=(tr,en)=>getLocale()!=='tr'?en:tr;
 const name=i=>l(SHADOW_MASTERY_TITLES[i],EN_TITLES[i]);
 export const SHADOW_MASTERY_WEEKLY_LIMIT=100;
 const safe=(v,lo,hi)=>Number.isSafeInteger(v)&&v>=lo&&v<=hi;
