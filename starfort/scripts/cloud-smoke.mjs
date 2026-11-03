@@ -19,6 +19,9 @@ try{
   const health=await (await check('/api/status',200)).json();
   assert.equal(health.ok,true);
   assert.equal(health.inviteOnly,true);
+  const release=JSON.parse((await import('node:fs')).readFileSync(new URL('../package.json',import.meta.url),'utf8'));
+  assert.equal(health.version,release.version,'health version must match package manifest');
+  assert.ok(health.commit===null||/^[0-9a-f]{40}$/.test(health.commit));
   const homepage=await (await check('/starfort/',200)).text();
   assert.match(homepage,/Starfort v2\.\d+\.\d+/i);
   const pathCode=await (await check('/starfort/commander-path.js',200)).text();

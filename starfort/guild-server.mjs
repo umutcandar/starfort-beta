@@ -1,5 +1,6 @@
 /** Starfort local multiplayer prototype. NOT production authentication or PvP. */
 import http from 'node:http';
+import {readFileSync} from 'node:fs';
 import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
 import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import {createArenaService} from './arena.js';
@@ -12,6 +13,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
+// Read the release manifest once instead of hardcoding an outdated health version.
+const RELEASE_VERSION=JSON.parse(readFileSync(path.join(DIR,'package.json'),'utf8')).version;
+const RENDER_COMMIT=typeof process.env.RENDER_GIT_COMMIT==='string'&&/^[0-9a-f]{40}$/i.test(process.env.RENDER_GIT_COMMIT)
+  ?process.env.RENDER_GIT_COMMIT.toLowerCase():null;
 const DATA_DIR = process.env.STARFORT_DATA_DIR || path.join(DIR, '.local-data');
 const DB_FILE = path.join(DATA_DIR, 'guilds.json');
 const testCode = (process.env.STARFORT_TEST_CODE || '').trim();
@@ -157,7 +162,7 @@ export async function createGuildServer({host='127.0.0.1',port=8877}={}){
     // input is accepted by this route; never grants currency or building levels.
     if(route==='/api/clock'&&req.method==='GET')return json(res,200,{ok:true,source:'starfort-server',now:Date.now()});
     // Health and static assets never depend on guild disk writes.
-    if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-live-arena',version:'2.41.0-chronicle',serverEpoch,online:true,historyReady:matchLedger.status.enabled,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']})
+    if(route==='/api/status'&&req.method==='GET')return json(res,200,{ok:true,service:'starfort-beta-live-arena',version:RELEASE_VERSION,commit:RENDER_COMMIT,serverEpoch,online:true,historyReady:matchLedger.status.enabled,inviteOnly:Boolean(testCode),features:['guilds','chat','shared-raid','war-room','live-1v1-duel','server-ai-duel-practice','live-2v2-and-5v5-team-battles','server-ai-team-training','squad-orders','guild-party-matchmaking','live-5v5-siege']})
     if(!route.startsWith('/api/')){void serveStatic(req,res,route);return;}
     function enqueue(data,authenticatedArenaUser=null){
       lock=lock.then(async()=>{
