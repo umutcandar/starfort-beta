@@ -49,7 +49,7 @@ export function validateAccountSnapshot(data){
   throw Error('İkinci perde ilerlemesi bozuk.');
  const m=data.mission;
  // v2.51: accept the new server-only encounter balance while preserving legacy missions.
- if(m&&m.balanceVersion!==undefined&&!safeNumber(m.balanceVersion,1,5))throw Error('Sunucu savaş dengesi sürümü geçersiz.');
+ if(m&&m.balanceVersion!==undefined&&!safeNumber(m.balanceVersion,1,6))throw Error('Sunucu savaş dengesi sürümü geçersiz.');
  // Three-wave stories have a longer server turn budget. Preserve legacy single-wave saves.
  const multiWave=object(m)&&['story','act2'].includes(m.mode)&&m.waves===3;
  const waveValid=!object(m)||(m.waves===undefined&&m.wave===undefined&&m.waveTurn===undefined)||
