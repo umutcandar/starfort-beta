@@ -3,6 +3,7 @@
  * No new win, loot, currency, damage or stats may originate here.
  */
 import {createShadow3D} from './shadow-boss-3d-v240.js';
+import {getLocale,t} from './locale-v243.js';
 const STAGE_NAMES=['Diken Nöbetçisi','Oyuk Siren','Kül Fırtınası','Tutulma Hükümdarı'];
 const LINES=Object.freeze([
  Object.freeze({enter:'Köklerim bu geçidi sonsuza dek koruyacak.',phase:'Orman uyanıyor. Kaçamayacaksınız.',special:'Dikenlerimi aşamayacaksınız!',defeat:'Köklerim... bir gün yeniden uzanacak.'}),
@@ -10,12 +11,18 @@ const LINES=Object.freeze([
  Object.freeze({enter:'Külün içinden doğdum. Kül olacaksınız.',phase:'Fırtına güçleniyor!',special:'Gökyüzü şimdi yanacak!',defeat:'Ateş... yeniden tutuşacak.'}),
  Object.freeze({enter:'Tutulma başladı. Işık size yardım etmeyecek.',phase:'Karanlık tahta boyun eğin!',special:'Son ışığınızı söndüreceğim.',defeat:'Güneş... tekrar mı doğuyor?'})
 ]);
+const ENGLISH_LINES=Object.freeze([
+ Object.freeze({enter:'My roots will guard this pass forever.',phase:'The forest awakens. You cannot escape.',special:'You will never break my thorns!',defeat:'My roots will rise again.'}),
+ Object.freeze({enter:'Do not disturb the silence of these shores.',phase:'My song will drag your souls into the deep.',special:'Give me your last breath.',defeat:'The tides... remember.'}),
+ Object.freeze({enter:'I was born from ash. To ash you shall return.',phase:'The storm is growing stronger!',special:'The sky will burn!',defeat:'The fire... will rise again.'}),
+ Object.freeze({enter:'The eclipse begins. Light cannot save you.',phase:'Bow before the throne of darkness!',special:'I will extinguish your last light.',defeat:'Is the sun... rising again?'})
+]);
 const VALID_EVENTS=['enter','attack','guard','feint','heal','skill','impact','shield-break','drain','crush','phase','enrage','victory','defeat','abandon'];
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,Number.isFinite(v)?v:a));
 const safe=(v,min=0,max=1000000)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
 const stageOk=n=>safe(n,1,4);
 const describe=(type,amount)=>({type,amount:safe(amount)?amount:null});
-export function shadowVoiceLines(stage){return LINES[stageOk(stage)?stage-1:0];}
+export function shadowVoiceLines(stage,locale=getLocale()){return (locale==='en'?ENGLISH_LINES:LINES)[stageOk(stage)?stage-1:0];}
 export function shadowCombatEffects(previous,next,action='get'){
  const old=previous?.battle||null,now=next?.battle||null,events=[];
  if(action==='start'&&now){events.push(describe('enter'),describe('phase'));return events;}
@@ -53,10 +60,10 @@ export function shadowAtmosphereParticles(stage){
  }));
 }
 export function shadowVoiceStatus({audio=false,voice=false}={}){
- return {audio:Boolean(audio),voice:Boolean(voice&&audio),caption:'Seslendirme tarayıcının Türkçe ses sentezine bağlıdır; profesyonel kayıt değildir.'};
+ return {audio:Boolean(audio),voice:Boolean(voice&&audio),caption:t('audio.voiceNote')};
 }
 function createVoice(storage,onSpeechState=()=>{}){
- const key='starfort:shadow-voice-v240',lang='tr-TR';
+ const key='starfort:shadow-voice-v240';
  let enabled=false,current=null;
  try{enabled=storage?.getItem(key)==='1';}catch{}
  const canSpeak=()=>typeof speechSynthesis!=='undefined'&&typeof SpeechSynthesisUtterance!=='undefined';
@@ -68,10 +75,11 @@ function createVoice(storage,onSpeechState=()=>{}){
   try{
    cancel();
    const utterance=new SpeechSynthesisUtterance(text);
-   utterance.lang=lang;utterance.rate=[.73,.82,.87,.72][stage-1]||.8;
+   const speechLang=getLocale()==='en'?'en-US':'tr-TR';
+   utterance.lang=speechLang;utterance.rate=[.73,.82,.87,.72][stage-1]||.8;
    utterance.pitch=[.55,.9,.65,.45][stage-1]||.7;utterance.volume=.7;
-   const turkish=speechSynthesis.getVoices().find(x=>x.lang?.toLowerCase().startsWith('tr'));
-   if(turkish)utterance.voice=turkish;
+   const matching=speechSynthesis.getVoices().find(x=>x.lang?.toLowerCase().startsWith(speechLang.slice(0,2).toLowerCase()));
+   if(matching)utterance.voice=matching;
    current=utterance;
    utterance.onstart=()=>{if(current===utterance)onSpeechState(true);};
    const finish=()=>{if(current===utterance){current=null;onSpeechState(false);}};
