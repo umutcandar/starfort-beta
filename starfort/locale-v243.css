@@ -47,3 +47,18 @@
  .server-expedition .server-stage-card button{flex:1 1 100%;max-width:none}
  .official-realm-map :is(.realm-map-actions,.realm-map-details){min-width:0}
 }
+
+/* v2.48 account-only social sign-in. Provider status comes from Supabase settings. */
+.social-auth{display:grid;gap:11px;margin:16px 0 3px;min-width:0}
+.social-auth-divider{display:flex;align-items:center;gap:12px;color:#bdc8b7;font-size:11px;line-height:1.4;text-align:center}
+.social-auth-divider::before,.social-auth-divider::after{content:"";height:1px;flex:1;background:#62715c66}
+.social-auth-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.social-auth-button{display:flex;justify-content:center;align-items:center;gap:10px;min-width:0;min-height:46px;padding:9px 12px;border:1px solid #657869;border-radius:9px;background:#f7f7f7;color:#1f2622;font:600 12px/1.35 system-ui,sans-serif;overflow-wrap:anywhere;text-align:center;cursor:pointer}
+.social-auth-button svg{flex:none}
+.social-apple{background:#101716;border-color:#8c9989;color:#fff}
+.social-auth-google-mark{font:800 20px/1 system-ui,sans-serif;flex:none;background:linear-gradient(135deg,#4285f4 10%,#34a853 42%,#fbbc05 66%,#ea4335 88%);background-clip:text;-webkit-background-clip:text;color:transparent}
+.social-auth-button:not(:disabled):hover{filter:brightness(.95);border-color:#e9cb83}
+.social-auth-button:focus-visible{outline:2px solid #97e0d0;outline-offset:3px}
+.social-auth-button:disabled{opacity:.53;cursor:not-allowed}
+.social-auth-help{font-size:10px;line-height:1.55;color:#a8b9a5;text-align:start}
+@media(max-width:470px){.social-auth-buttons{grid-template-columns:1fr}.social-auth-button{min-height:44px}}
