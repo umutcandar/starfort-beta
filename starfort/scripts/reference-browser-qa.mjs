@@ -366,6 +366,46 @@ try{
  assert.equal(turn,1,'Shadow Frontier feint was not sent to its trusted RPC');
  console.log('PASS v2.38: advanced account hero path debit/lock, 4 frontier cards, new battle, feint RPC and 390px layout');
 
+ // v2.39 full visual & reward acceptance: animated, distinct native SVG scenes,
+ // three synthetic battle turns and an account-backed loot reveal. Real live battle
+ // and account rewards are tested separately via transactional Supabase SQL.
+ assert.equal(await evaluate("document.querySelectorAll('.shadow-stage-symbol svg').length"),4,
+   'One or more stage boss illustrations missing');
+ assert.equal(await evaluate("!!document.querySelector('.shadow-battle-visual svg[role=img]')"),true,
+   'Live boss artwork not mounted');
+ assert.equal(await evaluate("document.querySelector('.shadow-boss-phase')?.textContent.length>20"),true,
+   'Live battle phase advice missing');
+ await shot('shadow-frontier-v239-mobile-fight.png');
+ await evaluate("document.querySelector('[data-shadow-move=strike]').click()");
+ let shadowWave3=false;
+ for(let i=0;i<100;i++){
+  shadowWave3=await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_shadow')||'{}').battle?.wave===3");
+  if(shadowWave3)break;await sleep(100);
+ }
+ assert.ok(shadowWave3,'Synthetic three-wave boss did not progress to last phase');
+ await evaluate("document.querySelector('[data-shadow-move=strike]').click()");
+ let victoryReady=false;
+ for(let i=0;i<110;i++){
+  victoryReady=await evaluate("!!document.querySelector('.shadow-last-report.win .shadow-reward-ledger')&&!!document.querySelector('[data-loot-id=grave_seal]')");
+  if(victoryReady)break;await sleep(100);
+ }
+ assert.ok(victoryReady,'Battle victory did not display real earned equipment and resource report');
+ assert.equal(await evaluate("document.querySelector('.shadow-reward-resource[data-resource=gold]')?.textContent.includes('420')"),true,
+  'Gold reward not shown using server values');
+ assert.equal(await evaluate("document.querySelector('.shadow-result-stars')?.textContent.trim()"),'★★★','Win stars do not match verified report');
+ const mobileVictory=await evaluate("({width:innerWidth,scroll:document.documentElement.scrollWidth,loot:!!document.querySelector('.shadow-rare-loot')})");
+ assert.ok(mobileVictory.scroll<=mobileVictory.width+6,'Mobile victory scene overflow '+JSON.stringify(mobileVictory));
+ await shot('shadow-frontier-v239-victory.png');
+ await evaluate("document.querySelector('[data-shadow-open-armory]').click()");
+ let bagOpen=false;
+ for(let i=0;i<80;i++){
+  bagOpen=await evaluate("document.querySelector('#workspace')?.dataset.view==='armory'");
+  if(bagOpen)break;await sleep(100);
+ }
+ assert.ok(bagOpen,'Victory loot inspect button did not open the actual bag view');
+ console.log('PASS v2.39: 4 SVG boss art scenes, phase warnings, 3-wave loot, first-clear gear, mobile victory and bag navigation');
+
+
 
 
 
