@@ -107,3 +107,10 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - `locale-core-completion-v247.js`: v2.43'teki `WORDS` sözlüğünde 12 yeni dil için yalnızca İngilizceye düşen 20 arayüz alanı çevrildi. Dünya/harita yardım metinleri, sunucu ve üretim durumları, hesap/deneyim ayarları, ses, tam ekran ve profesyonel olmayan TTS uyarısı dahildir.
 - `locale-v243.js` aktif dilde 20 yeni karşılığı kullanır; 41 önceki çekirdek anahtar ile 31 hesap ve yedekleme anahtarı korunur.
 - `locale-core-completion-v247.test.mjs` tüm v2.43 `WORDS` anahtarlarının 14 dilde çeviri katmanı tarafından kapsandığını test eder. Bu denetim yalnızca çekirdek sözlük için geçerlidir, oyunun bütün modlarını kapsamaz.
+
+## v2.47 çalışma dalı — 30 Komutan Kroniği rütbesi
+
+- `locale-chronicle-v247.js`: on adet rütbe teması × üç aşama ile oluşturulan **30 unvan**, 14 dilde; 11 kronik bilgilendirme/ilerleme/ödül metni ve erişilebilirlik etiketi 14 dilde.
+- `commander-chronicle.js`: 30 kanonik rütbenin kimlikleri ve adımları, `rank ** 2 * 2` zafer eşiği, altın/yıldız özü değerleri ve `data-account-chronicle` eylemleri korunur. Yalnızca görünen adlar/metinler yerelleştirilir.
+- `locale-chronicle-v247.test.mjs`: 14 dil × 30 görünen unvanı, arayüz metinlerini, tamamlanma durumunu ve ekonomi değişmezliğini denetler.
+- Dil editörü onayı ve tüm modların bitirilmesi sürümden önce hâlâ zorunludur.
