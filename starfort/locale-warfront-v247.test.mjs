@@ -6,6 +6,7 @@ import {WARFRONT_DOCTRINE_COPY,nativeWarfrontDoctrine,auditWarfrontDoctrine} fro
 import {WARFRONT_DOCTRINES,WARFRONT_DAILY_REWARD,displayWarfrontDoctrine,warfrontMarkup} from './warfront-v237.js';
 import {displayResource} from './locale-game-content-v245.js';
 import {createState} from './rules.js';
+const htmlEscape=x=>String(x).replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');
 const snapshot={pending:null,revision:1,wins:0,dailyWins:0,weeklyWins:0,day:'2026-11-03',week:'2026-45',dailyClaimed:false,weeklyClaimed:false,chestsClaimed:0,nextChestWins:3,lastLoot:null};
 test('all fourteen languages fully localize names, percentage rules and intended use for all three battle doctrines',()=>{
  assert.deepEqual(Object.keys(WARFRONT_DOCTRINE_COPY).sort(),[...SUPPORTED_LOCALES].sort());
@@ -34,8 +35,8 @@ test('warfront live panel uses native locale labels and currencies while 14-lang
     assert.equal(view.cost,doctrine.cost);
    }
    const html=warfrontMarkup(snapshot,game,null);
-   assert.ok(html.includes(nativeWarfrontDoctrine('assault').name),code);
-   assert.ok(html.includes(nativeWarfrontDoctrine('recon').focus),code);
+   assert.ok(html.includes(htmlEscape(nativeWarfrontDoctrine('assault').name)),code);
+   assert.ok(html.includes(htmlEscape(nativeWarfrontDoctrine('recon').focus)),code);
    assert.ok(html.includes(formatNumber(70)+' '+displayResource('gold')),code+': dynamic resource label');
    assert.ok(html.includes('data-warfront-action="prepare"'));
    assert.equal(JSON.stringify(WARFRONT_DOCTRINES),doc);
