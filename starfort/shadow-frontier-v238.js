@@ -2,6 +2,8 @@
 import {SUPABASE_URL,SUPABASE_KEY} from './online-config.js';
 import {freshAccountSession} from './account-auth.js';
 import {HEROES,ITEMS} from './rules.js';
+import {shadowBossArtwork,shadowBossPhase} from './shadow-boss-art-v239.js';
+import {shadowVictoryMarkup} from './shadow-rewards-v239.js';
 export const SHADOW_STAGES=Object.freeze([
  Object.freeze({id:1,name:'Diken Nöbetçisi',region:'Karanlık Geçit',boss:'Diken Nöbetçisi',
   unlock:2,description:'Yaşayan surların bekçisi. Son dalgada kalkanı sürekli onarır.',
@@ -101,7 +103,7 @@ export function heroDisciplinesMarkup(front,account,resources={},busy=false){
      </article>`;
    }).join('')}</div></section>`;
 }
-export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false){
+export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false,{hiddenReportAt=null}={}){
  if(!front||!account)return '<section class="shadow-frontier"><h3>🌘 Gölge Sınırı</h3><p>Yeni sefer ve kahraman uzmanlıkları sunucuda doğrulanıyor.</p><button class="secondary" data-shadow-refresh>Yenile</button></section>';
  const b=front.battle,report=front.lastReport;
  const intentHelp={
@@ -110,6 +112,8 @@ export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false){
   shield:'🛡 Kalkan kalktı: Aldat veya kahraman yeteneği kullan.',
   drain:'☾ Can emme geliyor: hasarı hızlı yükselt.'};
  const waiting=b?Math.max(0,3000-(now-b.lastTurnAt)):0;
+ const phase=b?shadowBossPhase(b.stage,b.wave,b.enemyHp,b.enemyMaxHp):null;
+ const enraged=phase?.id==='eclipse-rage';
  const skills=b?(account.team||[]).map(id=>{
    const h=heroMap.get(id);if(!h)return '';
    const cooldown=Math.max(0,(b.cooldowns?.[id]||0)-(b.turn+1));
@@ -117,8 +121,17 @@ export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false){
  }).join(''):'';
  const status=b?`<article class="shadow-active-battle" aria-label="Gölge Sınırı aktif savaşı">
    <span class="eyebrow">⚔ GERÇEK SUNUCU SAVAŞI · DALGA ${b.wave} / 3 · TUR ${b.turn+1}</span>
-   <h3>${esc(stageMap.get(b.stage)?.boss)}</h3>
-   <p>${esc(intentHelp[b.enemyIntent]||'Düşmanın hamlesini izle.')}</p>
+   <div class="shadow-battle-visual" data-boss-region="${b.stage}" data-boss-wave="${b.wave}" data-boss-intent="${b.enemyIntent}" data-boss-enraged="${enraged?'true':'false'}">
+     <div class="shadow-battle-illustration">${shadowBossArtwork(b.stage,{variant:'battle',wave:b.wave,intent:b.enemyIntent,enraged})}
+       <span class="shadow-visual-flash" aria-hidden="true"></span></div>
+     <div class="shadow-battle-story">
+       <span class="eyebrow">BÖLGE ${b.stage} · DALGA ${b.wave}/3</span>
+       <h3>${esc(stageMap.get(b.stage)?.boss)}</h3>
+       <div class="shadow-boss-phase" role="status"><strong>${esc(phase.title)}</strong><small>${esc(phase.hint)}</small></div>
+       <p>${esc(intentHelp[b.enemyIntent]||'Düşmanın hamlesini izle.')}</p>
+       <small>Patron canı: %${Math.round(b.enemyHp/b.enemyMaxHp*100)} · ${b.enemyIntent==='crush'?'Ağır Darbe':b.enemyIntent==='shield'?'Kalkan':b.enemyIntent==='drain'?'Can Emme':'Saldırı'}</small>
+     </div>
+   </div>
    <div class="shadow-health"><div><strong>Takım ${num(b.playerHp)} / ${num(b.playerMaxHp)}</strong><progress max="${b.playerMaxHp}" value="${b.playerHp}"></progress></div>
    <div><strong>Patron ${num(b.enemyHp)} / ${num(b.enemyMaxHp)}</strong><progress max="${b.enemyMaxHp}" value="${b.enemyHp}"></progress></div></div>
    <small>Takım gücü ${num(b.power)} · Hücum rütbesi ${b.attackRanks} · Muhafız rütbesi ${b.wardRanks}
@@ -131,17 +144,13 @@ export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false){
     ${skills}
     <button class="text-button" data-shadow-action="abandon" ${busy?'disabled':''}>Seferden çekil</button>
    </div></article>`:'';
- const last=report&&!b?`<article class="shadow-last-report ${report.won?'win':'loss'}">
-  <strong>${report.won?'✦ GÖLGE SINIRI ZAFERİ · '+'★'.repeat(report.stars||1):'Sefer sona erdi'}</strong>
-  <p>${esc(stageMap.get(report.stage)?.name||'Gölge Sınırı')} · ${report.won?report.turns+' turda tamamlandı. Kaynaklar sunucuda ödüllendirildi.':'Kahramanlarını geliştirip yeniden deneyebilirsin.'}</p>
-  ${report.won&&report.item?`<small>İlk zafer ganimeti: ${esc(itemMap.get(report.item)?.name||report.item)}</small>`:''}
-  </article>`:'';
+ const last=report&&!b&&report.at!==hiddenReportAt?shadowVictoryMarkup(report,SHADOW_STAGES):'';
  const cards=SHADOW_STAGES.map(stage=>{
   const completed=front.cleared.includes(stage.id),star=front.stars[stage.id]||0,
    act2Ready=account.act2Cleared.length>=stage.unlock,
    orderReady=stage.id<=front.cleared.length+1,available=act2Ready&&orderReady&&!b&&!account.mission;
   return `<article class="shadow-stage ${completed?'complete':''}">
-    <div class="shadow-stage-symbol">${stage.icon}</div><span class="eyebrow">BÖLGE ${stage.id} / 4 · ${completed?'TEMİZLENDİ':act2Ready?'AÇIK':'KİLİTLİ'}</span>
+    <div class="shadow-stage-symbol">${shadowBossArtwork(stage.id,{variant:'card',wave:3})}</div><span class="eyebrow">BÖLGE ${stage.id} / 4 · ${completed?'TEMİZLENDİ':act2Ready?'AÇIK':'KİLİTLİ'}</span>
     <h4>${esc(stage.region)}</h4><strong>${esc(stage.boss)}</strong>
     <p>${esc(stage.description)}</p><small>${esc(stage.tip)}</small>
     <span class="shadow-stars" aria-label="${star} yıldız">${'★'.repeat(star)}${'☆'.repeat(3-star)}</span>
@@ -150,10 +159,13 @@ export function shadowFrontierMarkup(front,account,now=Date.now(),busy=false){
     <button class="${available?'primary':'secondary'}" data-shadow-start="${stage.id}" ${!available||busy?'disabled':''}>${b?'Savaş sürüyor':!act2Ready?'İkinci Perde gerekli':!orderReady?'Önceki bölge gerekli':completed?'Yeniden sefer':'⚔ Sefere başla'}</button>
    </article>`;
  }).join('');
- return `<section class="shadow-frontier" aria-label="Dört yeni Gölge Sınırı sefer bölgesi">
+ return `<section class="shadow-frontier" id="shadow-frontier" aria-label="Dört yeni Gölge Sınırı sefer bölgesi">
    <header class="shadow-section-head"><span class="eyebrow">YENİ PERDE · 4 BÖLGE · 12 OPERASYON</span>
      <h3>🌘 Gölge Sınırı</h3><p>İkinci Perde boyunca açılan dört ayrı patron. Her savaş üç dalgalı, her ilk zaferde özel ekipman ve 1–3 yıldız; eski bölümleri tekrar oynayabilirsin.</p>
-     <strong>${front.cleared.length} / 4 TEMİZLENDİ</strong></header>
+     <strong>${front.cleared.length} / 4 TEMİZLENDİ</strong>
+     <div class="shadow-progress-ribbon" aria-label="Dört bölgenin tamamlanma durumu">
+      ${SHADOW_STAGES.map(stage=>`<span class="${front.cleared.includes(stage.id)?'is-cleared':''}" aria-label="Bölge ${stage.id}: ${front.cleared.includes(stage.id)?'Temizlendi':'Bekliyor'}">${front.cleared.includes(stage.id)?'✓':stage.id}</span>`).join('')}
+     </div></header>
    ${status}${last}
    <div class="shadow-stage-grid">${cards}</div>
    <small class="shadow-footer">Bu bölgelerdeki galibiyetler sunucu zafer sayacına işlenir ve tekrar oynanabilir günlük/haftalık hedefleri ilerletir. İlk zafer ekipmanı tekrarlanmaz.</small>
