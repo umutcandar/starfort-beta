@@ -6,7 +6,7 @@ import {accountExpeditionMarkup} from './account-expedition.js';
 import * as R from './rules.js';
 test('46 verified account and combat labels have all twelve additional language translations',()=>{
  assert.equal(OFFICIAL_KEYS.length,75);
- assert.equal(new Set(OFFICIAL_KEYS).size,46);
+ assert.equal(new Set(OFFICIAL_KEYS).size,75);
  assert.deepEqual(Object.keys(OFFICIAL_TRANSLATIONS).sort(),SUPPORTED_LOCALES.filter(l=>l!=='tr'&&l!=='en').sort());
  assert.deepEqual(auditOfficialTranslations(),[]);
  for(const [lang,values] of Object.entries(OFFICIAL_TRANSLATIONS)){
