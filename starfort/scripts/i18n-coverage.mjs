@@ -21,6 +21,7 @@ import {UNIFIED_KEYS,RANK_NAMES_EN,AUTH_ERROR_CODES,auditUnified} from '../local
 import {SHADOW_STAGE_NATIVE,auditShadowStageNative} from '../locale-shadow-stages-v247.js';
 import {MAZE_ENGLISH_KEYS,MAZE_GATE_TEXT,auditMazePhrases} from '../locale-maze-native-v247.js';
 import {PREMIUM_STORE_KEYS,auditPremiumStoreNative} from '../locale-premium-store-native-v247.js';
+import {WARFRONT_NATIVE_KEYS,auditWarfrontNative} from '../locale-warfront-native-v247.js';
 import {ARMORY_TRANSLATIONS,ARMORY_KEYS} from '../locale-armory-v246.js';
 import {REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS} from '../locale-rewards-v245.js';
 import {ITEM_DISPLAY_EN} from '../locale-items-v246.js';
@@ -76,7 +77,7 @@ function checkPack(pack,keys,name){
  }
  return problems;
 }
-const problems=[...auditPremiumStoreNative(),...auditMazePhrases(),...auditShadowStageNative(),...auditUnified(),...auditRealmUI(),...auditOfficialTranslations(),...auditCaravanTranslations(),...auditChronicleTranslations(),...auditCoreCompletion(localeSet),...auditAuthMessages(localeSet),...checkPack(AUTH_MESSAGES,AUTH_MESSAGE_KEYS,'auth-messages'),...auditShellTranslations(localeSet),...auditActOne(),...auditActTwo(),...auditHeroLore(),...auditItemLore(),...auditPremiumNative(),...auditWarfrontDoctrine(),...checkPack(ACT_TWO_GATES,ACT_TWO_GATE_KEYS,'act2-gates'),...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
+const problems=[...auditWarfrontNative(),...auditPremiumStoreNative(),...auditMazePhrases(),...auditShadowStageNative(),...auditUnified(),...auditRealmUI(),...auditOfficialTranslations(),...auditCaravanTranslations(),...auditChronicleTranslations(),...auditCoreCompletion(localeSet),...auditAuthMessages(localeSet),...checkPack(AUTH_MESSAGES,AUTH_MESSAGE_KEYS,'auth-messages'),...auditShellTranslations(localeSet),...auditActOne(),...auditActTwo(),...auditHeroLore(),...auditItemLore(),...auditPremiumNative(),...auditWarfrontDoctrine(),...checkPack(ACT_TWO_GATES,ACT_TWO_GATE_KEYS,'act2-gates'),...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
 for(const locale of localeSet){
  const itemNames=ITEM_NAMES[locale];
  if(!itemNames||Object.keys(itemNames.names||{}).length!==19||Object.keys(itemNames.sets||{}).length!==3)problems.push(locale+': incomplete native item and set names');
@@ -129,6 +130,7 @@ const summary={
   shadowStageNative:{stages:4,additionalLanguages:Object.keys(SHADOW_STAGE_NATIVE).length,fields:['region','boss','name','description','tip']},
   mazeNative:{screenPhrases:MAZE_ENGLISH_KEYS.length,zoneNamesAndHints:8,localizedStoryGateLanguages:Object.keys(MAZE_GATE_TEXT).length},
   premiumStoreNative:{labelCount:PREMIUM_STORE_KEYS.length,additionalLanguages:12,paymentsRemainDisabled:true},
+  warfrontNative:{labelCount:WARFRONT_NATIVE_KEYS.length,additionalLanguages:12,serverAuthorityUnchanged:true},
   teamBattle:{keysPerLanguage:TEAM_KEYS.length,languages:localeSet.length},
   guild:{keysPerLanguage:GUILD_KEYS.length,languages:localeSet.length},
   trainingEvents:{keysPerLanguage:TRAINING_EVENT_KEYS.length,languages:localeSet.length},

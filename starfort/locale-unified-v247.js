@@ -10,6 +10,7 @@ import {REALM_UI} from './locale-realm-ui-v247.js';
 import {AUTH_MESSAGES} from './locale-auth-messages-v247.js';
 import {MAZE_TRANSLATIONS} from './locale-maze-native-v247.js';
 import {PREMIUM_STORE_NATIVE} from './locale-premium-store-native-v247.js';
+import {WARFRONT_NATIVE} from './locale-warfront-native-v247.js';
 import {SHELL_TRANSLATIONS} from './locale-shell-v247.js';
 import {WORLD_LANGUAGES} from './locale-world-v247.js';
 import {HERO_UI} from './locale-hero-ui-v247.js';
@@ -51,6 +52,7 @@ function glossary(language){
  }
  for(const [en,native] of Object.entries(MAZE_TRANSLATIONS[language]||{}))map.set(en,native);
  for(const [en,native] of Object.entries(PREMIUM_STORE_NATIVE[language]||{}))map.set(en,native);
+ for(const [en,native] of Object.entries(WARFRONT_NATIVE[language]||{}))map.set(en,native);
  for(const [en,native] of Object.entries(UNIFIED_PACK[language]||{}))map.set(en,native);
  RANK_NAMES_EN.forEach((en,i)=>map.set(en,RANK_NAMES_NATIVE[language]?.[i]||en));
  caches.set(language,map);return map;

@@ -157,3 +157,7 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 
 - `locale-premium-store-native-v247.js` 18 mağaza arayüzü ve ödeme yapılmadığını belirten açıklamaları 12 ek dilde kapsar. `locale-unified-v247.js` üzerinden gerçek sunucu mağaza ekranına bağlandı.
 - Premium ödeme ve fiyatlandırma aktif edilmedi. `locale-premium-store-native-v247.test.mjs` gerçek görünümü ve 14 dil sözlüğünü denetler.
+
+## v2.47 birleşik Cephe Karargâhı yerelleştirmesi
+
+- 25 sabit ikmal/ganimet/tekrar seferi mesajı ve bunların 12 ek dildeki karşılıkları `locale-warfront-native-v247.js` ile tamamlandı. Sunucu baskın kazanımları ve ikmal maliyetleri aynı kaldı.
