@@ -8,7 +8,8 @@ test('production SMTP quota is explained without promising that mail was sent',(
  assert.match(explainAuthError(400,{error_code:'email_address_invalid'}),/geçersiz/);
  assert.match(explainAuthError(400,{error_code:'email_not_confirmed'}),/doğrulaması bekliyor/);
  assert.match(explainAuthError(400,{error_code:'invalid_credentials'}),/şifre hatalı/);
- assert.equal(explainAuthError(403,{message:'Sunucu hatası'}),'Sunucu hatası');
+ assert.equal(explainAuthError(403,{message:'Sunucu hatası'}),'Hesap işlemi başarısız.');
+ assert.equal(explainAuthError(503,{message:'Unexpected backend details'}),'Hesap işlemi başarısız.');
 });
 test('account signup stops on 429 and never falsely returns confirmation success',async()=>{
  const fetcher=async()=>({ok:false,status:429,json:async()=>({error_code:'over_email_send_rate_limit',msg:'email rate limit exceeded'})});
