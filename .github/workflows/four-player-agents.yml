@@ -1,0 +1,40 @@
+name: STARFORT Four Player Agents
+on:
+  push:
+    branches: ["qa/four-player-agents-*", main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  four-player-audit:
+    name: "Player agent — ${{ matrix.player }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        player: [rookie, tactician, veteran, breaker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check four-agent runner syntax
+        working-directory: starfort
+        run: node --check scripts/four-player-agents.mjs
+      - name: Play STARFORT independently in headless Chromium
+        working-directory: starfort
+        env:
+          CHROME_BIN: google-chrome
+        run: node scripts/four-player-agents.mjs "${{ matrix.player }}"
+      - name: Upload independent scenario trace and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: starfort-agent-${{ matrix.player }}
+          if-no-files-found: ignore
+          path: |
+            starfort/qa-artifacts/four-player-${{ matrix.player }}.json
+            starfort/qa-artifacts/player-${{ matrix.player }}-*.png
