@@ -1,5 +1,5 @@
 import {STAGES,ITEMS,HEROES,teamPower} from './rules.js';
-import {fm,labeledBattleAction} from './first-minutes-v255.js';
+import {fm,labeledBattleAction,bagAction} from './first-minutes-v255.js';
 import {formatNumber} from './locale-v243.js';
 import {displayStage,displayOperation,displayResource} from './locale-game-content-v245.js';
 import {officialText as local} from './locale-official-ui-v247.js';
@@ -88,7 +88,7 @@ export function accountExpeditionMarkup(game,account,now=Date.now(),selectedReal
    ${showVictory?'<div class="victory-actions">'+
      (canAdvance?'<button class="primary" data-result-next="'+reportNext+'">'+fm('next')+'</button>':
        '<button class="primary" data-result-dismiss>'+fm('replay')+'</button>')+
-     '<button class="secondary" data-view="armory">'+local('Çantayı aç','Open bag')+'</button>'+
+     '<button class="secondary" data-view="armory">'+bagAction()+'</button>'+
      '<button class="secondary" data-result-dismiss>'+fm('back')+'</button></div>':''}
   </article>`:'';
  const rankTitles=[['Sınır Nöbetçisi',5,'Frontier Watcher'],['Yıldız Ustası',20,'Star Master'],['Kuzey Muhafızı',40,'Northern Warden']];
