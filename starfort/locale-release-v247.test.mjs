@@ -1,0 +1,32 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+const cwd=fileURLToPath(new URL('.',import.meta.url));
+const run=(flag)=>spawnSync(process.execPath,['scripts/i18n-coverage.mjs',flag],{cwd,encoding:'utf8',maxBuffer:4*1024*1024});
+test('all implemented 14-language dictionaries pass technical coverage and core narrative is present',()=>{
+ const process=run('--check');
+ assert.equal(process.status,0,process.stderr||process.stdout.slice(-4000));
+ const report=JSON.parse(process.stdout);
+ assert.deepEqual(report.errors,[]);
+ assert.equal(report.verifiedPacks.firstActNarrative.nativeAdditionalLocales,12);
+ assert.equal(report.verifiedPacks.secondActNarrative.nativeAdditionalLocales,12);
+ assert.equal(report.verifiedPacks.secondActNarrative.operations,24);
+ assert.equal(report.verifiedPacks.heroNativeNarrative.additionalLocales,12);
+ assert.equal(report.verifiedPacks.heroNativeNarrative.heroes,9);
+ assert.equal(report.verifiedPacks.itemNativeNarrative.items,19);
+ assert.equal(report.verifiedPacks.premiumNativeCatalog.items,15);
+ assert.equal(report.verifiedPacks.warfrontDoctrines.languages,14);
+ assert.deepEqual(report.missingNativeNarrativeLocales,[]);
+ assert.equal(report.releaseReady,false);
+});
+test('a partially localized product cannot pass the global release gate',()=>{
+ const process=run('--release-check');
+ assert.equal(process.status,1,'The release gate must fail while native language review and UI coverage are outstanding');
+ const report=JSON.parse(process.stdout);
+ assert.equal(report.pendingHumanReviewLocales.length,14);
+ assert.equal(report.sourceCoverage.fullyTranslatedInto14Languages,false);
+ assert.ok(report.sourceCoverage.totalUserFacingModules>0);
+ assert.match(report.caveat,/NOT full-game translation/);
+ assert.equal(report.releaseReady,false);
+});
