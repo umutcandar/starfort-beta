@@ -166,7 +166,10 @@ try{
   await sleep(100);
  }
  assert.ok(accountUnlocked,'Synthetic signed-in account did not unlock the real UI');
+ assert.equal(await evaluate("sessionStorage.getItem('__starfort_qa_first_get_failure')"),'1',
+   'The first production-style 503 must recover automatically without clicking manual retry');
  assert.equal(await evaluate("!!document.querySelector('.village, .server-expedition, .app')"),true);
+ console.log('PASS beta.9: temporary initial server failure resolved automatically after real synthetic login');
  await cdp('Page.navigate',{url:origin});
  let persists=false;
  for(let i=0;i<100;i++){
@@ -178,6 +181,17 @@ try{
  await sleep(150);
  const mobileSignedIn=await evaluate("({viewport:innerWidth,scroll:document.documentElement.scrollWidth,locked:document.querySelector('.app').inert})");
  assert.equal(mobileSignedIn.locked,false,'Mobile authenticated app locked');
+ await evaluate("document.querySelector('.nav-item[data-view=guild]').click()");
+ let guildAutoLinked=false;
+ for(let i=0;i<100;i++){
+  guildAutoLinked=await evaluate("!!document.querySelector('.guild-server-status')&&!!JSON.parse(sessionStorage.getItem('__starfort_qa_guild_profile')||'null')");
+  if(guildAutoLinked)break;await sleep(100);
+ }
+ assert.ok(guildAutoLinked,'A confirmed email account should auto-link a single commander profile');
+ assert.equal(await evaluate("!!document.querySelector('[data-guild-action=register]')"),false,
+   'Confirmed user must not be forced to sign up for guild a second time');
+ await evaluate("document.querySelector('.nav-item[data-view=keep]').click()");
+ console.log('PASS beta.9: guild auto profile uses existing authenticated account, no second sign-up');
  assert.ok(mobileSignedIn.scroll<=mobileSignedIn.viewport+5,'Mobile authenticated app horizontal overflow: '+JSON.stringify(mobileSignedIn));
  // v2.47: verify all fourteen languages in the *unlocked* account-owned village,
  // not only in the account gate. A synthetic server session owns these screens.
@@ -392,6 +406,55 @@ try{
   if(feintWorked)break;await sleep(100);
  }
  assert.ok(feintWorked,'New feint turn not sent to authoritative combat RPC');
+ // The first account-owned fight must culminate in a large win and actual rewards.
+ for(let turn=0;turn<8;turn++){
+  const info=await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot'))");
+  if(!info.mission)break;
+  const before=info.mission.turn;
+  const clicked=await evaluate("(()=>{const b=document.querySelector('[data-account-turn=strike]');if(!b)return false;b.click();return true;})()");
+  assert.equal(clicked,true,'No real strike action available at turn '+before);
+  let next=false;
+  for(let i=0;i<100;i++){
+   next=await evaluate(`(()=>{const x=JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot'));return !x.mission||x.mission.turn>${before};})()`);
+   if(next)break;await sleep(100);
+  }
+  assert.ok(next,'Combat turn did not complete after pressing Strike: '+before);
+ }
+ const won=await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot'))");
+ assert.equal(won.mission,null,'Account first battle must finish in a server-signed victory');
+ assert.ok(won.lastReport?.won,'First-wave battle has no verified win receipt');
+ let victory=false;
+ for(let i=0;i<100;i++){
+  victory=await evaluate("!!document.querySelector('.server-mission-result.celebration[aria-modal=true]')&&!!document.querySelector('.victory-prizes')&&!!document.querySelector('[data-result-next]')");
+  if(victory)break;await sleep(100);
+ }
+ assert.ok(victory,'Visible centered victory/loot/next chapter CTA missing');
+ await shot('starfort-390x844-account-victory-beta9.png');
+ await evaluate("document.querySelector('[data-result-dismiss]').click()");
+ // Auto-equip must fill BOTH armor and weapon on the first click.
+ await evaluate("(()=>{const d=JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot'));d.inventory.ward_mail=1;sessionStorage.setItem('__starfort_qa_snapshot',JSON.stringify(d));})()");
+ await cdp('Page.reload',{ignoreCache:true});
+ let autoReady=false;
+ for(let i=0;i<100;i++){
+  autoReady=await evaluate("document.readyState==='complete'&&!document.body.classList.contains('account-locked')&&!!document.querySelector('.nav-item[data-view=armory]')");
+  if(autoReady)break;await sleep(100);
+ }
+ assert.ok(autoReady,'Account not restored before auto equip');
+ await evaluate("document.querySelector('.nav-item[data-view=armory]').click()");
+ let autoButton=false;
+ for(let i=0;i<100;i++){
+  autoButton=await evaluate("!!document.querySelector('[data-auto-equip=aldren]')");
+  if(autoButton)break;await sleep(100);
+ }
+ assert.ok(autoButton,'Auto-equip action missing from Bag');
+ await evaluate("document.querySelector('[data-auto-equip=aldren]').click()");
+ let bothSlots=false;
+ for(let i=0;i<100;i++){
+  bothSlots=await evaluate("(()=>{const l=JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot')).loadouts.aldren||{};return l.weapon==='iron_sword'&&l.armor==='ward_mail';})()");
+  if(bothSlots)break;await sleep(100);
+ }
+ assert.ok(bothSlots,'One-click auto-equip did not equip both weapon and armor');
+ console.log('PASS beta.9: first full account battle, centered win and server rewards, one-click weapon+armor auto-equip');
  console.log('PASS v2.37 combat: warfront bulwark consumed, new feint/rally controls, battle prioritization and mobile 390px');
 
  // Account-bound Shadow Frontier: simulate an advanced player only in isolated browser memory.
