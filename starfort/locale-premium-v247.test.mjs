@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {SUPPORTED_LOCALES,setLocale,getLocale} from './locale-v243.js';
 import {PREMIUM_NATIVE,nativePremiumItem,auditPremiumNative} from './locale-premium-v247.js';
+import {bilingual} from './locale-unified-v247.js';
 import {PREMIUM_COSMETICS,PREMIUM_ALL_ITEMS,CRYSTAL_PACKS,FREE_SEASON,displayPremiumItem,premiumStoreMarkup,validatePremium} from './premium-store.js';
 const other=SUPPORTED_LOCALES.filter(x=>!['tr','en'].includes(x));
 const sample={ok:true,source:'server-premium',paymentsEnabled:false,crystals:0,revision:1,vipUntil:null,owned:[],equipped:{},season:{month:'2026-11',wins:0,premium:false,thresholds:[2,5,10,18],freeClaims:[],premiumClaims:[]}};
@@ -38,7 +39,7 @@ test('all fourteen languages preserve cosmetic prices, free win thresholds and d
    assert.equal(snapshot.crystals,0);
    assert.deepEqual(FREE_SEASON.map(x=>x.wins),[2,5,10,18]);
    const html=premiumStoreMarkup(snapshot);
-   assert.match(html,/Real-money payments are disabled|Gerçek para ödemeleri henüz kapalı/);
+   assert.ok(html.includes(bilingual('Gerçek para ödemeleri henüz kapalı','Real-money payments are disabled')),locale+' native payment lock');
    assert.match(html,/data-premium-action="purchase"/);
    assert.match(html,/data-premium-action="claim"/);
    assert.ok(html.includes(locale==='tr'?'Kutup Işığı Hisarı':locale==='en'?'Aurora Keep':nativePremiumItem('castle-aurora').name),locale);
