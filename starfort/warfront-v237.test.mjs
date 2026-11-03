@@ -99,5 +99,5 @@ test('SQL warfront prevents replay, direct table writes, unverified rewards and 
  const exp=readFileSync(new URL('./account-expedition.js',import.meta.url),'utf8');
  assert.match(exp,/data-account-turn="feint"/);
  assert.match(exp,/data-account-turn="rally"/);
- assert.match(exp,/warfrontMarkup\(warfront,game,mission\)/);
+ assert.match(exp,/warfrontMarkup\(warfront,game,anyMission\)/);
 });
