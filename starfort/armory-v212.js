@@ -98,33 +98,33 @@ export function armoryMarkup(state,heroId='aldren',filter='all',selectedId=null)
       ${!selected.exclusive?`<button class="secondary" data-forge="${selected.id}" ${canForge?'':'disabled'}>${state.buildings.forge<selected.forge?`${a("forge")} ${a("level")} ${selected.forge} ${local("gerekli","required")}`:a("craft")}</button>`:''}
       ${state.serverVillage&&count>0?`<button class="secondary" data-account-enhance="${selected.id}" ${canMaster?'':'disabled'}>${mastery>=5?local("✦ +5 Tamamlandı","✦ +5 Completed"):`✧ ${a("mastery")} +${mastery+1}`}</button>`:''}
     </div>
-    ${state.serverVillage&&count>0?`<p class="bag-v226-upgrade-note">Eşya ustalığı: ${mastery}/5 · Bir eşya türünün tüm kopyalarını kalıcı güçlendirir. ${masteryCost?`Sıradaki maliyet: ${Object.entries(masteryCost).map(([k,v])=>fmt(v)+' '+({gold:'Altın',stone:'Taş',aether:'Yıldız özü'})[k]).join(' · ')}`:'Maksimum ustalık.'}</p>`:''}
-    <p class="bag-v212-origin">${selected.exclusive?'Özel sefer ganimeti. Demirhanede üretilemez.':`Üretim maliyeti: ${costText}`} · Çantada: ${count} · Boşta: ${Math.max(0,free)}</p>`;
+    ${state.serverVillage&&count>0?`<p class="bag-v226-upgrade-note">${local('Eşya ustalığı','Gear mastery')}: ${mastery}/5 · ${local('Bir eşya türünün tüm kopyalarını kalıcı güçlendirir.','Permanently strengthens all owned copies of this gear type.')} ${masteryCost?`${local('Sıradaki maliyet','Next cost')}: ${Object.entries(masteryCost).map(([k,v])=>fmt(v)+' '+displayResource(k)).join(' · ')}`:local('Maksimum ustalık.','Maximum mastery.')}</p>`:''}
+    <p class="bag-v212-origin">${selected.exclusive?local('Özel sefer ganimeti. Demirhanede üretilemez.','Special expedition loot. Cannot be crafted.'):`${local('Üretim maliyeti','Crafting cost')}: ${costText}`} · ${local('Çantada','Owned')}: ${count} · ${local('Boşta','Spare')}: ${Math.max(0,free)}</p>`;
   }
-  if(material)details=`<div class="bag-v212-detail-head"><span class="bag-v212-detail-art bag-v213-material-glyph material-${material.id}" aria-hidden="true">${material.glyph}</span><div><small>KAYNAK · ÇANTA</small><h3>${material.name}</h3><p>${material.description}</p></div></div>
-    <div class="bag-v213-material-total"><small>Mevcut miktar</small><strong>${fmt(state.res[material.id]||0)}</strong></div>
-    <p class="bag-v212-origin">Bu kaynak köy üretimi, sefer zaferleri ve görev ödülleriyle kazanılır. Kaynakların mevcut oyun kayıtlarına bağlıdır.</p>`;
-  return `<header class="bag-v212-header"><div><span class="eyebrow">YILDIZ KALESİ · KAHRAMAN TEÇHİZATI</span><h2>Çanta ve Donanım</h2><p>Silahını kuşan, setlerini tamamla ve takımını bir sonraki sefere hazırla.</p></div><button class="secondary" data-close-view>Köye dön</button></header>
+  if(material)details=`<div class="bag-v212-detail-head"><span class="bag-v212-detail-art bag-v213-material-glyph material-${material.id}" aria-hidden="true">${material.glyph}</span><div><small>${local('KAYNAK · ÇANTA','RESOURCE · INVENTORY')}</small><h3>${displayMaterial(material).name}</h3><p>${displayMaterial(material).description}</p></div></div>
+    <div class="bag-v213-material-total"><small>${local('Mevcut miktar','Available quantity')}</small><strong>${fmt(state.res[material.id]||0)}</strong></div>
+    <p class="bag-v212-origin">${local('Bu kaynak köy üretimi, sefer zaferleri ve görev ödülleriyle kazanılır. Kaynakların mevcut oyun kayıtlarına bağlıdır.','Resources come from village production, expeditions and objectives, and always reflect your authoritative save.')}</p>`;
+  return `<header class="bag-v212-header"><div><span class="eyebrow">${local('YILDIZ KALESİ · KAHRAMAN TEÇHİZATI','STAR KEEP · HERO EQUIPMENT')}</span><h2>${a('title')}</h2><p>${a('intro')}</p></div><button class="secondary" data-close-view >${a('back')}</button></header>
     <div class="armory-v212">
-      <aside class="bag-v212-roster"><h3>Kahramanlar</h3><div class="armory-heroes" aria-label="Ekipman kahramanı">${roster}</div></aside>
+      <aside class="bag-v212-roster"><h3>${a('heroes')}</h3><div class="armory-heroes" aria-label="${local('Ekipman kahramanı','Equipment hero')}">${roster}</div></aside>
       <section class="bag-v212-character bag-hero-display">
-        <div class="bag-v212-character-art"><img src="assets/${hero.id}.webp" alt="${hero.name}, ${hero.title}"></div>
-        <div class="bag-v212-character-name"><span class="eyebrow">AKTİF KAHRAMAN</span><h3>${hero.name}</h3><small>${hero.title} · Seviye ${state.heroes[hero.id].level}</small></div>
+        <div class="bag-v212-character-art"><img src="assets/${hero.id}.webp" alt="${hero.name}, ${displayHero(hero).title}"></div>
+        <div class="bag-v212-character-name"><span class="eyebrow">${a('activeHero')}</span><h3>${hero.name}</h3><small>${displayHero(hero).title} · ${a('level')} ${state.heroes[hero.id].level}</small></div>
         <div class="bag-v212-character-stats">
-          <div><span>⚔ Saldırı</span><b>${fmt(stats.attack)}</b></div>
-          <div><span>♡ Can</span><b>${fmt(stats.maxHp)}</b></div>
-          <div><span>⛨ Zırh</span><b>%${fmt(gear.armor)}</b></div>
-          <div><span>✦ Şifa</span><b>+${fmt(gear.healing)}</b></div>
-          <div class="bag-v213-power"><span>⚔ Donanım Gücü</span><b>${fmt(Math.round(stats.attack*2+stats.maxHp*.35+gear.armor*2+gear.healing))}</b></div>
+          <div><span>⚔ ${a('attack')}</span><b>${fmt(stats.attack)}</b></div>
+          <div><span>♡ ${a('health')}</span><b>${fmt(stats.maxHp)}</b></div>
+          <div><span>⛨ ${a('armor')}</span><b>%${fmt(gear.armor)}</b></div>
+          <div><span>✦ ${a('healing')}</span><b>+${fmt(gear.healing)}</b></div>
+          <div class="bag-v213-power"><span>⚔ ${a('power')}</span><b>${fmt(Math.round(stats.attack*2+stats.maxHp*.35+gear.armor*2+gear.healing))}</b></div>
         </div>
       </section>
       <div class="bag-v212-right">
-        <section class="bag-v212-equipped"><div class="bag-v212-section-heading"><span class="eyebrow">AKTİF KAHRAMANIN DONANIMI</span><strong>${hero.name}</strong></div><div class="bag-v212-slots">${equippedItems}</div>
-          <div class="bag-v212-detail-actions"><button class="secondary" data-auto-equip="${hero.id}" ${busy?'disabled':''} title="Boştaki veya bu kahramana ait ekipmanlardan rolüne uygun en güçlü dizilimi seçer; diğer kahramanların ekipmanlarını değiştirmez.">✦ Rolüne göre otomatik kuşan</button></div></section>
-        <div class="bag-toolbar"><h3>Çantam <small>${R.ITEMS.filter(item=>itemCount(state,item)>0).length}/${R.ITEMS.length} ekipman türü</small></h3><div class="bag-filters" aria-label="Çanta filtreleri">${FILTERS.map(([id,name])=>`<button data-bag-slot="${id}" aria-pressed="${filter===id}" class="${filter===id?'selected':''}">${name}</button>`).join('')}</div></div>
-        <div class="item-grid bag-item-grid" aria-label="Çanta eşyaları">${cards+materialCards||'<p class="bag-v212-empty">Bu filtrede eşya yok.</p>'}</div>
-        <p class="armory-tip">${busy?'Savaş sürerken ekipman değiştirilemez. ':''}Bir eşya iki kahramana takılamaz. Set bonusu ve seçili ekipman karşılaştırmaları sağ panelde görünür.</p>
+        <section class="bag-v212-equipped"><div class="bag-v212-section-heading"><span class="eyebrow">${local('AKTİF KAHRAMANIN DONANIMI','ACTIVE HERO EQUIPMENT')}</span><strong>${hero.name}</strong></div><div class="bag-v212-slots">${equippedItems}</div>
+          <div class="bag-v212-detail-actions"><button class="secondary" data-auto-equip="${hero.id}" ${busy?'disabled':''} title="${local('Boştaki veya bu kahramana ait ekipmanlardan rolüne uygun en güçlü dizilimi seçer; diğer kahramanların ekipmanlarını değiştirmez.','Chooses the strongest role-appropriate free or currently worn equipment without affecting other heroes.')}">✦ ${a('autoEquip')}</button></div></section>
+        <div class="bag-toolbar"><h3>${a('inventory')} <small>${R.ITEMS.filter(item=>itemCount(state,item)>0).length}/${R.ITEMS.length} ${local('ekipman türü','equipment types')}</small></h3><div class="bag-filters" aria-label="${local('Çanta filtreleri','Inventory filters')}">${FILTERS.map(([id,name])=>`<button data-bag-slot="${id}" aria-pressed="${filter===id}" class="${filter===id?'selected':''}">${a(({all:"all",weapon:"weapon",armor:"armor",relic:"relic",set:"set",forge:"forge",materials:"materials",owned:"owned"})[id])}</button>`).join('')}</div></div>
+        <div class="item-grid bag-item-grid" aria-label="${local('Çanta eşyaları','Inventory items')}">${cards+materialCards||`<p class="bag-v212-empty">${a('noItems')}</p>`}</div>
+        <p class="armory-tip">${busy?local('Savaş sürerken ekipman değiştirilemez. ','Equipment cannot be changed during battle. '):''}${local('Bir eşya iki kahramana takılamaz. Set bonusu ve seçili ekipman karşılaştırmaları sağ panelde görünür.','One copy cannot be equipped by two heroes. Set bonuses and comparison details appear in the side panel.')}</p>
       </div>
-      <section class="bag-v212-detail" aria-label="Seçili ekipman ayrıntıları">${details}</section>
+      <section class="bag-v212-detail" aria-label="${a('selectedDetails')}">${details}</section>
     </div>`;
 }
