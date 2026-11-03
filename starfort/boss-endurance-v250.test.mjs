@@ -40,8 +40,8 @@ test('all 14 active locales contain complete late-boss guidance; none falls back
 test('boss phase thresholds are independent of client timing and ignore legacy battles',()=>{
  assert.equal(bossV250Phase(mission({enemyHp:901})),null);
  assert.equal(bossV250Phase(mission({enemyHp:700})).phase,1);
- assert.equal(bossV250Phase(mission({enemyHp:603})).phase,1);
- assert.equal(bossV250Phase(mission({enemyHp:600})).phase,2);
+ assert.equal(bossV250Phase(mission({enemyHp:604})).phase,1);
+ assert.equal(bossV250Phase(mission({enemyHp:603})).phase,2);
  assert.equal(bossV250Phase(mission({enemyHp:300})).phase,2);
  assert.equal(bossV250Phase(mission({enemyHp:297})).phase,3);
  assert.equal(bossV250Phase(mission({stage:3})),null);
