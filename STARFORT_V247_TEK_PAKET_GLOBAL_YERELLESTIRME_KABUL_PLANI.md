@@ -166,3 +166,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 
 - `locale-building-native-v247.js` ve `locale-building-advanced-v247.js` gerçek `building-workshop.js` içindeki 91 farklı sabit iki dilli ifadeyi 12 ek dilde karşılar; Türkçe/İngilizce korunur. İnşaat süreleri, malzeme eksikleri, 20 seviye, ustalık mimarisi, sunucu yetkisi ve yıldız koşulları dahildir.
 - `locale-unified-v247.js` sözlüğe bağlanır; inşaat ekonomisine ve sunucu eylem adlarına dokunulmaz. `locale-building-native-v247.test.mjs` kaynak koddan birebir 91 ifadeyi tarayarak çeviri kapsamını doğrular.
+
+## Tek paket v2.47 — doğrulanmış hedef koçunun 14 dilde tamamı
+
+- Ana sefer ekranında yalnızca Türkçe kalmış `official-progress-coach.js` aşaması 18 kararlı hedef kimliği için **başlık/açıklama/eylem** olmak üzere toplam 54 UI alanını 12 ek dil + İngilizce destekleyecek şekilde bağlandı. Türkçe kanonik metin korunur.
+- Dinamik metinler, `stage`, `chapter`, `rank`, `current/required`, `stars`, `medals` gibi değişkenleri sunucu tarafından doğrulanmış mevcut görünümden alır. Görev/ödül kuralları, ekonomi ve buton `data-view` değerleri etkilenmez.
+- HTML escaping ve çok dilli yer değiştirme `locale-goals-v247.test.mjs` ile güvence altında tutulur.
