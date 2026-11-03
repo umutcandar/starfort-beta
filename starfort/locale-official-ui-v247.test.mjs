@@ -52,8 +52,8 @@ test('live combat intent hints, three-star estimate and battle outcome messages 
 test('all 122 direct bilingual server expedition phrases have native mappings in 12 extra languages',async()=>{
  const {readFileSync}=await import('node:fs');
  const exp=readFileSync(new URL('./account-expedition.js',import.meta.url),'utf8');
- const regex=/\\blocal\\(\\s*(?:'((?:\\\\.|[^'\\\\])*)'|"((?:\\\\.|[^"\\\\])*)")\\s*,\\s*(?:'((?:\\\\.|[^'\\\\])*)'|"((?:\\\\.|[^"\\\\])*)")\\s*\\)/g;
- const direct=[...new Set([...exp.matchAll(regex)].map(m=>(m[3]??m[4]).replace(/\\\\(['"\\\\])/g,'$1')))];
+ const regex=/\blocal\(\s*(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)")\s*,\s*(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)")\s*\)/g;
+ const direct=[...new Set([...exp.matchAll(regex)].map(m=>(m[3]??m[4]).replace(/\\(['"\\])/g,'$1')))];
  assert.equal(direct.length,122);
  for(const lang of SUPPORTED_LOCALES.filter(l=>l!=='tr'&&l!=='en')){
   for(const word of direct)assert.ok(OFFICIAL_TRANSLATIONS[lang][word]?.trim(),lang+': '+word);
