@@ -21,7 +21,7 @@ const watch=[
  {file:'arena-view.js'},
  {file:'app.js'},
  {file:'warfront-v237.js'},
- {file:'premium-store-v236.js'},
+ {file:'premium-store.js'},
  {file:'commander-chronicle.js'},
  {file:'official-progress-coach.js'}
 ];
