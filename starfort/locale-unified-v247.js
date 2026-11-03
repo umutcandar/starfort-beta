@@ -13,6 +13,7 @@ import {PREMIUM_STORE_NATIVE} from './locale-premium-store-native-v247.js';
 import {WARFRONT_NATIVE} from './locale-warfront-native-v247.js';
 import {BUILDING_NATIVE} from './locale-building-native-v247.js';
 import {BUILDING_ADVANCED_NATIVE} from './locale-building-advanced-v247.js';
+import {AUXILIARY_NATIVE} from './locale-auxiliary-native-v247.js';
 import {ARENA_NATIVE} from './locale-arena-native-v247.js';
 import {SHELL_TRANSLATIONS} from './locale-shell-v247.js';
 import {WORLD_LANGUAGES} from './locale-world-v247.js';
@@ -60,6 +61,7 @@ function glossary(language){
  for(const [en,native] of Object.entries(BUILDING_ADVANCED_NATIVE[language]||{}))map.set(en,native);
  for(const [en,native] of Object.entries(ARENA_NATIVE[language]||{}))map.set(en,native);
  for(const [en,native] of Object.entries(UNIFIED_PACK[language]||{}))map.set(en,native);
+ for(const [en,native] of Object.entries(AUXILIARY_NATIVE[language]||{}))map.set(en,native);
  RANK_NAMES_EN.forEach((en,i)=>map.set(en,RANK_NAMES_NATIVE[language]?.[i]||en));
  caches.set(language,map);return map;
 }

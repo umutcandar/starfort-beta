@@ -172,3 +172,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - Ana sefer ekranında yalnızca Türkçe kalmış `official-progress-coach.js` aşaması 18 kararlı hedef kimliği için **başlık/açıklama/eylem** olmak üzere toplam 54 UI alanını 12 ek dil + İngilizce destekleyecek şekilde bağlandı. Türkçe kanonik metin korunur.
 - Dinamik metinler, `stage`, `chapter`, `rank`, `current/required`, `stars`, `medals` gibi değişkenleri sunucu tarafından doğrulanmış mevcut görünümden alır. Görev/ödül kuralları, ekonomi ve buton `data-view` değerleri etkilenmez.
 - HTML escaping ve çok dilli yer değiştirme `locale-goals-v247.test.mjs` ile güvence altında tutulur.
+
+## v2.47 tek paket — savaş eğitimi, Shadow ödülleri, ödeme açılmayan vitrin
+
+- `locale-auxiliary-native-v247.js`: **56 gerçek ekran ifadesinin tamamı ×12 ek dil**. `tactics-view.js` kuşatma eğitimi/klavye kontrolleri, `shadow-rewards-v239.js` doğrulanmış zafer/ganimet raporu ve `premium-catalog.js` ödeme bulunmadığına dair açık uyarılar; Türkçe/İngilizce korunarak 14 dilde gösterilir.
+- Yalnızca `locale-unified-v247.js` içindeki gösterim sözlüğüne bağlandı; ödeme etkinleştirme, gerçek para toplama, sunucu ödülleri ve savaş mekaniği değişmedi.
+- Yeni sabit metin eklenirse `locale-auxiliary-native-v247.test.mjs` kaynak taraması tüm dillere karşı CI'da alarm verir.
