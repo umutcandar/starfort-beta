@@ -34,8 +34,10 @@
   dailyClaimed:false,weeklyClaimed:false,chestsClaimed:0,nextChestWins:3,lastLoot:null});
  const warfrontRead=()=>{try{return JSON.parse(sessionStorage.getItem('__starfort_qa_warfront'))||warfrontInitial()}catch{return warfrontInitial()}};
  const warfrontWrite=d=>{sessionStorage.setItem('__starfort_qa_warfront',JSON.stringify(d));return d;};
+ const shadowMilestones=[12,30,55,90,140,210,300,410,550,710,900,1120];
  const shadowInitial=()=>({ok:true,source:'server-shadow',revision:1,heroPaths:{},cleared:[],
-  stars:{},battle:null,lastReport:null,applied:'get'});
+  stars:{},battle:null,lastReport:null,masteryXp:0,masteryRank:0,masteryClaimed:0,
+  weeklyRenown:0,weeklyWins:0,weeklyLimit:100,week:'2026-45',applied:'get'});
  const shadowRead=()=>{try{return JSON.parse(sessionStorage.getItem('__starfort_qa_shadow'))||shadowInitial()}catch{return shadowInitial()}};
  const shadowWrite=d=>{sessionStorage.setItem('__starfort_qa_shadow',JSON.stringify(d));return d;};
  const realFetch=window.fetch.bind(window);
@@ -122,6 +124,13 @@
   if(path.includes('/rest/v1/rpc/sfb_shadow_api')){
    if(!String(options.headers?.Authorization||'').startsWith('Bearer qa.synthetic.'))return ok({message:'unauthorized'},401);
    const d=shadowRead(),v=read(),a=payload.p_action;
+   if(a==='claim_mastery'){
+    if(d.masteryClaimed>=d.masteryRank)return ok({message:'Ustalık ödülü hazır değil.'},400);
+    const rank=++d.masteryClaimed,prize={gold:80+60*rank,wood:40+30*rank,
+      stone:35+30*rank,aether:8+6*rank};
+    Object.entries(prize).forEach(([id,n])=>v.res[id]+=n);
+    d.reward=prize;d.revision++;v.revision++;write(v);
+   }
    if(a==='train'){
     const h=payload.p_target,style=payload.p_aux,rank=(d.heroPaths[h]?.rank||0)+1;
     if(!v.heroes[h]||!['assault','warden'].includes(style)||d.heroPaths[h]&&d.heroPaths[h].path!==style||
@@ -153,7 +162,10 @@
       if(d.battle.wave<3){d.battle.wave++;d.battle.waveTurn=0;d.battle.enemyHp=240;d.battle.enemyMaxHp=240;}
       else{
        const stage=d.battle.stage;const first=!d.cleared.includes(stage);
-       d.lastReport={won:true,stage,stars:3,turns:d.battle.turn,
+       const earned=Math.min(100-d.weeklyRenown,stage*3+6+(first?10:0));
+       d.masteryXp+=earned;d.weeklyRenown+=earned;d.weeklyWins++;
+       d.masteryRank=shadowMilestones.filter(n=>d.masteryXp>=n).length;
+       d.lastReport={won:true,stage,stars:3,turns:d.battle.turn,renown:earned,
          reward:{gold:420,wood:200,stone:210,aether:60},item:first?'grave_seal':null,at:now()};
        if(first){d.cleared.push(stage);v.inventory.grave_seal=(v.inventory.grave_seal||0)+1;}
        d.stars[String(stage)]=3;v.counters.win++;v.revision++;
