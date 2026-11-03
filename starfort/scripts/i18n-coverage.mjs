@@ -17,6 +17,8 @@ import {LONG_ROAD_KEYS,auditLongRoadLanguages} from '../long-horizon-v249.js';
 import {BOSS_V250_KEYS,auditBossV250Languages} from '../story-boss-v250.js';
 import {BOSS_RELIC_KEYS,auditBossRelicLanguages} from '../boss-relic-v251.js';
 import {ASCENSION_KEYS,auditAscensionLanguages} from '../relic-ascension-v252.js';
+import {ECONOMY_KEYS,auditEconomyLanguages} from '../economy-horizon-v253.js';
+import {COMBO_KEYS,auditComboLanguages} from '../boss-combo-v253.js';
 import {CORE_COMPLETION_KEYS,CORE_COMPLETION_TRANSLATIONS,auditCoreCompletion} from '../locale-core-completion-v247.js';
 import {CHRONICLE_UI_KEYS,auditChronicleTranslations} from '../locale-chronicle-v247.js';
 import {CARAVAN_UI_KEYS,auditCaravanTranslations} from '../locale-caravan-v247.js';
@@ -99,7 +101,7 @@ function checkPack(pack,keys,name){
  }
  return problems;
 }
-const problems=[...auditAscensionLanguages(localeSet),...auditBossRelicLanguages(localeSet),...auditBossV250Languages(localeSet),...auditLongRoadLanguages(localeSet),...auditSocialTranslations(localeSet),...auditDisciplineText(),...auditAppStatic(),...auditSceneCopy(),...auditShadowVoiceNative(),...auditBuildingAdvanced(),...auditBuildingNative(),...auditWarfrontNative(),...auditPremiumStoreNative(),...auditMazePhrases(),...auditShadowStageNative(),...auditUnified(),...auditRealmUI(),...auditOfficialTranslations(),...auditCaravanTranslations(),...auditChronicleTranslations(),...auditCoreCompletion(localeSet),...auditAuthMessages(localeSet),...checkPack(AUTH_MESSAGES,AUTH_MESSAGE_KEYS,'auth-messages'),...auditShellTranslations(localeSet),...auditActOne(),...auditActTwo(),...auditHeroLore(),...auditItemLore(),...auditPremiumNative(),...auditWarfrontDoctrine(),...checkPack(ACT_TWO_GATES,ACT_TWO_GATE_KEYS,'act2-gates'),...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
+const problems=[...auditEconomyLanguages(localeSet),...auditComboLanguages(localeSet),...auditAscensionLanguages(localeSet),...auditBossRelicLanguages(localeSet),...auditBossV250Languages(localeSet),...auditLongRoadLanguages(localeSet),...auditSocialTranslations(localeSet),...auditDisciplineText(),...auditAppStatic(),...auditSceneCopy(),...auditShadowVoiceNative(),...auditBuildingAdvanced(),...auditBuildingNative(),...auditWarfrontNative(),...auditPremiumStoreNative(),...auditMazePhrases(),...auditShadowStageNative(),...auditUnified(),...auditRealmUI(),...auditOfficialTranslations(),...auditCaravanTranslations(),...auditChronicleTranslations(),...auditCoreCompletion(localeSet),...auditAuthMessages(localeSet),...checkPack(AUTH_MESSAGES,AUTH_MESSAGE_KEYS,'auth-messages'),...auditShellTranslations(localeSet),...auditActOne(),...auditActTwo(),...auditHeroLore(),...auditItemLore(),...auditPremiumNative(),...auditWarfrontDoctrine(),...checkPack(ACT_TWO_GATES,ACT_TWO_GATE_KEYS,'act2-gates'),...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
 for(const locale of localeSet){
  const itemNames=ITEM_NAMES[locale];
  if(!itemNames||Object.keys(itemNames.names||{}).length!==19||Object.keys(itemNames.sets||{}).length!==3)problems.push(locale+': incomplete native item and set names');
@@ -148,6 +150,8 @@ const summary={
   versionedBossPhases:{keysPerLanguage:BOSS_V250_KEYS.length,languages:localeSet.length,serverResolved:true},
   guaranteedBossRelics:{keysPerLanguage:BOSS_RELIC_KEYS.length,languages:localeSet.length,serverResolved:true},
   weeklyRelicAscension:{keysPerLanguage:ASCENSION_KEYS.length,languages:localeSet.length,serverResolved:true},
+  projectedEconomy:{keysPerLanguage:ECONOMY_KEYS.length,languages:localeSet.length,readOnly:true},
+  chainedBossAttacks:{keysPerLanguage:COMBO_KEYS.length,languages:localeSet.length,serverResolved:true},
   completedCoreSettings:{newNativeKeys:CORE_COMPLETION_KEYS.length,additionalLanguages:12},
   commanderChronicle:{rankNamesPerLanguage:30,screenKeysPerLanguage:CHRONICLE_UI_KEYS.length,languages:localeSet.length},
   caravan:{routesWithNativeCopy:3,screenKeysPerLanguage:CARAVAN_UI_KEYS.length,languages:localeSet.length},
