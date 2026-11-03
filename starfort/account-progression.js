@@ -42,6 +42,8 @@ export function validateAccountSnapshot(data){
   !Object.entries(act2Stars).every(([k,v])=>safeNumber(Number(k),1,8)&&act2Cleared.includes(Number(k))&&safeNumber(v,1,3)))
   throw Error('İkinci perde ilerlemesi bozuk.');
  const m=data.mission;
+ // v2.50: only the trusted server can choose an encounter balance version; old saves omit it.
+ if(m&&m.balanceVersion!==undefined&&!safeNumber(m.balanceVersion,1,2))throw Error('Sunucu savaş dengesi sürümü geçersiz.');
  // Three-wave stories have a longer server turn budget. Preserve legacy single-wave saves.
  const multiWave=object(m)&&['story','act2'].includes(m.mode)&&m.waves===3;
  const waveValid=!object(m)||(m.waves===undefined&&m.wave===undefined&&m.waveTurn===undefined)||
