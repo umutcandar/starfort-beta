@@ -39,7 +39,7 @@ export function chronicleMarkup(account){
   <div class="chronicle-track" role="progressbar" aria-valuemin="0" aria-valuemax="${next?.wins||status.wins}" aria-valuenow="${Math.min(status.wins,next?.wins||status.wins)}" aria-label="${lt('Sonraki rütbeye zafer ilerlemesi','Progress toward next victory rank')}"><i style="width:${pct}%"></i></div>
   <div class="chronicle-cards">${upcoming.map(m=>`<article class="chronicle-rank ${status.wins>=m.wins?'ready':''}">
    <span class="eyebrow">${tx('chronicleRank')} ${String(m.rank).padStart(2,'0')}</span><strong>${esc(displayChronicleRank(m))}</strong>
-   <small>${status.wins>=m.wins?'✓ '+tx('complete'):formatNumber(status.wins)+' / '+formatNumber(m.wins)+' '+tx('wins')}</small>
+   <small>${status.wins>=m.wins?'✓ '+tx('complete'):formatNumber(status.wins)+' / '+formatNumber(m.wins)+' '+lt('zafer','wins')}</small>
    <p>${tx('warChest')} · ${formatNumber(m.gold)} ${lt('altın','Gold')} + ${m.aether} ${lt('yıldız özü','Star essence')}</p>
    <button class="${m.rank===status.claimed+1?'primary':'secondary'}" data-account-chronicle="${m.rank}"
    ${m.rank!==status.claimed+1||status.wins<m.wins?'disabled':''}>${m.rank===status.claimed+1&&status.wins>=m.wins?lt('Rütbe sandığını aç','Open rank chest'):tx('locked')}</button></article>`).join('')||
