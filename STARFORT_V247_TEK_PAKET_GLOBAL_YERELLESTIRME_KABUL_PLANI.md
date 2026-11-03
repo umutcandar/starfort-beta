@@ -206,3 +206,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - `locale-official-scene-v247.js`: doğrulanmış sunucu savaş sahnesinin **28 erişilebilir/görünür komut etiketini**, **8 atmosfer açıklamasını** ve **8 ikinci perde patron yeteneği adını** 14 dilde sağlar.
 - `official-combat-scene.js`: sefer, 1–3 yıldız, labirent, usta, yarık, patron ve 2D/3D geçiş ekranlarının canlı kullanıcı ifadeleri yerel dilde gösterilir. Yerelleştirilmiş ikinci perde hikâyesi/bölge/operasyon içeriği kullanılır. NPC başlıklarında Türkçe özel olmayan rol unvanlarının yabancı dildeki karşılıkları ve yerelleştirilmiş operasyon adı gösterilir.
 - Eylem `data-official-render-toggle`, gerçek sunucu görev durumu, güç, tur, hasar ve ödüllere dokunulmaz. 14 dilde kaynak-snapshot değişmezliği ve erişilebilirlik testi eklenmiştir.
+
+## v2.47 tek paket — ana krallık ekranında doğrudan Türkçe kalmış 72 satırın tamamı
+
+- `locale-app-static-a/b/c-v247.js` ve `locale-app-static-v247.js`: ana oyun `app.js` içinde **69 farklı Türkçe sabit metin, 72 ekrandaki kullanım yeri** tek tek çevrilip İngilizce ve 12 ek dilde karşılığı verildi. Kapsam: köy üretimi, sefer, günlük/haftalık görevler, 28 günlük sezon, 16 katlı labirent, savaş eğitimi, hikâye arşivi, mağaza için gerçek satış yapılmadığı uyarısı, şifre güncelleme.
+- Doğal dil adları `Türkçe` seçeneğinde **özellikle kendi dilinde bırakıldı**. Bu, yanlışlıkla çevirilmemesi gereken dil seçici metnidir.
+- `locale-app-static-v247.test.mjs` HTML kaynak taramasıyla bu 72 kullanım yerini, dillerin 69/69 doluluğunu ve bağlanan sözlük ile kanonik UI eylemleri arasındaki ayrımı doğrular. Sunucu kimlikleri, savaş, üretim, ödeme ve ödüller değişmedi.

@@ -22,6 +22,7 @@ import {SHADOW_HUD_KEYS,auditShadowHud} from '../locale-shadow-hud-native-v247.j
 import {auditShadowVoiceNative} from '../locale-shadow-voice-v247.js';
 import {SCENE_KEYS,auditSceneCopy} from '../locale-official-scene-v247.js';
 import {APP_NATIVE_KEYS,auditAppNative} from '../locale-app-native-v247.js';
+import {APP_STATIC_KEYS,auditAppStatic} from '../locale-app-static-v247.js';
 import {TEAM_HUD_KEYS,auditTeamHud} from '../locale-team-hud-native-v247.js';
 import {REALM_UI_KEYS,auditRealmUI} from '../locale-realm-ui-v247.js';
 import {UNIFIED_KEYS,RANK_NAMES_EN,AUTH_ERROR_CODES,auditUnified} from '../locale-unified-v247.js';
@@ -68,7 +69,7 @@ const watch=[
 const pattern=/>[^<>{}\n]*[ğüşöçıİĞÜŞÖÇ][^<>{}\n]*</gu;
 const auditFiles=watch.map(({file,strict=false})=>{
  const code=readFileSync(resolve(root,file),'utf8');
- const candidates=[...code.matchAll(pattern)].map(m=>({
+ const candidates=[...code.matchAll(pattern)].filter(m=>m[0]!=='>Türkçe<').map(m=>({
   line:code.slice(0,m.index).split('\n').length,
   fragment:m[0].slice(0,120)
  }));
@@ -86,7 +87,7 @@ function checkPack(pack,keys,name){
  }
  return problems;
 }
-const problems=[...auditSceneCopy(),...auditShadowVoiceNative(),...auditBuildingAdvanced(),...auditBuildingNative(),...auditWarfrontNative(),...auditPremiumStoreNative(),...auditMazePhrases(),...auditShadowStageNative(),...auditUnified(),...auditRealmUI(),...auditOfficialTranslations(),...auditCaravanTranslations(),...auditChronicleTranslations(),...auditCoreCompletion(localeSet),...auditAuthMessages(localeSet),...checkPack(AUTH_MESSAGES,AUTH_MESSAGE_KEYS,'auth-messages'),...auditShellTranslations(localeSet),...auditActOne(),...auditActTwo(),...auditHeroLore(),...auditItemLore(),...auditPremiumNative(),...auditWarfrontDoctrine(),...checkPack(ACT_TWO_GATES,ACT_TWO_GATE_KEYS,'act2-gates'),...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
+const problems=[...auditAppStatic(),...auditSceneCopy(),...auditShadowVoiceNative(),...auditBuildingAdvanced(),...auditBuildingNative(),...auditWarfrontNative(),...auditPremiumStoreNative(),...auditMazePhrases(),...auditShadowStageNative(),...auditUnified(),...auditRealmUI(),...auditOfficialTranslations(),...auditCaravanTranslations(),...auditChronicleTranslations(),...auditCoreCompletion(localeSet),...auditAuthMessages(localeSet),...checkPack(AUTH_MESSAGES,AUTH_MESSAGE_KEYS,'auth-messages'),...auditShellTranslations(localeSet),...auditActOne(),...auditActTwo(),...auditHeroLore(),...auditItemLore(),...auditPremiumNative(),...auditWarfrontDoctrine(),...checkPack(ACT_TWO_GATES,ACT_TWO_GATE_KEYS,'act2-gates'),...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
 for(const locale of localeSet){
  const itemNames=ITEM_NAMES[locale];
  if(!itemNames||Object.keys(itemNames.names||{}).length!==19||Object.keys(itemNames.sets||{}).length!==3)problems.push(locale+': incomplete native item and set names');
@@ -107,7 +108,7 @@ const userFacingModules=modules.filter(file=>{
 }).map(file=>{
  const code=readFileSync(resolve(root,file),'utf8');
  const localized=/locale-|\bt\('.*?'\)/.test(code);
- const rawTurkish=[...code.matchAll(pattern)].length;
+ const rawTurkish=[...code.matchAll(pattern)].filter(m=>m[0]!=='>Türkçe<').length;
  return {file,localized,rawTurkishCandidates:rawTurkish};
 });
 const needsLocalizationReview=userFacingModules.filter(m=>!m.localized||m.rawTurkishCandidates>0);
@@ -139,6 +140,7 @@ const summary={
   bossVoiceAndPhase:{stages:4,voiceLinesPerStage:4,additionalLocales:12,phaseTitles:14,phaseHints:7,ttsLocaleTags:14},
   officialCombatScene:{uiKeys:SCENE_KEYS.length,biomeMoods:8,bossAbilities:8,storyEnemyNames:8,languages:14},
   villageClanHeroShell:{fixedPhrases:APP_NATIVE_KEYS.length,additionalLocales:12},
+  nativeHomeStaticText:{distinctTurkishFragments:APP_STATIC_KEYS.length,renderedInstances:72,languages:14},
   teamBattleHud:{fixedPhrases:TEAM_HUD_KEYS.length,additionalLocales:12},
   verifiedExpeditionCore:{translatedLabelsPerAdditionalLanguage:OFFICIAL_KEYS.length,additionalLanguages:12,literalPairsCovered:122,dynamicNamesCovered:7},
   realmMap:{translatedLabelsPerAdditionalLanguage:REALM_UI_KEYS.length,additionalLanguages:12},
