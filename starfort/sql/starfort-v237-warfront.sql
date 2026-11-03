@@ -38,7 +38,7 @@ declare
  pg public.starfort_player_progress%rowtype;
  fw public.starfort_warfront%rowtype;
  wins integer;
- res jsonb;
+ v_resources jsonb;
  inv jsonb;
  pending_cost jsonb;
  item_id text;
@@ -77,7 +77,7 @@ begin
    where user_id=uid and request_id=p_request_id;
   if found then return previous; end if;
  end if;
- res:=vl.res; inv:=pg.inventory;
+ v_resources:=vl.res; inv:=pg.inventory;
  if fw.day<>today then
   fw.day:=today;fw.day_base:=wins;fw.day_claimed:=false;was_modified:=true;
  end if;
@@ -95,10 +95,10 @@ begin
     when 'bulwark' then '{"wood":30,"stone":65}'::jsonb
     else '{"gold":90,"aether":12}'::jsonb end;
   for k in select jsonb_object_keys(pending_cost) loop
-   if (res->>k)::bigint<(pending_cost->>k)::bigint then raise exception 'İkmal için yeterli sunucu kaynağı yok.'; end if;
+   if (v_resources->>k)::bigint<(pending_cost->>k)::bigint then raise exception 'İkmal için yeterli sunucu kaynağı yok.'; end if;
   end loop;
   for k in select jsonb_object_keys(pending_cost) loop
-   res:=jsonb_set(res,array[k],to_jsonb((res->>k)::bigint-(pending_cost->>k)::bigint));
+   v_resources:=jsonb_set(v_resources,array[k],to_jsonb((v_resources->>k)::bigint-(pending_cost->>k)::bigint));
   end loop;
   fw.pending_doctrine:=p_target;was_modified:=true;
  elsif p_action='cancel' then
@@ -108,11 +108,11 @@ begin
     when 'bulwark' then '{"wood":30,"stone":65}'::jsonb
     else '{"gold":90,"aether":12}'::jsonb end;
   for k in select jsonb_object_keys(pending_cost) loop
-   if (res->>k)::bigint+(pending_cost->>k)::bigint>1000000000 then
+   if (v_resources->>k)::bigint+(pending_cost->>k)::bigint>1000000000 then
     raise exception 'Depo dolu. İkmal iadesi için yer aç.'; end if;
   end loop;
   for k in select jsonb_object_keys(pending_cost) loop
-   res:=jsonb_set(res,array[k],to_jsonb((res->>k)::bigint+(pending_cost->>k)::bigint));
+   v_resources:=jsonb_set(v_resources,array[k],to_jsonb((v_resources->>k)::bigint+(pending_cost->>k)::bigint));
   end loop;
   fw.pending_doctrine:=null;was_modified:=true;
  elsif p_action='claim_daily' then
@@ -148,8 +148,8 @@ begin
  end if;
  if prize<>'{}'::jsonb then
   for k in select jsonb_object_keys(prize) loop
-   amount:=(res->>k)::bigint+(prize->>k)::bigint;
-   res:=jsonb_set(res,array[k],to_jsonb(least(1000000000,amount)));
+   amount:=(v_resources->>k)::bigint+(prize->>k)::bigint;
+   v_resources:=jsonb_set(v_resources,array[k],to_jsonb(least(1000000000,amount)));
   end loop;
  end if;
  if was_modified then
@@ -162,7 +162,7 @@ begin
  end if;
  if p_action<>'get' then
   update public.starfort_village_ledger
-   set res=res,revision=revision+1,updated_at=now_at where user_id=uid;
+   set res=v_resources,revision=revision+1,updated_at=now_at where user_id=uid;
   update public.starfort_player_progress set inventory=inv,updated_at=now_at where user_id=uid;
  end if;
  -- Do not use unqualified column names as variable names in SQL.
