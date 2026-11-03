@@ -116,7 +116,7 @@ test('app always opens calendar rather than blindly granting on the daily HUD bu
   css=readFileSync(new URL('./reward-calendar.css',import.meta.url),'utf8');
  assert.match(html,/id="reward-dialog"/);
  assert.match(html,/reward-calendar\.css/);
- assert.match(html,/v2\.41\.0/);
+ assert.match(html,/v2\.\d+\.\d+/);
  assert.match(app,/calendarRequest\('get'\)/);
  assert.match(app,/calendarRequest\('claim'\)/);
  assert.match(app,/rewardCalendarMarkup\(calendar/);

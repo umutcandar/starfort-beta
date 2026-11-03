@@ -1,0 +1,7 @@
+/* Locale controls can be used before authentication. */
+.language-switch{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.language-switch button{border:1px solid #746e5a;min-height:34px;border-radius:7px;background:#1a2828;color:#eee5d5;padding:6px 12px;font:600 12px system-ui,sans-serif}
+.language-switch button[aria-pressed="true"]{border-color:#e5c084;background:#425049;color:#ffefd2}
+.language-switch button:focus-visible{outline:2px solid #97e0d0;outline-offset:3px}
+.settings-language-switch{justify-content:flex-start;margin:10px 0}
+@media(max-width:410px){.language-switch button{min-width:70px;flex:1 1 auto}}

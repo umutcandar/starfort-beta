@@ -54,6 +54,14 @@ try{
  await cdp('Emulation.setDeviceMetricsOverride',{width:1536,height:864,deviceScaleFactor:1,mobile:false});
  await cdp('Page.navigate',{url:origin});
  await ready();await sleep(120);
+ // A first-time international player may auto-select English; ensure switching works
+ // before authentication and retain Turkish for legacy visual regression assertions.
+ await evaluate("document.querySelector('[data-language=en]').click()");
+ assert.equal(await evaluate("document.documentElement.lang==='en'&&document.querySelector('#gate-title').textContent==='Build your kingdom'"),true,'English account gate missing');
+ assert.equal(await evaluate("document.querySelector('[data-language=en]').getAttribute('aria-pressed')"),'true');
+ await evaluate("document.querySelector('[data-language=tr]').click()");
+ assert.equal(await evaluate("document.documentElement.lang==='tr'&&document.querySelector('#gate-title').textContent==='Kendi krallığını kur'"),true,'Turkish fallback missing');
+ assert.equal(await evaluate("localStorage.getItem('starfort:language-v243')"),'tr');
  let state=await evaluate(`(()=>{
   const g=document.querySelector('#account-gate'),form=document.querySelector('#starfort-gate-form'),app=document.querySelector('.app'),r=g.getBoundingClientRect();
   return {locked:document.body.classList.contains('account-locked'),gateVisible:getComputedStyle(g).display!=='none',

@@ -1,4 +1,5 @@
 import * as R from './rules.js';
+import {getLocale,setLocale,t,formatNumber,applyLocaleUI} from './locale-v243.js';
 import {ACCOUNT_ONLY,isLegacyOnlyAction,normalizeOnlineView} from './account-only.js';
 import {createGameAudio} from './audio.js';
 import {createShadowBattleDirector,shadowCombatEffects} from './shadow-battle-director-v240.js';
@@ -40,7 +41,7 @@ import {cloudSaveRequest,cloudBackupSummary} from './cloud-save.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const esc = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
-const number = value => new Intl.NumberFormat('tr-TR', { notation: value >= 100000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format(value);
+const number = value => formatNumber(value);
 const iconPaths = {
   keep: '<path d="M4 20V8l4 2V7l4 2V4h4v7l4-2v11z"/><path d="M9 20v-5h6v5M12 4V2"/>',
   farm: '<path d="M4 20V10l8-6 8 6v10M8 20v-5h8v5M12 4V2M3 7l2 1M21 7l-2 1"/>',
@@ -64,7 +65,7 @@ const iconPaths = {
 const svg = (name, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name] || iconPaths.star}</svg>`;
 const resourceIcon = { gold: 'coin', wood: 'wood', stone: 'stone', aether: 'star' };
 const battlePolicy=battleExperience(window.location);
-const resourceName = { gold: 'Altın', wood: 'Kereste', stone: 'Taş', aether: 'Yıldız özü' };
+const resourceName = { gold: 'gold', wood: 'wood', stone: 'stone', aether: 'aether' };
 const navItems = [ ['keep', 'keep', 'Köy'], ['expedition', 'expedition', 'Seferler'], ['heroes', 'heroes', 'Kahramanlar'], ['armory', 'armor', 'Çanta'], ['guild', 'guild', 'İttifak'], ['shop', 'shop', 'Mağaza'] ];
 // Legacy saves remain untouched in browser storage but are never opened or replayed.
 let state=R.createState();
@@ -113,7 +114,7 @@ const combatRunner=createBattleRunner({
 // Server progress is saved by Supabase and is unaffected by old browser save data.
 function persist(){
  const badge=$('#save-status');
- if(badge){badge.textContent=accountReady()?'Sunucuda doğrulandı':'Hesap doğrulanıyor';badge.title='STARFORT ilerlemesi yalnızca hesap sunucusunda tutulur.';}
+ if(badge){badge.textContent=accountReady()?(getLocale()==='en'?'Verified on server':'Sunucuda doğrulandı'):(getLocale()==='en'?'Verifying account':'Hesap doğrulanıyor');badge.title=getLocale()==='en'?'Progress is stored on the account server only.':'STARFORT ilerlemesi yalnızca hesap sunucusunda tutulur.';}
  return accountReady();
 }
 
@@ -151,8 +152,9 @@ function syncAccountGate(){
   if(resend)resend.hidden=!signupPending;
   if(locked){
     const status=$('#account-gate-status');
-    if(signed&&status&&accountRecovering)status.textContent='E-posta kurtarma bağlantısı doğrulandı. Aşağıya yeni şifreni yaz.';
-    else if(signed&&status&&!status.dataset.error)status.textContent='Sunucu köyü, kahramanlar ve kaynaklar doğrulanıyor. Bağlantı kesildiyse yeniden dene.';
+    if(signed&&status&&accountRecovering)status.textContent=t('gate.recovery');
+    else if(signed&&status&&!status.dataset.error)status.textContent=t('gate.verifying');
+     else if(!signed&&status&&!status.dataset.error&&['Hesabın yoksa yeni hesap oluştur. E-postanı doğruladıktan sonra giriş yapabilirsin.','New player? Create an account, verify your email, then sign in.'].includes(status.textContent))status.textContent=t('gate.help');
     combatRunner.pause();
     official3D.sync(null);
     for(const selector of ['#reward-dialog','#building-dialog','#battle-dialog']){
@@ -385,15 +387,15 @@ async function claimServerMatchRewards(){
 function renderResources() {
  const view=villageView();
  $('#commander-power').textContent=number(R.teamPower(villageView())); $('#village-level').textContent=view.buildings.keep;
- resourcesEl.innerHTML=Object.entries(R.RESOURCES).map(([id,item])=>`<div class="resource" data-res="${id}">${svg(resourceIcon[id])}<span><b>${villageSignedIn()&&!villageSnapshot?'…':number(view.res[id])}</b><small>${item.name}${villageSignedIn()?' · Sunucu':''}</small></span></div>`).join('');
+ resourcesEl.innerHTML=Object.entries(R.RESOURCES).map(([id])=>`<div class="resource" data-res="${id}">${svg(resourceIcon[id])}<span><b>${villageSignedIn()&&!villageSnapshot?'…':number(view.res[id])}</b><small>${t('resource.'+id)}${villageSignedIn()?' · '+t('resource.server'):''}</small></span></div>`).join('');
 }
 function renderNav() {
-  navEl.innerHTML = navItems.map(([id, icon, label]) => `<button class="nav-item ${(activeView === id || (activeView === 'campaign' && id === 'expedition')) ? 'active' : ''}" data-view="${id}" aria-label="${label}" aria-current="${(activeView === id || (activeView === 'campaign' && id === 'expedition')) ? 'page' : 'false'}">${svg(icon)}<span>${label}</span></button>`).join('') + '<div class="rail-foot">✦ &nbsp; BETA · UZUN OYUN TESTİ</div>';
+  navEl.innerHTML = navItems.map(([id, icon, label]) => `<button class="nav-item ${(activeView === id || (activeView === 'campaign' && id === 'expedition')) ? 'active' : ''}" data-view="${id}" aria-label="${t('nav.'+id)}" aria-current="${(activeView === id || (activeView === 'campaign' && id === 'expedition')) ? 'page' : 'false'}">${svg(icon)}<span>${t('nav.'+id)}</span></button>`).join('') + '<div class="rail-foot">'+t('nav.foot')+'</div>';
 }
 function renderPicker() {
   const v=villageView();
   $('#building-picker').innerHTML = R.BUILDINGS.map(building => `<button class="building-choice ${selectedBuilding === building.id ? 'active' : ''}" data-building="${building.id}" aria-label="${building.name}, seviye ${v.buildings[building.id]}">${svg(building.id)}<span>${building.name.replace('Karaorman ', '').replace('Yıldız ', '').replace('Kor ', '').replace('Aytaşı ', '')}</span></button>`).join('');
-  $('#keep-caption').textContent = `Kale seviyesi ${v.buildings.keep}`;
+  $('#keep-caption').textContent = getLocale()==='en'?`Keep level ${v.buildings.keep}`:`Kale seviyesi ${v.buildings.keep}`;
   for (const building of R.BUILDINGS) {
     let label = cityLabelNodes.get(building.id);
     if (!label) {
@@ -408,14 +410,14 @@ function renderPicker() {
   }
   renderCityProduction();
   const online=villageSignedIn(),cal=online?(dailyOwner===accountSession()?.user?.id?dailySnapshot:null):R.dailyRewardState(state,Date.now());
-  $('#daily-status').textContent=!cal?'28 Günlük Takvim':cal.available?cal.nextDay+'. Gün · Sandık Hazır':cal.displayDay+'. Gün · Alındı';
+  $('#daily-status').textContent=!cal?(getLocale()==='en'?'28-day calendar':'28 Günlük Takvim'):cal.available?(getLocale()==='en'?`Day ${cal.nextDay} · Chest ready`:cal.nextDay+'. Gün · Sandık Hazır'):(getLocale()==='en'?`Day ${cal.displayDay} · Claimed`:cal.displayDay+'. Gün · Alındı');
   $('#daily-reward').classList.toggle('ready',!!cal?.available);
   $('#daily-reward').disabled=false;
 }
 function renderCityProduction() {
   const gain = R.production(villageView(),constructionUiNow());
   const total = Object.values(gain).reduce((sum, n) => sum+n, 0);
-  $('#city-production').textContent = villageSignedIn()&&!villageSnapshot?'Sunucu kaynakları doğrulanıyor':total ? Object.entries(gain).filter(([,n])=>n).map(([id,n])=>`${number(n)} ${resourceName[id]}`).join(' · ') : 'Kaynaklar birikiyor';
+  $('#city-production').textContent = villageSignedIn()&&!villageSnapshot?(getLocale()==='en'?'Verifying server resources':'Sunucu kaynakları doğrulanıyor'):total ? Object.entries(gain).filter(([,n])=>n).map(([id,n])=>`${number(n)} ${t('resource.'+id)}`).join(' · ') : t('world.production');
   $('.city-collect').classList.toggle('ready', total > 0 &&(!villageSignedIn()||!!villageSnapshot));
   $('.city-collect').disabled=villageSignedIn()&&!villageSnapshot;
   renderConstructionBanner();
@@ -690,22 +692,26 @@ async function guildAction(name){
 }
 /** Account-only settings: local save import, guest backups and demo progression are retired. */
 function renderSettings(){
-  const email=accountSession()?.user?.email||'Doğrulanmış hesap';
-  workspaceEl.innerHTML=`<header><div><span class="eyebrow">KOMUTA MERKEZİ · ÇEVRİM İÇİ</span>
-   <h2>Hesap ve oyun ayarları</h2><p>Kaynaklar, inşaatlar, kahramanlar, ekipmanlar ve sefer ödülleri yalnızca sunucuda tutulur. Misafir modu bulunmaz.</p></div>
-   <button class="secondary" data-close-view>Köye dön</button></header>
-   <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">HESAP GÜVENLİĞİ</span><h3>E-posta hesabın</h3>
-   <strong>${esc(email)}</strong><p>Oyun ilerlemen doğrulanmış hesabına bağlıdır. Yeni cihazda aynı e-postayla oturum açabilirsin.</p>
-   <button class="secondary wide" data-village-refresh>Sunucudaki ilerlemeyi yenile</button>
-   <button class="primary wide" data-account-action="logout">Hesaptan çıkış yap</button></article>
-   <article class="guild-panel"><span class="eyebrow">OYUN DENEYİMİ</span><h3>Kontroller</h3>
-   <p>Köyü sürükle ve binaları geliştir. Savaş emirleri ve ödüller çevrim içi sunucu tarafından hesaplanır.</p>
-   <button class="secondary wide" data-fullscreen>Tam ekranı değiştir</button>
-   <button class="secondary wide" data-audio-toggle>Ses ve özgün müzik: ${gameAudio.enabled?'Açık · Kapat':'Kapalı · Aç'}</button>
-   <small>Bağlantın kesilirse yeni kaynak veya savaş ödülü üretilmez. Yeniden bağlandığında sunucu durumunu yenileyebilirsin.</small></article></div>
-   ${accountRecovering?'<div class="guild-panel"><h3>Şifreni güncelle</h3><input id="account-new-password" type="password" minlength="8" maxlength="100" autocomplete="new-password" placeholder="Yeni şifre"><button class="primary" data-account-action="password-update">Şifremi güncelle</button></div>':''}`;
+ const email=accountSession()?.user?.email||t('settings.verify');
+ workspaceEl.innerHTML=`<header><div><span class="eyebrow">${getLocale()==='en'?'COMMAND CENTER · ONLINE':'KOMUTA MERKEZİ · ÇEVRİM İÇİ'}</span>
+   <h2>${t('settings.title')}</h2><p>${t('settings.desc')}</p></div>
+   <button class="secondary" data-close-view>${t('settings.back')}</button></header>
+   <div class="settings-grid"><article class="guild-panel"><span class="eyebrow">${t('settings.security')}</span><h3>${t('settings.email')}</h3>
+   <strong>${esc(email)}</strong><p>${t('settings.emailHelp')}</p>
+   <button class="secondary wide" data-village-refresh>${t('settings.refresh')}</button>
+   <button class="primary wide" data-account-action="logout">${t('settings.logout')}</button></article>
+   <article class="guild-panel"><span class="eyebrow">${t('settings.experience')}</span><h3>${t('settings.controls')}</h3>
+   <p>${t('settings.controlsHelp')}</p>
+   <button class="secondary wide" data-fullscreen>${t('settings.fullscreen')}</button>
+   <button class="secondary wide" data-audio-toggle>${t(gameAudio.enabled?'settings.audioOn':'settings.audioOff')}</button>
+   <small>${t('settings.disconnected')}</small></article>
+   <article class="guild-panel"><span class="eyebrow">${t('settings.language')}</span>
+    <div class="language-switch settings-language-switch" aria-label="Language / Dil">
+     <button type="button" data-language="tr" aria-pressed="${getLocale()==='tr'}">Türkçe</button>
+     <button type="button" data-language="en" aria-pressed="${getLocale()==='en'}">English</button>
+    </div><small>${t('settings.languageHelp')}</small></article></div>
+    ${accountRecovering?'<div class="guild-panel"><h3>Şifreni güncelle</h3><input id="account-new-password" type="password" minlength="8" maxlength="100" autocomplete="new-password" placeholder="Yeni şifre"><button class="primary" data-account-action="password-update">Şifremi güncelle</button></div>':''}`;
 }
-
 async function accountAction(action){
  if(!['logout','reset-request','resend-confirmation','password-update'].includes(action))return notify('Yerel yedek ve misafir hesabı işlemleri kaldırıldı.');
  if(accountBusy)return;
@@ -713,22 +719,22 @@ async function accountAction(action){
  try{
    if(action==='reset-request'){
      const email=($('#starfort-gate-form [name=email]')||$('#starfort-account-form [name=email]'))?.value.trim();
-     if(!email)throw Error('Önce e-posta adresini yaz.');
+     if(!email)throw Error(t('auth.needEmail'));
      await accountRequestPasswordReset(email,location.origin+location.pathname);
-     notify('Hesap varsa kurtarma e-postası gönderildi.');return;
+     notify(t('auth.reset'));return;
    }
    if(action==='password-update'){
      await accountUpdatePassword(($('#account-gate .account-gate-recovery #account-new-password')||$('#account-new-password'))?.value);
-     accountRecovering=false;notify('Şifre güncellendi.');await refreshVillage();return;
+     accountRecovering=false;notify(t('auth.updated'));await refreshVillage();return;
    }
    if(action==='resend-confirmation'){
      if(!confirmationEmail)throw Error('Önce e-posta adresinle hesap oluştur.');
      await accountResendConfirmation(confirmationEmail,authRedirect());
-     notify('Onay e-postası yeniden istendi. Gelen kutunu kontrol et.');return;
+     notify(t('auth.resent'));return;
    }
    if(action==='logout'){
      accountSync.stop();await accountSignOut();premiumGeneration++;warfrontGeneration++;shadowGeneration++;shadowOwner=null;shadowSnapshot=null;shadowReportDismissedAt=null;shadowDirector.dispose();warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();
-     notify('E-posta hesabından çıkış yapıldı. Tekrar giriş yaparak krallığına ulaşabilirsin.');return;
+     notify(t('auth.signedOut'));return;
    }
    if(action==='sync'){await accountSync.refresh();return;}
    if(action==='use-local'){
@@ -761,18 +767,18 @@ document.addEventListener('submit',async event=>{
  if(accountBusy)return;
  const fd=new FormData(event.target),email=String(fd.get('email')||'').trim(),password=String(fd.get('password')||'');
  const mode=event.submitter?.value==='signup'?'signup':'login';
- if(!email.includes('@')||password.length<8)return notify('E-posta ve en az 8 karakterli şifre yaz.');
+ if(!email.includes('@')||password.length<8)return notify(t('auth.invalidForm'));
  accountBusy=true;
  try{
    if(mode==='signup'){
      const info=await accountSignUp(email,password,undefined,authRedirect());
      signupPending=info.needsConfirmation;confirmationEmail=email;
-      notify(info.needsConfirmation?'Onay bağlantısı e-postana gönderildi. Onayla ve oyuna dön.':'E-posta hesabı oluşturuldu.');
+      notify(t(info.needsConfirmation?'auth.confirm':'auth.created'));
      if(accountSession()){await refreshVillage();}
    }else{
      await accountSignIn(email,password);
      signupPending=false;confirmationEmail='';
-     notify('E-posta hesabına giriş yapıldı.');
+     notify(t('auth.signedIn'));
      await refreshVillage();if(activeView==='guild')void refreshGuild();
    }
  }catch(error){notify('Hesap: '+error.message);}
@@ -962,12 +968,14 @@ function castHeroSkill(heroId) {
 
 function render() {
   syncAccountGate();
+  applyLocaleUI(document);
   if(!accountReady())return;
   gameAudio.setScene($('#battle-dialog').open||(villageSignedIn()&&(accountProgressSnapshot?.mission||shadowSnapshot?.battle)&&activeView==='campaign')?'combat':'village');
   renderResources(); renderNav(); renderPicker(); renderInspector(); renderQuest(); renderWorkspace();
   scene?.update(villageView());
   if ($('#building-dialog').open) renderBuildingDialog();
   if ($('#reward-dialog').open)renderDailyDialog();
+  applyLocaleUI(document);
 }
 function openBattle(stageId){
   if(!accountReady())return syncAccountGate();
@@ -1041,12 +1049,13 @@ async function accountAutoEquip(heroId){
 }
 function dispatch(action) {
   const button = action.target.closest('button'); if (!button) return;
+  if(button.dataset.language){setLocale(button.dataset.language);render();return;}
   if(button.hasAttribute('data-gate-reset')){void accountAction('reset-request');return;}
   if(button.hasAttribute('data-gate-password-update')){void accountAction('password-update');return;}
   if(button.hasAttribute('data-gate-resend')){void accountAction('resend-confirmation');return;}
   if(button.hasAttribute('data-gate-refresh')){void refreshVillage({preserve:false});return;}
   if(button.hasAttribute('data-gate-logout')){void accountAction('logout');return;}
-  if(!accountReady()){syncAccountGate();return notify('Sunucu hesabın doğrulanmadan oyun açılmaz.');}
+  if(!accountReady()){syncAccountGate();return notify(t('auth.locked'));}
   if(ACCOUNT_ONLY&&isLegacyOnlyAction(button))return notify('Misafir ve yerel deneme özellikleri kaldırıldı. Resmî seferleri kullan.');
   if(button.hasAttribute('data-shadow-jump')){
     const node=document.querySelector('#shadow-frontier');

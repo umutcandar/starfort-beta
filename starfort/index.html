@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111918">
   <meta name="description" content="Starfort: yıldızın etrafında kaleni yükselt, kahramanlarını topla ve karanlığa karşı savaş.">
-  <title>Starfort v2.41.0 Beta — Yıldız Köyü</title>
+  <title>Starfort v2.43.0 Beta — Yıldız Köyü</title>
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="preload" as="image" href="assets/city/starfall-valley.webp">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="locale-v243.css">
   <link rel="stylesheet" href="art.css">
   <link rel="stylesheet" href="battle.css">
   <link rel="stylesheet" href="city.css">
@@ -48,29 +49,29 @@
 <body class="account-locked">
   <div class="app">
     <header class="topbar">
-      <a class="brand" href="./" aria-label="Starfort ana ekran"><img src="icon.svg" alt=""><span>STARFORT<small>YILDIZ KÖYÜ</small></span></a>
-      <span class="build-badge" title="Kapalı beta için hazırlanmış geliştirme sürümü">v2.41.0 Beta</span><span id="premium-wear-badge" hidden aria-label="Kuşanılan sancak"></span><button class="commander" data-view="heroes" aria-label="Kahramanları ve dizilimi aç"><img src="assets/aldren.webp" alt=""><span>Köy Muhafızı<small>Güç <b id="commander-power">—</b></small></span><b id="village-level" title="Kale seviyesi">1</b></button>
+      <a class="brand" href="./" aria-label="Starfort ana ekran"><img src="icon.svg" alt=""><span>STARFORT<small data-i18n="world.title">Yıldız Köyü</small></span></a>
+      <span class="build-badge" title="Kapalı beta için hazırlanmış geliştirme sürümü">v2.43.0 Beta</span><span id="premium-wear-badge" hidden aria-label="Kuşanılan sancak"></span><button class="commander" data-view="heroes" aria-label="Kahramanları ve dizilimi aç"><img src="assets/aldren.webp" alt=""><span>Köy Muhafızı<small>Güç <b id="commander-power">—</b></small></span><b id="village-level" title="Kale seviyesi">1</b></button>
       <div class="resources" id="resources" aria-label="Kaynaklar"></div>
       <div class="hud-tools"><button class="header-action" data-view="journal" title="Kronik" aria-label="Kronik">📜</button><button class="header-action" data-view="settings" title="Ayarlar ve kayıt yedeği" aria-label="Ayarlar ve kayıt yedeği">⚙</button><span class="save-indicator" id="save-status" title="Gerçek ilerleme sunucuda tutulur">Sunucu hesabı</span><button class="fullscreen-button" data-fullscreen aria-label="Tam ekranı aç" title="Tam ekran">⛶</button></div>
     </header>
     <nav class="rail" aria-label="Ana menü" id="navigation"></nav>
     <main class="world" id="world">
-      <div class="world-heading"><div><span class="eyebrow">YILDIZ VADİSİ · BÖLGE 01</span><h1>Yıldız Köyü</h1><p>Kahramanların gölgesinde yükselen krallığın.</p></div><button class="icon-button" id="recenter" aria-label="Şehrin tamamını göster" title="Şehrin tamamını göster"></button></div>
+      <div class="world-heading"><div><span class="eyebrow" data-i18n="world.subtitle">YILDIZ VADİSİ · BÖLGE 01</span><h1 data-i18n="world.title">Yıldız Köyü</h1><p data-i18n="world.intro">Kahramanların gölgesinde yükselen krallığın.</p></div><button class="icon-button" id="recenter" aria-label="Şehrin tamamını göster" title="Şehrin tamamını göster"></button></div>
       <div class="city-viewport">
       <canvas id="world-canvas" aria-label="Yıldız Köyü. Binalara dokunarak geliştir; sürükleyerek gez, iki parmakla yakınlaştır. Bina listesi ve haritadaki ad düğmeleriyle de seçim yapabilirsin."></canvas>
       <div id="city-labels" class="city-labels" aria-label="Şehirdeki binalar"></div>
       </div>
       <div class="city-controls" aria-label="Harita kontrolleri"><button data-city-buildings aria-expanded="false" aria-controls="building-picker" title="Bina listesi">▦</button><button data-city-zoom="1.2" aria-label="Yakınlaştır" title="Yakınlaştır">+</button><button data-city-zoom="0.833333" aria-label="Uzaklaştır" title="Uzaklaştır">−</button><button data-city-labels aria-pressed="true" title="Bina adlarını göster veya gizle">Adlar</button></div>
-      <button class="city-collect" data-collect><span>✦ Üretimi topla</span><small id="city-production">Kaynaklar birikiyor</small></button>
+      <button class="city-collect" data-collect><span data-i18n="world.collect">✦ Üretimi topla</span><small id="city-production">Kaynaklar birikiyor</small></button>
       <button class="construction-banner" id="construction-status" data-building="keep" hidden aria-label="Devam eden inşaatı aç"><strong>⚒ İnşaat sürüyor</strong><small id="construction-caption"></small></button>
        <div id="world-fallback" hidden>Köy görselleri yüklenemedi. Bina listesinden geliştirmelerine devam edebilirsin; görseller için sayfayı yenile.</div>
-      <div class="orientation-hint">↻ Yatay ekranda daha geniş bir köy seni bekliyor</div>
-      <div class="world-help">Binaya dokunarak geliştir · Haritayı sürükleyerek gez</div>
+      <div class="orientation-hint" data-i18n="world.hint">↻ Yatay ekranda daha geniş bir köy seni bekliyor</div>
+      <div class="world-help" data-i18n="world.help">Binaya dokunarak geliştir · Haritayı sürükleyerek gez</div>
       <div class="world-caption"><span class="status-light"></span>Yıldız Çekirdeği etkin<span class="divider">/</span><span id="keep-caption">Kale seviyesi 1</span></div>
       <div class="building-picker" id="building-picker" aria-label="Bina seçimi" hidden></div>
-      <button class="quest-mini" id="quest-mini" data-quest-toggle aria-controls="next-quest" aria-expanded="false" aria-label="Sıradaki sefer kartını aç"><span aria-hidden="true">⚔</span> <span>Sefer</span> <span aria-hidden="true">❯</span></button>
+      <button class="quest-mini" id="quest-mini" data-quest-toggle aria-controls="next-quest" aria-expanded="false" aria-label="Sıradaki sefer kartını aç"><span aria-hidden="true">⚔</span> <span data-i18n="world.quest">Sefer</span> <span aria-hidden="true">❯</span></button>
       <section class="next-quest" id="next-quest" aria-label="Sıradaki sefer" hidden></section>
-      <button class="daily-reward" id="daily-reward" data-daily-reward title="28 günlük ödül takvimini aç"><span><small>GÜNLÜK ÖDÜL</small><b id="daily-status">Sandık hazır</b></span><span class="daily-chest" aria-hidden="true">✧</span></button>
+      <button class="daily-reward" id="daily-reward" data-daily-reward title="28 günlük ödül takvimini aç"><span><small data-i18n="world.daily">GÜNLÜK ÖDÜL</small><b id="daily-status">Sandık hazır</b></span><span class="daily-chest" aria-hidden="true">✧</span></button>
       <section class="workspace" id="workspace" hidden aria-label="Oyun paneli"></section>
     </main>
     <aside class="inspector" id="inspector" aria-label="Köy yönetimi"></aside>
@@ -80,20 +81,21 @@
   <section id="account-gate" class="account-gate" role="main" aria-labelledby="gate-title">
     <div class="account-gate-panel">
       <div class="account-gate-mark" aria-hidden="true">✦</div>
-      <span class="eyebrow">STARFORT · ÇEVRİM İÇİ KRALLIK</span>
-      <h1 id="gate-title">Kendi krallığını kur</h1>
-      <p>STARFORT artık yalnızca e-posta hesabıyla oynanıyor. Köyün, kahramanların, savaşların ve ödüllerin sunucu hesabında korunur.</p>
+      <div class="language-switch" aria-label="Language / Dil"><button type="button" data-language="tr" aria-pressed="true">Türkçe</button><button type="button" data-language="en" aria-pressed="false">English</button></div>
+      <span class="eyebrow" data-i18n="gate.subtitle">STARFORT · ÇEVRİM İÇİ KRALLIK</span>
+      <h1 id="gate-title" data-i18n="gate.title">Kendi krallığını kur</h1>
+      <p data-i18n="gate.intro">STARFORT artık yalnızca e-posta hesabıyla oynanıyor. Köyün, kahramanların, savaşların ve ödüllerin sunucu hesabında korunur.</p>
       <form id="starfort-gate-form" autocomplete="on">
-        <label>E-posta<input required name="email" type="email" maxlength="180" autocomplete="username" placeholder="eposta@ornek.com"></label>
-        <label>Şifre<input required name="password" type="password" minlength="8" maxlength="100" autocomplete="current-password" placeholder="En az 8 karakter"></label>
+        <label><span data-i18n="gate.email">E-posta</span><input required name="email" type="email" maxlength="180" autocomplete="username" data-i18n-placeholder="gate.emailPlaceholder" placeholder="eposta@ornek.com"></label>
+        <label><span data-i18n="gate.password">Şifre</span><input required name="password" type="password" minlength="8" maxlength="100" autocomplete="current-password" data-i18n-placeholder="gate.passwordPlaceholder" placeholder="En az 8 karakter"></label>
         <div class="account-gate-actions">
-          <button type="submit" class="primary" name="account-mode" value="login">Hesabımla giriş yap</button>
-          <button type="submit" class="secondary" name="account-mode" value="signup">Yeni hesap oluştur</button>
+          <button type="submit" class="primary" name="account-mode" value="login" data-i18n="gate.login">Hesabımla giriş yap</button>
+          <button type="submit" class="secondary" name="account-mode" value="signup" data-i18n="gate.signup">Yeni hesap oluştur</button>
         </div>
       </form>
       <p id="account-gate-status" role="status" aria-live="polite">Hesabın yoksa yeni hesap oluştur. E-postanı doğruladıktan sonra giriş yapabilirsin.</p>
-      <div class="account-gate-help"><button type="button" class="text-button" data-gate-reset>Şifremi unuttum</button><button type="button" class="text-button" data-gate-resend hidden>Onay e-postasını yeniden gönder</button></div><div class="account-gate-server" hidden><button type="button" class="primary" data-gate-refresh>Sunucu bağlantısını yeniden dene</button><button type="button" class="secondary" data-gate-logout>Farklı hesapla giriş yap</button></div><div class="account-gate-recovery" hidden><label>Yeni şifren<input id="account-new-password" type="password" minlength="8" maxlength="100" autocomplete="new-password" placeholder="En az 8 karakter"></label><button type="button" class="primary" data-gate-password-update>Şifremi güncelle</button></div>
-      <small>Misafir kayıt, deneme köyü ve tarayıcıdan kaynak kazanma özelliği bulunmaz.</small>
+      <div class="account-gate-help"><button type="button" class="text-button" data-gate-reset data-i18n="gate.forgot">Şifremi unuttum</button><button type="button" class="text-button" data-gate-resend hidden data-i18n="gate.resend">Onay e-postasını yeniden gönder</button></div><div class="account-gate-server" hidden><button type="button" class="primary" data-gate-refresh data-i18n="gate.retry">Sunucu bağlantısını yeniden dene</button><button type="button" class="secondary" data-gate-logout data-i18n="gate.other">Farklı hesapla giriş yap</button></div><div class="account-gate-recovery" hidden><label><span data-i18n="gate.newPassword">Yeni şifren</span><input id="account-new-password" type="password" minlength="8" maxlength="100" autocomplete="new-password" data-i18n-placeholder="gate.passwordPlaceholder" placeholder="En az 8 karakter"></label><button type="button" class="primary" data-gate-password-update data-i18n="gate.update">Şifremi güncelle</button></div>
+      <small data-i18n="gate.noGuest">Misafir kayıt, deneme köyü ve tarayıcıdan kaynak kazanma özelliği bulunmaz.</small>
     </div>
   </section>
   <dialog id="reward-dialog" aria-label="28 günlük Yıldız Sandıkları takvimi"><div id="reward-content"></div></dialog>
