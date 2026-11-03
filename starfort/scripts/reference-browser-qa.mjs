@@ -375,6 +375,38 @@ try{
    'Live boss artwork not mounted');
  assert.equal(await evaluate("document.querySelector('.shadow-boss-phase')?.textContent.length>20"),true,
    'Live battle phase advice missing');
+ // v2.40: full 3D scene exists with fallback, 13 biome motes,
+ // audible controls start muted and voice is enabled only through a real click.
+ const cinematic=await evaluate("({canvas:!!document.querySelector('[data-shadow-3d-canvas]'),svg:!!document.querySelector('.shadow-svg-backdrop svg'),motes:document.querySelectorAll('.shadow-ambient-motes i').length,controls:document.querySelectorAll('.shadow-av-controls button').length,voice:document.querySelector('[data-shadow-voice-toggle]')?.getAttribute('aria-pressed')})");
+ assert.ok(cinematic.canvas&&cinematic.svg,'3D and illustrated fallback must both be present');
+ assert.equal(cinematic.motes,13,'Boss biome does not have its own depth particles');
+ assert.equal(cinematic.controls,3,'3D, SFX and TTS control surfaces are missing');
+ assert.equal(cinematic.voice,'false','Boss voice should be opt-in on clean browser');
+ await evaluate("document.querySelector('[data-shadow-render-toggle]').click()");
+ assert.equal(await evaluate("document.querySelector('[data-shadow-render-toggle]').getAttribute('aria-pressed')"),'false',
+  'User cannot opt for lightweight illustrated mode');
+ await evaluate("document.querySelector('[data-shadow-render-toggle]').click()");
+ assert.equal(await evaluate("document.querySelector('[data-shadow-render-toggle]').getAttribute('aria-pressed')"),'true',
+  'User cannot return to genuine 3D model mode');
+ await evaluate("document.querySelector('[data-shadow-audio-toggle]').click()");
+ let audioReady=false;
+ for(let i=0;i<45;i++){
+  audioReady=await evaluate("document.querySelector('[data-shadow-audio-toggle]')?.getAttribute('aria-pressed')==='true'");
+  if(audioReady)break;await sleep(60);
+ }
+ assert.ok(audioReady,'Player-initiated SFX toggle not honored');
+ await evaluate("document.querySelector('[data-shadow-voice-toggle]').click()");
+ let speechReady=false;
+ for(let i=0;i<45;i++){
+  speechReady=await evaluate("document.querySelector('[data-shadow-voice-toggle]')?.getAttribute('aria-pressed')==='true'");
+  if(speechReady)break;await sleep(60);
+ }
+ assert.ok(speechReady,'Opt-in Turkish boss voice control not connected');
+ assert.equal(await evaluate("document.querySelector('[data-shadow-caption]')?.textContent.includes('Köklerim')"),true,
+  'Boss voice subtitle missing after activation');
+ const cinematicMobile=await evaluate("({w:innerWidth,scroll:document.documentElement.scrollWidth,scene:document.querySelector('.shadow-battle-illustration')?.getBoundingClientRect().width})");
+ assert.ok(cinematicMobile.scroll<=cinematicMobile.w+6,'Mobile 3D boss art overflow '+JSON.stringify(cinematicMobile));
+ console.log('PASS v2.40: WebGL+SVG fallback, biome FX, opt-in SFX/Turkish TTS, 3D quality toggle and mobile viewport');
  await shot('shadow-frontier-v239-mobile-fight.png');
  await evaluate("document.querySelector('[data-shadow-move=strike]').click()");
  let shadowWave3=false;
