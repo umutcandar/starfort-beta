@@ -1,6 +1,7 @@
 /** Item appearance only. IDs, upgrade costs, combat stats and ownership remain authoritative. */
 import {getLocale} from './locale-v243.js';
 import {localizedItemName,localizedSetName} from './locale-item-names-v247.js';
+import {worldResource} from './locale-world-v247.js';
 export const ITEM_DISPLAY_EN=Object.freeze({
  "iron_sword": {
   "name": "Oath Sword",
@@ -94,6 +95,6 @@ export function displayItem(item){
 export function displayMaterial(item){
  if(!item||getLocale()==='tr')return item;
  const translated=MATERIAL_DISPLAY_EN[item.id];
- return translated?{...item,...translated}:item;
+ return translated?{...item,...translated,name:worldResource(item.id)||translated.name}:item;
 }
 export const displaySetName=(id,tr)=>getLocale()==='tr'?tr:localizedSetName(id)||SET_DISPLAY_EN[id]||tr;
