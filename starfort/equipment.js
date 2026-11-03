@@ -68,6 +68,9 @@ export function equipmentStats(state,heroId) {
       for(const [key,value] of Object.entries(item.stats)) stats[key]+=value;
       const mastery=Math.min(5,Math.max(0,Number(state.itemUpgrades?.[id]||0)));
       if(Number.isInteger(mastery)){stats.attack+=3*mastery;stats.hp+=8*mastery;}
+      // Account-only, server-verified PvE ascension: +14 power is represented as +7 attack.
+      const ascension=Number(state.relicAscensions?.[id]||0);
+      if(Number.isInteger(ascension)&&ascension>=1&&ascension<=4)stats.attack+=7*ascension;
 
       if(item.set)sets[item.set]=(sets[item.set]||0)+1;
     }
@@ -129,7 +132,7 @@ export function optimizeHeroEquipment(state,heroId,role) {
   ]);
   const current={...(state.loadouts?.[heroId]||{})};
   const score=loadout=>{
-    const stats=equipmentStats({loadouts:{[heroId]:loadout}},heroId);
+    const stats=equipmentStats({loadouts:{[heroId]:loadout},itemUpgrades:state.itemUpgrades,relicAscensions:state.relicAscensions},heroId);
     return Object.entries(ROLE_GEAR_WEIGHTS[role]).reduce((total,[stat,weight])=>total+stats[stat]*weight,0);
   };
   let best=current,bestScore=score(current);
