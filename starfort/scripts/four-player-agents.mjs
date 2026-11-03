@@ -8,7 +8,6 @@ import {mkdtemp,readFile,writeFile,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {createGuildServer} from '../guild-server.mjs';
-import {autoplayHonestNewPlayer} from '../fresh-player-journey-v229.test.mjs';
 import {simulateActTwoBattle,recommendedActTwoPower} from '../act-two-balance.js';
 import {economyScenario,relicRoadRemaining} from '../economy-horizon-v253.js';
 import {createState} from '../rules.js';
@@ -38,7 +37,7 @@ try{
   if(chrome.exitCode!==null||stderr.includes('ENOENT'))throw Error('Chrome unavailable: '+stderr.slice(0,200));
   await sleep(100);
  }
- assert.ok(port,'Chrome DevTools unavailable');
+ assert.ok(port,'Chrome DevTools unavailable: '+stderr.slice(-700));
  const tab=(await fetch('http://127.0.0.1:'+port+'/json/list').then(r=>r.json())).find(x=>x.type==='page');
  assert.ok(tab?.webSocketDebuggerUrl);
  ws=new WebSocket(tab.webSocketDebuggerUrl);
@@ -120,6 +119,7 @@ try{
   metrics.firstBattle={turns:actions.length,actions,stars:data.campaignStars['1'],win:true};
   await screenshot('first-victory');
   pass('Clicked every combat turn and completed visible first story fight',metrics.firstBattle);
+  const {autoplayHonestNewPlayer}=await import('../fresh-player-journey-v229.test.mjs');
   const journey=autoplayHonestNewPlayer({days:90});
   metrics.localSandbox={daysUsed:journey.daysUsed,furthest:journey.furthest,
    firstWinDay:journey.firstWinDay,maze:journey.state.labyrinth.cleared,
@@ -153,10 +153,13 @@ try{
    }
   }
   const good=shadows.filter(x=>x.policy==='tactical'),spam=shadows.filter(x=>x.policy==='strike');
-  metrics.actTwoShadow={n:shadows.length,tacticalWins:good.filter(x=>x.won).length,
+  metrics.actTwoShadow={n:shadows.length,threeStarsAt24:good.filter(x=>x.won&&x.turns<=24&&x.hpPct>=70).length,
+   tacticalWins:good.filter(x=>x.won).length,
    spamWins:spam.filter(x=>x.won).length,tacticalStars3:good.filter(x=>x.stars===3).length,
    spamStars3:spam.filter(x=>x.stars===3).length,
-   stage8:shadows.filter(x=>x.stage===8)};
+   stage1:shadows.filter(x=>x.stage===1),stage8:shadows.filter(x=>x.stage===8)};
+  if(metrics.actTwoShadow.tacticalStars3===0&&metrics.actTwoShadow.threeStarsAt24>0)
+   warn('high','18-turn 3-star threshold blocks tactical Act II play at baseline power',metrics.actTwoShadow);
   if(metrics.actTwoShadow.spamWins>=metrics.actTwoShadow.tacticalWins)
    warn('high','Old Act II shadow model does not reward tactics enough',metrics.actTwoShadow);
   pass('48 strategy-vs-spam simulated Act II fights (not production SQL)',metrics.actTwoShadow);
@@ -196,7 +199,8 @@ try{
   const views=['keep','expedition','heroes','armory','guild','shop'];
   const overflows=[],errors=[];
   for(const lang of locales){
-   assert.ok(await click('[data-language="'+lang+'"]'),'language '+lang);
+   const picked=await evaluate('(()=>{const p=document.querySelector("[data-language-picker]");if(!p)return null;p.value='+JSON.stringify(lang)+';p.dispatchEvent(new Event("change",{bubbles:true}));return document.documentElement.lang;})()');
+   assert.equal(picked,lang,'language selector '+lang);
    await sleep(65);
    for(const view of views){
     assert.ok(await click('.nav-item[data-view="'+view+'"]'),'view '+view);
@@ -209,7 +213,7 @@ try{
   metrics.mobile={width:320,routes:84,overflows,errors};
   if(overflows.length)warn('high','320px signed-in game has overflow',overflows);
   assert.deepEqual(errors,[],'Global navigation and RTL are broken');
-  await click('[data-language=ar]');
+  await evaluate('(()=>{const p=document.querySelector("[data-language-picker]");p.value="ar";p.dispatchEvent(new Event("change",{bubbles:true}));})()');
   await click('.nav-item[data-view=expedition]');
   await screenshot('arabic-320px');
   pass('Navigated 84 mobile routes in all fourteen languages at 320px',metrics.mobile);
