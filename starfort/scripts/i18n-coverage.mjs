@@ -18,6 +18,7 @@ import {CARAVAN_UI_KEYS,auditCaravanTranslations} from '../locale-caravan-v247.j
 import {OFFICIAL_KEYS,auditOfficialTranslations} from '../locale-official-ui-v247.js';
 import {GOAL_IDS,auditGoals} from '../locale-goals-v247.js';
 import {AUXILIARY_KEYS,auditAuxiliary} from '../locale-auxiliary-native-v247.js';
+import {SHADOW_HUD_KEYS,auditShadowHud} from '../locale-shadow-hud-native-v247.js';
 import {REALM_UI_KEYS,auditRealmUI} from '../locale-realm-ui-v247.js';
 import {UNIFIED_KEYS,RANK_NAMES_EN,AUTH_ERROR_CODES,auditUnified} from '../locale-unified-v247.js';
 import {SHADOW_STAGE_NATIVE,auditShadowStageNative} from '../locale-shadow-stages-v247.js';
@@ -72,7 +73,7 @@ const auditFiles=watch.map(({file,strict=false})=>{
 });
 const localeSet=[...SUPPORTED_LOCALES].sort();
 function checkPack(pack,keys,name){
- const problems=[...auditAuxiliary(),...auditGoals(),];
+ const problems=[...auditShadowHud(),...auditAuxiliary(),...auditGoals(),];
  if(JSON.stringify(Object.keys(pack).sort())!==JSON.stringify(localeSet))problems.push(name+': locale count mismatch');
  for(const id of localeSet){
   const dictionary=pack[id]||{};
@@ -130,6 +131,7 @@ const summary={
   caravan:{routesWithNativeCopy:3,screenKeysPerLanguage:CARAVAN_UI_KEYS.length,languages:localeSet.length},
   progressionCoach:{milestoneTypes:GOAL_IDS.length,languages:14},
   nativeTrainingAndShadowRewards:{fixedPhrases:AUXILIARY_KEYS.length,additionalLocales:12},
+  shadowFrontierMastery:{fixedPhrases:SHADOW_HUD_KEYS.length,additionalLocales:12},
   verifiedExpeditionCore:{translatedLabelsPerAdditionalLanguage:OFFICIAL_KEYS.length,additionalLanguages:12,literalPairsCovered:122,dynamicNamesCovered:7},
   realmMap:{translatedLabelsPerAdditionalLanguage:REALM_UI_KEYS.length,additionalLanguages:12},
   sharedRuntime:{reusedLanguagePacks:12,additionalPhrases:UNIFIED_KEYS.length,shadowRankNames:RANK_NAMES_EN.length,mappedAuthErrorCodes:Object.keys(AUTH_ERROR_CODES).length},

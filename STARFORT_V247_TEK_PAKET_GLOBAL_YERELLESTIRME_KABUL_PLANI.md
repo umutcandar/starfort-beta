@@ -178,3 +178,8 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - `locale-auxiliary-native-v247.js`: **56 gerçek ekran ifadesinin tamamı ×12 ek dil**. `tactics-view.js` kuşatma eğitimi/klavye kontrolleri, `shadow-rewards-v239.js` doğrulanmış zafer/ganimet raporu ve `premium-catalog.js` ödeme bulunmadığına dair açık uyarılar; Türkçe/İngilizce korunarak 14 dilde gösterilir.
 - Yalnızca `locale-unified-v247.js` içindeki gösterim sözlüğüne bağlandı; ödeme etkinleştirme, gerçek para toplama, sunucu ödülleri ve savaş mekaniği değişmedi.
 - Yeni sabit metin eklenirse `locale-auxiliary-native-v247.test.mjs` kaynak taraması tüm dillere karşı CI'da alarm verir.
+
+## v2.47 tek paket — Gölge Sınırı canlı savaş ve kalıcı ustalık
+
+- `locale-shadow-hud-native-v247.js`: **Gölge Sınırı'ndaki 52** sabit UI ifadesi ve **Kalıcı Ustalık'taki 26** sabit UI ifadesinin tamamı, toplam **78 ×12 ek dil**. Gerçek savaş HUD, ses açma/kapama, 4 bölge ilerlemesi, 12 kalıcı rütbe, haftalık 100 şöhret sınırı, 1–3 yıldız açıklamaları dahil.
+- 14 dilde sözlük kapsaması kaynak dosyalarındaki `local(tr,en)` ifadeleriyle birebir denetlenir. Kanonik sezon/patron ödülleri, sunucu RPC ve savaş kuralları değiştirilmez.
