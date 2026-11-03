@@ -1,0 +1,61 @@
+/* STARFORT v2.40 — cinematic real WebGL boss sculptures and verified hit reactions.
+   CSS covers both WebGL perspective and v2.39 accessible static SVG fallback. */
+.shadow-battle-illustration{position:relative;min-width:0;aspect-ratio:7/5;isolation:isolate;overflow:hidden;background:#101b2a}
+.shadow-svg-backdrop{width:100%;height:100%;transition:opacity .22s ease}
+.shadow-svg-backdrop>svg{display:block;width:100%;height:100%;object-fit:cover}
+.shadow-boss-webgl{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:2;opacity:0;pointer-events:none;
+  filter:drop-shadow(0 12px 14px #02070a80)}
+.shadow-battle-illustration.has-real-webgl .shadow-svg-backdrop{opacity:.19}
+.shadow-battle-illustration.has-real-webgl .shadow-boss-webgl{opacity:1}
+.shadow-ambient-motes{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
+.shadow-ambient-motes i{position:absolute;left:var(--mote-x);top:var(--mote-y);width:var(--mote-size);height:var(--mote-size);border-radius:100%;background:var(--boss-accent,#f5bf76);opacity:.32;box-shadow:0 0 13px var(--boss-accent,#ffd59c)}
+.shadow-battle-illustration[data-shadow-scene="1"]{--boss-accent:#a5d188}
+.shadow-battle-illustration[data-shadow-scene="2"]{--boss-accent:#7dd6ee}
+.shadow-battle-illustration[data-shadow-scene="3"]{--boss-accent:#ffa05d}
+.shadow-battle-illustration[data-shadow-scene="4"]{--boss-accent:#d8b0ff}
+.shadow-ambient-motes:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#2636470e,transparent 35%,#10192265)}
+.shadow-battle-visual[data-boss-wave="3"] .shadow-ambient-motes:after{background:radial-gradient(circle at 50% 45%,transparent 45%,#2b101447 98%)}
+.shadow-battle-visual[data-boss-enraged="true"] .shadow-ambient-motes:after{background:radial-gradient(circle at 45% 55%,#a52c3255,transparent 65%)}
+.shadow-av-controls{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.shadow-av-controls button{font:600 10px/1.4 system-ui,sans-serif;padding:7px 9px;white-space:normal;min-height:31px}
+.shadow-av-controls button[aria-pressed="true"]{border-color:#e3b97a;background:#384c4de5;color:#fae5bd}
+.shadow-av-controls button[disabled]{opacity:.46}
+.shadow-caption{font-size:10px;line-height:1.6;color:#e1d6ef;margin:0;padding:6px 0;min-height:16px}
+.shadow-vfx{position:absolute;z-index:5;left:47%;top:38%;font:bold clamp(28px,5vw,52px)/1 Georgia,serif;color:#fff4cd;pointer-events:none;text-shadow:0 0 12px #ffe9b4,2px 3px 1px #26313b;transform:translate(-50%,-50%);opacity:0}
+.shadow-vfx-attack,.shadow-vfx-feint,.shadow-vfx-skill{color:#fff7d6;--fx-color:#ffe7b8}
+.shadow-vfx-impact,.shadow-vfx-crush{color:#f7a276;--fx-color:#f18b5c}
+.shadow-vfx-shield-break,.shadow-vfx-guard{color:#a9e8ff;--fx-color:#72bbeb}
+.shadow-vfx-drain,.shadow-vfx-enrage{color:#d9a8ff;--fx-color:#bb86f0}
+.shadow-vfx-heal,.shadow-vfx-victory{color:#c7f5b0;--fx-color:#a8dc8c}
+.shadow-vfx-still{opacity:.8}
+.shadow-battle-illustration .shadow-visual-flash{z-index:4;mix-blend-mode:screen}
+@media(prefers-reduced-motion:no-preference){
+ .shadow-battle-illustration .shadow-boss-webgl{transition:opacity .22s ease}
+ .shadow-ambient-motes i{animation:shadow-mote-rain var(--mote-duration) linear infinite;animation-delay:calc(-1*var(--mote-delay))}
+ .shadow-battle-visual[data-boss-intent="crush"] .shadow-battle-illustration{animation:shadow-cinematic-vibration 1.5s ease-in-out infinite}
+ .shadow-vfx{animation:shadow-vfx-impact .75s cubic-bezier(.17,.75,.28,1) both}
+ .shadow-vfx-heal,.shadow-vfx-phase,.shadow-vfx-victory{animation:shadow-vfx-float .78s ease-out both}
+ .shadow-vfx-guard,.shadow-vfx-shield-break{animation:shadow-vfx-shatter .7s ease-out both}
+}
+@keyframes shadow-mote-rain{0%{transform:translate(-10px,28px) scale(.45);opacity:0}25%{opacity:.56}85%{opacity:.20}100%{transform:translate(35px,-85px) scale(1.6);opacity:0}}
+@keyframes shadow-cinematic-vibration{0%,100%,72%{transform:translate3d(0,0,0)}76%{transform:translate3d(-2px,2px,0)}79%{transform:translate3d(2px,-1px,0)}83%{transform:translate3d(-1px,0,0)}}
+@keyframes shadow-vfx-impact{0%{opacity:0;transform:translate(-70%,-55%) rotate(-20deg) scale(.4)}24%{opacity:1;transform:translate(-50%,-50%) rotate(4deg) scale(1.5)}100%{opacity:0;transform:translate(-30%,-74%) rotate(5deg) scale(.9)}}
+@keyframes shadow-vfx-float{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}18%{opacity:1}100%{opacity:0;transform:translate(-50%,-138%) scale(1.2)}}
+@keyframes shadow-vfx-shatter{0%{opacity:0;transform:translate(-50%,-50%) scale(.5) rotate(-25deg)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.6) rotate(15deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(2) rotate(35deg)}}
+@media(max-width:950px){
+ .shadow-battle-illustration{width:100%;aspect-ratio:7/5}
+ .shadow-av-controls{flex-wrap:wrap;gap:5px}
+}
+@media(max-width:580px){
+ .shadow-battle-illustration{aspect-ratio:16/11}
+ .shadow-av-controls button{flex:1 1 calc(50% - 6px);min-width:0}
+ .shadow-caption{font-size:10px}
+ .shadow-vfx{font-size:32px}
+ .shadow-boss-webgl{filter:none}
+ .shadow-ambient-motes i:nth-child(even){display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .shadow-battle-visual,.shadow-battle-illustration,.shadow-visual-flash,.shadow-ambient-motes i,
+ .shadow-vfx,.shadow-boss-webgl{animation:none!important;transition:none!important}
+ .shadow-vfx{opacity:.75!important;transform:translate(-50%,-50%)}
+}
