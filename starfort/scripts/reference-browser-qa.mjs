@@ -76,11 +76,17 @@ try{
    return {language:document.documentElement.lang,direction:document.documentElement.dir,scroll:document.documentElement.scrollWidth,
     width:innerWidth,left:rect.left,right:rect.right,title:title.textContent.trim(),
     inputs:document.querySelectorAll('#starfort-gate-form input').length,
+    social:[...document.querySelectorAll('[data-social-login]')].map(x=>({
+     provider:x.dataset.socialLogin,label:x.textContent.trim(),disabled:x.disabled,
+     ariaDisabled:x.getAttribute('aria-disabled')})),
     locked:document.body.classList.contains('account-locked'),inert:document.querySelector('.app').inert};})()`);
   assert.equal(layout.language,lang,'mobile language switch: '+lang);
   assert.equal(layout.direction,lang==='ar'?'rtl':'ltr','mobile direction: '+lang);
   assert.ok(layout.locked&&layout.inert&&layout.inputs===2,'no guest or account bypass: '+lang);
   assert.ok(layout.title.length>0,'missing native login heading: '+lang);
+  assert.deepEqual(layout.social.map(x=>x.provider),['google','apple'],'both social providers appear: '+lang);
+  assert.ok(layout.social.every(x=>x.label.length>5&&x.ariaDisabled===String(x.disabled)),
+   'social label, accessible disabled state: '+lang+' '+JSON.stringify(layout.social));
   assert.ok(layout.left>=-2&&layout.right<=layout.width+2,'account gate clipped: '+lang+' '+JSON.stringify(layout));
   assert.ok(layout.scroll<=layout.width+2,'horizontal page overflow: '+lang+' '+JSON.stringify(layout));
   if(lang==='ar')await shot('starfort-390x844-arabic-rtl.png');
