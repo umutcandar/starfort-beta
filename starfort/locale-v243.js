@@ -1,9 +1,23 @@
 /** STARFORT language preference. Display-only: never alters account, combat or UTC rewards. */
+import {LANGUAGE_META,EXTRA_TRANSLATIONS} from './locale-global-v244.js';
+export {LANGUAGE_META} from './locale-global-v244.js';
 export const LOCALE_KEY='starfort:language-v243';
+export const SUPPORTED_LOCALES=Object.freeze(LANGUAGE_META.map(x=>x.id));
+const SUPPORTED=new Set(SUPPORTED_LOCALES);
+export const getLocaleDirection=(locale=getLocale())=>locale==='ar'?'rtl':'ltr';
+export function normalizeLocale(value){
+ if(typeof value!=='string'||value.length>32)return null;
+ const code=value.trim().replace(/_/g,'-').toLowerCase();
+ if(code==='pt'||code.startsWith('pt-'))return 'pt-BR';
+ if(code==='zh'||code==='zh-hans'||code.startsWith('zh-hans-')||code==='zh-cn'||code==='zh-sg')return 'zh-CN';
+ const base=code.split('-')[0];
+ return SUPPORTED.has(base)?base:null;
+}
 export function resolveLocale(saved,languages=[]){
- if(saved==='tr'||saved==='en')return saved;
- const first=Array.isArray(languages)?languages[0]:languages;
- return typeof first==='string'&&first.toLowerCase().startsWith('tr')?'tr':'en';
+ if(SUPPORTED.has(saved))return saved;
+ const listed=Array.isArray(languages)?languages:[languages];
+ for(const language of listed){const supported=normalizeLocale(language);if(supported)return supported;}
+ return 'en';
 }
 let active=null;
 export function getLocale(){
@@ -14,7 +28,7 @@ export function getLocale(){
  return active=resolveLocale(saved,langs);
 }
 export function setLocale(value){
- if(value!=='tr'&&value!=='en')return getLocale();
+ if(!SUPPORTED.has(value))return getLocale();
  active=value;
  try{globalThis.localStorage?.setItem(LOCALE_KEY,value);}catch{}
  return active;
@@ -83,24 +97,39 @@ const WORDS=Object.freeze({
  'auth.resent':['Onay e-postası yeniden istendi. Gelen kutunu kontrol et.','Confirmation email requested. Check your inbox.'],
  'auth.signedOut':['E-posta hesabından çıkış yapıldı. Tekrar giriş yaparak krallığına ulaşabilirsin.','Signed out. Sign in again to access your kingdom.'],
  'auth.locked':['Sunucu hesabın doğrulanmadan oyun açılmaz.','A verified server account is required to play.'],
+ 'auth.limit':['E-posta gönderim sınırına ulaşıldı. Yeni bir onay bağlantısı istemeden önce daha sonra tekrar dene; hesabın varsa giriş yapmayı deneyebilirsin.','Email sending limit reached. Please try again later.'],
+ 'auth.unauthorized':['Bu e-posta adresine doğrulama gönderilemiyor. E-posta hizmeti yöneticisi tarafından yapılandırılmalı.','Verification cannot be sent to this address. Email delivery must be configured by the administrator.'],
+ 'auth.badAddress':['E-posta adresi sağlayıcı tarafından geçersiz bulundu. Gerçek ve kullanılabilir bir e-posta adresi gir.','Invalid email address. Enter a valid email.'],
+ 'auth.notConfirmed':['Hesabın e-posta doğrulaması bekliyor. Gelen kutunu ve gereksiz klasörünü kontrol et.','Your account is awaiting email verification. Check your inbox and spam folder.'],
+ 'auth.invalidCredentials':['E-posta veya şifre hatalı. Bilgilerini kontrol et; gerekirse şifre sıfırlamayı kullan.','Incorrect email or password. Check your details or reset your password.'],
+ 'auth.failed':['Hesap işlemi başarısız.','Account operation failed.'],
+ 'auth.connection':['Sunucuya bağlanılamadı. Yerel kayıt değişmedi.','Could not connect to the server. No local progress was changed.'],
  'audio.voiceNote':['Seslendirme tarayıcının Türkçe ses sentezine bağlıdır; profesyonel kayıt değildir.','Voice lines use browser speech synthesis, not studio recordings.']
 });
 export function t(key,parameters={}){
- const pair=WORDS[key],string=pair?pair[getLocale()==='en'?1:0]:key;
+ const language=getLocale(),pair=WORDS[key],extra=EXTRA_TRANSLATIONS[language]?.[key];
+ const string=language==='tr'?(pair?.[0]??key):extra??pair?.[1]??key;
  return string.replace(/\{([a-zA-Z]+)\}/g,(_,field)=>String(parameters[field]??''));
 }
 export function formatNumber(value){
- return new Intl.NumberFormat(getLocale()==='en'?'en-US':'tr-TR',{
+ return new Intl.NumberFormat(getLocale(),{
   notation:value>=100000?'compact':'standard',maximumFractionDigits:1}).format(value);
 }
 export function applyLocaleUI(doc=globalThis.document){
  if(!doc?.querySelectorAll)return;
  const language=getLocale();
- doc.documentElement.lang=language;doc.documentElement.dir='ltr';
- doc.title=language==='en'?'Starfort Beta — Star Village':'Starfort Beta — Yıldız Köyü';
+ doc.documentElement.lang=language;doc.documentElement.dir=getLocaleDirection(language);
+ doc.title=language==='tr'?'Starfort Beta — Yıldız Köyü':'Starfort Beta — Star Village';
  for(const el of doc.querySelectorAll('[data-i18n]'))el.textContent=t(el.dataset.i18n);
  for(const [attribute,property] of [['data-i18n-placeholder','placeholder'],['data-i18n-aria-label','aria-label']]){
   for(const el of doc.querySelectorAll('['+attribute+']'))el.setAttribute(property,t(el.getAttribute(attribute)));
  }
  for(const el of doc.querySelectorAll('[data-language]'))el.setAttribute('aria-pressed',String(el.dataset.language===language));
+ for(const select of doc.querySelectorAll('[data-language-picker]'))select.value=language;
+}
+
+/** Reusable native-language dropdown for the account gate and authenticated settings. */
+export function languagePickerMarkup(){
+ const options=LANGUAGE_META.map(x=>`<option value="${x.id}"${x.id===getLocale()?' selected':''}>${x.native}${x.id==='tr'||x.id==='en'?'':' · Beta'}</option>`).join('');
+ return `<label class="language-select-label">🌐 <select data-language-picker aria-label="Language / Dil">${options}</select></label>`;
 }

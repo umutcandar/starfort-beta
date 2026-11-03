@@ -22,7 +22,7 @@ const clamp=(v,a,b)=>Math.min(b,Math.max(a,Number.isFinite(v)?v:a));
 const safe=(v,min=0,max=1000000)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
 const stageOk=n=>safe(n,1,4);
 const describe=(type,amount)=>({type,amount:safe(amount)?amount:null});
-export function shadowVoiceLines(stage,locale=getLocale()){return (locale==='en'?ENGLISH_LINES:LINES)[stageOk(stage)?stage-1:0];}
+export function shadowVoiceLines(stage,locale=getLocale()){return (locale!=='tr'?ENGLISH_LINES:LINES)[stageOk(stage)?stage-1:0];}
 export function shadowCombatEffects(previous,next,action='get'){
  const old=previous?.battle||null,now=next?.battle||null,events=[];
  if(action==='start'&&now){events.push(describe('enter'),describe('phase'));return events;}
@@ -75,7 +75,7 @@ function createVoice(storage,onSpeechState=()=>{}){
   try{
    cancel();
    const utterance=new SpeechSynthesisUtterance(text);
-   const speechLang=getLocale()==='en'?'en-US':'tr-TR';
+   const speechLang=getLocale()!=='tr'?'en-US':'tr-TR';
    utterance.lang=speechLang;utterance.rate=[.73,.82,.87,.72][stage-1]||.8;
    utterance.pitch=[.55,.9,.65,.45][stage-1]||.7;utterance.volume=.7;
    const matching=speechSynthesis.getVoices().find(x=>x.lang?.toLowerCase().startsWith(speechLang.slice(0,2).toLowerCase()));

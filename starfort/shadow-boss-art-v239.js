@@ -1,3 +1,4 @@
+import {getLocale} from './locale-v243.js';
 /** STARFORT v2.39 original vector boss illustrations.
  * Static SVG geometry only; no remote images, external dependencies, or scripts.
  * Per-stage visual states are derived exclusively from authenticated battle snapshots.
@@ -56,10 +57,11 @@ const ENVIRONMENTS=[
 export function shadowBossArtwork(stage,{variant='card',wave=1,intent='strike',enraged=false}={}){
  const idx=SAFE_X(stage,1,4)-1,w=SAFE_X(wave,1,3);
  const key=STAGE_KEYS[idx];
+ const bossName=(getLocale()==='tr'?['Diken Nöbetçisi','Oyuk Siren','Kül Fırtınası','Tutulma Hükümdarı']:['Thorn Sentinel','Hollow Siren','Ash Tempest','Eclipse Sovereign'])[idx];
  const mode=variant==='battle'?'battle':variant==='reward'?'reward':'card';
  const style=(enraged&&idx===3)?'enraged':(INTENTS.includes(intent)?intent:'strike');
  const paint='sfb-v239-'+key+'-'+mode;
- return `<svg xmlns="http://www.w3.org/2000/svg" class="shadow-boss-art art-${key} boss-intent-${style} ${mode==='battle'?'art-combat':''}" viewBox="0 0 420 300" role="img" aria-label="${['Diken Nöbetçisi','Oyuk Siren','Kül Fırtınası','Tutulma Hükümdarı'][idx]} savaş illüstrasyonu" focusable="false" preserveAspectRatio="xMidYMid meet">
+ return `<svg xmlns="http://www.w3.org/2000/svg" class="shadow-boss-art art-${key} boss-intent-${style} ${mode==='battle'?'art-combat':''}" viewBox="0 0 420 300" role="img" aria-label="${bossName} ${getLocale()==='tr'?'savaş illüstrasyonu':'battle illustration'}" focusable="false" preserveAspectRatio="xMidYMid meet">
  <defs><radialGradient id="${paint}-sky" cx="50%" cy="37%" r="75%">
   <stop offset="0%" stop-color="var(--boss-sky-core)"/><stop offset="100%" stop-color="var(--boss-sky-edge)"/></radialGradient>
   <linearGradient id="${paint}-core" x1="0" y1="0" x2="1" y2="1">
