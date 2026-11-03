@@ -2,6 +2,8 @@
  * Damage, HP, intent and rewards are always computed by Supabase; this renders only.
  */
 import {getLocale} from './locale-v243.js';
+import {bossRelicText} from './boss-relic-v251.js';
+import {officialText as official} from './locale-official-ui-v247.js';
 const KEYS=['boss','phase','prelude','pressure','lastStand','guard','shield','drain','strike','verified'];
 const COPY={
 tr:['Bölge patronu','Safha','Savunmayı gözle; patronun hamlesini öğren.','Patronun gücü artıyor. Hamle işaretlerini takip et.','Son direniş! Yanlış savunma ağır hasar verebilir.','Ağır darbeye karşı Savun kullan.','Kalkanı Aldat veya kahraman yeteneğiyle aş.','Can emmesini güçlü saldırıyla durdur.','Güvenli anda saldır ve enerjini koru.','Savaş ve ganimet hesabı sunucu tarafından yapılır.'],
@@ -24,21 +26,25 @@ export const BOSS_V250_TRANSLATIONS=Object.freeze(Object.fromEntries(Object.entr
  ([locale,values])=>[locale,Object.freeze(Object.fromEntries(KEYS.map((key,i)=>[key,values[i]])))])));
 const text=key=>BOSS_V250_TRANSLATIONS[getLocale()]?.[key]??BOSS_V250_TRANSLATIONS.en[key];
 export function bossV250Phase(mission){
- if(!mission||mission.mode!=='story'||mission.balanceVersion!==2||!Number.isInteger(mission.stage)||
-    mission.stage<4||mission.stage>8||mission.wave!==3)return null;
+ if(!mission)return null;
+ const story=mission.mode==='story'&&[2,3].includes(mission.balanceVersion)&&
+   Number.isInteger(mission.stage)&&mission.stage>=4&&mission.stage<=8&&mission.wave===3;
+ const weekly=mission.mode==='boss'&&mission.balanceVersion===3&&mission.stage===4&&mission.wave===1;
+ if(!story&&!weekly)return null;
  const max=Number(mission.enemyMaxHp),hp=Number(mission.enemyHp);
  if(!Number.isFinite(max)||max<=0||!Number.isFinite(hp)||hp<0||hp>max)return null;
  const phase=hp<=max*.33?3:hp<=max*.67?2:1;
- const intent=['crush','shield','drain','strike'].includes(mission.enemyIntent)?mission.enemyIntent:'strike';
- return Object.freeze({phase,intent,stage:mission.stage,ratio:hp/max});
+ const intent=['crush','shield','drain','strike','sunder'].includes(mission.enemyIntent)?mission.enemyIntent:'strike';
+ return Object.freeze({phase,intent,stage:mission.stage,ratio:hp/max,weekly});
 }
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function bossV250Markup(mission){
  const state=bossV250Phase(mission);if(!state)return '';
  const phaseLabel=text(['prelude','pressure','lastStand'][state.phase-1]);
- const hint=text({crush:'guard',shield:'shield',drain:'drain',strike:'strike'}[state.intent]);
- return '<aside class="story-boss-v250 phase-'+state.phase+'" aria-label="'+esc(text('boss'))+'">'+
- '<div><span class="eyebrow">⚔ '+esc(text('boss'))+' · '+esc(text('phase'))+' '+state.phase+' / 3</span>'+
+ const hint=state.intent==='sunder'?bossRelicText('sunderHint'):text({crush:'guard',shield:'shield',drain:'drain',strike:'strike'}[state.intent]);
+ const heading=state.weekly?official('Haftalık ortak dünya patronu','Weekly community world boss'):text('boss');
+ return '<aside class="story-boss-v250 phase-'+state.phase+'" aria-label="'+esc(heading)+'">'+
+ '<div><span class="eyebrow">⚔ '+esc(heading)+' · '+esc(text('phase'))+' '+state.phase+' / 3</span>'+
  '<strong>'+esc(phaseLabel)+'</strong><p>'+esc(hint)+'</p><small>'+esc(text('verified'))+'</small></div>'+
  '<div class="story-boss-v250-track" aria-hidden="true">'+[1,2,3].map(i=>'<i class="'+(i<=state.phase?'active':'')+'"></i>').join('')+'</div></aside>';
 }
