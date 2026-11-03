@@ -37,12 +37,12 @@ test('a partially localized product cannot pass the global release gate',()=>{
 test('v2.47 unified beta build metadata, single 14-language picker and account-only entry stay consistent',()=>{
  const pkg=JSON.parse(readFileSync(new URL('./package.json',import.meta.url),'utf8'));
  const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
- assert.match(pkg.version,/^2\\.47\\.\\d+-beta\\.\\d+$/);
- const label='v'+pkg.version.replace(/-beta\\.\\d+$/,'')+' Beta';
+ assert.match(pkg.version,/^2\.47\.\d+-beta\.\d+$/);
+ const label='v'+pkg.version.replace(/-beta\.\d+$/,'')+' Beta';
  assert.ok(html.includes('<title>Starfort '+label),'HTML title must identify the shipped beta');
  assert.ok(html.includes('>'+label+'</span>'),'HUD version badge must identify the shipped beta');
- assert.doesNotMatch(html,/v2\\.46\\.0 Beta/,'Outdated build labels are forbidden');
- const selector=html.match(/<select data-language-picker[^>]*>([\\s\\S]*?)<\\/select>/)?.[1];
+ assert.doesNotMatch(html,/v2\.46\.0 Beta/,'Outdated build labels are forbidden');
+ const selector=html.match(/<select data-language-picker[^>]*>([\s\S]*?)<\/select>/)?.[1];
  assert.ok(selector,'Language picker must be present on account gate');
  const languages=[...selector.matchAll(/<option value="([^"]+)"/g)].map(m=>m[1]);
  assert.equal(languages.length,14,'All 14 supported locales must ship together');
