@@ -5,3 +5,15 @@
 .language-switch button:focus-visible{outline:2px solid #97e0d0;outline-offset:3px}
 .settings-language-switch{justify-content:flex-start;margin:10px 0}
 @media(max-width:410px){.language-switch button{min-width:70px;flex:1 1 auto}}
+
+/* International-language list; native scripts retain their own font shaping. */
+.language-tools{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.language-tools .language-switch{margin:0;flex:0 0 auto}
+.language-select-label{display:flex;align-items:center;gap:7px;min-width:0;max-width:100%;font-size:15px;color:var(--gold)}
+.language-select-label select{max-width:100%;width:min(245px,65vw);height:38px;background:#172625;color:#f4ead8;border:1px solid #84745c;border-radius:7px;padding:6px 9px;font:600 12px/1.4 system-ui,sans-serif;direction:auto;cursor:pointer}
+.language-select-label select:focus-visible{outline:2px solid #97e0d0;outline-offset:3px}
+.settings-language-switch + .language-select-label{justify-content:flex-start;margin:8px 0 12px}
+:root[dir="rtl"] .rail{border-right:0;border-left:1px solid var(--line)}
+:root[dir="rtl"] .account-gate-panel,:root[dir="rtl"] .guild-panel{text-align:start}
+:root[dir="rtl"] input[type="email"]{direction:ltr;text-align:start}
+@media(max-width:420px){.language-tools{justify-content:center}.language-tools .language-switch{width:100%}.language-select-label select{width:min(100%,320px)}.language-tools .language-select-label{width:100%;justify-content:center}}
