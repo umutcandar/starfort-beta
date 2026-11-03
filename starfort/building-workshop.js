@@ -1,17 +1,21 @@
 /** Building upgrade command center: authored from the existing game state. */
-import {buildingUpgradePlan,buildingRoadmap,villageResourceNames} from './building-planner.js';
+import {buildingUpgradePlan,buildingRoadmap} from './building-planner.js';
+import {getLocale} from './locale-v243.js';
+import {local,displayBuilding,displayBuildingUnit,displayResource} from './locale-game-content-v245.js';
 import {caravanMarkup} from './kingdom-caravan.js';
 import {ART_EVOLUTION} from './city-art-layout.js';
 import {MASTERY_START_LEVEL,MASTERY_ARCHITECTURE} from './mastery-architecture.js';
-const nice=v=>new Intl.NumberFormat('tr-TR',{maximumFractionDigits:2}).format(v);
+const nice=v=>new Intl.NumberFormat(getLocale(),{maximumFractionDigits:2}).format(v);
 const resourceIcons={gold:'coin',wood:'wood',stone:'stone',aether:'star'};
 const statusLabel={ready:'Geliştirmeye hazır',collect:'Üretim hazır',short:'Kaynak bekleniyor',locked:'Kale seviyesi gerekli',maxed:'Tamamlandı',battle:'Savaş devam ediyor',building:'İnşaat sürüyor',claim:'İnşaat tamamlandı','builder-busy':'Usta başka binada',mastery:'Ustalık gereklidir',offline:'Sunucu köyü bekleniyor'};
-const timeLabel=minutes=>minutes===null?'Üretim tek başına yetmiyor; seferlerden de kaynak kazan.':minutes<60?'Yaklaşık '+minutes+' dk sonra':minutes<1440?'Yaklaşık '+Math.ceil(minutes/60)+' saat sonra':'Yaklaşık 1 gün sonra';
-const durationLabel=ms=>{const minutes=Math.ceil(ms/60000);return minutes>=1440?Math.ceil(minutes/1440)+' gün':minutes>=60?Math.ceil(minutes/60)+' saat':Math.max(1,minutes)+' dk';};
+const statusEn={ready:'Ready to upgrade',collect:'Production ready',short:'Waiting for resources',locked:'Keep level required',maxed:'Completed',battle:'Battle in progress',building:'Under construction',claim:'Construction finished','builder-busy':'Builder is busy',mastery:'Mastery required',offline:'Waiting for server village'};
+const timeLabel=minutes=>minutes===null?local('Üretim tek başına yetmiyor; seferlerden de kaynak kazan.','Production alone is not enough; earn resources through expeditions.'):minutes<60?local('Yaklaşık ','About ')+minutes+local(' dk sonra',' min until ready'):minutes<1440?local('Yaklaşık ','About ')+Math.ceil(minutes/60)+local(' saat sonra',' hours until ready'):local('Yaklaşık 1 gün sonra','About 1 day until ready');
+const durationLabel=ms=>{const minutes=Math.ceil(ms/60000);return minutes>=1440?Math.ceil(minutes/1440)+local(' gün',' days'):minutes>=60?Math.ceil(minutes/60)+local(' saat',' hours'):Math.max(1,minutes)+local(' dk',' min');};
 export function buildingWorkshopMarkup(state,selectedId,{icon,number=nice,now=Date.now()}={}){
  const roadmap=buildingRoadmap(state,now),plan=buildingUpgradePlan(state,selectedId,now);
  if(!plan)return '';
- const {building,level,nextLevel,status,cost,progress,missing,available,current,next,etaMinutes,construction,durationMs,mastery}=plan;
+ const {building:rawBuilding,level,nextLevel,status,cost,progress,missing,available,current,next,etaMinutes,construction,durationMs,mastery}=plan;
+ const building=displayBuilding(rawBuilding);
  const job=construction,buildingNow=status==='building'||status==='claim';
  const isAvailable=status==='ready'||status==='collect';
  const missingItems=Object.entries(missing).filter(([,value])=>value>0);
@@ -20,17 +24,17 @@ export function buildingWorkshopMarkup(state,selectedId,{icon,number=nice,now=Da
  const numberLabel=n=>number(Number(n.toFixed?.(2)??n));
  const resources=Object.entries(cost).map(([id,required])=>{
    const held=state.res[id],usable=available[id],short=missing[id],fraction=Math.min(100,Math.round(usable/required*100));
-   return `<div class="ws-resource ${short?'short':'enough'}"><div class="ws-resource-icon">${icon(resourceIcons[id])}</div><div class="ws-resource-info"><div class="ws-resource-line"><b>${villageResourceNames[id]}</b><strong>${number(usable)} <small>/ ${number(required)}</small></strong></div><div class="ws-bar"><i style="width:${fraction}%"></i></div><small>${short?'Eksik '+number(short):usable>held?'Bekleyen üretim dahil hazır':'Yeterli kaynak var'}</small></div></div>`;
+   return `<div class="ws-resource ${short?'short':'enough'}"><div class="ws-resource-icon">${icon(resourceIcons[id])}</div><div class="ws-resource-info"><div class="ws-resource-line"><b>${displayResource(id)}</b><strong>${number(usable)} <small>/ ${number(required)}</small></strong></div><div class="ws-bar"><i style="width:${fraction}%"></i></div><small>${short?local('Eksik ','Missing ')+number(short):usable>held?local('Bekleyen üretim dahil hazır','Ready including pending production'):local('Yeterli kaynak var','Enough resources')}</small></div></div>`;
  }).join('');
- const actions=status==='claim'? `<button class="primary ws-upgrade-button" data-finish-building>✓ İnşaatı tamamla · Seviye ${nextLevel}</button>`:
-   status==='offline'? `<button class="secondary ws-upgrade-button" disabled>Sunucu köyüne bağlanılıyor</button>`:
-   status==='building'? `<button class="secondary ws-upgrade-button" disabled>⌛ Kalan: ${durationLabel(job.remainingMs)}</button>`:
-   status==='ready'? `<button class="primary ws-upgrade-button" data-upgrade-building="${building.id}">${durationMs?'⚒ İnşaatı başlat · '+durationLabel(durationMs):'✦ Şimdi geliştir · Seviye '+nextLevel}</button>`:
-   status==='collect'? `<button class="primary ws-upgrade-button" data-collect-upgrade="${building.id}">${durationMs?'⚒ Üretimi topla ve inşaatı başlat':'✦ Üretimi topla ve geliştir'}</button>`:
-   status==='locked'? `<button class="secondary ws-upgrade-button" data-workshop-keep>♜ Kaleyi geliştirmeye git</button>`:
-   status==='mastery'? `<button class="secondary ws-upgrade-button" data-workshop-expedition>✦ Seferlerde yıldız kazan · ${mastery.total}/${mastery.required}</button>`:
-   status==='builder-busy'? `<button class="secondary ws-upgrade-button" data-plan-building="${job.id}">⛏ Devam eden inşaata git</button>`:
-   `<button class="secondary ws-upgrade-button" disabled>${status==='maxed'?'✓ En yüksek seviye':status==='battle'?'Savaşta geliştirilemez':'Kaynaklar eksik'}</button>`;
+ const actions=status==='claim'? `<button class="primary ws-upgrade-button" data-finish-building>✓ ${local('İnşaatı tamamla','Finish construction')} · ${local('Seviye','Level')} ${nextLevel}</button>`:
+   status==='offline'? `<button class="secondary ws-upgrade-button" disabled>${local('Sunucu köyüne bağlanılıyor','Connecting to server village')}</button>`:
+   status==='building'? `<button class="secondary ws-upgrade-button" disabled>⌛ ${local('Kalan','Remaining')}: ${durationLabel(job.remainingMs)}</button>`:
+   status==='ready'? `<button class="primary ws-upgrade-button" data-upgrade-building="${building.id}">${durationMs?local('⚒ İnşaatı başlat · ','⚒ Start construction · ')+durationLabel(durationMs):local('✦ Şimdi geliştir · Seviye ','✦ Upgrade now · Level ')+nextLevel}</button>`:
+   status==='collect'? `<button class="primary ws-upgrade-button" data-collect-upgrade="${building.id}">${durationMs?local('⚒ Üretimi topla ve inşaatı başlat','⚒ Collect and start construction'):local('✦ Üretimi topla ve geliştir','✦ Collect and upgrade')}</button>`:
+   status==='locked'? `<button class="secondary ws-upgrade-button" data-workshop-keep>♜ ${local('Kaleyi geliştirmeye git','Go upgrade the keep')}</button>`:
+   status==='mastery'? `<button class="secondary ws-upgrade-button" data-workshop-expedition>✦ ${local('Seferlerde yıldız kazan','Earn stars in expeditions')} · ${mastery.total}/${mastery.required}</button>`:
+   status==='builder-busy'? `<button class="secondary ws-upgrade-button" data-plan-building="${job.id}">⛏ ${local('Devam eden inşaata git','Go to active construction')}</button>`:
+   `<button class="secondary ws-upgrade-button" disabled>${status==='maxed'?local('✓ En yüksek seviye','✓ Maximum level'):status==='battle'?local('Savaşta geliştirilemez','Cannot upgrade during battle'):local('Kaynaklar eksik','Missing resources')}</button>`;
  const guidance=status==='offline'?'Sunucu envanteri doğrulanmadan hiçbir inşaat başlatılamaz; bağlantı kurulunca tekrar dene.':status==='building'?`Tek inşaat ustası burada çalışıyor. Kalan süre: ${durationLabel(job.remainingMs)}. Oyun kapalıyken de süre ilerler.`:
    status==='claim'?'İnşaat tamamlandı! Seviyeyi aktifleştirmek için tamamla düğmesine bas.':
    status==='builder-busy'?`${roadmap.plans.find(p=>p.id===job.id)?.building.name||'Başka bir bina'} üzerinde çalışan tek inşaat ustası boşalana kadar yeni inşaat başlayamaz.`:
