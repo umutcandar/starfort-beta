@@ -1,5 +1,6 @@
 import * as R from './rules.js';
 import {getLocale,setLocale,t,formatNumber,applyLocaleUI,languagePickerMarkup} from './locale-v243.js';
+import {localizeServerError} from './locale-unified-v247.js';
 import {local,displayBuilding,displayStage,displayResource} from './locale-game-content-v245.js';
 import {rewardText} from './locale-rewards-v245.js';
 import {displayHero,displayHeroLore,displayHeroAbility,displayHeroRole} from './locale-heroes-v245.js';
@@ -124,6 +125,7 @@ function persist(){
 }
 
 function notify(message) {
+  message=localizeServerError(message);
   if(document.body.classList.contains('account-locked')){
     const gateStatus=$('#account-gate-status');
     if(gateStatus){gateStatus.textContent=message;gateStatus.dataset.error='1';}

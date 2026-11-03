@@ -13,6 +13,7 @@ import {createBattleMotion,graphicsPreset} from './battle-motion.js';
 import {setCanvasQuality,nextQuality,QUALITY_LABELS} from './graphics-display.js';
 import {mountJoystick,combineMovement} from './mobile-controls.js';
 import {textKey as tx,longText as lt} from './locale-sections-v247.js';
+import {localizeServerError} from './locale-unified-v247.js';
 import {displayHero} from './locale-heroes-v245.js';
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -91,7 +92,7 @@ export function mountArena(root){
     }
     if(status==='ended'&&!room?.isPractice&&receiptRecovery.pending)detail+=' · '+lt('Maç kaydı sunucuya yeniden gönderiliyor.','Resending the match receipt to the server.');
     const el=$('#arena-message');el.hidden=status==='active'&&!error;
-    el.innerHTML=title?`<b>${esc(title)}</b><p>${esc(detail)}</p>`:'';
+    el.innerHTML=title?`<b>${esc(title)}</b><p>${esc(localizeServerError(detail))}</p>`:'';
     $('#arena-connection').textContent=error?lt('Bağlantı kesildi','Disconnected'):({idle:lt('Arena hazır','Arena ready'),interrupted:lt('Maç oturumu iptal','Match interrupted'),waiting:lt('Eşleşme bekleniyor','Matchmaking'),active:lt('Canlı düello sürüyor','Live duel in progress'),ended:lt('Maç tamamlandı','Match finished')})[status]||lt('Hazırlanıyor','Preparing');
     $('#arena-match').textContent=room?`${room.isPractice?'BOT ('+trainingLabel(room.botDifficulty)+') · ':''}${room.players.map(p=>p.name).join(' ⚔ ')} · ${Math.max(0,Math.ceil(120-room.elapsed))} ${lt('sn kaldı','sec left')}` :lt('Sunuculu 1v1 · bot antrenmanı veya gerçek oyuncu','Server 1v1 · bot training or real players');
     const you=room?.players.find(p=>p.id===snapshot.you),enemy=room?.players.find(p=>p.id!==snapshot.you);
