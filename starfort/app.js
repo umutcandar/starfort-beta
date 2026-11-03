@@ -72,7 +72,7 @@ const saveGuard=createSaveGuard(localStorage,R.STORAGE_KEY,null);
 let battleSpeed=1, battleFxExpires=0;
 let premiumOwner=null,premiumSnapshot=null,premiumBusy=false,premiumGeneration=0;
 let warfrontOwner=null,warfrontSnapshot=null,warfrontBusy=false,warfrontGeneration=0;
-let shadowOwner=null,shadowSnapshot=null,shadowBusy=false,shadowGeneration=0;
+let shadowOwner=null,shadowSnapshot=null,shadowBusy=false,shadowGeneration=0,shadowReportDismissedAt=null;
 let guildSnapshot=null,guildError='',guildBusy=false,guildAvailable=null;
 let cloudSaveInfo=null,cloudSaveBusy=false;
 let accountBackupInfo=null,accountBusy=false,accountSyncInfo={status:'disconnected'},accountRecovering=false;
@@ -205,7 +205,7 @@ async function refreshShadow(){
  const uid=accountSession()?.user?.id;
  if(!uid||!accountReady()){shadowOwner=null;shadowSnapshot=null;return false;}
  const gen=++shadowGeneration;
- if(shadowOwner!==uid){shadowOwner=uid;shadowSnapshot=null;}
+ if(shadowOwner!==uid){shadowOwner=uid;shadowSnapshot=null;shadowReportDismissedAt=null;}
  try{
   const result=await shadowRequest('get');
   if(gen!==shadowGeneration||accountSession()?.user?.id!==result.identity)return false;
@@ -233,6 +233,7 @@ async function shadowAction(action,target=null,aux=null){
   else if(action==='train')notify('✦ Kahramanın kalıcı uzmanlık rütbesi yükseldi.');
   else if(action==='start')notify('⚔ Yeni sınır seferi başladı.');
   else if(action==='abandon')notify('Gölge Sınırı seferinden çekildin.');
+  if(action==='turn'&&!shadowSnapshot.battle)shadowReportDismissedAt=null;
   if(action==='train'||action==='turn'&&!shadowSnapshot.battle){
    await refreshVillage({preserve:true});
    if(action==='turn')void refreshWarfront();
@@ -306,7 +307,7 @@ async function premiumAction(action,item=null){
 }
 async function refreshVillage({preserve=false}={}){
  const uid=accountSession()?.user?.id;
- if(!uid){villageGeneration++;premiumGeneration++;warfrontGeneration++;shadowGeneration++;shadowOwner=null;shadowSnapshot=null;warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();return false;}
+ if(!uid){villageGeneration++;premiumGeneration++;warfrontGeneration++;shadowGeneration++;shadowOwner=null;shadowSnapshot=null;shadowReportDismissedAt=null;warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();return false;}
  const gen=++villageGeneration;
  if(!preserve||villageOwner!==uid){villageOwner=uid;villageSnapshot=null;accountProgressOwner=uid;accountProgressSnapshot=null;dailyOwner=uid;dailySnapshot=null;render();}
  try{
@@ -553,7 +554,7 @@ function renderContractCards() {
 }
 function renderExpedition() {
   if(villageSignedIn()){
-    workspaceEl.innerHTML=accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow(),selectedRealm,lastCombatDelta,warfrontOwner===accountSession()?.user?.id?warfrontSnapshot:null,shadowOwner===accountSession()?.user?.id?shadowSnapshot:null);
+    workspaceEl.innerHTML=accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow(),selectedRealm,lastCombatDelta,warfrontOwner===accountSession()?.user?.id?warfrontSnapshot:null,shadowOwner===accountSession()?.user?.id?shadowSnapshot:null,shadowReportDismissedAt);
     official3D.sync(workspaceEl,villageView().team,accountProgressSnapshot?.mission,accountProgressOwner);
     return;
   }
@@ -717,7 +718,7 @@ async function accountAction(action){
      notify('Onay e-postası yeniden istendi. Gelen kutunu kontrol et.');return;
    }
    if(action==='logout'){
-     accountSync.stop();await accountSignOut();premiumGeneration++;warfrontGeneration++;shadowGeneration++;shadowOwner=null;shadowSnapshot=null;warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();
+     accountSync.stop();await accountSignOut();premiumGeneration++;warfrontGeneration++;shadowGeneration++;shadowOwner=null;shadowSnapshot=null;shadowReportDismissedAt=null;warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();
      notify('E-posta hesabından çıkış yapıldı. Tekrar giriş yaparak krallığına ulaşabilirsin.');return;
    }
    if(action==='sync'){await accountSync.refresh();return;}
@@ -1036,6 +1037,15 @@ function dispatch(action) {
   if(button.hasAttribute('data-gate-logout')){void accountAction('logout');return;}
   if(!accountReady()){syncAccountGate();return notify('Sunucu hesabın doğrulanmadan oyun açılmaz.');}
   if(ACCOUNT_ONLY&&isLegacyOnlyAction(button))return notify('Misafir ve yerel deneme özellikleri kaldırıldı. Resmî seferleri kullan.');
+  if(button.hasAttribute('data-shadow-jump')){
+    const node=document.querySelector('#shadow-frontier');
+    if(node)node.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+    return;
+  }
+  if(button.hasAttribute('data-shadow-open-armory')){activeView='armory';render();return;}
+  if(button.hasAttribute('data-shadow-dismiss-result')){
+    shadowReportDismissedAt=shadowSnapshot?.lastReport?.at??null;render();return;
+  }
   if(button.hasAttribute('data-shadow-refresh')){void refreshShadow();return;}
   if(button.dataset.shadowTrain){void shadowAction('train',button.dataset.shadowTrain,button.dataset.shadowPath);return;}
   if(button.dataset.shadowStart){void shadowAction('start',button.dataset.shadowStart);return;}

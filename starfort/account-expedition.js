@@ -16,7 +16,7 @@ function progressBadges(account){
  const pieces=[['win','Sefer'],['hero','Kahraman'],['forge','Demirhane'],['maze','Labirent'],['rift','Yarık'],['veteran','Usta']];
  return pieces.map(([k,label])=>`<span><b>${n(account.counters[k]||0)}</b><small>${label}</small></span>`).join('');
 }
-export function accountExpeditionMarkup(game,account,now=Date.now(),selectedRealm=null,combatDelta=null,warfront=null,shadow=null){
+export function accountExpeditionMarkup(game,account,now=Date.now(),selectedRealm=null,combatDelta=null,warfront=null,shadow=null,shadowHiddenAt=null){
  if(!account)return `<section class="guild-panel server-expedition"><h2>Sunucu seferleri</h2><p>Hesap ilerlemesi doğrulanıyor. Yerel kayıtlar buraya aktarılmaz.</p><button class="secondary" data-village-refresh>Yeniden bağlan</button></section>`;
  const cleared=new Set(account.cleared),mission=account.mission,report=account.lastReport;
  const anyMission=mission||shadow?.battle;
@@ -35,7 +35,7 @@ export function accountExpeditionMarkup(game,account,now=Date.now(),selectedReal
   const until=Math.max(0,(mission.cooldowns?.[hero.id]||0)-(mission.turn+1));
   return `<button class="official-hero-ability" data-account-turn="skill:${hero.id}" ${wait||until?'disabled':''} title="${esc(hero.skill)}"><img src="assets/${hero.id}.webp" alt=""><span><b>${esc(hero.name)}</b><small>${until?'Yenileniyor · '+until+' tur':esc(hero.role==='healer'?'Şifa':hero.role==='tank'?'Siper':'Özel saldırı')}</small></span></button>`;
  }).join(''):'';
- const campaignHeader=`<header class="server-progress-header"><div><span class="eyebrow">KOMUTAN HESABI · DOĞRULANMIŞ SEFERLER</span><h2>Kuzey Seferleri</h2><p>Gerçek kaynaklar, savaş sonucu ve ganimet sunucuda hesaplanır. Yerel kayıt veya değiştirilmiş savaş ekranı ödül kazandıramaz.</p></div><div class="official-server-actions"><button class="secondary" data-village-refresh aria-label="Sunucu savaşını yeniden doğrula">↻ Sunucuyu yenile</button><button class="secondary" data-close-view>Köye dön</button></div></header>`;
+ const campaignHeader=`<header class="server-progress-header"><div><span class="eyebrow">KOMUTAN HESABI · DOĞRULANMIŞ SEFERLER</span><h2>Kuzey Seferleri</h2><p>Gerçek kaynaklar, savaş sonucu ve ganimet sunucuda hesaplanır. Yerel kayıt veya değiştirilmiş savaş ekranı ödül kazandıramaz.</p></div><div class="official-server-actions"><button class="secondary" data-village-refresh aria-label="Sunucu savaşını yeniden doğrula">↻ Sunucuyu yenile</button><button class="secondary" data-shadow-jump>🌘 Gölge Sınırı'na git</button><button class="secondary" data-close-view>Köye dön</button></div></header>`;
  const deltaUi=mission&&combatDelta&&!combatDelta.initial&&combatDelta.turn===mission.turn?
   `<div class="official-damage-summary" role="status"><span>⚔ Sunucu hasarı: <b>${n(combatDelta.damage)}</b></span><span>🛡 Alınan hasar: <b>${n(combatDelta.received)}</b></span><small>Doğrulanmış ${n(combatDelta.turn)}. tur</small></div>`:'';
  const operation=operationStatus(mission),act2Mission=secondActMission(mission),act2Boss=actTwoBossStatus(mission);
@@ -43,7 +43,7 @@ export function accountExpeditionMarkup(game,account,now=Date.now(),selectedReal
  const nextAttack={strike:{icon:'⚔',name:'Normal Saldırı',hint:'Normal hasar. İstersen saldırıya geç.'},crush:{icon:'☄',name:'Ağır Darbe',hint:'Siper komutunu kullan: ağır darbeyi büyük ölçüde engellersin.'},shield:{icon:'🛡',name:'Kalkan Savunması',hint:'Özel kahraman yetenekleri düşmanın kalkanını deler. ◈ Aldat da kalkanı aşar.'},drain:{icon:'☾',name:'Can Emme',hint:'Düşman hasar verdiğinde kendini iyileştirir. Güçlü saldırıya yönel.'}}[intent];
  const tacticalTip=mission?(mission.enemyIntent==='crush'?'🛡 Savun: ağır darbeye karşı koy.':mission.enemyIntent==='shield'?'◈ Aldat: savunmayı del; normal saldırı burada zayıf.':mission.enemyIntent==='drain'?'⚔ Hücum et: can emen düşmanı çabuk düşür.':'⚔ Saldır veya ♡ Toparlan: canını koru.'):'';
  const predictedStar=mission?(mission.playerHp/mission.playerMaxHp>=.7&&mission.turn<=(mission.waves===3?18:5)?3:mission.playerHp/mission.playerMaxHp>=.3?2:1):0;
- const shadowPanel=shadowFrontierMarkup(shadow,account,now);
+ const shadowPanel=shadowFrontierMarkup(shadow,account,now,false,{hiddenReportAt:shadowHiddenAt});
  const missionUi=mission?`<article class="server-mission" aria-label="Devam eden sunucu savaşı"><div class="server-mission-header"><span class="eyebrow">⚔ CANLI SUNUCU MUHAREBESİ</span><h3>${esc(mission.mode==='boss'?'Küllerin Kadim Hükümdarı':act2Mission?.stage.name||STAGES[mission.stage-1]?.name||'Yıldız Seferi')} · TUR ${mission.turn+1}</h3>${operation?`<div class="official-operation-current"><strong>GÖREV ${operation.wave} / ${operation.total} · ${esc(operation.title)}</strong><p>${esc(operation.objective)}</p><div class="operation-dots">${Array.from({length:operation.total},(_,i)=>`<span class="${i<operation.wave?'reached':''}"></span>`).join('')}</div></div>`:''}<p>${mission.mode==='boss'?'Haftalık ortak dünya patronu':mission.mode==='act2'?'İkinci perde · Şafağın Ötesi':mission.mode==='maze'?'Labirent katı '+mission.floor:mission.mode==='rift'?'Haftalık Yarık':mission.mode==='veteran'?'Usta seferi '+mission.tier:'Hikâye seferi'} · Takımın her hamlesi sunucuda sonuçlandırılır.</p></div>
  ${officialCombatScene(game,mission)}
  ${deltaUi}
