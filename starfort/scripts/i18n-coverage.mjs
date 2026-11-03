@@ -72,7 +72,9 @@ const userFacingModules=modules.filter(file=>{
 const needsLocalizationReview=userFacingModules.filter(m=>!m.localized||m.rawTurkishCandidates>0);
 const partialSourceCoverage={totalUserFacingModules:userFacingModules.length,needsLocalizationReview:needsLocalizationReview.length,
  examples:needsLocalizationReview.slice(0,30),fullyTranslatedInto14Languages:false};
-const releaseReady=problems.length===0&&needsLocalizationReview.length===0&&false; // Narrative translations have no native review yet.
+const reviewedNarrativeLocales=new Set(['tr','en']); // Existing canonical Turkish + verified English fallback only.
+const missingNativeNarrativeLocales=localeSet.filter(lang=>!reviewedNarrativeLocales.has(lang));
+const releaseReady=problems.length===0&&needsLocalizationReview.length===0&&missingNativeNarrativeLocales.length===0;
 const summary={
  auditedAt:'STARFORT v2.47 unified beta (not production-ready)',
  supportedLanguages:localeSet,
@@ -84,6 +86,7 @@ const summary={
  },
  staticUiCandidates:auditFiles,
  sourceCoverage:partialSourceCoverage,
+ missingNativeNarrativeLocales,
  releaseReady,
  caveat:'Source scanning is advisory and partial. 14-language shared controls DO NOT mean full 14-language narrative. Runtime messages, server errors, guild and native-speaker review remain blocking.',
  errors:problems
