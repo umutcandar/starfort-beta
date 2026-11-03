@@ -1,6 +1,7 @@
 import * as R from './rules.js';
 import {ACCOUNT_ONLY,isLegacyOnlyAction,normalizeOnlineView} from './account-only.js';
 import {createGameAudio} from './audio.js';
+import {createShadowBattleDirector,shadowCombatEffects} from './shadow-battle-director-v240.js';
 import {loadAccountSession,accountSession,accountSignIn,accountSignUp,accountSignOut,accountBackup,accountRequestPasswordReset,accountAcceptAuthHash,accountResendConfirmation,accountUpdatePassword} from './account-auth.js';
 import {createAccountSync} from './account-sync.js';
 import {makeRecoveryPoint,recoveryPoints,loadRecoveryPoint} from './recovery-points.js';
@@ -95,6 +96,7 @@ if(pendingMatchRecovery.pending){
   window.addEventListener('online',()=>void pendingMatchRecovery.flush());
 }
 const gameAudio=createGameAudio();
+const shadowDirector=createShadowBattleDirector({audioActive:()=>gameAudio.enabled});
 let guildToken='';try{guildToken=localStorage.getItem(GUILD_TOKEN_KEY)||''}catch{}
 let trainingCleanup = null;
 let questPanelExpanded=false;
@@ -220,13 +222,17 @@ async function refreshShadow(){
 }
 async function shadowAction(action,target=null,aux=null){
  if(shadowBusy||villageBusy||!accountReady())return;
+ // Unlock AudioContext in the actual click, before asynchronous server verification.
+ if(action==='start'||action==='turn')shadowDirector.unlock();
  shadowBusy=true;
+ let serverFx=[];
  try{
-  const user=accountSession().user.id;
+  const user=accountSession().user.id,previous=shadowSnapshot;
   const response=await shadowRequest(action,{target,aux});
   if(accountSession()?.user?.id!==user)return;
   if(!shadowSnapshot||response.snapshot.revision>=shadowSnapshot.revision){
     shadowOwner=user;shadowSnapshot=response.snapshot;
+    serverFx=shadowCombatEffects(previous,response.snapshot,action);
   }
   if(action==='turn'&&!shadowSnapshot.battle&&shadowSnapshot.lastReport?.won)
     notify('★ Gölge Sınırı zaferi! '+shadowSnapshot.lastReport.stars+' yıldız · Ganimet sunucuda kaydedildi.');
@@ -239,7 +245,7 @@ async function shadowAction(action,target=null,aux=null){
    if(action==='turn')void refreshWarfront();
   }
  }catch(error){notify('Gölge Sınırı: '+error.message);void refreshShadow();}
- finally{shadowBusy=false;render();}
+ finally{shadowBusy=false;render();shadowDirector.play(serverFx);}
 }
 async function refreshWarfront(){
  const uid=accountSession()?.user?.id;
@@ -307,7 +313,7 @@ async function premiumAction(action,item=null){
 }
 async function refreshVillage({preserve=false}={}){
  const uid=accountSession()?.user?.id;
- if(!uid){villageGeneration++;premiumGeneration++;warfrontGeneration++;shadowGeneration++;shadowOwner=null;shadowSnapshot=null;shadowReportDismissedAt=null;warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();return false;}
+ if(!uid){villageGeneration++;premiumGeneration++;warfrontGeneration++;shadowGeneration++;shadowOwner=null;shadowSnapshot=null;shadowReportDismissedAt=null;shadowDirector.dispose();warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();return false;}
  const gen=++villageGeneration;
  if(!preserve||villageOwner!==uid){villageOwner=uid;villageSnapshot=null;accountProgressOwner=uid;accountProgressSnapshot=null;dailyOwner=uid;dailySnapshot=null;render();}
  try{
@@ -554,7 +560,9 @@ function renderContractCards() {
 }
 function renderExpedition() {
   if(villageSignedIn()){
-    workspaceEl.innerHTML=accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow(),selectedRealm,lastCombatDelta,warfrontOwner===accountSession()?.user?.id?warfrontSnapshot:null,shadowOwner===accountSession()?.user?.id?shadowSnapshot:null,shadowReportDismissedAt);
+    workspaceEl.innerHTML=accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow(),selectedRealm,lastCombatDelta,warfrontOwner===accountSession()?.user?.id?warfrontSnapshot:null,shadowOwner===accountSession()?.user?.id?shadowSnapshot:null,shadowReportDismissedAt,
+      {audioEnabled:gameAudio.enabled,voiceEnabled:shadowDirector.voiceEnabled,render3D:shadowDirector.quality3D});
+    shadowDirector.mount(workspaceEl.querySelector('.shadow-active-battle'),shadowSnapshot?.battle);
     official3D.sync(workspaceEl,villageView().team,accountProgressSnapshot?.mission,accountProgressOwner);
     return;
   }
@@ -718,7 +726,7 @@ async function accountAction(action){
      notify('Onay e-postası yeniden istendi. Gelen kutunu kontrol et.');return;
    }
    if(action==='logout'){
-     accountSync.stop();await accountSignOut();premiumGeneration++;warfrontGeneration++;shadowGeneration++;shadowOwner=null;shadowSnapshot=null;shadowReportDismissedAt=null;warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();
+     accountSync.stop();await accountSignOut();premiumGeneration++;warfrontGeneration++;shadowGeneration++;shadowOwner=null;shadowSnapshot=null;shadowReportDismissedAt=null;shadowDirector.dispose();warfrontOwner=null;warfrontSnapshot=null;premiumOwner=null;premiumSnapshot=null;applyPremiumAppearance(null);accountBackupInfo=null;guildSnapshot=null;villageGeneration++;villageOwner=null;villageSnapshot=null;accountProgressOwner=null;accountProgressSnapshot=null;dailyOwner=null;dailySnapshot=null;render();
      notify('E-posta hesabından çıkış yapıldı. Tekrar giriş yaparak krallığına ulaşabilirsin.');return;
    }
    if(action==='sync'){await accountSync.refresh();return;}
@@ -830,7 +838,9 @@ async function cloudSaveAction(action){
 }
 function renderWorkspace() {
   activeView=normalizeOnlineView(activeView);
-  if(activeView!=='campaign'&&!(villageSignedIn()&&activeView==='labyrinth'))official3D.sync(null);
+  if(activeView!=='campaign'&&!(villageSignedIn()&&activeView==='labyrinth')){
+    official3D.sync(null);shadowDirector.dispose();
+  }
   if(trainingCleanup){trainingCleanup();trainingCleanup=null;}
   const open = activeView !== 'keep' && activeView !== 'expedition'; workspaceEl.hidden = !open; inspectorEl.hidden = open; document.querySelector('.app').classList.toggle('panel-open', open); workspaceEl.dataset.view = activeView;
   if (activeView === 'heroes') renderHeroes(); else if (activeView === 'campaign') renderExpedition(); else if (activeView === 'journal') renderJournal(); else if (activeView === 'labyrinth') {if(villageSignedIn())renderExpedition();else workspaceEl.innerHTML=labyrinthMarkup(state);} else if (activeView === 'armory') renderArmory(); else if (activeView === 'shop') renderShop(); else if (activeView === 'guild') renderGuild(); else if (activeView === 'settings') renderSettings(); else if (activeView === 'training') trainingCleanup=mountTraining(workspaceEl); else if(activeView==='arena')trainingCleanup=mountArena(workspaceEl); else if(activeView==='team')trainingCleanup=mountTeamArena(workspaceEl);
@@ -952,7 +962,7 @@ function castHeroSkill(heroId) {
 function render() {
   syncAccountGate();
   if(!accountReady())return;
-  gameAudio.setScene($('#battle-dialog').open||(villageSignedIn()&&accountProgressSnapshot?.mission&&activeView==='campaign')?'combat':'village');
+  gameAudio.setScene($('#battle-dialog').open||(villageSignedIn()&&(accountProgressSnapshot?.mission||shadowSnapshot?.battle)&&activeView==='campaign')?'combat':'village');
   renderResources(); renderNav(); renderPicker(); renderInspector(); renderQuest(); renderWorkspace();
   scene?.update(villageView());
   if ($('#building-dialog').open) renderBuildingDialog();
@@ -1045,6 +1055,23 @@ function dispatch(action) {
   if(button.hasAttribute('data-shadow-open-armory')){activeView='armory';render();return;}
   if(button.hasAttribute('data-shadow-dismiss-result')){
     shadowReportDismissedAt=shadowSnapshot?.lastReport?.at??null;render();return;
+  }
+  if(button.hasAttribute('data-shadow-render-toggle')){
+    const high=shadowDirector.toggleQuality();render();
+    notify(high?'Patronun gerçek 3D modeli seçildi (destek yoksa 2D görünür).':'Hafif 2D patron çizimi seçildi.');
+    return;
+  }
+  if(button.hasAttribute('data-shadow-audio-toggle')){
+    const enabled=gameAudio.toggle();if(enabled)shadowDirector.unlock();else shadowDirector.cancelVoice();
+    render();notify(enabled?'Patron ses efektleri açıldı.':'Savaş sesleri kapatıldı.');
+    return;
+  }
+  if(button.hasAttribute('data-shadow-voice-toggle')){
+    if(!gameAudio.enabled)return notify('Önce patron ses efektlerini aç.');
+    shadowDirector.unlock();const enabled=shadowDirector.toggleVoice();render();
+    if(enabled&&shadowSnapshot?.battle)shadowDirector.play([{type:'enter'}]);
+    notify(enabled?'Türkçe patron konuşmaları açıldı (cihazın konuşma sentezi kullanılır).':'Patron konuşmaları kapatıldı.');
+    return;
   }
   if(button.hasAttribute('data-shadow-refresh')){void refreshShadow();return;}
   if(button.dataset.shadowTrain){void shadowAction('train',button.dataset.shadowTrain,button.dataset.shadowPath);return;}
