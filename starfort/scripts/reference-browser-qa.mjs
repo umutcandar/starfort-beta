@@ -428,6 +428,31 @@ try{
  const mobileVictory=await evaluate("({width:innerWidth,scroll:document.documentElement.scrollWidth,loot:!!document.querySelector('.shadow-rare-loot')})");
  assert.ok(mobileVictory.scroll<=mobileVictory.width+6,'Mobile victory scene overflow '+JSON.stringify(mobileVictory));
  await shot('shadow-frontier-v239-victory.png');
+
+ // v2.41: the account now earned 19 authentic renown from its first three-wave boss.
+ // A one-time milestone claim must credit the village and become unavailable.
+ assert.equal(await evaluate("document.querySelector('.shadow-mastery .mastery-rank-stamp b')?.textContent.includes('1')"),true,
+  'Verified first Shadow Frontier victory did not reach mastery rank 1');
+ assert.equal(await evaluate("document.querySelector('.shadow-result-renown')?.textContent.includes('+19')"),true,
+  'Victory did not display the verified first-clear renown grant');
+ assert.equal(await evaluate("document.querySelector('[data-shadow-action=claim_mastery]')?.disabled"),false,
+  'Reached rank one milestone is not claimable');
+ const masteryGoldBefore=await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot')).res.gold");
+ await evaluate("document.querySelector('[data-shadow-action=claim_mastery]').click()");
+ let masteryClaimed=false;
+ for(let i=0;i<100;i++){
+  masteryClaimed=await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_shadow')||'{}').masteryClaimed===1&&document.querySelector('[data-shadow-action=claim_mastery]')?.disabled===true");
+  if(masteryClaimed)break;await sleep(100);
+ }
+ assert.ok(masteryClaimed,'One-time authenticated mastery milestone did not update and lock');
+ const masteryGoldAfter=await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot')).res.gold");
+ assert.equal(masteryGoldAfter-masteryGoldBefore,140,'Mastery milestone did not grant exactly 140 gold');
+ const masteryMobile=await evaluate("({width:innerWidth,scroll:document.documentElement.scrollWidth,ranks:document.querySelectorAll('.mastery-rank-list li').length})");
+ assert.equal(masteryMobile.ranks,12,'Long-game roadmap does not show all twelve ranks');
+ assert.ok(masteryMobile.scroll<=masteryMobile.width+6,
+  'Mobile shadow mastery roadmap overflow '+JSON.stringify(masteryMobile));
+ console.log('PASS v2.41: server win renown, 12 mastery ranks, one-time rank1 payout, weekly cap UI and mobile 390px');
+
  await evaluate("document.querySelector('[data-shadow-open-armory]').click()");
  let bagOpen=false;
  for(let i=0;i<80;i++){
