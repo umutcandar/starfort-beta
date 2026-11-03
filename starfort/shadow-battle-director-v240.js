@@ -161,8 +161,8 @@ export function createShadowBattleDirector({
    synth.cue(event.type,stage);
   }
   const spoken=allowVoice?(list.find(x=>x.type==='victory')?'defeat':
-    list.find(x=>x.type==='phase'||x.type==='enrage')?'phase':
     list.find(x=>x.type==='enter')?'enter':
+    list.find(x=>x.type==='phase'||x.type==='enrage')?'phase':
     list.find(x=>x.type==='crush'||x.type==='drain')?'special':null):null;
   if(spoken){
    const phrase=shadowVoiceLines(stage)[spoken];lastLine=phrase;
