@@ -229,6 +229,53 @@ try{
  assert.ok(premiumMobile.scroll<=premiumMobile.w+6,'Mobile premium shop horizontal overflow '+JSON.stringify(premiumMobile));
  console.log('PASS v2.36: zero-charge payment lock, authenticated shop, verified free season reward, cosmetic equip and mobile layout');
 
+ // Real Chromium: warfront renders, resource-paid doctrine is queued/refunded,
+ // replayable bounty is claimable only with verified synthetic victory counters.
+ await evaluate("document.querySelector('[data-view=expedition]').click()");
+ let frontReady=false;
+ for(let i=0;i<100;i++){
+  frontReady=await evaluate("!!document.querySelector('.warfront-options')&&!!document.querySelector('[data-warfront-target=assault]')");
+  if(frontReady)break;await sleep(100);
+ }
+ assert.ok(frontReady,'Authenticated warfront command center did not mount');
+ const before=await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot')).res.gold");
+ await evaluate("document.querySelector('[data-warfront-target=assault]').click()");
+ let prepared=false;
+ for(let i=0;i<80;i++){
+  prepared=await evaluate("document.querySelector('.warfront-pending')?.textContent.includes('Hücum Taburu')===true");
+  if(prepared)break;await sleep(100);
+ }
+ assert.ok(prepared,'Verified assault logistics were not queued');
+ const after=await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot')).res.gold");
+ assert.equal(before-after,70,'Assault doctrine did not debit exactly 70 gold');
+ await evaluate("document.querySelector('[data-warfront-action=cancel]').click()");
+ let refunded=false;
+ for(let i=0;i<80;i++){
+  refunded=await evaluate("!!document.querySelector('.warfront-options')&&!document.querySelector('.warfront-pending')");
+  if(refunded)break;await sleep(100);
+ }
+ assert.ok(refunded,'Queued supplies were not canceled');
+ assert.equal(await evaluate("JSON.parse(sessionStorage.getItem('__starfort_qa_snapshot')).res.gold"),before,'Canceled supplies were not refunded');
+ await evaluate("document.querySelector('[data-warfront-refresh]').click()");
+ let dailyBounty=false;
+ for(let i=0;i<80;i++){
+  dailyBounty=await evaluate("!!document.querySelector('[data-warfront-action=claim_daily]:not([disabled])')");
+  if(dailyBounty)break;await sleep(100);
+ }
+ assert.ok(dailyBounty,'Two verified mock wins did not unlock the daily bounty');
+ await evaluate("document.querySelector('[data-warfront-action=claim_daily]').click()");
+ let claimedBounty=false;
+ for(let i=0;i<80;i++){
+  claimedBounty=await evaluate("!!document.querySelector('[data-warfront-action=claim_daily][disabled]')&&document.querySelector('.warfront-bounties')?.textContent.includes('Bu dönem alındı')");
+  if(claimedBounty)break;await sleep(100);
+ }
+ assert.ok(claimedBounty,'Daily bounty claimed twice or failed to update status');
+ const mobileFront=await evaluate("({w:innerWidth,scroll:document.documentElement.scrollWidth,tactical:document.querySelectorAll('.warfront-option').length})");
+ assert.equal(mobileFront.tactical,3,'Warfront tactical choices are missing in real Chromium');
+ assert.ok(mobileFront.scroll<=mobileFront.w+6,'Mobile warfront overflow '+JSON.stringify(mobileFront));
+ console.log('PASS v2.37: authenticated warfront, supply debit/refund, true server-bounty UX and mobile 390px layout');
+
+
 
 }finally{
  if(ws&&ws.readyState===1)ws.close();
