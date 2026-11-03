@@ -92,26 +92,26 @@ export function mountTeamArena(root){
   }
   function status(){const state=snapshot.status,room=snapshot.room;
     const wasLive=root.classList.contains('sf-battle-live');root.classList.toggle('sf-battle-live',state==='active');document.body.classList.toggle('sf-combat-running',state==='active');if(wasLive!==(state==='active'))requestAnimationFrame(resizeCanvas);
-    let headline='',detail='';if(error){headline='BAĞLANTI HATASI';detail=error;}else if(state==='interrupted'){headline='MAÇ OTURUMU İPTAL';detail=snapshot.message||'Sunucu yeniden başladı. Yenilgi yazılmadı; yeniden eşleşebilirsin.';}else if(state==='idle'){headline='SAVAŞI DENE';detail='Botla hemen 2v2 veya kuşatma başlat; gerçek takım için diğer eşleşme düğmelerini kullan.';}else if(state==='waiting'){headline=`${snapshot.mode} İÇİN OYUNCULAR BEKLENİYOR`;detail=snapshot.party?`${snapshot.waiting}/${snapshot.required} oyuncu · Klan takımı sırada. Tüm üyeler bu ekranı açık tutmalı. Rakip klan da aynı formatı seçmeli.`:`${snapshot.waiting}/${snapshot.required} oyuncu hazır. Diğer oyuncular farklı tarayıcı profillerinden aynı modu seçmeli.`;}else if(state==='ended'){headline=room.winner===null?'BERABERE':room.players.find(p=>p.id===snapshot.you)?.team===room.winner?'ZAFER':'MAĞLUBİYET';detail=room.reason==='disconnect'?'Bağlantı kesilmesi nedeniyle maç sona erdi.':room.reason==='siege-victory'?'Kuşatanlar yıldız çekirdeğini ele geçirdi.':room.reason==='siege-defense'?'Savunmacılar 3 dakika boyunca kaleyi korudu.':'Yeni maça girmek için Çık ardından eşleşme seç.';}
+    let headline='',detail='';if(error){headline=lt('BAĞLANTI HATASI','CONNECTION ERROR');detail=error;}else if(state==='interrupted'){headline=lt('MAÇ OTURUMU İPTAL','MATCH INTERRUPTED');detail=snapshot.message||lt('Sunucu yeniden başladı. Yenilgi yazılmadı; yeniden eşleşebilirsin.','The server restarted. No defeat was recorded; you can match again.');}else if(state==='idle'){headline=lt('SAVAŞI DENE','TRY A BATTLE');detail=lt('Botla hemen 2v2 veya kuşatma başlat; gerçek takım için diğer eşleşme düğmelerini kullan.','Start bot 2v2 or siege immediately. Use live matchmaking for a real team battle.');}else if(state==='waiting'){headline=`${snapshot.mode} · ${tt('waiting').toLocaleUpperCase(getLocale())}`;detail=snapshot.party?lt(`${snapshot.waiting}/${snapshot.required} oyuncu · Klan takımı sırada. Tüm üyeler bu ekranı açık tutmalı. Rakip klan da aynı formatı seçmeli.`,`${snapshot.waiting}/${snapshot.required} players · Clan team is queued. All members must keep this screen open; opponents must choose the same format.`):lt(`${snapshot.waiting}/${snapshot.required} oyuncu hazır. Diğer oyuncular farklı tarayıcı profillerinden aynı modu seçmeli.`,`${snapshot.waiting}/${snapshot.required} players ready. Other players need separate browser profiles and the same mode.`);}else if(state==='ended'){headline=room.winner===null?lt('BERABERE','DRAW'):room.players.find(p=>p.id===snapshot.you)?.team===room.winner?tx('victory'):lt('MAĞLUBİYET','DEFEAT');detail=room.reason==='disconnect'?lt('Bağlantı kesilmesi nedeniyle maç sona erdi.','Match ended due to disconnection.'):room.reason==='siege-victory'?lt('Kuşatanlar yıldız çekirdeğini ele geçirdi.','Attackers captured the star core.'):room.reason==='siege-defense'?lt('Savunmacılar 3 dakika boyunca kaleyi korudu.','Defenders held the castle for three minutes.'):lt('Yeni maça girmek için Çık ardından eşleşme seç.','Exit and select matchmaking to play again.');}
     if(state==='ended'&&room&&rewarded!==room.id){rewarded=room.id;const meEnd=room.players.find(p=>p.id===snapshot.you);if(room.isPractice)window.dispatchEvent(new CustomEvent('starfort:practice-result',{detail:{won:room.winner!==null&&meEnd?.team===room.winner,mode:rewardMode(room),matchId:room.id,difficulty:room.botDifficulty||botDifficulty}}));}
-    if(state==='ended'&&!room?.isPractice&&receiptRecovery.pending)detail+=' · Maç kaydı sunucuya yeniden gönderiliyor.';
+    if(state==='ended'&&!room?.isPractice&&receiptRecovery.pending)detail+=' · '+lt('Maç kaydı sunucuya yeniden gönderiliyor.','Resending match receipt to the server.');
     $('#team-overlay').hidden=state==='active'&&!error;$('#team-overlay').innerHTML=headline?`<b>${clean(headline)}</b><p>${clean(detail)}</p>`:'';
-    $('#team-status').textContent=error?'Sunucuya bağlanılamıyor':({idle:'Takım arenası hazır',interrupted:'Maç iptal edildi',waiting:'Eşleşme bekleniyor',active:'CANLI MUHAREBE',ended:'Maç tamamlandı'})[state]||'Hazırlanıyor';
-    $('#team-detail').textContent=room?`${room.guilds?room.guilds.join(' ⚔ '):clean(room.mode)} · ${room.players.map(p=>p.name).join(' · ')}`:'Sunucu doğrulamalı hareket, hasar ve birlik emirleri';
+    $('#team-status').textContent=error?lt('Sunucuya bağlanılamıyor','Cannot connect to server'):({idle:tt('teamStatus'),interrupted:lt('Maç iptal edildi','Match cancelled'),waiting:tt('waiting'),active:lt('CANLI MUHAREBE','LIVE BATTLE'),ended:lt('Maç tamamlandı','Match complete')})[state]||lt('Hazırlanıyor','Preparing');
+    $('#team-detail').textContent=room?`${room.guilds?room.guilds.join(' ⚔ '):clean(room.mode)} · ${room.players.map(p=>p.name).join(' · ')}` :lt('Sunucu doğrulamalı hareket, hasar ve birlik emirleri','Server-verified movement, damage and troop orders');
     $('#team-score-0').textContent=room?.score?.[0]??0;$('#team-score-1').textContent=room?.score?.[1]??0;
     const siege=room?.variant==='siege';
-    $('.team-match-hud .team-blue').textContent=siege?'KUŞATANLAR':'ŞAFAK MUHAFIZLARI';
-    $('.team-match-hud .team-red').textContent=siege?'SAVUNMACILAR':'GECE LEJYONU';
+    $('.team-match-hud .team-blue').textContent=siege?tt('attackers').toLocaleUpperCase(getLocale()):tt('dawn').toLocaleUpperCase(getLocale());
+    $('.team-match-hud .team-red').textContent=siege?tt('defenders').toLocaleUpperCase(getLocale()):tt('dusk').toLocaleUpperCase(getLocale());
     const directive=battleObjective(room,snapshot.you);const card=$('#sf-objective-card');card.hidden=state!=='active';
     card.classList.toggle('is-urgent',directive.urgent);$('#sf-objective-title').textContent=directive.title;$('#sf-objective-detail').textContent=directive.detail;$('#sf-objective-progress').style.width=directive.progress+'%';
     const goal=$('#siege-status');goal.hidden=!siege;
-    if(siege){const r=room.siege.ram;const ramState=!r?'—':r.hp<=0?`Yıkıldı · ${Math.max(0,Math.ceil(r.respawnAt-room.elapsed))} sn`:`${r.hp}/${r.maxHp} · ${r.phase==='ramming'?'Kapıyı dövüyor':r.phase==='advancing'?'İlerliyor':'Muhafız bekliyor'}`;goal.textContent=`⚔ KUŞATMA · Kapı ${room.siege.gate.hp}/${room.siege.gate.maxHp} · Koçbaşı ${ramState} · Kristal ${room.siege.core.hp}/${room.siege.core.maxHp} · Saldıranlar koçbaşına eskort olmalı; savunanlar koçbaşını vurabilir.`;}
+    if(siege){const r=room.siege.ram;const ramState=!r?'—':r.hp<=0?`${lt('Yıkıldı','Destroyed')} · ${Math.max(0,Math.ceil(r.respawnAt-room.elapsed))} ${lt('sn','sec')}`:`${r.hp}/${r.maxHp} · ${r.phase==='ramming'?lt('Kapıyı dövüyor','Ramming gate'):r.phase==='advancing'?lt('İlerliyor','Advancing'):lt('Muhafız bekliyor','Waiting for escort')}`;goal.textContent=`⚔ ${tt('siege')} · ${lt('Kapı','Gate')} ${room.siege.gate.hp}/${room.siege.gate.maxHp} · ${lt('Koçbaşı','Ram')} ${ramState} · ${lt('Kristal','Crystal')} ${room.siege.core.hp}/${room.siege.core.maxHp} · ${lt('Saldıranlar koçbaşına eskort olmalı; savunanlar koçbaşını vurabilir.','Attackers must escort the ram; defenders can destroy it.')}`;}
     const seconds=Math.max(0,180-(room?.elapsed||0));$('#team-clock').textContent=`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
     root.querySelectorAll('[data-team-mode]').forEach(b=>b.disabled=!policy.liveMatchmaking||!token||!['idle','interrupted'].includes(state)||busy);
     root.querySelectorAll('[data-team-party]').forEach(b=>b.disabled=true);
     $('[data-team-leave]').disabled=!token||state==='idle'||busy;
-    root.querySelectorAll('[data-team-bot]').forEach(b=>b.disabled=!token||state==='active'||busy);const me=room?.players.find(p=>p.id===snapshot.you);$('#team-detail').title=room?.isPractice?`Bot zorluğu: ${trainingLabel(room.botDifficulty)} · Derecesiz ve ödülsüz`:'Gerçek oyunculu takım maçı';
-    $('[data-team-burst] small').textContent=me?.burstReady>0?me.burstReady.toFixed(1)+' sn':'Q';$('[data-team-dash] small').textContent=me?.dashReady>0?me.dashReady.toFixed(1)+' sn':'Space';
+    root.querySelectorAll('[data-team-bot]').forEach(b=>b.disabled=!token||state==='active'||busy);const me=room?.players.find(p=>p.id===snapshot.you);$('#team-detail').title=room?.isPractice?`${tt('botDifficulty')}: ${tt(room.botDifficulty)||trainingLabel(room.botDifficulty)} · ${lt('Derecesiz ve ödülsüz','Unranked and no rewards')}` :lt('Gerçek oyunculu takım maçı','Real-player team battle');
+    $('[data-team-burst] small').textContent=me?.burstReady>0?me.burstReady.toFixed(1)+' '+lt('sn','sec'):'Q';$('[data-team-dash] small').textContent=me?.dashReady>0?me.dashReady.toFixed(1)+' '+lt('sn','sec'):'Space';
     const groups=room?.squads.filter(s=>s.ownerId===snapshot.you&&(selectedSquad==='all'||s.type===selectedSquad))||[];
     root.querySelectorAll('[data-team-order]').forEach(b=>b.classList.toggle('selected',groups.length>0&&groups.every(s=>s.order===b.dataset.teamOrder)));
     root.querySelectorAll('[data-squad-select]').forEach(b=>{const isSelected=b.dataset.squadSelect===selectedSquad;b.classList.toggle('selected',isSelected);b.setAttribute('aria-pressed',String(isSelected));});
@@ -119,7 +119,7 @@ export function mountTeamArena(root){
     for(const b of root.querySelectorAll('[data-squad-select]')){
       const filtered=ownSquads.filter(s=>b.dataset.squadSelect==='all'||s.type===b.dataset.squadSelect);
       const hp=filtered.reduce((acc,s)=>acc+s.hp,0),maxHp=filtered.reduce((acc,s)=>acc+s.maxHp,0);
-      b.title=maxHp?`Can ${Math.ceil(hp)}/${maxHp}`:'Birlikler henüz savaş alanında değil';
+      b.title=maxHp?`${lt('Can','Health')} ${Math.ceil(hp)}/${maxHp}`:lt('Birlikler henüz savaş alanında değil','Troops are not on the battlefield yet');
     }
   }
   async function refresh(){if(disposed||busy||!token)return;try{snapshot=acceptMatch(await api('state'));if(Number.isSafeInteger(snapshot.inputSeq))seq=Math.max(seq,snapshot.inputSeq);error='';}catch(e){error=e.message;}if(!disposed)status();}
@@ -139,10 +139,10 @@ export function mountTeamArena(root){
   }
   function selectSquad(value){if(!['all','guard','archer'].includes(value))return;selectedSquad=value;
     root.querySelectorAll('[data-squad-select]').forEach(b=>{const active=b.dataset.squadSelect===value;b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));});
-    $('#sf-squad-feedback').textContent=({all:'Tüm birlikler',guard:'Öncüler',archer:'Okçular'})[value]+' seçildi';
+    $('#sf-squad-feedback').textContent=({all:tt('all'),guard:tt('vanguard'),archer:tt('archers')})[value]+' '+lt('seçildi','selected');
   }
   function order(value){pendingOrder=value;pendingFocus=value==='focus'?selectedTarget:null;pendingSquad=selectedSquad;
-    $('#sf-squad-feedback').textContent=({all:'Tüm birliklere',guard:'Öncülere',archer:'Okçulara'})[selectedSquad]+' '+orders[value].toLocaleLowerCase('tr')+' emri';
+    $('#sf-squad-feedback').textContent=({all:tt('all'),guard:tt('vanguard'),archer:tt('archers')})[selectedSquad]+' · '+tt(({push:'advance',hold:'hold',focus:'focus',follow:'follow'})[value]||value);
   }
   function keyDown(event){if(!root.isConnected||['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName)||event.ctrlKey||event.metaKey)return;const k=event.key.toLowerCase();if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','j','q',' ','1','2','3','4','5','6','7','m'].includes(k))event.preventDefault();keys.add(k);if(!event.repeat){if(k==='q')pendingBurst=true;if(k===' ')pendingDash=true;if('1234'.includes(k)&&k.length===1)order(['follow','push','hold','focus'][Number(k)-1]);if('567'.includes(k)&&k.length===1)selectSquad(['all','guard','archer'][Number(k)-5]);if(k==='m')toggleMinimap();}}
   function toggleMinimap(){minimapVisible=!minimapVisible;localStorage.setItem('starfort:minimap-visible',String(minimapVisible));updateMinimap();}
@@ -150,16 +150,16 @@ export function mountTeamArena(root){
   async function toggleMatchHistory(){
     const panel=root.querySelector('.match-history-content'),button=root.querySelector('[data-match-history]');
     if(!panel.hidden){panel.hidden=true;button.setAttribute('aria-expanded','false');return;}
-    panel.hidden=false;button.setAttribute('aria-expanded','true');panel.textContent='Maç geçmişin yükleniyor…';
+    panel.hidden=false;button.setAttribute('aria-expanded','true');panel.textContent=lt('Maç geçmişin yükleniyor…','Loading match history…');
     try{
       const rows=await guildMatchHistory(10);
       if(disposed)return;
       panel.innerHTML=rows.length?'<ul>'+rows.map(r=>
-        '<li><b>'+clean(({win:'Zafer',loss:'Yenilgi',draw:'Berabere',cancel:'İptal'})[r.outcome]||'Maç')+
+        '<li><b>'+clean(({win:tx('victory'),loss:lt('Yenilgi','Defeat'),draw:lt('Berabere','Draw'),cancel:tx('cancel')})[r.outcome]||tx('battle'))+
         '</b> · '+clean(r.mode||'')+' · '+clean(r.hero_id||'')+
-        ' <small>'+clean(new Date(r.ended_at).toLocaleString('tr-TR'))+'</small></li>'
-      ).join('')+'</ul>':'<p>Henüz kayıtlı gerçek oyuncu maçın yok.</p>';
-    }catch(error){panel.textContent='Maç geçmişine ulaşılamadı: '+error.message;}
+        ' <small>'+clean(new Date(r.ended_at).toLocaleString(getLocale()))+'</small></li>'
+      ).join('')+'</ul>' :`<p>${lt('Henüz kayıtlı gerçek oyuncu maçın yok.','No recorded real-player matches yet.')}</p>`;
+    }catch(error){panel.textContent=lt('Maç geçmişine ulaşılamadı: ','Unable to load match history: ')+error.message;}
   }
   function click(e){const b=e.target.closest('button');if(!b||!root.contains(b))return;if(b.hasAttribute('data-match-history')){void toggleMatchHistory();return;}if(b.dataset.squadSelect){selectSquad(b.dataset.squadSelect);return;}if(b.dataset.teamBot){startBot(Number(b.dataset.teamBot),b.dataset.teamVariant||'flags');return;}if(b.dataset.teamMode){start(Number(b.dataset.teamMode),b.dataset.teamVariant||'flags');return;}if(b.dataset.teamParty){startParty(Number(b.dataset.teamParty),b.dataset.teamVariant||'flags');return;}if(b.hasAttribute('data-team-leave')){leave();return;}if(b.hasAttribute('data-sf-render')){if(policy.graphicsLab)switchRenderMode(renderMode==='3d'?'2d':'3d');return;}if(b.hasAttribute('data-sf-graphics')){updateGraphics(nextQuality(graphics));return;}if(b.hasAttribute('data-team-map')){toggleMinimap();return;}if(b.hasAttribute('data-sf-fullscreen')){if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});else root.requestFullscreen?.().catch(()=>{});return;}if(b.hasAttribute('data-team-attack'))pendingAttack=true;if(b.hasAttribute('data-team-burst'))pendingBurst=true;if(b.hasAttribute('data-team-dash'))pendingDash=true;if(b.dataset.teamOrder)order(b.dataset.teamOrder);}
   function selectEnemy(e){const room=snapshot.room,me=room?.players.find(p=>p.id===snapshot.you);if(!me)return;const rect=canvas.getBoundingClientRect();const point=renderer.mode==='webgl3d'?{x:(e.clientX-rect.left)/rect.width*1000,y:(e.clientY-rect.top)/rect.height*600}:battlePoint(e.clientX,e.clientY,rect,1000,600,getComputedStyle(canvas).objectFit);if(!point)return;const {x:pixelX,y:pixelY}=point;const {x:worldX,y:worldY}=renderer.toWorld(pixelX*10,pixelY*10);const x=worldX/10,y=worldY/10;let best=null,bestDist=4;for(const p of room.players){if(p.team===me.team||p.hp<=0)continue;const d=Math.hypot(p.x-x,p.y-y);if(d<bestDist){best=p;bestDist=d;}}if(best){selectedTarget=best.id;order('focus');}}
