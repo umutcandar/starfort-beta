@@ -95,3 +95,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 - `locale-auth-messages-v247.js`: giriş, kayıt, sıfırlama, e-posta doğrulama, SMTP kota sınırı, geçersiz adres, hatalı şifre, bağlantı kesintisi ve sunucu hesabı durumlarına ait 16 bilinen hata/bilgi anahtarı ×14 dil. Önceki onaylanmamış e-posta uyarısı yanlış başarı vaat etmeden korunur.
 - `locale-v243.js`: bu mesajlar zaten kullanılan `t()` üzerinden ilgili dilde verilir; kullanıcı giriş akışına, Supabase doğrulamasına veya token saklama işlemine dokunulmadı.
 - `locale-auth-messages-v247.test.mjs`: 14 dilde tüm anahtarlar ve hata kodlarından çeviri kontrol edilir. Tanınmayan sunucu hata metinleri hâlâ kaynak dillerinde gelebilir; bu alan global yayın öncesi ayrıca kapatılmalıdır.
+
+## v2.47 çalışma dalı — hesap doğrulama ve yedekleme hata metinleri
+
+- `account-auth.js` dosyasındaki 15 doğrudan Türkçe istisna, artık 14 dilde `auth.validation.*` anahtarlarını kullanıyor. Bunlar geçersiz hesap, yedek biçimi ve 125 KB sınırı, eski kayıt revizyonu, güvenli yönlendirme, zaman aşımına uğrayan kurtarma bağlantısı ve 8–100 karakterlik şifre uyarılarını içerir.
+- Tek `locale-auth-messages-v247.js` sözlüğü böylece toplam **31 hesap durumu/validasyon anahtarını 14 dilde** içerir. JWT, güvenli yönlendirme izin listesi, oturum kontrolü, Supabase RPC ve dosya sınırları değiştirilmedi.
+- Kod testleri, 14 dilde geçersiz e-posta, kısa şifre, hatalı yedek eylemi ve son kullanma tarihli bağlantının aynı mantıksal koşullarda reddedilmesini denetler.
