@@ -188,3 +188,9 @@ Bu v2.47 **taslak PR içinde**, mevcut Türkçe ve İngilizceye ek olarak diğer
 
 - `locale-app-native-v247.js` ana `app.js` dosyasındaki **74 iki dilli sabit ifadeyi 12 ek dilin tamamına** taşır. Bina durumu, kahraman dizilişi, 25 kişilik klan, sohbet, davet kodu, haftalık baskın ve açık beta/test açıklamaları içerir.
 - Kaynakta yeni `local(tr,en)` ifadesi eklenirse `locale-app-native-v247.test.mjs` bire bir kontrolle tespit eder. Hesap kilidi, ödül üretimi veya PvP eşleşme yetkileri değiştirilmedi.
+
+## v2.47 tek paket — tüm 2v2/5v5 takım savaşı sabitleri
+
+- `locale-team-hud-native-v247.js`: `team-view.js` içindeki **85 iki dilli sabit mesajın tamamı ×12 ek dil**, toplam 14 dilde takım savaşı ve arayüz etiketlerini gösterir.
+- Bot/gerçek rakip ayrımı, klan eşleşmesi şartları, sancak/kuşatma hedefleri, koçbaşı, bağlantı kesilmesi, maç kayıtları, kazançsız rekabet uyarıları ve telefon kontrol metinleri dahil.
+- Sözlük yalnızca `bilingual` gösterimine bağlandı; gerçek maç kuralları, 2v2/5v5 büyüklükleri, eylem kimlikleri, ağ işlemleri ve ödül yetkileri değişmedi. Kaynak birebir tarama testi eklendi.

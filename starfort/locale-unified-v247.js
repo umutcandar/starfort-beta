@@ -16,6 +16,7 @@ import {BUILDING_ADVANCED_NATIVE} from './locale-building-advanced-v247.js';
 import {AUXILIARY_NATIVE} from './locale-auxiliary-native-v247.js';
 import {SHADOW_HUD_NATIVE} from './locale-shadow-hud-native-v247.js';
 import {APP_NATIVE} from './locale-app-native-v247.js';
+import {TEAM_HUD_NATIVE} from './locale-team-hud-native-v247.js';
 import {ARENA_NATIVE} from './locale-arena-native-v247.js';
 import {SHELL_TRANSLATIONS} from './locale-shell-v247.js';
 import {WORLD_LANGUAGES} from './locale-world-v247.js';
@@ -66,6 +67,7 @@ function glossary(language){
  for(const [en,native] of Object.entries(AUXILIARY_NATIVE[language]||{}))map.set(en,native);
  for(const [en,native] of Object.entries(SHADOW_HUD_NATIVE[language]||{}))map.set(en,native);
  for(const [en,native] of Object.entries(APP_NATIVE[language]||{}))map.set(en,native);
+ for(const [en,native] of Object.entries(TEAM_HUD_NATIVE[language]||{}))map.set(en,native);
  RANK_NAMES_EN.forEach((en,i)=>map.set(en,RANK_NAMES_NATIVE[language]?.[i]||en));
  caches.set(language,map);return map;
 }
