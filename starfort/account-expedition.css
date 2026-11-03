@@ -179,3 +179,8 @@
 .server-enemy-intent.intent-sunder{border-color:#f0aa7588;background:linear-gradient(135deg,#442d38,#1c283e)}
 .server-enemy-intent.intent-sunder .intent-symbol{color:#ffd09b}
 @media(max-width:510px){.boss-relic-preview{padding:10px 11px}.boss-relic-preview strong{font-size:14px}}
+
+/* v2.53: a distinct warning for the second blow of a server-driven combo. */
+.server-enemy-intent.intent-eclipse{border:1px solid #d8acffab;background:linear-gradient(112deg,#3b274a,#1e3147);box-shadow:inset 0 0 28px #974ec326}
+.server-enemy-intent.intent-eclipse .intent-symbol{color:#ebc7ff;filter:drop-shadow(0 0 7px #af72e8)}
+.story-boss-v250.phase-3:has(+ .official-tactical-briefing) {border-color:#b99cc6}
