@@ -204,3 +204,10 @@
 @media(max-width:430px){.caravan-market{padding:10px}.caravan-head{align-items:start}.caravan-quota{font-size:26px}.caravan-route{padding:9px}}
 
 .caravan-route.recommended{outline:2px solid #edcb8a;outline-offset:1px;background:linear-gradient(145deg,#4a413cba,#15384acc)}
+
+/* v2.55: keep the upgrade CTA entirely reachable above the device safe area. */
+#building-dialog{scroll-padding-block-end:130px;padding-bottom:max(32px,env(safe-area-inset-bottom))}
+#building-dialog .ws-actions{position:sticky;bottom:0;z-index:6;background:linear-gradient(180deg,#132035e3,#101d30 30%);border-top:1px solid #ad936c80;padding:12px 0 max(12px,env(safe-area-inset-bottom))}
+#building-dialog .ws-upgrade-button{min-height:53px;touch-action:manipulation;white-space:normal;line-height:1.45}
+#building-dialog .ws-investment{padding-bottom:14px}
+@media(max-width:730px){#building-dialog{max-height:calc(100dvh - 12px)!important}#building-dialog .ws-investment{padding-bottom:95px}#building-dialog .ws-actions{bottom:0;padding-bottom:15px}}
