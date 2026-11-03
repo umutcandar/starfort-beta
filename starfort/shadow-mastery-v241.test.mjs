@@ -62,7 +62,7 @@ test('milestone panel shows real player progress, 12-rank map and one-time payou
  assert.match(markup,/1<small>\/12/);
  assert.match(markup,/19 \/ 30 itibar/);
  assert.match(markup,/19 \/ 100 itibar/);
- assert.match(markup,/Ustalık ödülün hazır/);
+ assert.match(markup,/rütbe ödülün hazır/);
  assert.match(markup,/140 altın/);
  assert.match(markup,/data-shadow-action="claim_mastery"/);
  assert.equal((markup.match(/<li class=/g)||[]).length,12);
