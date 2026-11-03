@@ -19,7 +19,7 @@ test('four hand-authored boss silhouette families are distinct and self-containe
   assert.match(svg,/<g class="shadow-boss-figure"/);
   assert.match(svg,/class="boss-eyes"/);
   assert.match(svg,/fill="url\(#sfb-v239-/);
-  assert.doesNotMatch(svg,/(?:https?:\/\/|<script|<foreignObject|<image|onload=|eval\()/i);
+  assert.doesNotMatch(svg.replace('xmlns="http://www.w3.org/2000/svg"',''),/(?:https?:\/\/|<script|<foreignObject|<image|onload=|eval\()/i);
   for(const [j,b] of vector.entries())if(i!==j)assert.notEqual(svg,b);
  }
  assert.notEqual(shadowBossArtwork(1,{variant:'card'}),shadowBossArtwork(1,{variant:'battle'}));
