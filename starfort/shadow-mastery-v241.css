@@ -1,0 +1,54 @@
+/* STARFORT v2.41 — visible 12-rank long-game balance and weekly XP budget */
+.shadow-mastery{display:grid;gap:14px;background:linear-gradient(125deg,#293a48ec,#1a2538de);border:1px solid #b7a27c9f;border-radius:13px;padding:17px;color:#f3e2c6}
+.mastery-header{display:grid;gap:5px}
+.mastery-header .eyebrow{font-size:10px;color:#e5c78f}
+.mastery-header h3{font:700 clamp(19px,2.5vw,27px) Georgia,serif;color:#ffdcad;margin:4px 0}
+.mastery-header p{font-size:12px;line-height:1.6;color:#d0d9e2;max-width:73ch;margin:0}
+.mastery-overview{display:grid;grid-template-columns:120px minmax(0,1fr);gap:18px;align-items:stretch}
+.mastery-rank-stamp{border:1px solid #e5ba77a1;box-shadow:inset 0 0 25px #8a692b23;border-radius:13px;background:#473b3c80;padding:15px;display:grid;place-content:center;gap:5px;text-align:center}
+.mastery-rank-stamp b{font:700 42px Georgia,serif;color:#ffe1a8}
+.mastery-rank-stamp b small{font-size:15px;color:#d9b986}
+.mastery-rank-stamp span{font-size:9px;letter-spacing:.09em;font-weight:700;color:#ead5a8}
+.mastery-bars{display:grid;grid-template-rows:auto 9px auto 9px auto;align-content:center;gap:10px}
+.mastery-bar-title{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 12px}
+.mastery-bar-title strong{font:700 13px Georgia,serif;color:#f8e1af}
+.mastery-bar-title span{font-size:11px;color:#d0dfe4}
+.mastery-meter{height:9px;overflow:hidden;background:#101c2d;border:1px solid #5770824b;border-radius:99px}
+.mastery-meter>i{display:block;height:100%;background:linear-gradient(90deg,#a87c48,#f7d69a);border-radius:inherit;transition:width .25s ease}
+.mastery-meter.week>i{background:linear-gradient(90deg,#6394b5,#a8dfdf)}
+.mastery-bars>small{font-size:10px;color:#bad2d9;line-height:1.6}
+.mastery-claim{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#1b3340b8;border:1px solid #aabca17b;padding:12px 13px;border-radius:11px}
+.mastery-claim p{display:grid;gap:6px;margin:0}
+.mastery-claim strong{font:700 14px Georgia,serif;color:#f4e0ad}
+.mastery-claim small{font-size:10px;line-height:1.55;color:#cbd9d7}
+.mastery-claim button{min-width:145px;min-height:38px;flex:0 0 auto;font-size:11px}
+.mastery-roadmap{border:1px solid #627b8a86;background:#172d3b8a;border-radius:10px;overflow:hidden}
+.mastery-roadmap summary{cursor:pointer;list-style-position:inside;padding:12px 14px;font-size:12px;font-weight:700;color:#e7d5b7}
+.mastery-roadmap summary:focus-visible{outline:2px solid #d5b780;outline-offset:-2px}
+.mastery-rank-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;list-style:none;margin:0;padding:0 12px 12px}
+.mastery-rank-list li{display:flex;align-items:center;gap:9px;min-width:0;border:1px solid #6d829581;border-radius:9px;padding:9px;background:#2335499e}
+.mastery-rank-list li.locked{opacity:.65}
+.mastery-rank-list li.earned{border-color:#dfb873b3;background:#52423086}
+.mastery-rank-list li.claimed{border-color:#8ba98891;background:#284d3d7d}
+.mastery-rank-index{display:grid;place-items:center;flex:0 0 27px;width:27px;height:27px;border:1px solid #b29b7a;border-radius:50%;font-size:12px;color:#f0d4a5;font-weight:700}
+.mastery-rank-list li>span:last-child{display:grid;gap:3px;min-width:0}
+.mastery-rank-list b{font:700 12px Georgia,serif;color:#f7e0b5}
+.mastery-rank-list small{font-size:10px;line-height:1.4;color:#c8d4dd}
+.mastery-economy-note{font-size:10px;line-height:1.7;color:#aec8d6;margin:0}
+.shadow-result-renown{margin-top:5px;display:inline-flex;gap:6px;align-items:center;padding:7px 10px;border:1px solid #b6b07ca9;background:#31384ea3;border-radius:9px;color:#f6dca6;font-size:11px;font-weight:700}
+@media(max-width:950px){.mastery-rank-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){
+ .shadow-mastery{padding:11px;gap:11px}
+ .mastery-overview{grid-template-columns:80px minmax(0,1fr);gap:10px}
+ .mastery-rank-stamp{padding:10px 7px}
+ .mastery-rank-stamp b{font-size:30px}
+ .mastery-rank-stamp span{font-size:8px}
+ .mastery-bars{gap:7px}
+ .mastery-bar-title{display:grid;gap:3px}
+ .mastery-bar-title strong{font-size:11px}
+ .mastery-bar-title span{font-size:10px}
+ .mastery-claim{flex-direction:column;align-items:stretch;gap:10px}
+ .mastery-claim button{width:100%;min-width:0}
+ .mastery-rank-list{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){.mastery-meter>i{transition:none}}
