@@ -85,7 +85,7 @@ const summary={
  staticUiCandidates:auditFiles,
  sourceCoverage:partialSourceCoverage,
  releaseReady,
- caveat:'Source scanning is advisory. 14-language shared controls DO NOT mean full 14-language narrative. Runtime messages, server errors, guild and native-speaker review remain blocking.',
+ caveat:'Source scanning is advisory and partial. 14-language shared controls DO NOT mean full 14-language narrative. Runtime messages, server errors, guild and native-speaker review remain blocking.',
  errors:problems
 };
 console.log(JSON.stringify(summary,null,2));
