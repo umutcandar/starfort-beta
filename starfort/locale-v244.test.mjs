@@ -71,7 +71,7 @@ test('every extra language translates account controls and menu, falls back to E
    assert.match(report,/Shadow Frontier Victory/);
    assert.match(report,/Gold/);
    assert.match(shadowVoiceLines(1).enter,/roots/,'unsupported voice tracks fall back to English');
-   assert.match(shadowVoiceStatus().caption,/browser/);
+   assert.equal(shadowVoiceStatus().caption,CORE_COMPLETION_TRANSLATIONS[locale]['audio.voiceNote']);
   }
  }finally{setLocale('tr');}
 });
