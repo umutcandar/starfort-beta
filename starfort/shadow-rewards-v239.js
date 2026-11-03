@@ -30,7 +30,7 @@ export function shadowVictoryMarkup(report,regions=[]){
         <span><small>İLK ZAFER GANİMETİ · ${rarity[item.rarity]||'Özel'}</small><strong>${esc(item.name)}</strong>
           <small>${esc(item.description)}</small></span>
         <button class="secondary" data-shadow-open-armory>Çantada incele</button>
-      </div>`:'<p class="shadow-repeat-note">Kaynaklar sunucuda hesaplandı. Bu sefer için ilk-zafer ekipmanı verilmedi.</p>'}`:''}
+      </div>`:'<p class="shadow-repeat-note">${report.converted===true?"Ekipman için 20 adet çanta sınırına ulaşıldı; ödül 36 Yıldız Özü’ne dönüştürüldü.":"Kaynaklar sunucuda hesaplandı. Bu sefer için ilk-zafer ekipmanı verilmedi."}</p>'}`:''}
       <button class="secondary" data-shadow-dismiss-result>Sonucu kapat</button>
     </div></div></article>`;
 }
