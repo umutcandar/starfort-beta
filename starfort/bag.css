@@ -40,3 +40,19 @@
 @media(max-width:750px){.premium-gear-grid{grid-template-columns:1fr}.premium-gear-card{display:grid;grid-template-columns:100px 1fr;align-items:center;text-align:left}.premium-gear-card .item-art{grid-row:span 4}.premium-gear-card button{grid-column:1/-1}.labyrinth-teaser{flex-wrap:wrap}.labyrinth-teaser button{width:100%}}
 @media(max-width:480px){.bag-hero-display{gap:12px;padding:12px}.bag-hero-art{width:92px;height:124px}.bag-hero-display h3{font-size:24px}.bag-toolbar{align-items:flex-start}.bag-item-grid .item-card{padding:12px}.premium-gear-section{padding:14px}}
 @media(prefers-reduced-motion:reduce){.bag-item-grid .item-card{transition:none}}
+
+/* v2.52: 14-week server-owned relic ascension in the existing equipment pane. */
+.relic-ascension{display:grid;gap:10px;margin:14px 0;padding:15px;border:1px solid #c8aa7775;border-radius:12px;background:linear-gradient(125deg,#222d3f,#1a3035);min-width:0;overflow-wrap:anywhere}
+.relic-ascension-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.relic-ascension-head strong{color:#f7dca2;font:700 18px/1.2 Georgia,serif}
+.relic-ascension-head span{white-space:nowrap;border-radius:20px;background:#dab77f24;padding:5px 9px;font-size:12px;color:#fbe8c6}
+.relic-ascension p{color:#c8d7d9;font-size:12px;line-height:1.65;margin:0}
+.relic-ascension progress{width:100%;height:9px;accent-color:#b9c897;display:block}
+.relic-ascension-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.relic-ascension-facts span{padding:9px;background:#1725339e;border:1px solid #65737870;border-radius:8px;color:#d0dfe0;line-height:1.5;font-size:11px}
+.relic-ascension-facts b{color:#f8d49f}
+.relic-ascension>small{font-size:11px;line-height:1.55;color:#c4d4d2}
+.relic-ascension>button{min-height:43px;white-space:normal}
+.relic-ascension .relic-ascension-blocked{color:#ffca98}
+.bag-v252-ascension{display:inline-block;padding:2px 6px;border-radius:6px;background:#ae8b448a;color:#fff1c8;font-size:10px;font-weight:700}
+@media(max-width:490px){.relic-ascension{padding:11px}.relic-ascension-facts{grid-template-columns:1fr}.relic-ascension-head strong{font-size:15px}}
