@@ -74,7 +74,7 @@ export function shadowBossArtwork(stage,{variant='card',wave=1,intent='strike',e
  <path d="M0 221Q80 197 174 218T420 207" class="boss-fog"/></g>
  <g>${ENVIRONMENTS[idx]}</g>
  <g class="shadow-boss-figure" style="transform-origin:50% 60%">
- ${SCENE_BODY[idx]}</g>
+ ${SCENE_BODY[idx].replaceAll('class="boss-core"','class="boss-core" fill="url(#'+paint+'-core)"')}</g>
  <g class="boss-ground-light"><ellipse cx="211" cy="266" rx="109" ry="13" fill="var(--boss-halo)" opacity=".30"/></g>
  <g class="boss-wave-indicator" aria-hidden="true">${[1,2,3].map(n=>`<circle cx="${191+(n-1)*17}" cy="284" r="4" fill="${n<=w?'var(--boss-accent)':'#263146'}"/>`).join('')}</g>
  </svg>`;
