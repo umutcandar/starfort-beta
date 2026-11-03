@@ -18,6 +18,7 @@ import {SHARED_TRANSLATIONS,SHARED_KEYS} from '../locale-sections-v247.js';
 import {TEAM_TRANSLATIONS,TEAM_KEYS} from '../locale-team-v247.js';
 import {GUILD_TRANSLATIONS,GUILD_KEYS} from '../locale-guild-v247.js';
 import {TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS} from '../locale-training-v247.js';
+import {WORLD_LANGUAGES} from '../locale-world-v247.js';
 const root=resolve(fileURLToPath(new URL('../',import.meta.url)));
 const watch=[
  {file:'armory-v212.js',strict:true},
@@ -57,6 +58,10 @@ function checkPack(pack,keys,name){
  return problems;
 }
 const problems=[...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
+for(const locale of localeSet){
+ const world=WORLD_LANGUAGES[locale];
+ if(!world||Object.keys(world.buildings||{}).length!==7||Object.keys(world.stages||{}).length!==8||Object.keys(world.resources||{}).length!==4)problems.push(locale+': incomplete world content');
+}
 for(const item of ITEMS)if(!ITEM_DISPLAY_EN[item.id]?.name?.trim()||!ITEM_DISPLAY_EN[item.id]?.description?.trim())problems.push('Missing English item: '+item.id);
 for(const key of Object.keys(ITEM_DISPLAY_EN))if(!ITEMS.some(item=>item.id===key))problems.push('Orphaned English item: '+key);
 for(const f of auditFiles)if(f.strict&&f.candidateVisibleTurkishFragments>0)problems.push(f.file+': visible untranslated Turkish fragments');
@@ -86,7 +91,8 @@ const summary={
   sharedNavigation:{keysPerLanguage:SHARED_KEYS.length,languages:localeSet.length},
   teamBattle:{keysPerLanguage:TEAM_KEYS.length,languages:localeSet.length},
   guild:{keysPerLanguage:GUILD_KEYS.length,languages:localeSet.length},
-  trainingEvents:{keysPerLanguage:TRAINING_EVENT_KEYS.length,languages:localeSet.length}, 
+  trainingEvents:{keysPerLanguage:TRAINING_EVENT_KEYS.length,languages:localeSet.length},
+  world:{buildings:7,storyChapters:8,resources:4,languages:localeSet.length}, 
   dailyRewards:{keysPerLanguage:REWARD_MESSAGE_KEYS.length,languages:localeSet.length},
   gearEnglishFallback:{translated:ITEMS.filter(x=>Boolean(ITEM_DISPLAY_EN[x.id])).length,canonical:ITEMS.length}
  },
