@@ -1,6 +1,7 @@
 /** Server-backed premium wardrobe and free season path. Never store purchase state in a browser save. */
 import {SUPABASE_URL,SUPABASE_KEY} from './online-config.js';
 import {freshAccountSession} from './account-auth.js';
+import {fm} from './first-minutes-v255.js';
 import {textKey as tx,longText as lt} from './locale-sections-v247.js';
 import {formatNumber,getLocale} from './locale-v243.js';
 import {nativePremiumItem} from './locale-premium-v247.js';
@@ -89,13 +90,13 @@ export function premiumStoreMarkup(data,{loading=false,busy=false}={}){
  if(loading||!data)return `<section class="premium-live"><h3>${tx('premiumTitle')}</h3><p>${lt('Sunucuya bağlı mağaza hesabı doğrulanıyor.','Verifying your server-linked store account.')}</p><button class="secondary" data-premium-refresh>${tx('refresh')}</button></section>`;
  const owned=new Set(data.owned),season=data.season;
  const itemRows=PREMIUM_COSMETICS.map(o=>{
-  const has=owned.has(o.id),active=data.equipped[o.kind]===o.id,afford=data.crystals>=o.price;
+  const has=owned.has(o.id),active=data.equipped[o.kind]===o.id;
   return `<article class="premium-live-item ${active?'equipped':''}">
    <div class="premium-live-icon" aria-hidden="true">${({castle:'♜',cape:'♟',banner:'⚑',victory:'✦'})[o.kind]}</div>
    <span class="eyebrow">${displayPremiumKind(o.kind)} · ${o.price} ✦</span><h4>${esc(displayPremiumItem(o).name)}</h4><p>${esc(displayPremiumItem(o).detail)}</p>
-   <button class="${active?'secondary':has||afford?'primary':'secondary'}"
+   <button class="${active?'secondary':has?'primary':'secondary'}"
     data-premium-action="${active?'unequip':has?'equip':'purchase'}"
-    data-premium-item="${active?o.kind:o.id}" ${busy||!has&&!afford?'disabled':''}>${active?tx('unequip'):has?tx('equip'):'✦ '+o.price+' '+lt('Kristal','Crystals')}</button>
+    data-premium-item="${active?o.kind:o.id}" ${busy||!has?'disabled aria-disabled="true"':''}>${active?tx('unequip'):has?tx('equip'):fm('purchaseClosed')}</button>${!has?`<small class="premium-availability">${fm('shopOnly')}</small>`:''}
    </article>`;
  }).join('');
  const free=FREE_SEASON.map(o=>{
@@ -106,7 +107,7 @@ export function premiumStoreMarkup(data,{loading=false,busy=false}={}){
     <button class="${earned&&!claimed||claimed&&!active?'primary':'secondary'}"
      data-premium-action="${!claimed?'claim':active?'unequip':'equip'}"
      data-premium-item="${!claimed?o.id:active?o.kind:o.item}"
-     ${busy||!earned&&!claimed?'disabled':''}>${!claimed?tx('claim'):active?tx('unequip'):has?tx('equip'):tx('claimed')}</button></article>`;
+     ${busy||!earned&&!claimed?'disabled aria-disabled="true"':''}>${!claimed?tx('claim'):active?tx('unequip'):has?tx('equip'):tx('claimed')}</button>${!earned&&!claimed?`<small class="premium-availability">${fm('notReady')}: ${season.wins} / ${o.wins} ${tx('wins')}</small>`:''}</article>`;
  }).join('');
  const ownedNames=data.owned.map(id=>displayPremiumItem(PREMIUM_ALL_ITEMS.find(x=>x.id===id))?.name||id);
  return `<section class="premium-live" aria-label="${lt('Hesaba bağlı mağaza','Account-linked store')}">
