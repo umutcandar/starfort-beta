@@ -28,6 +28,12 @@
    thresholds:[2,5,10,18],freeClaims:[],premium:false,premiumClaims:[]},applied:'get'});
  const premiumRead=()=>{try{return JSON.parse(sessionStorage.getItem('__starfort_qa_premium'))||premiumInitial()}catch{return premiumInitial()}};
  const premiumWrite=x=>{sessionStorage.setItem('__starfort_qa_premium',JSON.stringify(x));return x;};
+ const warfrontInitial=()=>({ok:true,source:'server-warfront',pending:null,revision:1,wins:read().counters.win,
+  dailyWins:read().counters.win,weeklyWins:read().counters.win,
+  day:new Date().toISOString().slice(0,10),week:'2026-45',
+  dailyClaimed:false,weeklyClaimed:false,chestsClaimed:0,nextChestWins:3,lastLoot:null});
+ const warfrontRead=()=>{try{return JSON.parse(sessionStorage.getItem('__starfort_qa_warfront'))||warfrontInitial()}catch{return warfrontInitial()}};
+ const warfrontWrite=d=>{sessionStorage.setItem('__starfort_qa_warfront',JSON.stringify(d));return d;};
  const realFetch=window.fetch.bind(window);
  window.fetch=(input,options={})=>{
   const url=String(input?.url||input);
@@ -54,9 +60,12 @@
     d.heroes[payload.p_target]++;d.res.gold-=60;d.counters.hero++;
    }
    if(a==='mission_start'&&payload.p_target==='1'&&!d.mission){
+    const f=warfrontRead();
+    if(f.pending){f.revision++;warfrontWrite({...f,pending:null});}
+
     d.mission={mode:'story',stage:1,wave:1,waves:3,turn:0,waveTurn:0,tier:0,floor:0,
      startedAt:now(),lastTurnAt:now()-5000,power:268,enemyHp:130,enemyMaxHp:130,
-     playerHp:420,playerMaxHp:420,enemyIntent:'strike',lastAction:'Başladı',cooldowns:{}};
+     playerHp:420,playerMaxHp:420,enemyIntent:'strike',lastAction:'Başladı',cooldowns:{},doctrine:f.pending||'none',lastRallyTurn:0};
    }
    if(a==='mission_turn'&&d.mission){
     d.mission.turn++;d.mission.waveTurn++;d.mission.lastAction=payload.p_aux;
@@ -70,6 +79,41 @@
     }
    }
    return ok(write(d));
+  }
+  if(path.includes('/rest/v1/rpc/sfb_warfront_api')){
+   if(!String(options.headers?.Authorization||'').startsWith('Bearer qa.synthetic.'))return ok({message:'unauthorized'},401);
+   const d=warfrontRead(),a=payload.p_action,target=payload.p_target,v=read();
+   d.wins=v.counters.win;
+   d.dailyWins=v.counters.win;d.weeklyWins=v.counters.win;
+   if(a==='prepare'){
+    const costs={assault:{gold:70,wood:50},bulwark:{wood:30,stone:65},recon:{gold:90,aether:12}};
+    const cost=costs[target];
+    if(!cost||d.pending||v.mission||Object.entries(cost).some(([k,n])=>v.res[k]<n))
+     return ok({message:'İkmal uygun değil.'},400);
+    Object.entries(cost).forEach(([k,n])=>v.res[k]-=n);
+    d.pending=target;d.revision++;v.revision++;write(v);
+   }else if(a==='cancel'){
+    if(!d.pending||v.mission)return ok({message:'İkmal iptal edilemez.'},400);
+    const c={assault:{gold:70,wood:50},bulwark:{wood:30,stone:65},recon:{gold:90,aether:12}}[d.pending];
+    Object.entries(c).forEach(([k,n])=>v.res[k]+=n);
+    d.pending=null;d.revision++;v.revision++;write(v);
+   }else if(a==='claim_daily'){
+    if(d.dailyClaimed||d.dailyWins<2)return ok({message:'Günlük hedef tamamlanmadı.'},400);
+    d.dailyClaimed=true;d.revision++;v.revision++;v.res.gold+=160;write(v);
+   }else if(a==='claim_weekly'){
+    if(d.weeklyClaimed||d.weeklyWins<8)return ok({message:'Haftalık hedef tamamlanmadı.'},400);
+    d.weeklyClaimed=true;d.revision++;v.revision++;v.res.gold+=580;write(v);
+   }else if(a==='claim_chest'){
+    const targets=[3,8,15,24],need=d.chestsClaimed<4?targets[d.chestsClaimed]:24+(d.chestsClaimed-3)*12;
+    if(d.wins<need)return ok({message:'Sandık zafer hedefi tamamlanmadı.'},400);
+    const drops=['ward_mail','ember_blade','star_lens','moonheart','ember_guard','star_spear','guardian_seal','starbreaker'];
+    const tiers=['uncommon','rare','epic','legendary','rare','rare','epic','legendary'];
+    const i=d.chestsClaimed<4?d.chestsClaimed:4+(d.chestsClaimed-4)%4;
+    v.inventory[drops[i]]=(v.inventory[drops[i]]||0)+1;
+    d.chestsClaimed++;d.revision++;v.revision++;d.lastLoot={chest:d.chestsClaimed,item:drops[i],rarity:tiers[i],converted:false};write(v);
+   }
+   d.nextChestWins=d.chestsClaimed<4?[3,8,15,24][d.chestsClaimed]:24+(d.chestsClaimed-3)*12;
+   return ok(warfrontWrite({...d,applied:a}));
   }
   if(path.includes('/rest/v1/rpc/sfb_premium_api')){
    if(!String(options.headers?.Authorization||'').startsWith('Bearer qa.synthetic.'))return ok({message:'unauthorized'},401);
