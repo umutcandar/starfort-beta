@@ -128,7 +128,7 @@ const summary={
  missingNativeNarrativeLocales,
  pendingHumanReviewLocales,
  releaseReady,
- caveat:'Core campaign, hero, equipment, and cosmetic dictionaries now cover all fourteen languages. This is NOT full-game translation: runtime messages, server errors, other UI panels, voice scripts, RTL layout and native-speaker review remain blocking.',
+ caveat:'Core campaign, hero, equipment, and cosmetic dictionaries now cover all fourteen languages. This is NOT full-game translation: partial UI coverage remains; runtime messages, server errors, other UI panels, voice scripts, RTL layout and native-speaker review remain blocking.',
  errors:problems
 };
 console.log(JSON.stringify(summary,null,2));
