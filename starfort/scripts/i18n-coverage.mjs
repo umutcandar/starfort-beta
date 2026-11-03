@@ -14,6 +14,7 @@ import {SHELL_KEYS,SHELL_TRANSLATIONS,auditShellTranslations} from '../locale-sh
 import {AUTH_MESSAGE_KEYS,AUTH_MESSAGES,auditAuthMessages} from '../locale-auth-messages-v247.js';
 import {SOCIAL_KEYS,auditSocialTranslations} from '../locale-social-v248.js';
 import {LONG_ROAD_KEYS,auditLongRoadLanguages} from '../long-horizon-v249.js';
+import {BOSS_V250_KEYS,auditBossV250Languages} from '../story-boss-v250.js';
 import {CORE_COMPLETION_KEYS,CORE_COMPLETION_TRANSLATIONS,auditCoreCompletion} from '../locale-core-completion-v247.js';
 import {CHRONICLE_UI_KEYS,auditChronicleTranslations} from '../locale-chronicle-v247.js';
 import {CARAVAN_UI_KEYS,auditCaravanTranslations} from '../locale-caravan-v247.js';
@@ -96,7 +97,7 @@ function checkPack(pack,keys,name){
  }
  return problems;
 }
-const problems=[...auditLongRoadLanguages(localeSet),...auditSocialTranslations(localeSet),...auditDisciplineText(),...auditAppStatic(),...auditSceneCopy(),...auditShadowVoiceNative(),...auditBuildingAdvanced(),...auditBuildingNative(),...auditWarfrontNative(),...auditPremiumStoreNative(),...auditMazePhrases(),...auditShadowStageNative(),...auditUnified(),...auditRealmUI(),...auditOfficialTranslations(),...auditCaravanTranslations(),...auditChronicleTranslations(),...auditCoreCompletion(localeSet),...auditAuthMessages(localeSet),...checkPack(AUTH_MESSAGES,AUTH_MESSAGE_KEYS,'auth-messages'),...auditShellTranslations(localeSet),...auditActOne(),...auditActTwo(),...auditHeroLore(),...auditItemLore(),...auditPremiumNative(),...auditWarfrontDoctrine(),...checkPack(ACT_TWO_GATES,ACT_TWO_GATE_KEYS,'act2-gates'),...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
+const problems=[...auditBossV250Languages(localeSet),...auditLongRoadLanguages(localeSet),...auditSocialTranslations(localeSet),...auditDisciplineText(),...auditAppStatic(),...auditSceneCopy(),...auditShadowVoiceNative(),...auditBuildingAdvanced(),...auditBuildingNative(),...auditWarfrontNative(),...auditPremiumStoreNative(),...auditMazePhrases(),...auditShadowStageNative(),...auditUnified(),...auditRealmUI(),...auditOfficialTranslations(),...auditCaravanTranslations(),...auditChronicleTranslations(),...auditCoreCompletion(localeSet),...auditAuthMessages(localeSet),...checkPack(AUTH_MESSAGES,AUTH_MESSAGE_KEYS,'auth-messages'),...auditShellTranslations(localeSet),...auditActOne(),...auditActTwo(),...auditHeroLore(),...auditItemLore(),...auditPremiumNative(),...auditWarfrontDoctrine(),...checkPack(ACT_TWO_GATES,ACT_TWO_GATE_KEYS,'act2-gates'),...checkPack(ARMORY_TRANSLATIONS,ARMORY_KEYS,'armory'),...checkPack(REWARD_TRANSLATIONS,REWARD_MESSAGE_KEYS,'rewards'),...checkPack(SHARED_TRANSLATIONS,SHARED_KEYS,'shared'),...checkPack(TEAM_TRANSLATIONS,TEAM_KEYS,'team'),...checkPack(GUILD_TRANSLATIONS,GUILD_KEYS,'guild'),...checkPack(TRAINING_EVENT_TRANSLATIONS,TRAINING_EVENT_KEYS,'training')];
 for(const locale of localeSet){
  const itemNames=ITEM_NAMES[locale];
  if(!itemNames||Object.keys(itemNames.names||{}).length!==19||Object.keys(itemNames.sets||{}).length!==3)problems.push(locale+': incomplete native item and set names');
@@ -142,6 +143,7 @@ const summary={
   knownAccountMessages:{keysPerLanguage:AUTH_MESSAGE_KEYS.length,languages:localeSet.length},
   googleAppleAuth:{keysPerLanguage:SOCIAL_KEYS.length,languages:localeSet.length,serverProvidersRequired:true},
   longTermRoad:{keysPerLanguage:LONG_ROAD_KEYS.length,languages:localeSet.length,readOnly:true},
+  versionedBossPhases:{keysPerLanguage:BOSS_V250_KEYS.length,languages:localeSet.length,serverResolved:true},
   completedCoreSettings:{newNativeKeys:CORE_COMPLETION_KEYS.length,additionalLanguages:12},
   commanderChronicle:{rankNamesPerLanguage:30,screenKeysPerLanguage:CHRONICLE_UI_KEYS.length,languages:localeSet.length},
   caravan:{routesWithNativeCopy:3,screenKeysPerLanguage:CARAVAN_UI_KEYS.length,languages:localeSet.length},
