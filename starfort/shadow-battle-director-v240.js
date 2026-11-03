@@ -81,7 +81,7 @@ function createVoice(storage){
   speak,cancel(){if(canSpeak())speechSynthesis.cancel();}};
 }
 function synthSound(audioActive){
- let ctx=null,out=null,disposed=false;
+ let ctx=null,out=null,disposed=false,ambientTimer=null,ambientStage=0,ambientBeat=0;
  function unlock(){
   if(disposed||!audioActive()||typeof window==='undefined')return false;
   const C=window.AudioContext||window.webkitAudioContext;if(!C)return false;
@@ -116,7 +116,30 @@ function synthSound(audioActive){
   else if(type==='victory'){[261,330,392,523].forEach((n,i)=>ping(n,.38,{wave:'triangle',delay:i*.12,level:.13}));}
   else if(type==='defeat'){ping(180,.8,{wave:'triangle',level:.11,slide:.40});}
  }
- return {unlock,cue,destroy(){disposed=true;ctx?.close?.();ctx=null;out=null;}};
+ const AMBIENT=[
+  [110,146.83,164.81,220],
+  [130.81,174.61,196,261.63],
+  [98,123.47,146.83,196],
+  [82.41,110,138.59,164.81]
+ ];
+ function stopAmbient(){
+  if(ambientTimer!==null){clearInterval(ambientTimer);ambientTimer=null}
+  ambientStage=0;
+ }
+ function startAmbient(stage){
+  if(ambientStage===stage&&ambientTimer!==null)return;
+  stopAmbient();
+  if(!audioActive()||typeof setInterval!=='function')return;
+  ambientStage=stage;ambientBeat=0;
+  // A sparse original boss-specific drone, not an imported copyrighted track.
+  ambientTimer=setInterval(()=>{
+   if(disposed||!audioActive()||globalThis.document?.hidden)return;
+   const notes=AMBIENT[clamp(ambientStage-1,0,3)],idx=ambientBeat++%notes.length;
+   ping(notes[idx],1.25,{wave:'sine',level:.035,delay:0});
+   ping(notes[(idx+2)%4]*.5,1.8,{wave:'triangle',level:.020,delay:.16});
+  },4400);
+ }
+ return {unlock,cue,startAmbient,stopAmbient,destroy(){disposed=true;stopAmbient();ctx?.close?.();ctx=null;out=null;}};
 }
 function renderFx(root,event,reduced){
  if(!root||!event||!VALID_EVENTS.includes(event.type))return;
@@ -140,8 +163,9 @@ export function createShadowBattleDirector({
  try{quality3D=storage?.getItem('starfort:shadow-render-v240')!=='2d'}catch{}
  function stopModel(){model?.destroy();model=null;root=null;}
  function mount(container,battle){
-  stopModel();if(disposed||!container||!battle)return false;
+  stopModel();if(disposed||!container||!battle){synth.stopAmbient();return false;}
   root=container;stage=stageOk(battle.stage)?battle.stage:1;
+  synth.startAmbient(stage);
   const canvas=root.querySelector('[data-shadow-3d-canvas]');
   if(!canvas||!quality3D)return false;
   model=createShadow3D(canvas,{stage,reduceMotion:reduceMotion()});
@@ -178,5 +202,5 @@ export function createShadowBattleDirector({
    return quality3D;},get voiceEnabled(){return voice.enabled},
   get voiceAvailable(){return voice.available},get lastLine(){return lastLine},
   toggleVoice(){return voice.set(!voice.enabled)},cancelVoice(){voice.cancel();},
-  dispose(){stopModel();voice.cancel();},destroy(){disposed=true;stopModel();voice.cancel();synth.destroy();}};
+  dispose(){stopModel();voice.cancel();synth.stopAmbient();},destroy(){disposed=true;stopModel();voice.cancel();synth.destroy();}};
 }
