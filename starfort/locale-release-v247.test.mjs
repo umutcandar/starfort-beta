@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 const cwd=fileURLToPath(new URL('.',import.meta.url));
 const run=(flag)=>spawnSync(process.execPath,['scripts/i18n-coverage.mjs',flag],{cwd,encoding:'utf8',maxBuffer:4*1024*1024});
@@ -31,4 +32,21 @@ test('a partially localized product cannot pass the global release gate',()=>{
  assert.ok(report.sourceCoverage.retiredLegacyExcluded.includes('battle-view.js'),'Retired guest battle stays excluded only while account-only boundary remains active');
  assert.match(report.caveat,/NOT full-game translation/);
  assert.equal(report.releaseReady,false);
+});
+
+test('v2.47 unified beta build metadata, single 14-language picker and account-only entry stay consistent',()=>{
+ const pkg=JSON.parse(readFileSync(new URL('./package.json',import.meta.url),'utf8'));
+ const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
+ assert.match(pkg.version,/^2\\.47\\.\\d+-beta\\.\\d+$/);
+ const label='v'+pkg.version.replace(/-beta\\.\\d+$/,'')+' Beta';
+ assert.ok(html.includes('<title>Starfort '+label),'HTML title must identify the shipped beta');
+ assert.ok(html.includes('>'+label+'</span>'),'HUD version badge must identify the shipped beta');
+ assert.doesNotMatch(html,/v2\\.46\\.0 Beta/,'Outdated build labels are forbidden');
+ const selector=html.match(/<select data-language-picker[^>]*>([\\s\\S]*?)<\\/select>/)?.[1];
+ assert.ok(selector,'Language picker must be present on account gate');
+ const languages=[...selector.matchAll(/<option value="([^"]+)"/g)].map(m=>m[1]);
+ assert.equal(languages.length,14,'All 14 supported locales must ship together');
+ assert.equal(new Set(languages).size,14,'Duplicate locale choices are forbidden');
+ assert.match(html,/<body class="account-locked">/);
+ assert.match(html,/id="starfort-gate-form"/);
 });
