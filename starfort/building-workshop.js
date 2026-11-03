@@ -65,7 +65,7 @@ export function buildingWorkshopMarkup(state,selectedId,{icon,number=nice,now=Da
        ${plan.maxed?'':`<div class="ws-resource-list">${resources}</div><div class="ws-funding"><div><b>Hazırlık durumu</b><strong>%${progress}</strong></div><div class="ws-bar"><i style="width:${progress}%"></i></div></div>`}
        <p class="ws-guidance" role="status">${guidance}</p>
        ${job? `<div class="ws-queue"><b>⚒ Tek inşaat ustası</b><span>${roadmap.plans.find(p=>p.id===job.id)?.building.name||'Yapı'} · ${job.ready?'Tamamlanmaya hazır':durationLabel(job.remainingMs)+' kaldı'}</span></div>`:''}
-       <div class="ws-actions">${actions}${!plan.maxed&&Object.values(plan.pending).some(n=>n>0)&&status!=='collect'?'<button class="secondary ws-collect-button" data-collect>✧ Biriken kaynakları topla</button>':''}</div>
+       <div class="ws-actions">${actions}${state.serverVillage?'<button class="secondary ws-expedition-earn" data-warfront-open>⚔ Cephe Karargâhı · Sefer, sandık ve ikmal ödülleri</button>':''}${!plan.maxed&&Object.values(plan.pending).some(n=>n>0)&&status!=='collect'?'<button class="secondary ws-collect-button" data-collect>✧ Biriken kaynakları topla</button>':''}</div>
        <small class="ws-fair-note">${state.serverVillage?'Bütün köy kaynakları, ustalık ve inşaat sunucudadır; yerel savaş/çanta ödülleri buna eklenmez.':'Hesapsız köy yerel denemedir; buluttaki ekonomiye aktarılmaz.'} İlk yükseltme anında tamamlanır. 3–20. seviyeler tek ustayla, dakikalardan günlere uzayan gerçek inşaatlardır. 1–3 yıldızlı sefer başarıları ileri aşamaları açar. Para ile hızlandırma yok.</small>
      </aside>
    </div>
