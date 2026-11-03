@@ -27,6 +27,8 @@ test('a partially localized product cannot pass the global release gate',()=>{
  assert.equal(report.pendingHumanReviewLocales.length,14);
  assert.equal(report.sourceCoverage.fullyTranslatedInto14Languages,false);
  assert.ok(report.sourceCoverage.totalUserFacingModules>0);
+ assert.equal(report.sourceCoverage.needsLocalizationReview,0,'Active source modules have no unresolved static Turkish/locale import flags');
+ assert.ok(report.sourceCoverage.retiredLegacyExcluded.includes('battle-view.js'),'Retired guest battle stays excluded only while account-only boundary remains active');
  assert.match(report.caveat,/NOT full-game translation/);
  assert.equal(report.releaseReady,false);
 });
