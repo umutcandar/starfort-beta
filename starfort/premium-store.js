@@ -94,7 +94,7 @@ export function premiumStoreMarkup(data,{loading=false,busy=false}={}){
    <span class="eyebrow">${displayPremiumKind(o.kind)} · ${o.price} ✦</span><h4>${esc(displayPremiumItem(o).name)}</h4><p>${esc(displayPremiumItem(o).detail)}</p>
    <button class="${active?'secondary':has||afford?'primary':'secondary'}"
     data-premium-action="${active?'unequip':has?'equip':'purchase'}"
-    data-premium-item="${active?o.kind:o.id}" ${busy||!has&&!afford?'disabled':''}>${active?tx('unequip'):has?tx('equip'):'✦ '+o.price+' '+lt('Kristal','Crystals')'}</button>
+    data-premium-item="${active?o.kind:o.id}" ${busy||!has&&!afford?'disabled':''}>${active?tx('unequip'):has?tx('equip'):'✦ '+o.price+' '+lt('Kristal','Crystals')}</button>
    </article>`;
  }).join('');
  const free=FREE_SEASON.map(o=>{
