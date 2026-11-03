@@ -71,7 +71,7 @@ test('every extra language translates account controls and menu, falls back to E
    assert.ok(mastery.includes(bilingual('Sınır Ustalığı','Frontier Mastery')));
    const report=shadowVictoryMarkup({won:true,stage:1,stars:3,turns:8,renown:10,reward:{gold:420}},[]);
    assert.match(report,/Shadow Frontier Victory/);
-   assert.match(report,/Gold/);
+   assert.ok(report.includes(bilingual('Altın','Gold')),'reward resources must follow the selected locale');
    assert.match(shadowVoiceLines(1).enter,/roots/,'unsupported voice tracks fall back to English');
    assert.equal(shadowVoiceStatus().caption,CORE_COMPLETION_TRANSLATIONS[locale]['audio.voiceNote']);
   }
