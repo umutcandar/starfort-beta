@@ -33,7 +33,12 @@ try{
  ws=new WebSocket(tab.webSocketDebuggerUrl);
  await new Promise((res,rej)=>{ws.addEventListener('open',res,{once:true});ws.addEventListener('error',rej,{once:true})});
  ws.addEventListener('message',e=>{
-  const obj=JSON.parse(String(e.data)),p=pending.get(obj.id);if(!p)return;
+  const obj=JSON.parse(String(e.data));
+  if(obj.method==='Runtime.consoleAPICalled'){
+   const msg=(obj.params?.args||[]).map(a=>String(a.value||a.description||'')).join(' ');
+   if(msg.includes('3D')||msg.includes('rigged')||msg.includes('WebGL'))console.warn('[QA 3D event]',msg.slice(0,320));
+  }
+  const p=pending.get(obj.id);if(!p)return;
   pending.delete(obj.id);obj.error?p.reject(Error(obj.error.message)):p.resolve(obj.result);
  });
  const cdp=(method,params={})=>new Promise((res,rej)=>{
