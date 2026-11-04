@@ -52,10 +52,10 @@ test('mobile material batching reduces GPU draw calls without flattening articul
 test('rendered effect and hero equipment remain separate from server reward/action logic',()=>{
  const equip=src('./official-rigged-equipment-v266.js');
  const render=src('./official-rigged-three-v264.entry.js');
- assert.match(render,/createRiggedEquipment\(root,model,unit,\{quality\}\)/);
+ assert.match(render,/createRiggedEquipment\(root,model,unit,\{quality,rig:human\?'human':'gobkit'\}\)/);
  assert.match(render,/actor\.equipment\.update\(time,desired,animate\)/);
  assert.match(render,/actor\.equipment\.dispose\(\)/);
- assert.match(equip,/model\.getObjectByName\(BONES\[slot\]\)/);
+ assert.match(equip,/model\.getObjectByName\(riggedEquipmentBone\(slot,rig\)\)/);
  assert.match(equip,/riggedGearProfile\(unit\)/);
  assert.match(equip,/cape\.geometry\.computeVertexNormals/);
  assert.doesNotMatch(equip,/accountProgressRequest|supabase|\.rpc\(|reward\.gold|setItem\(/i);
