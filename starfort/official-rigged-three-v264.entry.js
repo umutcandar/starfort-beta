@@ -196,10 +196,10 @@ function createImpact(scene){
 }
 export async function createRiggedBattle(canvas,{quality='balanced',reducedMotion=false}={}){
  if(!canvas||typeof window==='undefined')throw Error('Rigged battles require a browser canvas');
- const context=canvas.getContext('webgl2',{antialias:quality!=='performance',alpha:false,depth:true,
+ const context=canvas.getContext('webgl2',{antialias:true,alpha:false,depth:true,
   powerPreference:'high-performance'});
  if(!context)throw Error('WebGL2 is required for the skinned 3D renderer');
- const renderer=new THREE.WebGLRenderer({canvas,context,alpha:false,antialias:quality!=='performance',
+ const renderer=new THREE.WebGLRenderer({canvas,context,alpha:false,antialias:true,
   powerPreference:'high-performance',preserveDrawingBuffer:false});
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.37;
@@ -230,7 +230,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
  let stage=-1,stageCleanup=()=>{},lastTime=null,lastRoom=null,drawn=0,actors=new Map(),qualityName=quality;
  const impacts=createImpact(scene);
  function resize(){
-  const dpr=Math.min(qualityName==='performance'?1:1.55,window.devicePixelRatio||1);
+  const dpr=Math.min(qualityName==='performance'?1.45:1.75,window.devicePixelRatio||1);
   renderer.setPixelRatio(dpr);
   const width=Math.max(1,canvas.clientWidth||1000),height=Math.max(1,canvas.clientHeight||600);
   renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();
@@ -267,7 +267,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
    actor.mixer.stopAllAction();actors.delete(id);}
   impacts.update(room.fx,time,qualityName);
   const yaw=bounded(Number(opts.cameraYaw)||0,-.85,.85);
-  const distance=bounded(Number(opts.cameraDistance)||51,43,95)*.29;
+  const distance=bounded(Number(opts.cameraDistance)||51,43,95)*.27;
   camera.position.set(Math.sin(yaw)*distance,5.2+distance*.15,Math.cos(yaw)*distance);
   camera.lookAt(0,1.45,0);
   renderer.render(scene,camera);drawn++;
