@@ -91,8 +91,13 @@ try{
   await wait('!!document.querySelector(".server-mission")','battle UI');
   // A passing mock fight alone does not prove real 3D character quality.
   // Block the release until WebGL has actually rendered the licensed GLB rigs.
+  try{
   await wait('(()=>{const stage=document.querySelector(".official-combat-scene.is-3d");const canvas=stage?.querySelector(".official-3d-canvas");return !!stage&&!!canvas&&canvas.width>0&&canvas.height>0;})()',
    'REAL skinned 3D character scene (not a 2D fallback or loading placeholders)');
+  }catch(error){
+   const details=await evaluate('(()=>{const stage=document.querySelector(".official-combat-scene"),canvas=stage?.querySelector(".official-3d-canvas");return {visible:!!stage,loaded:stage?.classList.contains("is-3d"),loading:stage?.classList.contains("is-loading-rigs"),hasCanvas:!!canvas,canvasWidth:canvas?.width,renderStatus:stage?.querySelector("[data-official-render-state]")?.textContent};})()');
+   throw Error(error.message+' '+JSON.stringify(details));
+  }
   const real3D=await evaluate('(()=>{const v=document.querySelector(".official-combat-scene.is-3d"),c=v.querySelector("canvas");return {width:c.width,height:c.height,mode:v.querySelector("[data-official-render-state]")?.textContent};})()');
   pass('REAL skinned 3D models loaded and a WebGL frame rendered',real3D);
   await screenshot('rigged-3d-ready');
