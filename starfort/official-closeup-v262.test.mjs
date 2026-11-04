@@ -1,0 +1,45 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {officialBattleFormation,officialStrikeWindow} from './official-3d-choreography-v259.js';
+import {cinematicCameraShot} from './official-3d-camera-shots-v260.js';
+import {officialBattleRoom} from './official-battle-bridge.js';
+const source=p=>readFileSync(new URL(p,import.meta.url),'utf8');
+const time=Date.UTC(2026,10,4,19);
+const prev={mode:'story',stage:1,startedAt:time-5000,turn:1,wave:1,playerHp:200,enemyHp:160,lastTurnAt:time-3300};
+const next={...prev,turn:2,lastTurnAt:time,playerHp:190,enemyHp:90,lastAction:'strike',playerMaxHp:220,enemyMaxHp:160};
+test('hero and enemy lines are close enough for physical readable 3D clashes',()=>{
+ const party=['aldren','lyra','rovan'],enemy=['raider','boss','caster'];
+ const form=officialBattleFormation(party,enemy);
+ assert.equal(form.actors.length,3);assert.equal(form.foes.length,3);
+ assert.ok(form.actors[0].x>=36,'front-line hero has moved toward the center');
+ assert.ok(form.foes[1].x<=64,'boss has moved toward the center');
+ const minGap=Math.min(...form.foes.map(f=>f.x))-Math.max(...form.actors.map(a=>a.x));
+ assert.ok(minGap>20&&minGap<35,'battle line has room for actual approach');
+ const strike=officialStrikeWindow(prev,next,time+650);
+ const swing=officialBattleFormation(party,enemy,strike);
+ assert.ok(swing.actors[0].x>form.actors[0].x);
+ assert.ok(swing.foes[1].x<form.foes[1].x);
+ const room=officialBattleRoom(party,next,{previous:prev,now:time+650});
+ assert.equal(room.source,'authenticated-postgres');
+ assert.ok(room.squads.length===3&&room.players.length===3);
+});
+test('closeup camera dynamically focuses only genuine accepted turns',()=>{
+ const base={yaw:0,distance:51},shot=cinematicCameraShot(prev,next,time+700,base);
+ assert.ok(shot.distance<51&&shot.distance>=43);
+ assert.equal(cinematicCameraShot(null,next,time+700,base).distance,51);
+ assert.equal(cinematicCameraShot(prev,next,time+700,base,{reducedMotion:true}).distance,51);
+ assert.ok(Math.abs(shot.yaw)<=.85);
+});
+test('3D renderer has larger physical figures and lower cinematic eye without affecting arena renderer',()=>{
+ const gl=source('./graphics-3d.js'),director=source('./official-3d-director.js');
+ assert.match(gl,/boss\?2\.72:hero\?2\.10:1\.72/);
+ assert.match(gl,/31\+distance\*\.10/);
+ assert.match(gl,/cameraMode==='cinematic'/);
+ assert.match(director,/distance:51/);
+ assert.match(gl,/room\?\.variant==='official'/);
+ assert.match(gl,/drawOfficial3DBattlefield/);
+ assert.match(gl,/drawCharacterDetail/);
+ assert.match(gl,/drawOfficialFantasyEffects/);
+ assert.doesNotMatch(gl,/accountProgressRequest|supabase\.rpc|service_role/);
+});
