@@ -29,7 +29,7 @@ test('all seven hero gear kits create true reusable 3D meshes and dispose cleanl
   const root=new THREE.Group(),model=new THREE.Group();
   const gear=createRiggedEquipment(root,model,{team:0,heroId},{quality:'performance'});
   let count=0;gear.root.traverse(node=>{if(node.isMesh)count++;});
-  assert.ok(count>20,heroId+' needs actual armour geometry');
+  assert.ok(count>12,heroId+' needs articulated armour geometry');
   assert.ok(count<140,heroId+' must stay within mobile draw-call budget');
   assert.ok(gear.anchors>=7,'rig animation must have enough articulation links');
   assert.equal(root.children.length,1);
@@ -37,6 +37,17 @@ test('all seven hero gear kits create true reusable 3D meshes and dispose cleanl
   gear.dispose();gear.dispose();
   assert.equal(root.children.length,0,'equipment buffers must detach on teardown');
  }
+});
+test('mobile material batching reduces GPU draw calls without flattening articulated gear',()=>{
+ const unit={team:0,heroId:'aldren'};
+ const model=new THREE.Group(),fullRoot=new THREE.Group(),mobileRoot=new THREE.Group();
+ const full=createRiggedEquipment(fullRoot,model,unit,{quality:'balanced'});
+ const mobile=createRiggedEquipment(mobileRoot,model,unit,{quality:'performance'});
+ const count=group=>{let n=0;group.traverse(o=>{if(o.isMesh)n++;});return n;};
+ const fullMeshes=count(full.root),mobileMeshes=count(mobile.root);
+ assert.ok(mobileMeshes<fullMeshes,'mobile gear should submit fewer draw calls');
+ assert.ok(mobileMeshes>8,'mobile armour still has moving helmet, arms and weapons');
+ full.dispose();mobile.dispose();
 });
 test('rendered effect and hero equipment remain separate from server reward/action logic',()=>{
  const equip=src('./official-rigged-equipment-v266.js');
