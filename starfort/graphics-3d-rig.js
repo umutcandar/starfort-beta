@@ -2,13 +2,13 @@
  * All positions are visual-only; the server remains authoritative for combat.
  * The clips can be replaced by skeletal GLB animation clips later.
  */
-export const RIG_ACTIONS=Object.freeze(['idle','run','attack','cast','hit','death']);
+export const RIG_ACTIONS=Object.freeze(['idle','run','attack','cast','guard','hit','death']);
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
 const finite=(value,fallback=0)=>Number.isFinite(value)?value:fallback;
 
 export function rigPose({action='idle',speed=0,walk=0,hit=0,life=1,attackPhase=0,castPhase=0}={},time=0,{reducedMotion=false}={}){
   const alive=life>0;
-  let state=!alive?'death':hit>.15?'hit':action==='attack'?'attack':action==='cast'?'cast':speed>.11?'run':'idle';
+  let state=!alive?'death':hit>.15?'hit':action==='attack'?'attack':action==='cast'?'cast':action==='guard'?'guard':speed>.11?'run':'idle';
   if(!RIG_ACTIONS.includes(state))state='idle';
   const phase=finite(walk,time*3),stride=reducedMotion?0:Math.sin(phase*1.9)*clamp(finite(speed),0,1);
   const breath=reducedMotion?0:Math.sin(time*2.5+phase*.1)*.035;
@@ -20,6 +20,7 @@ export function rigPose({action='idle',speed=0,walk=0,hit=0,life=1,attackPhase=0
     armR=-.6-1.45*s;armL=.4+.25*s;legL=-.25;legR=.2;
     swordSwing=s;torsoTilt=.21*s;
   }
+  if(state==='guard'){armL=-1.35;armR=-.9;legL=-.18;legR=.19;crouch=.14;torsoTilt=-.08;}
   if(state==='cast'){
     const t=clamp(finite(castPhase),0,1);armR=-1.85;armL=-1.65;
     legL=.1;legR=-.1;glow=.35+.65*Math.sin(t*Math.PI);torsoTilt=-.1;

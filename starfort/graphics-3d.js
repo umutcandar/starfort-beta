@@ -7,6 +7,7 @@ import {rigPose,rigBones} from './graphics-3d-rig.js';
 import {create3DResolutionManager} from './graphics-3d-performance.js';
 import {createBattleMotion} from './battle-motion.js';
 import {fetchGLB} from './graphics-gltf.js';
+import {drawOfficial3DBattlefield} from './graphics-3d-battlefield-v259.js';
 
 const VERT=`#version 300 es
 precision highp float;
@@ -85,13 +86,14 @@ function drawWall(mesh,gateHp=1,time=0){
 function drawActor(mesh,item,pose,time,hero,quality,reducedMotion){
   // Segment bones are actually articulated; all animation is presentation-only.
   const side=item.team||0,main=side?RED:BLUE,p=world3(pose?.x??item.x,pose?.y??item.y),x=p.x,z=p.z;
-  const action=item.action==='attack'||item.action==='cast'?item.action:'idle';
+  const action=['attack','cast','hit','guard'].includes(item.action)?item.action:'idle';
   const health=Math.max(0,Math.min(1,(item.hp||0)/Math.max(1,item.maxHp||100)));
   const poseState=rigPose({action,speed:pose?.speed||0,walk:pose?.walk||0,
-    hit:pose?.hit||0,life:health,attackPhase:((time+(Number(item.attackAt)||0))%1),castPhase:time%1},time,{reducedMotion});
-  const scale=hero?1.48:1;const bones=rigBones(poseState,scale);
+    hit:action==='hit'?1:pose?.hit||0,life:health,attackPhase:clamp3((time-(Number(item.attackAt)||0))/.84,0,1),castPhase:clamp3((time-(Number(item.attackAt)||0))/1.15,0,1)},time,{reducedMotion});
+  const boss=item.type==='boss',role=item.role||(item.type==='caster'?'mage':item.type==='archer'?'ranger':'fighter');
+  const scale=boss?2.04:hero?1.48:1.18;const bones=rigBones(poseState,scale);
   const yaw=(pose?.face||(side?-1:1))>0?Math.PI/2:-Math.PI/2;
-  const armor=color(main,poseState.state==='hit'?.9:1),shoulder=bones.shoulder,hip=bones.hip;
+  const armor=color(role==='mage'?[.38,.39,.71]:role==='ranger'?[.29,.48,.34]:role==='assassin'?[.47,.35,.51]:main,poseState.state==='hit'?.80:1),shoulder=bones.shoulder,hip=bones.hip;
   // Ground-contact shadow, differentiated by team; no gameplay hitbox changes.
   mesh.box(x,.035,z,hero?2.7:1.75,.06,hero?1.55:1.05,[.085,.10,.12]);
   // Boots, knees and hips follow rig joints instead of static rotating cubes.
@@ -115,14 +117,43 @@ function drawActor(mesh,item,pose,time,hero,quality,reducedMotion){
     mesh.segment([x+a[0],a[1],z+a[2]],[x+k[0],k[1],z+k[2]],.36*scale,.37*scale,color(armor,.91));
     mesh.segment([x+k[0],k[1],z+k[2]],[x+b[0],b[1],z+b[2]],.33*scale,.35*scale,[.59,.61,.64]);
   }
-  const hand=bones.arms[1].hand;
-  if(hero||item.type!=='archer'){
-    const h=[x+hand[0],hand[1],z+hand[2]],tip=[h[0]+(.55+poseState.swordSwing*.4)*scale,h[1]+(1.52-poseState.swordSwing*.75)*scale,h[2]];
-    mesh.segment(h,tip,.16*scale,.16*scale,WHITE);
-    mesh.box(h[0],h[1]+.24*scale,h[2],.76*scale,.14*scale,.22*scale,GOLD,{yaw});
+  const hand=bones.arms[1].hand,grip=[x+hand[0],hand[1],z+hand[2]];
+  if(role==='ranger'){
+    // An actual drawn bow, grip and nocked shaft rather than a generic floating sword.
+    mesh.segment([grip[0]-.22*scale,grip[1]+.85*scale,grip[2]],
+      [grip[0]+.15*scale,grip[1]-.88*scale,grip[2]],.12*scale,.18*scale,item.team?GOLD:WHITE);
+    mesh.segment([grip[0]-.22*scale,grip[1]+.85*scale,grip[2]],
+      [grip[0]+.38*scale,grip[1],grip[2]],.035*scale,.035*scale,WHITE);
+    mesh.segment([grip[0]+.38*scale,grip[1],grip[2]],
+      [grip[0]+.15*scale,grip[1]-.88*scale,grip[2]],.035*scale,.035*scale,WHITE);
+    mesh.segment([grip[0],grip[1],grip[2]],[grip[0]+1.55*scale,grip[1],grip[2]],.06*scale,.07*scale,GOLD);
+  }else if(role==='mage'||item.type==='caster'){
+    mesh.segment([grip[0],grip[1]-.1*scale,grip[2]],[grip[0]+.25*scale,grip[1]+2.1*scale,grip[2]],.14*scale,.18*scale,item.team?RED:GOLD);
+    mesh.prism(grip[0]+.25*scale,grip[1]+2.2*scale,grip[2],.4*scale,.75*scale,
+      item.team?[.97,.41,.56]:[.38,.77,.98],7);
+  }else if(role==='tank'){
+    // The shield is visible even when idle; a guard order actually raises it.
+    const offset=poseState.state==='guard'?.75*scale:0;
+    mesh.box(x-.85*scale,shoulder-.15*scale+offset,z+.55*scale,
+      .25*scale,1.52*scale,1.22*scale,[.46,.50,.54],{yaw:Math.PI/4});
+    mesh.box(x-.86*scale,shoulder-.1*scale+offset,z+.57*scale,
+      .30*scale,1.16*scale,.71*scale,GOLD,{yaw:Math.PI/4});
+    const tip=[grip[0]+(.55+poseState.swordSwing*.5)*scale,
+      grip[1]+(1.45-poseState.swordSwing*.70)*scale,grip[2]];
+    mesh.segment(grip,tip,.14*scale,.17*scale,WHITE);
   }else{
-    const h=[x+hand[0],hand[1],z+hand[2]];
-    mesh.segment([h[0]-.42*scale,h[1]+.80*scale,h[2]],[h[0]+.48*scale,h[1]-.82*scale,h[2]],.14*scale,.18*scale,GOLD);
+    const tip=[grip[0]+(.54+poseState.swordSwing*.4)*scale,
+      grip[1]+(1.65-poseState.swordSwing*.83)*scale,grip[2]];
+    mesh.segment(grip,tip,.16*scale,.18*scale,WHITE);
+    mesh.box(grip[0],grip[1]+.2*scale,grip[2],.71*scale,.14*scale,.21*scale,GOLD,{yaw});
+    if(role==='assassin'){
+      mesh.segment([x+.3*scale,shoulder-.7*scale,z-.25*scale],
+        [x+.85*scale,shoulder+.4*scale,z-.25*scale],.12*scale,.12*scale,WHITE);
+    }
+  }
+  if(boss){
+    mesh.box(x,shoulder+.96*scale,z,1.45*scale,.27*scale,.96*scale,GOLD,{yaw});
+    for(const dx of [-.55,.55])mesh.pyramid(x+dx*scale,shoulder+1.05*scale,z,.32*scale,.85*scale,GOLD,5);
   }
   if(poseState.glow>.1){const wave=poseState.glow;
     mesh.prism(x,.20,z,1.7*scale,.12,[.16*wave,.60*wave,.93*wave],12);
@@ -139,10 +170,33 @@ function drawRam(mesh,ram,time){if(!ram||ram.hp<=0)return;const p=world3(ram.x,r
   mesh.box(x+4,3.1,z,3.6,.85,1,[.69,.70,.67]);
   drawBanner(mesh,x-2,z,0,time);
 }
-function drawEffects(mesh,fx,time,quality){if(quality==='performance')return;let n=0;for(const f of fx||[]){if(n++>22)break;const p=world3(f.x,f.y),x=p.x,z=p.z;const age=Math.max(0,time-(f.t||0)),size=.8+age*3;
-    const c=f.team===1?[.98,.40,.22]:[.27,.74,.99];
-    for(let i=0;i<5;i++){const a=i*Math.PI*2/5+f.t*2;mesh.box(x+Math.cos(a)*size,2+i*.5,z+Math.sin(a)*size,.35,.35,.35,c,{yaw:a});}
-  }}
+function drawEffects(mesh,fx,time,quality){
+ let n=0;for(const f of fx||[]){
+  if(n++>(quality==='performance'?5:18))break;
+  const age=Math.max(0,time-(Number(f.t)||0));
+  if(age>2.2||!Number.isFinite(age))continue;
+  const center=world3(f.x,f.y),x=center.x,z=center.z;
+  const color=f.team===1?[.98,.41,.23]:f.type==='spell'?[.39,.78,.99]:[1,.77,.43];
+  const progress=clamp3(age/1.8,0,1),fade=1-progress;
+  if(['spell','flank','slash'].includes(f.type)){
+   // 3D projectile moves across the actual scene after a verified server action.
+   const start=f.team===1?18:-19,end=f.team===1?-18:19;
+   const tipX=x+start+(end-start)*clamp3(progress*1.6,0,1);
+   const tipY=f.type==='spell'?3+Math.sin(progress*Math.PI)*8:2+Math.sin(progress*Math.PI)*2;
+   mesh.prism(tipX,tipY,z+(f.type==='flank'?6*Math.sin(progress*Math.PI):0),.45+.28*fade,
+     .85+.3*fade,color,8);
+   if(quality!=='performance')for(let i=1;i<5;i++){
+    mesh.box(tipX+(start>end?1:-1)*i*.75,tipY-.18*i,z,.28,.28,.30,color);
+   }
+  }else if(f.type==='impact'){
+   for(let i=0;i<(quality==='performance'?3:7);i++){
+    const a=i*Math.PI*2/7+Number(f.t)*.1,spread=1+progress*4;
+    mesh.box(x+Math.cos(a)*spread,.35+i*.2,z+Math.sin(a)*spread,
+     .17+fade*.30,.2+fade*.30,.2+fade*.30,color,{yaw:a});
+   }
+  }
+ }
+}
 function drawTerrain(mesh,quality){const n=quality==='performance'?12:20;const w=110/n,d=76/Math.max(8,Math.round(n*.64));const nz=Math.max(8,Math.round(n*.64));
   for(let i=0;i<n;i++)for(let j=0;j<nz;j++){
     const x=-55+(i+.5)*w,z=-38+(j+.5)*d,h=((i*41+j*23)%13)/150;
@@ -178,7 +232,7 @@ export function createGraphics3D(canvas,{quality='balanced',reducedMotion=false,
     const factor=base*resolution.getScale();
     const w=Math.max(1,Math.round((canvas.clientWidth||1000)*factor)),h=Math.max(1,Math.round((canvas.clientHeight||600)*factor));
     if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}gl.viewport(0,0,w,h);}
-  function render(room,you,time=0,{quality:next=qualityName,motion=null,reducedMotion:reduced=reducedMotion,cameraMode='overview'}={}){
+  function render(room,you,time=0,{quality:next=qualityName,motion=null,reducedMotion:reduced=reducedMotion,cameraMode='overview',cameraYaw=0,cameraDistance=69}={}){
     if(next!==qualityName){qualityName=next;resolution.setQuality(next);}
     const firstFrame=lastClock===null;
     if(!firstFrame)resolution.observe((time-lastClock)*1000);lastClock=time;
@@ -188,20 +242,24 @@ export function createGraphics3D(canvas,{quality='balanced',reducedMotion=false,
     const desiredX=clamp3(point.x*.33,-12,12),desiredZ=clamp3(point.z*.28,-9,9);
     const blend=firstFrame?1:(reduced?1:.095);
     target=[target[0]+(desiredX-target[0])*blend,0,target[2]+(desiredZ-target[2])*blend];
-    eye=[target[0],74,81+target[2]];
+    if(cameraMode==='cinematic'){
+      const distance=clamp3(Number(cameraDistance)||69,50,95),yaw=clamp3(Number(cameraYaw)||0,-.85,.85);
+      eye=[target[0]+Math.sin(yaw)*distance,45+distance*.08,Math.cos(yaw)*distance+target[2]];
+    }else eye=[target[0],74,81+target[2]];
     resize(0,0,typeof window==='undefined'?1:window.devicePixelRatio||1);
     gl.clearColor(.14,.21,.29,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     if(disposed)return;
     const aspect=canvas.width/canvas.height;const mat=cameraMatrix(aspect,Math.PI/3,.1,350,eye,target);gl.useProgram(program);gl.uniformMatrix4fv(uniform,false,new Float32Array(mat));
     const gateFraction=room?.siege?.gate?room.siege.gate.hp/room.siege.gate.maxHp:1;
     const stage=gateFraction<=0?3:gateFraction<.3?2:gateFraction<.65?1:0;
-    const key=`${next}:${room?.variant==='siege'?'siege':'arena'}:${stage}:asset${modelVersion}`;
+    const key=`${next}:${room?.variant==='siege'?'siege':room?.variant==='official'?'official-'+(room.stage||1):'arena'}:${stage}:asset${modelVersion}`;
     if(key!==staticKey){
       const scenery=new MeshBatch();drawTerrain(scenery,next);
       if(room?.variant==='siege'){drawWall(scenery,gateFraction,0);
         // Imported GLB architectural insert; the gameplay gate itself remains HP-driven.
         if(model){const vertices=model.geometry();for(let i=0;i<vertices.length;i++)scenery.a.push(vertices[i]);}
       }
+      else if(room?.variant==='official'){drawOfficial3DBattlefield(scenery,room.stage||1,next);}
       else {
         for(const point of [{x:0,z:-10},{x:0,z:10}]){
           scenery.prism(point.x,.4,point.z,4,.8,[.44,.41,.33],12);scenery.prism(point.x,2,point.z,1,3,[.30,.66,.79],8);

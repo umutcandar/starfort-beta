@@ -1,0 +1,37 @@
+/* STARFORT beta.13 — browser 3D cinematic combat presentation.
+   The WebGL canvas shows server-acknowledged animated actors; it never calculates
+   hit detection, rewards or player statistics. */
+.server-mission .official-combat-scene.is-3d{min-height:clamp(460px,55vw,680px);border:2px solid #b99b65;box-shadow:inset 0 0 42px #050d1899,0 18px 45px #0009}
+.official-combat-scene.is-3d .official-3d-viewport{background:radial-gradient(ellipse at 50% 72%,#364347,#0c1929 90%)}
+.official-combat-scene.is-3d .official-3d-canvas{pointer-events:auto;touch-action:pan-y;cursor:grab;outline:none;min-height:100%}
+.official-combat-scene.is-3d .official-3d-canvas:active{cursor:grabbing}
+.official-combat-scene.is-3d .official-3d-canvas:focus-visible{outline:2px solid #f7dda4;outline-offset:-3px}
+.official-combat-scene.is-3d .battle-biome{left:16px;top:48px;max-width:260px;z-index:6;background:linear-gradient(90deg,#091b2bf0,#0c2234b4);border-radius:9px;padding:10px 13px}
+.official-combat-scene.is-3d .battle-biome strong{font-size:14px}
+.official-combat-scene.is-3d .battle-biome small{font-size:11px}
+.official-combat-scene.is-3d .official-arena-top{top:13px}
+.official-combat-scene.is-3d .official-arena-foot{bottom:14px;z-index:6;font-size:12px}
+.official-combat-scene.is-3d .official-action-caption{z-index:7;bottom:48px;min-height:34px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.07em;background:#0b1c2bdc}
+.official-combat-scene.is-3d .official-render-switch{right:17px;top:51px;min-height:40px;padding:9px 12px;background:#142c40ec}
+.official-combat-scene.is-3d.has-verified-impact .official-hit-floater{z-index:15}
+.official-combat-scene.is-3d.has-verified-impact .official-hit-floater.foe{left:68%;top:40%}
+.official-combat-scene.is-3d.has-verified-impact .official-hit-floater.ally{left:24%;top:45%}
+.official-combat-scene.is-3d.has-verified-impact .official-hit-floater.healed{left:29%;top:28%}
+.official-combat-scene.is-3d .official-weapon-flash,.official-combat-scene.is-3d .official-impact-ring,.official-combat-scene.is-3d .war-verified-tracer{display:none!important} /* 3D GPU projects attacks; no 2D fake overlay */
+@media(max-width:760px){
+ .server-mission .official-combat-scene.is-3d{min-height:390px}
+ .official-combat-scene.is-3d .battle-biome{left:8px;top:41px;max-width:132px;padding:7px 8px}
+ .official-combat-scene.is-3d .battle-biome strong{font-size:10px}
+ .official-combat-scene.is-3d .battle-biome small{font-size:9px}
+ .official-combat-scene.is-3d .official-render-switch{right:8px;top:40px;min-height:36px;padding:7px}
+ .official-combat-scene.is-3d .official-arena-top,.official-combat-scene.is-3d .official-arena-foot{font-size:9px}
+ .official-combat-scene.is-3d .official-action-caption{bottom:37px;font-size:10px;min-height:28px}
+}
+@media(max-width:420px){.server-mission .official-combat-scene.is-3d{min-height:325px}}
+@media(prefers-reduced-motion:reduce){
+ .official-combat-scene.is-3d.has-verified-impact .official-hit-floater{animation:none!important;opacity:1}
+}
+
+.official-3d-camera-hint{display:none;position:absolute;z-index:8;right:14px;bottom:43px;color:#f7e4ba;background:#112537cb;border:1px solid #a8b9b77d;border-radius:15px;padding:4px 11px;font:800 13px system-ui;pointer-events:none}
+.official-combat-scene.is-3d .official-3d-camera-hint{display:block}
+@media(max-width:620px){.official-3d-camera-hint{right:8px;bottom:33px;font-size:11px;padding:3px 8px}}
