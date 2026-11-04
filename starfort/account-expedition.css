@@ -213,7 +213,7 @@
 .sf-bot-entry strong{color:#ffe0a4;font:700 17px Georgia,serif}
 .sf-bot-entry p{font-size:11px;color:#c4d4da;line-height:1.6;margin:6px 0 0}
 .sf-bot-entry button{white-space:nowrap;min-height:42px}
-@keyframes sf-victory-arrive{from{opacity:0;transform:translate(-50%,-44%) scale(.94)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes sf-victory-arrive{from{opacity:1;transform:translate(-50%,-44%) scale(.94)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 @media(max-width:650px){.server-mission .official-combat-scene{min-height:305px}.server-mission .official-fighter{max-width:105px}.server-mission .server-moves button{flex:1 1 40%}.sf-bot-entry{flex-direction:column;align-items:stretch}}
 @media(prefers-reduced-motion:reduce){.server-mission-result.celebration{animation:none}}
 
@@ -259,3 +259,8 @@
  .official-combat-scene.has-verified-impact .official-weapon-flash{animation:none!important}
  .official-hit-floater{opacity:1!important;transform:none!important}
 }
+
+/* Beta.14 mobile war focus: battlefield visible before tutorial and stats. */
+.server-expedition.in-battle{gap:12px;padding-top:0}
+.server-expedition.in-battle .server-mission{margin-top:0}
+@media(max-width:760px){.workspace:has(.server-expedition.in-battle){padding:8px 7px 70px}.server-expedition.in-battle .server-mission{padding:9px;border-radius:10px}.server-expedition.in-battle .server-mission-header h3{font-size:clamp(19px,5vw,27px)}}
