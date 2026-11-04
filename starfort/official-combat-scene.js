@@ -26,7 +26,7 @@ export function officialCombatImpact(mission,delta){
    !Number.isSafeInteger(delta.turn)||delta.turn!==mission.turn)return null;
  const valid=n=>Number.isSafeInteger(n)&&n>=0&&n<=1000000?n:0;
  const damage=valid(delta.damage),received=valid(delta.received);
- const healed=delta.waveAdvanced&&valid(delta.healed)?valid(delta.healed):0;
+ const healed=valid(delta.healed); // net HP gain from verified Rally or wave recovery
  if(!damage&&!received&&!healed)return null;
  return Object.freeze({damage,received,healed});
 }
