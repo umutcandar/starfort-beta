@@ -2,33 +2,22 @@
  * Credentials remain only in runner memory. No page screenshots or tokens are uploaded.
  */
 import assert from 'node:assert/strict';
-import {spawn} from 'node:child_process';
-import {mkdtemp,readFile,rm} from 'node:fs/promises';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {launchChrome} from './chrome-devtools-launch.mjs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {setTimeout as sleep} from 'node:timers/promises';
 export async function testDeployedLogin(email,password){
  const profile=await mkdtemp(path.join(tmpdir(),'starfort-real-auth-'));
- const chrome=spawn(process.env.CHROME_BIN||'google-chrome',[
-  '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
-  '--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'
- ],{stdio:['ignore','ignore','pipe']});
- let error='',ws=null,seq=0;
+ let chrome=null,ws=null,seq=0;
  const pend=new Map();
- chrome.on('error',e=>{error=e.message});
- chrome.stderr.on('data',bytes=>{error+=String(bytes).slice(-400)});
  try{
-  let port=0;
-  for(let i=0;i<90;i++){
-   try{port=Number((await readFile(path.join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0])}catch{}
-   if(port)break;
-   if(chrome.exitCode!==null||error.includes('ENOENT'))throw Error('Chrome unavailable: '+error.slice(0,300));
-   await sleep(100);
-  }
-  assert.ok(port,'Real browser remote debugging unavailable');
-  const targets=await fetch('http://127.0.0.1:'+port+'/json/list').then(r=>r.json());
-  const tab=targets.find(x=>x.type==='page');
-  assert.ok(tab?.webSocketDebuggerUrl,'Real browser tab missing');
+  const running=await launchChrome({
+   profileRoot:profile,attempts:3,perAttemptMs:18000,
+   onRetry:({attempt,reason})=>console.warn('[STARFORT REAL QA] Browser startup retry '+attempt+': '+reason)
+  });
+  chrome=running.chrome;
+  const tab=running.tab;
   ws=new WebSocket(tab.webSocketDebuggerUrl);
   await new Promise((resolve,reject)=>{
    ws.addEventListener('open',resolve,{once:true});
@@ -103,7 +92,7 @@ export async function testDeployedLogin(email,password){
   console.log('[STARFORT REAL QA] PASS Live mobile authenticated layout 390px.');
  }finally{
   try{if(ws?.readyState===1)ws.close()}catch{}
-  chrome.kill('SIGTERM');
+  chrome?.kill('SIGTERM');
   await rm(profile,{recursive:true,force:true,maxRetries:2}).catch(()=>{});
  }
 }

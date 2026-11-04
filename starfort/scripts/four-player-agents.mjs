@@ -3,7 +3,6 @@
  * NOT 4 independent LLM agents, NOT a real live-account combat proof.
  */
 import assert from 'node:assert/strict';
-import {spawn} from 'node:child_process';
 import {mkdtemp,readFile,writeFile,mkdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
@@ -11,6 +10,7 @@ import {createGuildServer} from '../guild-server.mjs';
 import {simulateActTwoBattle,recommendedActTwoPower} from '../act-two-balance.js';
 import {economyScenario,relicRoadRemaining} from '../economy-horizon-v253.js';
 import {createState} from '../rules.js';
+import {launchChrome} from './chrome-devtools-launch.mjs';
 
 const role=process.argv[2];
 if(!['rookie','tactician','veteran','breaker'].includes(role))throw Error('Missing player role');
@@ -21,25 +21,15 @@ const warn=(severity,label,evidence)=>findings.push({severity,label,evidence});
 const profile=await mkdtemp(path.join(tmpdir(),'starfort-player-'+role+'-'));
 const server=await createGuildServer({host:'127.0.0.1',port:0});
 const origin='http://127.0.0.1:'+server.address().port+'/starfort/';
-const chrome=spawn(process.env.CHROME_BIN||'google-chrome',[
- '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
- '--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'
-],{stdio:['ignore','ignore','pipe']});
-let stderr='',ws=null,seq=0,failed=null;
+let chrome=null,ws=null,seq=0,failed=null;
 const pending=new Map();
-chrome.on('error',e=>{stderr=e.message});
-chrome.stderr.on('data',x=>{stderr+=String(x).slice(-500)});
 try{
- let port=0;
- for(let i=0;i<100;i++){
-  try{port=Number((await readFile(path.join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0])}catch{}
-  if(port)break;
-  if(chrome.exitCode!==null||stderr.includes('ENOENT'))throw Error('Chrome unavailable: '+stderr.slice(0,200));
-  await sleep(100);
- }
- assert.ok(port,'Chrome DevTools unavailable: '+stderr.slice(-700));
- const tab=(await fetch('http://127.0.0.1:'+port+'/json/list').then(r=>r.json())).find(x=>x.type==='page');
- assert.ok(tab?.webSocketDebuggerUrl);
+ const running=await launchChrome({
+  profileRoot:profile,attempts:3,perAttemptMs:18000,
+  onRetry:({attempt,reason})=>console.warn('[4PLAYER '+role+'] Chrome startup attempt '+attempt+' failed:',reason)
+ });
+ chrome=running.chrome;
+ const tab=running.tab;
  ws=new WebSocket(tab.webSocketDebuggerUrl);
  await new Promise((res,rej)=>{ws.addEventListener('open',res,{once:true});ws.addEventListener('error',rej,{once:true})});
  ws.addEventListener('message',e=>{
@@ -99,6 +89,8 @@ try{
   assert.equal(await evaluate('document.querySelector("[data-account-stage=\\"1\\"]").disabled'),false);
   assert.ok(await click('[data-account-stage="1"]'));
   await wait('!!document.querySelector(".server-mission")','battle UI');
+  assert.equal(await evaluate('!!document.querySelector(".official-hit-floater")'),false,
+   'A new battle must never fabricate an attack before the player uses a skill');
   const actions=[];
   for(let n=0;n<12;n++){
    const before=await snap();
@@ -108,6 +100,13 @@ try{
    assert.ok(await click('[data-account-turn="'+move+'"]'));
    await wait('(()=>{const x=JSON.parse(sessionStorage.getItem("__starfort_qa_snapshot"));return !x.mission||x.mission.turn>'+
     before.mission.turn+'})()','mission turn '+n);
+   if(n===0){
+    await wait('!!document.querySelector(".official-hit-floater.foe")','first verified damage overlay');
+    const hit=await evaluate('document.querySelector(".official-hit-floater.foe")?.textContent.trim()');
+    assert.equal(hit,'−100','Scene damage must equal the synthetic server response, never a guessed number');
+    await screenshot('first-server-hit');
+    pass('First hit rendered only after a server result and displayed exactly the server damage',{damage:hit});
+   }
    actions.push({intent,move});
   }
   const data=await snap();
@@ -242,7 +241,7 @@ try{
  console.error('[4PLAYER '+role+'] FAIL',failed);
 }finally{
  try{if(ws?.readyState===1)ws.close()}catch{}
- chrome.kill('SIGTERM');await new Promise(resolve=>server.close(resolve));
+ chrome?.kill('SIGTERM');await new Promise(resolve=>server.close(resolve));
  await rm(profile,{recursive:true,force:true,maxRetries:3}).catch(()=>{});
  const summary={role,kind:'independent scripted player browser agent with synthetic Supabase; local simulations labeled',
   createdAt:new Date().toISOString(),elapsedMs:Date.now()-start,checks,findings,metrics,failed};
