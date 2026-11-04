@@ -21,6 +21,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Build genuine 3D models before agent gameplay
+        working-directory: starfort
+        run: |
+          npm install --no-audit --no-fund --omit=dev
+          npm run build:rigged3d
       - name: Check four-agent runner syntax
         working-directory: starfort
         run: node --check scripts/four-player-agents.mjs
