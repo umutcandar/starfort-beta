@@ -64,7 +64,7 @@ export function cinematicCombatMarkup(mission,team,delta=null,language=getLocale
   '<div class="sf-cinematic-meter" role="meter" aria-label="'+esc(t('enemy'))+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct(EHP,EMAX)+'"><i style="width:'+pct(EHP,EMAX)+'%"></i></div></div></div>'+
   '<div class="sf-cinematic-portraits">'+portraits+'</div>'+
   '<div class="sf-cinematic-tell" aria-live="off"><span>◇ '+esc(t('preparing'))+'</span><strong>'+esc(state==='crush'?warText('guard',language):state==='shield'?warText('feint',language):state==='sunder'?warText('pierce',language):state==='drain'?warText('strike',language):warText('strike',language))+'</strong></div>'+
-  (moment?'<div class="sf-cinematic-moment kind-'+moment.kind+(moment.heroId?' hero-'+moment.heroId:'')+'" role="status">'+
+  (moment?.kind==='skill'?'<div class="sf-cinematic-moment kind-'+moment.kind+(moment.heroId?' hero-'+moment.heroId:'')+'" role="status">'+
     (moment.heroId?'<img src="assets/'+moment.heroId+'.webp" loading="lazy" alt="">':'<span class="sf-cinematic-emblem" aria-hidden="true">✦</span>')+
     '<div><small>'+esc(t(moment.kind==='skill'?'skill':moment.kind==='guard'?'guard':moment.kind==='flank'?'flank':moment.kind==='rally'?'rally':'order'))+'</small>'+
     '<strong>'+esc(moment.label)+'</strong><span class="sf-cinematic-result">'+
