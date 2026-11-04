@@ -119,7 +119,7 @@ test('release uses real 3D renderer, no reward or combat calculation in cinemati
  assert.match(css,/touch-action:pan-y/);
  assert.match(css,/max-width:420px/);
  assert.match(index,/official-3d-v259\.css/);
- assert.match(pkg.version,/^2\.(?:47|48)\.0-beta\.(?:1[3-9]|[2-9]\d+)$/,'beta.13 graphics must remain supported by later releases');
+ assert.match(pkg.version,/^2\.(?:47|48|49)\.0-beta\.(?:1[3-9]|[2-9]\d+)$/,'beta.13 graphics must remain supported by later releases');
  for(const file of ['./official-3d-choreography-v259.js','./official-3d-camera-v259.js','./graphics-3d-battlefield-v259.js']){
   assert.doesNotMatch(source(file),/fetch\(|supabase|auth\.uid|localStorage|reward\(|accountProgressRequest|service_role/i);
  }
