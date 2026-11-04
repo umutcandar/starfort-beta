@@ -25,9 +25,9 @@ export function combatAppearance(unit){
 export function combatCameraFrame(requestedDistance=51,aspect=16/9,quality='balanced'){
  const d=Number.isFinite(Number(requestedDistance))?Number(requestedDistance):51;
  const a=Number.isFinite(Number(aspect))?Number(aspect):16/9;
- const zoom=a<1.1?0.244:a<1.55?0.226:0.201;
- return Object.freeze({distance:Math.max(8.6,Math.min(20.5,d*zoom)),fov:a<1.1?46:a<1.55?41:38,
-  y:a<1.1?6.1:5.3,focusY:1.35,far:quality==='performance'?65:95});
+ const zoom=a<1.1?0.34:a<1.55?0.27:0.201;
+ return Object.freeze({distance:Math.max(8.6,Math.min(20.5,d*zoom)),fov:a<1.1?53:a<1.55?44:38,
+  y:a<1.1?6.6:5.3,focusY:1.35,far:quality==='performance'?65:95});
 }
 /** Reproducible decor: no Math.random calls during 3D rendering. */
 export function battlefieldScatter(stage,index){
