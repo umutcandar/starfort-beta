@@ -50,7 +50,7 @@ export function officialBattleFormation(team,enemyIds,window=null){
  const strike=action==='strike'||feint||isSkill(action);
  const actors=roster.map((id,i)=>{
   const role=roles[id],front=CLOSE.has(role),lane=(i-1)*12;
-  const baseX=front?29:24,baseZ=30+lane;
+  const baseX=front?37:33,baseZ=30+lane*.80;
   const selected=action==='skill:'+id;
   const push=active&&strike?(selected?18:front?13:4)*pulse:guard?(front?2:-2)*pulse:0;
   const dodge=feint?(i%2===0?-1:1)*7*pulse:0;
@@ -58,7 +58,7 @@ export function officialBattleFormation(team,enemyIds,window=null){
   return Object.freeze({id,x:baseX+push,y:baseZ+dodge,action:anim,role,team:0,face:1,attackAt:window?window.age:0});
  });
  const foes=enemies.map((kind,i)=>{
-  const isBoss=kind==='boss',baseX=isBoss?69:75,lane=(i-1)*11;
+  const isBoss=kind==='boss',baseX=isBoss?63:67,lane=(i-1)*10;
   const advancing=active&&window.playerHit>0;
   const enemySwing=advancing&&window.progress>.28&&window.progress<.83;
   return Object.freeze({
