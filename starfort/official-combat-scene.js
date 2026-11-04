@@ -38,7 +38,7 @@ export function officialCombatScene(game,mission,combatDelta=null){
  const team=(game.team||[]).filter(id=>HEROES.some(h=>h.id===id)).slice(0,3);
  const actorId=String(mission.lastAction||'').startsWith('skill:')?String(mission.lastAction).slice(6):'';
  const actor=HEROES.find(h=>h.id===actorId);
- const lastLabel=actor?sceneText('actorSkill',{hero:actor.name}):mission.lastAction==='Başladı'?sceneText('started'):mission.lastAction?labeledBattleAction(mission.lastAction):sceneText('ongoing');
+ const lastLabel=actor?sceneText('actorSkill',{hero:actor.name}):mission.lastAction==='Başladı'?sceneText('started'):mission.lastAction==='guard'?sceneText('guard'):mission.lastAction==='strike'?sceneText('strike'):mission.lastAction?labeledBattleAction(mission.lastAction):sceneText('ongoing');
  const ph=mission.playerMaxHp?mission.playerHp/mission.playerMaxHp*100:0;
  const eh=mission.enemyMaxHp?mission.enemyHp/mission.enemyMaxHp*100:0;
  const enemies=encounter?encounter.roster.map(x=>x.kind):mission.mode==='boss'?['raider','boss','caster']:mission.stage>=7?['raider','caster','boss']:mission.stage>=4?['raider','caster','raider']:['raider','caster','raider'];
