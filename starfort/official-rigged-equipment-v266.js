@@ -5,6 +5,7 @@
  * by its fighter and explicitly disposed with that fighter.
  */
 import * as THREE from 'three';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {combatAppearance} from './official-rigged-style-v265.js';
 
 const BONES=Object.freeze({
@@ -259,6 +260,36 @@ export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',r
    ell(body,bright,side*.40,.34,-.25,.10,.11,.11);
   }
  }
+ // Merge armour pieces sharing a material into one draw call per articulated
+ // anchor. The cape stays separate because its vertices move on every frame.
+ // This is essential for mobile GPU bandwidth and avoids external mesh engines.
+ function batchStatic(group){
+  for(const child of [...group.children])if(child.isGroup)batchStatic(child);
+  const batches=new Map();
+  for(const child of group.children){
+   if(!child.isMesh||child===cape||!child.geometry||!child.material?.uuid)continue;
+   const attrs=Object.keys(child.geometry.attributes).sort().join(',');
+   const key=child.material.uuid+':'+Boolean(child.geometry.index)+':'+attrs;
+   if(!batches.has(key))batches.set(key,[]);
+   batches.get(key).push(child);
+  }
+  for(const meshes of batches.values()){
+   if(meshes.length<2)continue;
+   const clones=meshes.map(mesh=>{
+    mesh.updateMatrix();return mesh.geometry.clone().applyMatrix4(mesh.matrix);
+   });
+   const combined=mergeGeometries(clones,false);
+   clones.forEach(geo=>geo.dispose());
+   if(!combined)continue;
+   for(const mesh of meshes){
+    group.remove(mesh);geometries.delete(mesh.geometry);mesh.geometry.dispose();
+   }
+   geometries.add(combined);
+   const merged=new THREE.Mesh(combined,meshes[0].material);
+   merged.castShadow=true;merged.receiveShadow=true;group.add(merged);
+  }
+ }
+ if(quality==='performance')batchStatic(decoration);
  const worldLocal=(bone)=>{
   bone.getWorldPosition(tmpWorld);return actorRoot.worldToLocal(tmpWorld.clone());
  };
