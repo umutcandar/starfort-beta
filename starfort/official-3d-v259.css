@@ -31,3 +31,7 @@
 @media(prefers-reduced-motion:reduce){
  .official-combat-scene.is-3d.has-verified-impact .official-hit-floater{animation:none!important;opacity:1}
 }
+
+.official-3d-camera-hint{display:none;position:absolute;z-index:8;right:14px;bottom:43px;color:#f7e4ba;background:#112537cb;border:1px solid #a8b9b77d;border-radius:15px;padding:4px 11px;font:800 13px system-ui;pointer-events:none}
+.official-combat-scene.is-3d .official-3d-camera-hint{display:block}
+@media(max-width:620px){.official-3d-camera-hint{right:8px;bottom:33px;font-size:11px;padding:3px 8px}}
