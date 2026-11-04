@@ -78,7 +78,12 @@ export function createOfficialBattleDirector({store=null,onModeChange=()=>{},mot
   }
   if(room){
    try{renderer.render(room,room.you,now/1000,{quality:root.clientWidth<560?'performance':'balanced',
-     cameraMode:'cinematic',cameraYaw:shot.yaw,cameraDistance:shot.distance,reducedMotion:motionPreference});}
+     cameraMode:'cinematic',cameraYaw:shot.yaw,cameraDistance:shot.distance,reducedMotion:motionPreference});
+    // Read-only diagnostics: tests require on-screen anatomical bodies, not a fake 3D badge.
+    const visual=renderer.stats();
+    root.dataset.officialAnatomicalActors=String(visual.anatomicalActors||0);
+    root.dataset.officialDrawCalls=String(visual.drawCalls||0);
+   }
    catch(error){console.warn('3D iskeletli savaş çizimi durduruldu:',error);
     preferred='2d';try{store?.setItem(KEY,'2d');}catch{}release();onModeChange('sprites');return;}
   }
