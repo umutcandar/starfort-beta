@@ -14,7 +14,7 @@ import {weeklyBossRelic,bossRelicText,BOSS_RELIC_ITEMS} from './boss-relic-v251.
 import {displayItem} from './locale-items-v246.js';
 import {STORY_OPERATIONS,operationStatus} from './story-operations.js';
 import {officialCombatScene} from './official-combat-scene.js';
-import {officialWarRoomMarkup,warText,warAdvice} from './official-warroom-v258.js';
+import {officialWarRoomMarkup,warText} from './official-warroom-v258.js';
 import {realmMapMarkup} from './realm-map.js';
 import {officialNextGoal,officialNextGoalMarkup,officialStoryReadiness,isoWeek} from './official-progress-coach.js';
 import {longRoadMarkup,longRoadWord} from './long-horizon-v249.js';
