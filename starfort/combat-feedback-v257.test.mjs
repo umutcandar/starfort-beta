@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
 import {officialCombatImpact,officialCombatScene} from './official-combat-scene.js';
 import {officialBattleDelta} from './official-battle-bridge.js';
 import {createState} from './rules.js';
@@ -109,4 +112,20 @@ test('Chrome startup makes at most 3 isolated attempts; no gameplay retried',()=
  assert.match(launcher,/child\.kill\('SIGTERM'\)/);
  assert.match(launcher,/child\.kill\('SIGKILL'\)/);
  assert.match(launcher,/for\(let attempt=1;attempt<=attempts;attempt\+\+\)/);
+});
+
+test('broken Chrome executable retries only launch, then fails closed with clean profiles',async()=>{
+ const root=await mkdtemp(path.join(tmpdir(),'starfort-chrome-launch-test-'));
+ const attempts=[];
+ try{
+  await assert.rejects(
+   launchChrome({profileRoot:root,chromeBin:'/definitely-missing-starfort-chromium',
+    attempts:2,perAttemptMs:300,onRetry:info=>attempts.push(info)}),
+   /Browser launch failed across 2 isolated attempts/
+  );
+  assert.equal(attempts.length,1,'Only one retry notification for two startup attempts');
+  assert.equal(attempts[0].attempt,1);
+ }finally{
+  await rm(root,{recursive:true,force:true});
+ }
 });
