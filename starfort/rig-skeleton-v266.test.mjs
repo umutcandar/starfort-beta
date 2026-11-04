@@ -15,6 +15,15 @@ test('rigged GLB skeleton reference and detailed equipment anchor inventory',()=
   const names=[...new Set(joints.map(i=>nodes[i]?.name||''))].filter(Boolean);
   assert.ok(joints.length>=5,name+' must have actual animation bones');
   assert.ok(names.length>=5,name+' needs named skeleton joints');
-  if(name==='KnightCaptain'||name==='Priestess'||name==='Archer')console.log('EQUIPMENT_RIG_BONES '+name+' '+JSON.stringify(names));
+  if(name==='KnightCaptain'){
+   const parents=new Map();
+   nodes.forEach((node,i)=>(node.children||[]).forEach(child=>parents.set(child,i)));
+   const info=joints.map(i=>({i,name:nodes[i]?.name,
+     xyz:nodes[i]?.translation||[0,0,0],
+     rot:nodes[i]?.rotation||[0,0,0,1],
+     parent:parents.get(i)??null,
+     parentName:parents.has(i)?nodes[parents.get(i)]?.name:null}));
+   console.log('EQUIPMENT_RIG_STRUCTURE '+JSON.stringify(info));
+  }
  }
 });
