@@ -12,6 +12,7 @@ import {clone as cloneSkinned} from 'three/addons/utils/SkeletonUtils.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {RIGGED_ASSETS,riggedModelForUnit,riggedAnimationForUnit,officialRiggedWorldPosition} from './official-rigged-contract-v264.js';
 import {combatAppearance,combatCameraFrame,battlefieldScatter} from './official-rigged-style-v265.js';
+import {createRiggedEquipment} from './official-rigged-equipment-v266.js';
 
 const bounded=(v,a,b)=>Math.min(b,Math.max(a,v));
 const RAD=Math.PI/180;
@@ -127,7 +128,7 @@ function appearance(model,team,stage){
  shadow.rotation.x=-Math.PI/2;shadow.position.y=.018;
  shadow.scale.set(1.1,.68,1);model.add(shadow);return shadow;
 }
-function prepareActor(gltf,unit,scene){
+function prepareActor(gltf,unit,scene,quality){
  const root=new THREE.Group(),model=cloneSkinned(gltf.scene);
  root.add(model);
  // Real GLBs use a .01 scene root plus 100x inverse-bind matrices.
@@ -173,6 +174,7 @@ function prepareActor(gltf,unit,scene){
  slash.rotation.set(.13,0,Math.PI/2);
  slash.position.set(unit.team===0?.52:-.52,1.38,.23);
  slash.visible=false;root.add(slash);
+ const equipment=createRiggedEquipment(root,model,unit,{quality});
  const mixer=new THREE.AnimationMixer(model),actions=new Map();
  for(const clip of gltf.animations){
   if(!['Idle','Run','Walk','Attack','Special','Hit','Death'].includes(clip.name))continue;
@@ -188,7 +190,7 @@ function prepareActor(gltf,unit,scene){
  root.rotation.y=unit.team===0?Math.PI/2:-Math.PI/2;
  scene.add(root);
  return {root,mixer,actions,current:null,lastActionKey:null,lastPosition:root.position.clone(),
-  ring,slash,ownedMaterials,style,team:unit.team,name:riggedModelForUnit(unit)};
+  ring,slash,equipment,ownedMaterials,style,team:unit.team,name:riggedModelForUnit(unit)};
 }
 function setActorClip(actor,name,unit,room){
  if(!actor.actions.has(name))name='Idle';
@@ -355,7 +357,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
  function render(room,you,time=0,opts={}){
   if(disposed||!room||room.variant!=='official')return;
   if(room.id!==lastRoom){for(const actor of actors.values()){
-    scene.remove(actor.root);actor.mixer.stopAllAction();actor.ownedMaterials.forEach(m=>m.dispose());
+    scene.remove(actor.root);actor.mixer.stopAllAction();actor.equipment.dispose();actor.ownedMaterials.forEach(m=>m.dispose());
     actor.slash.geometry.dispose();actor.slash.material.dispose();
     actor.ring.geometry.dispose();actor.ring.material.dispose();
    }
@@ -375,7 +377,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
    const point=officialRiggedWorldPosition(unit);if(!point)continue;
    active.add(id);
    let actor=actors.get(id);
-   if(!actor){actor=prepareActor(gltf,unit,scene);actors.set(id,actor);}
+   if(!actor){actor=prepareActor(gltf,unit,scene,qualityName);actors.set(id,actor);}
    const target=new THREE.Vector3(point.x,0,point.z);
    const distance=actor.root.position.distanceTo(target);
    actor.root.position.lerp(target,animate?1-Math.exp(-11*delta):1);
@@ -383,6 +385,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
    const desired=animate?riggedAnimationForUnit(unit,distance>.10):'Idle';
    setActorClip(actor,desired,unit,room);
    actor.mixer.update(animate?delta:0);
+   actor.equipment.update(time,desired,animate);
    const attack=animate&&(desired==='Attack'||desired==='Special');
    const phase=attack?(actor.actions.get(desired)?.time||0)/
      Math.max(.01,actor.actions.get(desired)?.getClip().duration||1):0;
@@ -417,7 +420,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
    pipeline:'textured-PBR-skeletal',quality:qualityName};},
   dispose(){if(disposed)return;disposed=true;stageCleanup();impacts.dispose();
    for(const actor of actors.values()){
-    scene.remove(actor.root);actor.mixer.stopAllAction();actor.ownedMaterials.forEach(m=>m.dispose());
+    scene.remove(actor.root);actor.mixer.stopAllAction();actor.equipment.dispose();actor.ownedMaterials.forEach(m=>m.dispose());
     actor.slash.geometry.dispose();actor.slash.material.dispose();
     actor.ring.geometry.dispose();actor.ring.material.dispose();
    }
