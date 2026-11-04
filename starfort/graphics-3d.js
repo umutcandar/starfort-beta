@@ -8,6 +8,7 @@ import {create3DResolutionManager} from './graphics-3d-performance.js';
 import {createBattleMotion} from './battle-motion.js';
 import {fetchGLB} from './graphics-gltf.js';
 import {drawOfficial3DBattlefield} from './graphics-3d-battlefield-v259.js';
+import {drawOfficialFantasyEffects} from './graphics-3d-fantasy-v260.js';
 
 const VERT=`#version 300 es
 precision highp float;
@@ -276,7 +277,8 @@ export function createGraphics3D(canvas,{quality='balanced',reducedMotion=false,
       const core=world3(room.siege.core.x,room.siege.core.y);
       mesh.prism(core.x,1,core.z,4,2,[.49,.42,.28],8);mesh.pyramid(core.x,2,core.z,2.1,6,[.25,.77,.95]);
     }
-    drawEffects(mesh,room?.fx,time,next);
+    if(room?.variant==='official')drawOfficialFantasyEffects(mesh,room?.fx,time,next);
+    else drawEffects(mesh,room?.fx,time,next);
     configureAttributes(staticVbo);
     gl.drawArrays(gl.TRIANGLES,0,staticCount);
     const data=new Float32Array(mesh.a);gl.bindBuffer(gl.ARRAY_BUFFER,vbo);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);
