@@ -261,6 +261,10 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
   camera.position.set(Math.sin(yaw)*distance,5.2+distance*.15,Math.cos(yaw)*distance);
   camera.lookAt(0,1.45,0);
   renderer.render(scene,camera);drawn++;
+  if(drawn===3){
+   const measures=[...actors.values()].map(a=>{const b=new THREE.Box3().setFromObject(a.root);return {name:a.name,position:a.root.position.toArray().map(v=>Number(v.toFixed(3))),min:b.min.toArray().map(v=>Number(v.toFixed(3))),max:b.max.toArray().map(v=>Number(v.toFixed(3)))};});
+   console.warn('3D rigged scene measures',JSON.stringify({camera:camera.position.toArray(),target:[0,1.45,0],actors:measures}));
+  }
  }
  return {
   mode:'rigged3d',kind:'rigged-webgl2',ready:Promise.resolve(true),canvas,render,resize,
