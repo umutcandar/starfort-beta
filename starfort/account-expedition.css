@@ -216,3 +216,46 @@
 @keyframes sf-victory-arrive{from{opacity:0;transform:translate(-50%,-44%) scale(.94)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 @media(max-width:650px){.server-mission .official-combat-scene{min-height:305px}.server-mission .official-fighter{max-width:105px}.server-mission .server-moves button{flex:1 1 40%}.sf-bot-entry{flex-direction:column;align-items:stretch}}
 @media(prefers-reduced-motion:reduce){.server-mission-result.celebration{animation:none}}
+
+/* v2.57 — genuine per-turn hit feedback, derived ONLY from accepted server snapshots.
+ * Cosmetic animation cannot create damage, resources, stars or outcome.
+ */
+.official-combat-scene .official-verified-impacts{position:absolute;inset:0;pointer-events:none;z-index:11}
+.official-hit-floater{position:absolute;display:grid;place-items:center;min-width:72px;min-height:42px;padding:5px 11px;
+ border-radius:10px;font:900 clamp(24px,4vw,38px)/1.1 system-ui,sans-serif;text-shadow:0 2px 8px #000;
+ box-shadow:0 6px 25px #0009;animation:sf-verified-hit-float 1.75s ease-out both}
+.official-hit-floater.foe{left:72%;top:28%;color:#ffedbc;border:2px solid #ff9868;background:#731c27e6}
+.official-hit-floater.ally{left:17%;top:43%;color:#fff0e9;border:2px solid #ee6f70;background:#79262cdd;
+ animation-delay:.08s}
+.official-hit-floater.healed{left:23%;top:27%;color:#b9ffe7;border:2px solid #6bd8aa;background:#19564ddd;
+ animation-delay:.15s}
+.official-combat-scene.has-verified-impact .official-impact-ring{animation:sf-verified-impact-ring .85s ease-out both!important;
+ left:50%;top:33%;opacity:1!important;filter:drop-shadow(0 0 20px #ffc57c)}
+.official-combat-scene.has-verified-impact .official-weapon-flash{animation:sf-verified-weapon .8s ease-out both!important}
+@keyframes sf-verified-hit-float{
+ 0%{opacity:0;transform:translateY(18px) scale(.65)}
+ 18%{opacity:1;transform:translateY(0) scale(1.12)}
+ 62%{opacity:1;transform:translateY(-13px) scale(1)}
+ 100%{opacity:0;transform:translateY(-34px) scale(.98)}
+}
+@keyframes sf-verified-impact-ring{
+ 0%{opacity:0;transform:scale(.4)}
+ 24%{opacity:1;transform:scale(1.35)}
+ 100%{opacity:0;transform:scale(2.2)}
+}
+@keyframes sf-verified-weapon{
+ 0%{opacity:0;transform:scale(.7)}
+ 22%{opacity:1;transform:scale(1.18)}
+ 100%{opacity:0;transform:scale(1.45)}
+}
+@media(max-width:580px){
+ .official-hit-floater{min-width:42px;min-height:34px;font-size:21px;padding:4px 7px}
+ .official-hit-floater.foe{left:70%;top:35%}
+ .official-hit-floater.ally{left:10%;top:47%}
+ .official-hit-floater.healed{left:15%;top:27%}
+}
+@media(prefers-reduced-motion:reduce){
+ .official-hit-floater,.official-combat-scene.has-verified-impact .official-impact-ring,
+ .official-combat-scene.has-verified-impact .official-weapon-flash{animation:none!important}
+ .official-hit-floater{opacity:1!important;transform:none!important}
+}
