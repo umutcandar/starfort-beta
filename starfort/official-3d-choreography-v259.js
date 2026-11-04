@@ -75,7 +75,7 @@ export function officialClashEffects(window,now=Date.now()){
  const effects=[];
  if(window.enemyHit>0)effects.push(Object.freeze({
   x:54,y:30,type:isSkill(window.action)?'spell':window.action==='feint'?'flank':'slash',
-  team:0,age,progress:p,t:now/1000
+  team:0,age,progress:p,t:now/1000-age
  }));
  if(window.playerHit>0)effects.push(Object.freeze({
   x:46,y:30,type:'impact',team:1,age,progress:p,t:now/1000
