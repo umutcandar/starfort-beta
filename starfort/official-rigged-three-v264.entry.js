@@ -451,6 +451,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
   setQuality(q){qualityName=q;stage=-1;},
   toWorld(){return {x:-1e6,y:-1e6};},
   stats(){return {mode:'rigged3d',skinnedModels:assets.size,animatedActors:actors.size,frames:drawn,
+   anatomicalActors:[...actors.values()].filter(a=>a.name===ANATOMICAL_MODEL.name).length,
    equipmentActors:[...actors.values()].filter(a=>a.equipment).length,
    drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
    pipeline:'textured-PBR-skeletal-modular',quality:qualityName};},
