@@ -115,7 +115,9 @@ function prepareActor(gltf,unit,scene){
  const root=new THREE.Group(),model=cloneSkinned(gltf.scene);
  root.add(model);
  const box=new THREE.Box3().setFromObject(model),size=new THREE.Vector3();box.getSize(size);
- if(!Number.isFinite(size.y)||size.y<.001||size.y>1000)throw Error('Character model bounding box malformed '+riggedModelForUnit(unit)+' height='+size.y+' bounds='+[box.min.x,box.min.y,box.min.z,box.max.x,box.max.y,box.max.z].join(','));
+ // Some real GLBs are authored in millimetre-scale source units. Normalize
+ // skinned geometry by measured height; tiny ≠ invalid. A 1 mm Archer is valid.
+ if(!Number.isFinite(size.y)||size.y<1e-7||size.y>1000)throw Error('Character geometry has no finite usable height: '+riggedModelForUnit(unit));
  const targetHeight=unit.type==='boss'?3.55:unit.team===0?2.5:2.25;
  const scale=targetHeight/size.y;
  model.scale.setScalar(scale);
