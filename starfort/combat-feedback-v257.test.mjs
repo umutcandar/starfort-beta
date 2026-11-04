@@ -80,8 +80,8 @@ test('all 14 languages show translated Feint/Rally/hero skill in the actual figh
     const caption=action.startsWith('skill:')?sceneText('actorSkill',{hero:'Lyra'}):
       ['strike','guard'].includes(action)?sceneText(action):text;
     assert.ok(html.includes(caption),lang+' battle caption '+action);
-    assert.doesNotMatch(html,/>feint</i);
-    assert.doesNotMatch(html,/>rally</i);
+    assert.doesNotMatch(html,/>feint</);
+    assert.doesNotMatch(html,/>rally</);
    }
   }
  }finally{setLocale('tr')}
