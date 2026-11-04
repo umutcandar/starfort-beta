@@ -37,7 +37,7 @@ test('a partially localized product cannot pass the global release gate',()=>{
 test('v2.47 unified beta build metadata, single 14-language picker and account-only entry stay consistent',()=>{
  const pkg=JSON.parse(readFileSync(new URL('./package.json',import.meta.url),'utf8'));
  const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
- assert.match(pkg.version,/^2\.(?:47|48|49)\.\d+-beta\.\d+$/);
+ assert.match(pkg.version,/^2\.(?:47|48|49|50)\.\d+-beta\.\d+$/);
  const label='v'+pkg.version.replace(/-beta\.\d+$/,'')+' Beta';
  assert.ok(html.includes('<title>Starfort '+label),'HTML title must identify the shipped beta');
  assert.ok(html.includes('>'+label+'</span>'),'HUD version badge must identify the shipped beta');
