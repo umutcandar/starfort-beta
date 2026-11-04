@@ -153,7 +153,7 @@ function notify(message) {
 function result(action, success) { if (!action.ok) { notify(action.error); return false; } if (success) notify(success); persist(); render(); return true; }
 let villageSnapshot=null,villageOwner=null,villageBusy=false,villageGeneration=0;
 let accountProgressSnapshot=null,accountProgressOwner=null,selectedRealm=null;
-const official3D=createOfficialBattleDirector({store:localStorage,motionPreference:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false});
+const official3D=createOfficialBattleDirector({store:localStorage,motionPreference:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false,audioCue:name=>gameAudio.cue(name)});
 let lastCombatDelta=null;
 let dailySnapshot=null,dailyOwner=null,dailyBusy=false;
 const villageSignedIn=()=>!!accountSession();

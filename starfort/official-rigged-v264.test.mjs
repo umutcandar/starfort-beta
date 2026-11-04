@@ -61,7 +61,7 @@ test('Three.js production bundle exists on same-origin static server with workin
  assert.match(script,/RIGGED_LICENSE/);
  assert.doesNotMatch(script,/https?:\/\/(?:cdn\.jsdelivr|esm\.sh)/);
  const pkg=JSON.parse(source('./package.json'));
- assert.match(pkg.version,/beta\.(15|16)$/);
+ assert.match(pkg.version,/beta\.(15|16|17)$/);
  assert.ok(pkg.dependencies.three&&pkg.dependencies.esbuild);
  assert.match(pkg.scripts['prestart:cloud'],/build:rigged3d/);
  assert.match(pkg.scripts['qa:all'],/build:rigged3d/);

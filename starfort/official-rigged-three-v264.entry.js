@@ -12,6 +12,7 @@ import {clone as cloneSkinned} from 'three/addons/utils/SkeletonUtils.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {RIGGED_ASSETS,riggedModelForUnit,riggedAnimationForUnit,officialRiggedWorldPosition} from './official-rigged-contract-v264.js';
 import {combatAppearance,combatCameraFrame,battlefieldScatter} from './official-rigged-style-v265.js';
+import {createRiggedEquipment,riggedEquipmentBone} from './official-rigged-equipment-v266.js';
 
 const bounded=(v,a,b)=>Math.min(b,Math.max(a,v));
 const RAD=Math.PI/180;
@@ -89,14 +90,31 @@ function createArena(scene,stage,quality){
  for(let i=0;i<n;i++){
   const sign=i%2?1:-1,offset=(i*7%21)-10,x=offset,z=sign*(7.4+i%3*1.6);
   if(stage===3||stage===6){
-   cylinder(.13,.19,2.7,wood,x,z);
-   const leaf=material(stage===6?0xaac3ca:0x365e4a);
-   const crown=add(new THREE.Mesh(new THREE.ConeGeometry(stage===6?.98:1.2,3.3,8),leaf));
-   crown.position.set(x,3.7,z);crown.castShadow=true;
+   // Separate trunk, limbs and organic branches instead of triangular toy trees.
+   cylinder(.18,.32,3.15,wood,x,z);
+   const foliage=material(stage===6?0x93a7ab:0x374f43,.98);
+   for(let j=0;j<4;j++){
+    const cluster=add(new THREE.Mesh(new THREE.IcosahedronGeometry(.92-(j%2)*.14,1),foliage));
+    cluster.position.set(x+Math.sin(i*2+j)*.43,2.80+j*.55,
+      z+Math.cos(i*3+j)*.43);cluster.scale.set(1.18,.75,1.08);
+    cluster.castShadow=rich;
+   }
   }else{
-   cylinder(.58,.68,2.9+((i*7)%4)*.35,stone,x,z);
-   box(1.4,.35,1.4,darkStone,x,3.18+((i*7)%4)*.35,z);
-   if(i%3===0)box(.5,.35,1.75,stone,x-1.3,.18,z-.8,.26);
+   // Eroded ruins: irregular stone courses, broken columns and fallen blocks.
+   const h=2.2+(i*13%5)*.42,angle=.03*Math.sin(i*4.1);
+   const shaft=add(new THREE.Mesh(new THREE.CylinderGeometry(.46,.62,h,9,5),stone));
+   shaft.position.set(x,h*.5,z);shaft.rotation.z=angle;
+   shaft.castShadow=rich;shaft.receiveShadow=true;
+   const crackedTop=add(new THREE.Mesh(new THREE.DodecahedronGeometry(.77,0),darkStone));
+   crackedTop.position.set(x+Math.sin(i)*.14,h+.03,z+.04);
+   crackedTop.scale.set(1,.23,.91);crackedTop.rotation.set(.12,i*.38,-.1);
+   crackedTop.castShadow=rich;
+   for(let j=0;j<3;j++){
+    const rubble=add(new THREE.Mesh(new THREE.DodecahedronGeometry(.36+.09*j,0),j%2?stone:darkStone));
+    rubble.position.set(x+(j-1)*.65,.04,z+(.5-j*.41));
+    rubble.scale.set(1.5,.5,1.1);rubble.rotation.y=i*.9+j*.7;
+    rubble.castShadow=rich;
+   }
   }
  }
  for(const x of [-10,10])for(const z of [-6,6]){
@@ -127,7 +145,7 @@ function appearance(model,team,stage){
  shadow.rotation.x=-Math.PI/2;shadow.position.y=.018;
  shadow.scale.set(1.1,.68,1);model.add(shadow);return shadow;
 }
-function prepareActor(gltf,unit,scene){
+function prepareActor(gltf,unit,scene,quality){
  const root=new THREE.Group(),model=cloneSkinned(gltf.scene);
  root.add(model);
  // Real GLBs use a .01 scene root plus 100x inverse-bind matrices.
@@ -152,7 +170,7 @@ function prepareActor(gltf,unit,scene){
  // Per-actor material clones: color schemes must never leak to a second hero.
  const ownedMaterials=[];
  model.traverse(obj=>{
-  if(obj.isBone&&/head$/i.test(obj.name))obj.scale.multiplyScalar(style.head);
+  if(obj.isBone&&obj.name===riggedEquipmentBone('head'))obj.scale.multiplyScalar(style.head);
   if(!obj.isMesh)return;
   const finish=mat=>{
    if(!mat?.isMaterial)return mat;
@@ -173,6 +191,7 @@ function prepareActor(gltf,unit,scene){
  slash.rotation.set(.13,0,Math.PI/2);
  slash.position.set(unit.team===0?.52:-.52,1.38,.23);
  slash.visible=false;root.add(slash);
+ const equipment=createRiggedEquipment(root,model,unit,{quality});
  const mixer=new THREE.AnimationMixer(model),actions=new Map();
  for(const clip of gltf.animations){
   if(!['Idle','Run','Walk','Attack','Special','Hit','Death'].includes(clip.name))continue;
@@ -188,7 +207,7 @@ function prepareActor(gltf,unit,scene){
  root.rotation.y=unit.team===0?Math.PI/2:-Math.PI/2;
  scene.add(root);
  return {root,mixer,actions,current:null,lastActionKey:null,lastPosition:root.position.clone(),
-  ring,slash,ownedMaterials,style,team:unit.team,name:riggedModelForUnit(unit)};
+  ring,slash,equipment,ownedMaterials,style,team:unit.team,name:riggedModelForUnit(unit)};
 }
 function setActorClip(actor,name,unit,room){
  if(!actor.actions.has(name))name='Idle';
@@ -355,7 +374,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
  function render(room,you,time=0,opts={}){
   if(disposed||!room||room.variant!=='official')return;
   if(room.id!==lastRoom){for(const actor of actors.values()){
-    scene.remove(actor.root);actor.mixer.stopAllAction();actor.ownedMaterials.forEach(m=>m.dispose());
+    scene.remove(actor.root);actor.mixer.stopAllAction();actor.equipment.dispose();actor.ownedMaterials.forEach(m=>m.dispose());
     actor.slash.geometry.dispose();actor.slash.material.dispose();
     actor.ring.geometry.dispose();actor.ring.material.dispose();
    }
@@ -375,7 +394,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
    const point=officialRiggedWorldPosition(unit);if(!point)continue;
    active.add(id);
    let actor=actors.get(id);
-   if(!actor){actor=prepareActor(gltf,unit,scene);actors.set(id,actor);}
+   if(!actor){actor=prepareActor(gltf,unit,scene,qualityName);actors.set(id,actor);}
    const target=new THREE.Vector3(point.x,0,point.z);
    const distance=actor.root.position.distanceTo(target);
    actor.root.position.lerp(target,animate?1-Math.exp(-11*delta):1);
@@ -383,6 +402,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
    const desired=animate?riggedAnimationForUnit(unit,distance>.10):'Idle';
    setActorClip(actor,desired,unit,room);
    actor.mixer.update(animate?delta:0);
+   actor.equipment.update(time,desired,animate);
    const attack=animate&&(desired==='Attack'||desired==='Special');
    const phase=attack?(actor.actions.get(desired)?.time||0)/
      Math.max(.01,actor.actions.get(desired)?.getClip().duration||1):0;
@@ -414,10 +434,12 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
   setQuality(q){qualityName=q;stage=-1;},
   toWorld(){return {x:-1e6,y:-1e6};},
   stats(){return {mode:'rigged3d',skinnedModels:assets.size,animatedActors:actors.size,frames:drawn,
-   pipeline:'textured-PBR-skeletal',quality:qualityName};},
+   equipmentActors:[...actors.values()].filter(a=>a.equipment).length,
+   drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
+   pipeline:'textured-PBR-skeletal-modular',quality:qualityName};},
   dispose(){if(disposed)return;disposed=true;stageCleanup();impacts.dispose();
    for(const actor of actors.values()){
-    scene.remove(actor.root);actor.mixer.stopAllAction();actor.ownedMaterials.forEach(m=>m.dispose());
+    scene.remove(actor.root);actor.mixer.stopAllAction();actor.equipment.dispose();actor.ownedMaterials.forEach(m=>m.dispose());
     actor.slash.geometry.dispose();actor.slash.material.dispose();
     actor.ring.geometry.dispose();actor.ring.material.dispose();
    }

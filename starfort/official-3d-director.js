@@ -8,6 +8,7 @@
 import {officialBattleRoom,officialMissionIdentity} from './official-battle-bridge.js';
 import {CAMERA_DEFAULT,orbitCamera,zoomCamera} from './official-3d-camera-v259.js';
 import {cinematicCameraShot} from './official-3d-camera-shots-v260.js';
+import {officialStrikeWindow} from './official-3d-choreography-v259.js';
 const KEY='starfort:official-3d-v228';
 export function officialGraphicsPreference(store){
  try{return store?.getItem(KEY)==='2d'?'2d':'3d';}catch{return '3d';}
@@ -17,9 +18,9 @@ export function premiumRiggedBundleUrl(host=''){
   ?'https://starfort-online-beta.onrender.com/starfort/assets/rigged/engine-v264.js'
   :'./assets/rigged/engine-v264.js';
 }
-export function createOfficialBattleDirector({store=null,onModeChange=()=>{},motionPreference=false}={}){
+export function createOfficialBattleDirector({store=null,onModeChange=()=>{},motionPreference=false,audioCue=()=>{}}={}){
  let preferred=officialGraphicsPreference(store),renderer=null,canvas=null,active=null,party=[],previous=null,owner=null;
- let frameId=null,lastRender=0,lastPaint=0,disposed=false,root=null,mode='sprites',lost=()=>{};
+ let frameId=null,lastRender=0,lastPaint=0,disposed=false,root=null,mode='sprites',lost=()=>{},lastSoundKey=null;
  let camera={...CAMERA_DEFAULT,distance:51},down=null,dragEl=null,loading=null,pendingCanvas=null,generation=0;
  function stop(){if(frameId!==null){cancelAnimationFrame(frameId);frameId=null;}}
  function pointerDown(e){if(e.button!==0&&e.pointerType==='mouse')return;
@@ -41,7 +42,7 @@ export function createOfficialBattleDirector({store=null,onModeChange=()=>{},mot
  function release(){
   generation++;stop();detachCanvas();
   try{renderer?.dispose();}catch{}renderer=null;loading=null;
-  mode='sprites';previous=null;active=null;party=[];owner=null;lastPaint=0;
+  mode='sprites';previous=null;active=null;party=[];owner=null;lastPaint=0;lastSoundKey=null;
   if(root){root.classList.remove('is-3d');root.classList.remove('is-loading-rigs');root=null;}
  }
  function displayMode(el){
@@ -64,6 +65,17 @@ export function createOfficialBattleDirector({store=null,onModeChange=()=>{},mot
   lastPaint=clock;
   const now=Date.now(),room=officialBattleRoom(party,active,{now,previous});
   const shot=cinematicCameraShot(previous,active,now,camera,{reducedMotion:motionPreference});
+  const verified=officialStrikeWindow(previous,active,now);
+  if(room&&verified&&verified.action!=='reinforce'){
+   const key=room.id+':'+room.turn;
+   if(lastSoundKey!==key){
+    lastSoundKey=key;
+    const action=verified.action;
+    const sound=action==='guard'?'shield':action==='rally'||action.startsWith('skill:')?'spell':
+     action==='feint'?'bow':verified.enemyHit>100?'heavy':'sword';
+    try{audioCue(sound);}catch(error){console.warn('Savaş sesi oynatılamadı:',error);}
+   }
+  }
   if(room){
    try{renderer.render(room,room.you,now/1000,{quality:root.clientWidth<560?'performance':'balanced',
      cameraMode:'cinematic',cameraYaw:shot.yaw,cameraDistance:shot.distance,reducedMotion:motionPreference});}
