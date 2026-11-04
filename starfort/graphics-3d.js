@@ -85,6 +85,8 @@ function drawWall(mesh,gateHp=1,time=0){
   mesh.prism(29,12,0,7,24,[.44,.47,.49],12);mesh.pyramid(29,24,0,9,11,[.23,.30,.43],8);
   mesh.prism(29,27,0,2.5,5,[.33,.69,.90],8);
 }
+// Larger human-scale meshes for authenticated cinematic PvE, no physical hitbox changes.
+const roomlessScale=(item,boss,hero)=>boss?2.72:hero?2.10:1.72;
 function drawActor(mesh,item,pose,time,hero,quality,reducedMotion){
   // Segment bones are actually articulated; all animation is presentation-only.
   const side=item.team||0,main=side?RED:BLUE,p=world3(pose?.x??item.x,pose?.y??item.y),x=p.x,z=p.z;
@@ -93,11 +95,11 @@ function drawActor(mesh,item,pose,time,hero,quality,reducedMotion){
   const poseState=rigPose({action,speed:pose?.speed||0,walk:pose?.walk||0,
     hit:action==='hit'?1:pose?.hit||0,life:health,attackPhase:clamp3((time-(Number(item.attackAt)||0))/.84,0,1),castPhase:clamp3((time-(Number(item.attackAt)||0))/1.15,0,1)},time,{reducedMotion});
   const boss=item.type==='boss',role=item.role||(item.type==='caster'?'mage':item.type==='archer'?'ranger':'fighter');
-  const scale=boss?2.04:hero?1.48:1.18;const bones=rigBones(poseState,scale);
+  const scale=roomlessScale(item,boss,hero);const bones=rigBones(poseState,scale);
   const yaw=(pose?.face||(side?-1:1))>0?Math.PI/2:-Math.PI/2;
   const armor=color(role==='mage'?[.38,.39,.71]:role==='ranger'?[.29,.48,.34]:role==='assassin'?[.47,.35,.51]:main,poseState.state==='hit'?.80:1),shoulder=bones.shoulder,hip=bones.hip;
   // Ground-contact shadow, differentiated by team; no gameplay hitbox changes.
-  mesh.box(x,.035,z,hero?2.7:1.75,.06,hero?1.55:1.05,[.085,.10,.12]);
+  mesh.box(x,.035,z,boss?4.5:hero?3.8:2.9,.06,boss?2.9:hero?2.3:1.7,[.085,.10,.12]);
   // Boots, knees and hips follow rig joints instead of static rotating cubes.
   for(const part of bones.legs){
     const [a,k,b]=[part.hip,part.knee,part.boot],c=[.23,.28,.34];
@@ -246,8 +248,8 @@ export function createGraphics3D(canvas,{quality='balanced',reducedMotion=false,
     const blend=firstFrame?1:(reduced?1:.095);
     target=[target[0]+(desiredX-target[0])*blend,0,target[2]+(desiredZ-target[2])*blend];
     if(cameraMode==='cinematic'){
-      const distance=clamp3(Number(cameraDistance)||69,50,95),yaw=clamp3(Number(cameraYaw)||0,-.85,.85);
-      eye=[target[0]+Math.sin(yaw)*distance,45+distance*.08,Math.cos(yaw)*distance+target[2]];
+      const distance=clamp3(Number(cameraDistance)||69,43,95),yaw=clamp3(Number(cameraYaw)||0,-.85,.85);
+      eye=[target[0]+Math.sin(yaw)*distance,31+distance*.10,Math.cos(yaw)*distance+target[2]];
     }else eye=[target[0],74,81+target[2]];
     resize(0,0,typeof window==='undefined'?1:window.devicePixelRatio||1);
     gl.clearColor(.14,.21,.29,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);

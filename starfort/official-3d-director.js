@@ -12,7 +12,7 @@ export function officialGraphicsPreference(store){
 export function createOfficialBattleDirector({store=null,onModeChange=()=>{},motionPreference=false}={}){
  let preferred=officialGraphicsPreference(store),renderer=null,canvas=null,active=null,party=[],previous=null,owner=null;
  let frameId=null,lastRender=0,lastPaint=0,disposed=false,root=null,mode='sprites',lost=()=>{};
- let camera={...CAMERA_DEFAULT},down=null,dragEl=null;
+ let camera={...CAMERA_DEFAULT,distance:51},down=null,dragEl=null;
  function stop(){if(frameId!==null){cancelAnimationFrame(frameId);frameId=null;}}
  function pointerDown(e){if(e.button!==0&&e.pointerType==='mouse')return;down={id:e.pointerId,x:e.clientX};try{dragEl.setPointerCapture(e.pointerId);}catch{}}
  function pointerMove(e){if(!down||e.pointerId!==down.id)return;camera=orbitCamera(camera,e.clientX-down.x);down.x=e.clientX;}
