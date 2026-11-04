@@ -115,7 +115,7 @@ function prepareActor(gltf,unit,scene){
  const root=new THREE.Group(),model=cloneSkinned(gltf.scene);
  root.add(model);
  const box=new THREE.Box3().setFromObject(model),size=new THREE.Vector3();box.getSize(size);
- if(!Number.isFinite(size.y)||size.y<.001||size.y>1000)throw Error('Character model bounding box malformed');
+ if(!Number.isFinite(size.y)||size.y<.001||size.y>1000)throw Error('Character model bounding box malformed '+riggedModelForUnit(unit)+' height='+size.y+' bounds='+[box.min.x,box.min.y,box.min.z,box.max.x,box.max.y,box.max.z].join(','));
  const targetHeight=unit.type==='boss'?3.55:unit.team===0?2.5:2.25;
  const scale=targetHeight/size.y;
  model.scale.setScalar(scale);
