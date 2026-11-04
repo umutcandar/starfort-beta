@@ -12,7 +12,7 @@ import {clone as cloneSkinned} from 'three/addons/utils/SkeletonUtils.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {RIGGED_ASSETS,riggedModelForUnit,riggedAnimationForUnit,officialRiggedWorldPosition} from './official-rigged-contract-v264.js';
 import {combatAppearance,combatCameraFrame,battlefieldScatter} from './official-rigged-style-v265.js';
-import {createRiggedEquipment} from './official-rigged-equipment-v266.js';
+import {createRiggedEquipment,riggedEquipmentBone} from './official-rigged-equipment-v266.js';
 
 const bounded=(v,a,b)=>Math.min(b,Math.max(a,v));
 const RAD=Math.PI/180;
@@ -153,7 +153,7 @@ function prepareActor(gltf,unit,scene,quality){
  // Per-actor material clones: color schemes must never leak to a second hero.
  const ownedMaterials=[];
  model.traverse(obj=>{
-  if(obj.isBone&&/head$/i.test(obj.name))obj.scale.multiplyScalar(style.head);
+  if(obj.isBone&&obj.name===riggedEquipmentBone('head'))obj.scale.multiplyScalar(style.head);
   if(!obj.isMesh)return;
   const finish=mat=>{
    if(!mat?.isMaterial)return mat;
