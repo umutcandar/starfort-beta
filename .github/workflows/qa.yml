@@ -18,6 +18,13 @@ jobs:
       - name: Syntax and gameplay tests
         working-directory: starfort
         run: npm run qa:all
+      - name: Retain public CC0 GLB model for rig debugger
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: starfort-beta15-cc0-archer-debug
+          if-no-files-found: ignore
+          path: starfort/assets/rigged/Archer.glb
       - name: Reference layout browser check (Chromium)
         working-directory: starfort
         # GitHub runner Chrome occasionally aborts before opening DevTools.
