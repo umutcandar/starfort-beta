@@ -145,7 +145,8 @@ function prepareActor(gltf,unit,scene){
  if(!Number.isFinite(height)||height<1e-6||height>1000)
   throw Error('Unusable animated mesh dimensions for '+riggedModelForUnit(unit));
  const targetHeight=unit.type==='boss'?3.55:unit.team===0?2.75:2.48;
- const style=combatAppearance(unit),scale=targetHeight/height;
+ const scale=targetHeight/height;
+ const style=combatAppearance(unit);
  // A little taller and narrower than the source stylised figures.
  model.scale.set(scale*style.build*.91,scale*1.05,scale*.88);
  // Per-actor material clones: color schemes must never leak to a second hero.
