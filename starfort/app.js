@@ -390,8 +390,9 @@ async function accountProgressAction(action,target=null,aux=null){
   if(acceptAccountProgress(response)){
    if(action==='mission_start'||action==='mission_abandon'||action==='mission_turn'&&!response.account.mission)void refreshWarfront();
    if(action==='mission_turn'&&!response.account.mission&&report){
-    notify(report.won?'★ Sunucu zaferi! '+report.stars+' yıldız · Kaynaklar ve ganimet kaydedildi.':'Sefer sonuçlandı. Takımını geliştirip yeniden dene.');
-   }else notify(({'hero':'Kahraman eğitildi','enhance':'Eşya ustalığı geliştirildi','ascend':'✦ Yıldız işleme rütbesi sunucuya kaydedildi','boss_claim':'Ortak dünya patronu ödülü alındı','forge':'Ekipman üretildi','equip':'Ekipman kuşanıldı','unequip':'Ekipman çıkarıldı','team':'Takım kaydedildi','mission_start':'Sunucu seferi başladı','mission_abandon':'Seferden çekildin','contract':'Doğrulanmış görev ödülü alındı','chronicle_claim':'✦ Komutan Kroniği sandığı açıldı · Kalıcı rütbe kaydedildi','title':'Unvan açıldı'})[action]||'Savaş komutu sunucuda işlendi.');
+    // The verified victory overlay already communicates the result in the selected locale.
+    if(!report.won)notify('Sefer sonuçlandı. Takımını geliştirip yeniden dene.');
+   }else if(action!=='mission_turn')notify(({'hero':'Kahraman eğitildi','enhance':'Eşya ustalığı geliştirildi','ascend':'✦ Yıldız işleme rütbesi sunucuya kaydedildi','boss_claim':'Ortak dünya patronu ödülü alındı','forge':'Ekipman üretildi','equip':'Ekipman kuşanıldı','unequip':'Ekipman çıkarıldı','team':'Takım kaydedildi','mission_start':'Sunucu seferi başladı','mission_abandon':'Seferden çekildin','contract':'Doğrulanmış görev ödülü alındı','chronicle_claim':'✦ Komutan Kroniği sandığı açıldı · Kalıcı rütbe kaydedildi','title':'Unvan açıldı'})[action]||'Savaş komutu sunucuda işlendi.');
   }
  }catch(error){notify('Sunucu: '+error.message);await refreshVillage({preserve:true});}
  finally{villageBusy=false;}
