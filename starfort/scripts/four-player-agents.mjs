@@ -89,6 +89,13 @@ try{
   assert.equal(await evaluate('document.querySelector("[data-account-stage=\\"1\\"]").disabled'),false);
   assert.ok(await click('[data-account-stage="1"]'));
   await wait('!!document.querySelector(".server-mission")','battle UI');
+  // A passing mock fight alone does not prove real 3D character quality.
+  // Block the release until WebGL has actually rendered the licensed GLB rigs.
+  await wait('(()=>{const stage=document.querySelector(".official-combat-scene.is-3d");const canvas=stage?.querySelector(".official-3d-canvas");return !!stage&&!!canvas&&canvas.width>0&&canvas.height>0;})()',
+   'REAL skinned 3D character scene (not a 2D fallback or loading placeholders)');
+  const real3D=await evaluate('(()=>{const v=document.querySelector(".official-combat-scene.is-3d"),c=v.querySelector("canvas");return {width:c.width,height:c.height,mode:v.querySelector("[data-official-render-state]")?.textContent};})()');
+  pass('REAL skinned 3D models loaded and a WebGL frame rendered',real3D);
+  await screenshot('rigged-3d-ready');
   assert.equal(await evaluate('!!document.querySelector(".official-hit-floater")'),false,
    'A new battle must never fabricate an attack before the player uses a skill');
   const actions=[];
