@@ -36,6 +36,7 @@ import {buildingWorkshopMarkup} from './building-workshop.js';
 import {villageAuthorityRequest,villageServerView,validateVillageSnapshot} from './village-authority.js';
 import {accountProgressRequest,accountServerView} from './account-progression.js';
 import {accountExpeditionMarkup} from './account-expedition.js';
+import {warRallyCooldown} from './official-warroom-v258.js';
 import {createOfficialBattleDirector} from './official-3d-director.js';
 import {officialBattleDelta} from './official-battle-bridge.js';
 import {calendarRequest,rewardCalendarMarkup} from './reward-calendar.js';
@@ -1356,7 +1357,7 @@ setInterval(()=>{
  for(const button of workspaceEl.querySelectorAll('[data-account-turn]')){
    const action=button.dataset.accountTurn||'',hero=action.startsWith('skill:')?action.slice(6):null;
    const next=hero?(accountProgressSnapshot.mission.cooldowns?.[hero]||0):0;
-   button.disabled=villageBusy||remaining>0||next>accountProgressSnapshot.mission.turn+1;
+   button.disabled=villageBusy||remaining>0||next>accountProgressSnapshot.mission.turn+1||(action==='rally'&&warRallyCooldown(accountProgressSnapshot.mission)>0);
   }
  const hint=workspaceEl.querySelector('[data-server-wait]');
  if(hint)hint.textContent=remaining?'Yaklaşık '+Math.ceil(remaining/1000)+' sn bekle.':'Komut verebilirsin.';

@@ -97,7 +97,9 @@ test('SQL warfront prevents replay, direct table writes, unverified rewards and 
  assert.match(app,/refreshWarfront\(\)/);
  assert.match(app,/warfrontOwner===accountSession\(\)\?\.user\?\.id\?warfrontSnapshot/);
  const exp=readFileSync(new URL('./account-expedition.js',import.meta.url),'utf8');
- assert.match(exp,/data-account-turn="feint"/);
- assert.match(exp,/data-account-turn="rally"/);
+ const warRoom=readFileSync(new URL('./official-warroom-v258.js',import.meta.url),'utf8');
+ assert.match(warRoom,/id:'feint'/);
+ assert.match(warRoom,/id:'rally'/);
+ assert.match(exp,/officialWarRoomMarkup\(mission,game\.team\|\|\[\],now,combatDelta\)/);
  assert.match(exp,/warfrontMarkup\(warfront,game,anyMission\)/);
 });

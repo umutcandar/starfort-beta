@@ -1,0 +1,56 @@
+/* STARFORT beta.12: authored tactical battle interface; server-owned outcomes.
+   Battle effects below only animate when officialCombatImpact validates an RPC turn. */
+.official-war-room{position:relative;display:grid;gap:12px;margin-top:13px;padding:clamp(12px,2.2vw,21px);border:1px solid #a98b5d;border-radius:15px;background:linear-gradient(145deg,#243739 0%,#142735 44%,#101a29 100%);box-shadow:inset 0 1px #e6c78a29,0 14px 32px #03090f6b}
+.war-room-header{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.war-room-header .eyebrow{display:block;font:800 12px/1.4 system-ui,sans-serif;letter-spacing:.17em;color:#ffdda1}
+.war-room-header p{margin:4px 0 0;font-size:12px;color:#bccfd0;line-height:1.6}
+.war-room-header .war-live-advice{max-width:260px;border-inline-start:3px solid #82c8af;padding:6px 10px;background:#112e35;color:#e7ece1;font-weight:600}
+.war-command-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.official-war-room .war-command,.official-war-room .war-skill{appearance:none;display:flex;position:relative;align-items:center;text-align:start;min-width:0;min-height:90px;gap:12px;border:1px solid #617786;background:linear-gradient(135deg,#263b4b,#162936);border-radius:11px;padding:13px 11px;box-shadow:inset 0 1px #f7dca41b;transition:border-color .18s,background .18s,transform .18s}
+.official-war-room .war-command:hover:not(:disabled),.official-war-room .war-skill:hover:not(:disabled){transform:translateY(-2px);background:linear-gradient(135deg,#365363,#203b42);border-color:#efcb8a}
+.official-war-room .war-command.suggested,.official-war-room .war-skill.suggested{border-color:#ecc67d;background:linear-gradient(135deg,#45503c,#253947);box-shadow:0 0 0 1px #e9bf7c55,inset 0 1px #e9d39d45}
+.war-command-icon{flex:0 0 46px;display:grid;place-items:center;width:46px;height:48px;color:#fff0bd;border:1px solid #98b4aa81;background:radial-gradient(circle at 50% 30%,#70877c6b,#152c39);border-radius:10px;font-size:26px}
+.war-command-copy,.war-skill-body{min-width:0;display:grid;gap:4px}
+.war-command-copy strong,.war-skill-body strong{font:750 clamp(12px,1.2vw,16px)/1.25 system-ui,sans-serif;color:#f8e8c6}
+.war-command-copy small,.war-skill-body small{font:650 11px/1.35 system-ui,sans-serif;white-space:normal;overflow-wrap:anywhere;color:#afd8df;font-variant-numeric:tabular-nums}
+.war-recommended{position:absolute;inset:auto 7px 5px auto;font:900 9px/1.1 system-ui,sans-serif;font-style:normal;letter-spacing:.045em;color:#ffdda1}
+.official-war-room .war-command.suggested,.official-war-room .war-skill.suggested{padding-bottom:22px}
+.official-war-room button:disabled{opacity:.45;cursor:not-allowed;filter:saturate(.55)}
+.war-skills-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding-top:7px;border-top:1px solid #8c9b9060}
+.war-skills-head strong{font:800 12px system-ui,sans-serif;letter-spacing:.13em;color:#f4d6a0}
+.war-skills-head small{color:#afc8ca;font-size:11px}
+.war-skill-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.official-war-room .war-skill{min-height:106px;background:linear-gradient(130deg,#243a41,#162538)}
+.war-skill img{width:59px;height:70px;object-fit:cover;object-position:50% 24%;border-radius:8px;border:1px solid #c8a879a0;background:#0c1a24}
+.war-foot{display:flex;justify-content:flex-end}
+.official-war-room .war-foot .text-button{min-height:40px;padding:8px 14px;color:#f7c7b9;text-decoration:underline}
+.war-verified-report{display:flex;flex-wrap:wrap;align-items:center;gap:8px 13px;padding:11px 14px;border:1px solid #84bfa59e;border-radius:10px;background:#153c39b5;color:#edf4e6;font-size:12px}
+.war-verified-report>strong{color:#a9ffe0;font-weight:900;margin-inline-end:8px}
+.war-verified-report b{font-weight:900;color:#ffe2a9;font-variant-numeric:tabular-nums}
+.official-combat-scene{background-position:center 67%;--war-flare:#f5b976}
+.official-combat-scene .official-fighter .official-mini-health{display:none}/* SQL owns one SHARED team/enemy HP pool, not individual fighter HP. */
+.official-combat-scene .official-unit-label{min-height:22px;align-content:center}
+.official-combat-scene .official-stage-formation{perspective:750px}
+.official-combat-scene .official-side.allies .official-fighter:first-child{z-index:2}
+.official-combat-scene .official-clash-center{opacity:.25;font-size:24px}
+.official-combat-scene .war-frontline-ground{position:absolute;inset:auto 8% 12%;height:20%;pointer-events:none;z-index:2;border-top:2px solid #d6be9465;background:linear-gradient(180deg,#d3a15f12,#0a1a1e15);clip-path:polygon(5% 0,95% 0,100% 100%,0 100%)}
+.official-combat-scene .war-frontline-ground:after{content:'';position:absolute;left:25%;right:25%;top:0;height:4px;background:linear-gradient(90deg,transparent,#fff6d1ad,transparent)}
+.official-combat-scene .war-verified-tracer{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0}
+.official-combat-scene.has-verified-impact .war-verified-tracer{animation:war-tracer 1.05s ease-out both;background:linear-gradient(108deg,transparent 32%,#e5b57c00 43%,#ffeab6b8 49%,#f2c98d00 52%,transparent 60%);clip-path:polygon(19% 34%,77% 30%,87% 60%,23% 78%)}
+.official-combat-scene.has-verified-impact .official-side.allies .official-fighter:first-child{animation:war-charge .82s cubic-bezier(.2,.6,.35,1) both}
+.official-combat-scene.has-verified-impact .official-side.hostiles .official-fighter:nth-child(2){animation:war-recoil .72s ease-out both}
+.official-combat-scene.has-verified-impact.verified-guard .official-side.allies .official-fighter{animation:war-guard .72s ease-out both}
+.official-combat-scene.has-verified-impact.verified-feint .official-side.allies .official-fighter:first-child{animation:war-flank .85s ease-out both}
+.official-combat-scene.has-verified-impact.verified-heal .official-side.allies .official-fighter{filter:drop-shadow(0 0 24px #83ffcca8)}
+.official-combat-scene.has-verified-impact.verified-skill .official-side.allies .official-fighter.casting{animation:war-cast .9s ease-out both;filter:drop-shadow(0 0 20px #c8dfffaf)}
+.official-combat-scene .official-fighter.casting .official-unit-label{border-color:#f0cb83;color:#ffedb5}
+.official-combat-scene .official-action-caption{max-width:85%;overflow:hidden;text-overflow:ellipsis}
+@keyframes war-charge{0%{transform:translateX(0) rotate(0)}34%{transform:translateX(36%) rotate(-3deg)}55%{transform:translateX(48%) rotate(2deg)}100%{transform:translateX(0) rotate(0)}}
+@keyframes war-recoil{0%{transform:translateX(0)}45%{transform:translateX(14%) rotate(6deg)}100%{transform:translateX(0)}}
+@keyframes war-guard{0%{transform:translateY(0) scale(1)}35%{transform:translateY(8px) scale(.96)}100%{transform:translateY(0) scale(1)}}
+@keyframes war-flank{0%{transform:translateX(0)}30%{transform:translate(25%,-6%)}52%{transform:translate(48%,3%)}100%{transform:translateX(0)}}
+@keyframes war-cast{0%{transform:scale(1)}34%{transform:translateY(-10px) scale(1.08)}63%{transform:translateY(-3px) scale(1.04)}100%{transform:scale(1)}}
+@keyframes war-tracer{0%{opacity:0;transform:translateX(-20px)}20%{opacity:.8}72%{opacity:.4}100%{opacity:0;transform:translateX(65px)}}
+@media(max-width:900px){.war-command-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.war-room-header{flex-direction:column;align-items:stretch}.war-room-header .war-live-advice{max-width:none}.war-skill-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.official-war-room{padding:12px;gap:10px}.war-command-grid{gap:7px}.war-skill-grid{grid-template-columns:1fr}.official-war-room .war-command{min-height:86px;padding:10px 8px;gap:8px}.war-command-icon{flex-basis:34px;width:34px;height:36px;font-size:20px}.war-command-copy strong{font-size:12px}.war-command-copy small{font-size:10px}.official-war-room .war-skill{min-height:72px}.war-skill img{width:49px;height:57px}.war-skills-head{flex-direction:column;gap:3px}.war-verified-report{font-size:11px}.official-combat-scene .official-stage-formation{gap:1%;inset-inline:1%}.official-combat-scene.has-verified-impact .official-side.allies .official-fighter:first-child{animation-duration:.65s}}
+@media(prefers-reduced-motion:reduce){.official-war-room .war-command,.official-war-room .war-skill{transition:none}.official-war-room button:hover{transform:none!important}.official-combat-scene.has-verified-impact .war-verified-tracer,.official-combat-scene.has-verified-impact .official-fighter{animation:none!important}.official-combat-scene .war-verified-tracer{display:none}}

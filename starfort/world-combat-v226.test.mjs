@@ -101,7 +101,8 @@ test('authenticated campaign contains battle scene, world map, shared boss and s
  assert.match(combat,/data-account-turn="strike"/);
  assert.match(combat,/DÜNYA PATRONU/);
  assert.equal((combat.match(/data-account-turn="skill:[a-z]+"/g)||[]).length,3,'each hero has a server-validated unique ability');
- assert.match(combat,/official-hero-ability-strip/);
+ assert.match(combat,/official-war-room/);
+ assert.match(combat,/war-skill-grid/);
  account.mission.cooldowns={aldren:4};
  account.mission.turn=1;
  const cooling=accountExpeditionMarkup(state,account,NOW+3500);

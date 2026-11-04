@@ -71,10 +71,10 @@ test('verified turn damage HUD never displays invented combat numbers from unver
  };
  const delta=officialBattleDelta(mission(0),mission(1));
  const html=accountExpeditionMarkup(game,account,time+3300,null,delta);
- assert.match(html,/Sunucu hasarı:/);assert.match(html,/35/);
- assert.match(html,/Alınan hasar:/);assert.match(html,/24/);
+ assert.match(html,/Doğrulanmış son çarpışma/);assert.match(html,/Verilen hasar/);assert.match(html,/35/);
+ assert.match(html,/Alınan hasar/);assert.match(html,/24/);
  const absent=accountExpeditionMarkup(game,account,time+3300,null,null);
- assert.doesNotMatch(absent,/Sunucu hasarı:/);
+ assert.doesNotMatch(absent,/war-verified-report/);
 });
 test('production wires the exact WebGL renderer already used by arena and team matches',()=>{
  const director=readFileSync(new URL('./official-3d-director.js',import.meta.url),'utf8');
