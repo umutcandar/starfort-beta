@@ -89,6 +89,8 @@ try{
   assert.equal(await evaluate('document.querySelector("[data-account-stage=\\"1\\"]").disabled'),false);
   assert.ok(await click('[data-account-stage="1"]'));
   await wait('!!document.querySelector(".server-mission")','battle UI');
+  assert.equal(await evaluate('!!document.querySelector(".official-hit-floater")'),false,
+   'A new battle must never fabricate an attack before the player uses a skill');
   const actions=[];
   for(let n=0;n<12;n++){
    const before=await snap();
@@ -98,6 +100,13 @@ try{
    assert.ok(await click('[data-account-turn="'+move+'"]'));
    await wait('(()=>{const x=JSON.parse(sessionStorage.getItem("__starfort_qa_snapshot"));return !x.mission||x.mission.turn>'+
     before.mission.turn+'})()','mission turn '+n);
+   if(n===0){
+    await wait('!!document.querySelector(".official-hit-floater.foe")','first verified damage overlay');
+    const hit=await evaluate('document.querySelector(".official-hit-floater.foe")?.textContent.trim()');
+    assert.equal(hit,'−100','Scene damage must equal the synthetic server response, never a guessed number');
+    await screenshot('first-server-hit');
+    pass('First hit rendered only after a server result and displayed exactly the server damage',{damage:hit});
+   }
    actions.push({intent,move});
   }
   const data=await snap();
