@@ -128,7 +128,7 @@ test('asset, quality, controls and canonical backend invariants remain intact',(
  const director=source('./official-3d-director.js'),gl=source('./graphics-3d.js');
  const stage=source('./official-combat-scene.js'),bridge=source('./official-battle-bridge.js');
  const pkg=JSON.parse(source('./package.json'));
- assert.match(pkg.version,/beta\.14$/);
+ assert.match(pkg.version,/beta\.(?:1[4-9]|[2-9]\d+)$/);
  assert.match(html,/official-cinematic-v260\.css/);
  assert.match(stage,/cinematicCombatMarkup\(mission,team,combatDelta\)/);
  assert.match(director,/cinematicCameraShot\(previous,active,now,camera/);
