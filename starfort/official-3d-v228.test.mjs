@@ -76,15 +76,15 @@ test('verified turn damage HUD never displays invented combat numbers from unver
  const absent=accountExpeditionMarkup(game,account,time+3300,null,null);
  assert.doesNotMatch(absent,/war-verified-report/);
 });
-test('production wires the exact WebGL renderer already used by arena and team matches',()=>{
+test('official PvE now uses licensed, skinned models while legacy arena keeps the earlier WebGL renderer',()=>{
  const director=readFileSync(new URL('./official-3d-director.js',import.meta.url),'utf8');
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
  const gl=readFileSync(new URL('./graphics-3d.js',import.meta.url),'utf8');
  const index=readFileSync(new URL('./index.html',import.meta.url),'utf8');
- assert.match(director,/import \{createBattleRenderer\} from '\.\/battle-render-adapter\.js'/);
- assert.match(director,/renderMode:'3d'/);
- assert.match(director,/candidate\.mode!=='webgl3d'/);
- assert.match(director,/spot\.append\(canvas\)/,'canvas survives innerHTML updates');
+ assert.match(director,/import\(premiumRiggedBundleUrl\(host\)\)/);
+ assert.match(director,/mode='rigged3d'/);
+ assert.match(director,/preferred='2d'/);
+ assert.match(director,/spot\.append\(canvas\)/,'rigged 3D canvas survives innerHTML updates');
  assert.match(director,/requestAnimationFrame\(frame\)/);
  assert.match(director,/cancelAnimationFrame\(frameId\)/);
  assert.match(gl,/gl\.DEPTH_TEST/);
