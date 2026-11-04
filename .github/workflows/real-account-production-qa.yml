@@ -1,18 +1,32 @@
 name: STARFORT real-account production QA
-# A real account must never be mass-created on every commit.
+# Manual opt-in only. Never sign up new accounts or touch real players.
 on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: starfort-production-qa-dedicated
+  cancel-in-progress: false
 jobs:
   authenticated-campaign:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
+    env:
+      STARFORT_QA_EMAIL: ${{ secrets.STARFORT_QA_EMAIL }}
+      STARFORT_QA_PASSWORD: ${{ secrets.STARFORT_QA_PASSWORD }}
+      STARFORT_QA_USER_ID: ${{ secrets.STARFORT_QA_USER_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify real Supabase signup, login and production battle
+      - name: Validate isolated QA-account credentials are configured
+        shell: bash
+        run: |
+          if [[ -z "$STARFORT_QA_EMAIL" || -z "$STARFORT_QA_PASSWORD" || -z "$STARFORT_QA_USER_ID" ]]; then
+            echo "::error::Set three GitHub Actions Secrets for a confirmed dedicated STARFORT QA account: STARFORT_QA_EMAIL, STARFORT_QA_PASSWORD, STARFORT_QA_USER_ID. Never reuse a player's account."
+            exit 1
+          fi
+      - name: Test real production Auth, authenticated guild, two official PvE battles and mobile Chromium
         working-directory: starfort
         run: node scripts/real-account-production-qa.mjs
