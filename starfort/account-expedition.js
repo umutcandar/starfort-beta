@@ -87,10 +87,11 @@ export function accountExpeditionMarkup(game,account,now=Date.now(),selectedReal
   </article>`:'';
  const rankTitles=[['Sınır Nöbetçisi',5,'Frontier Watcher'],['Yıldız Ustası',20,'Star Master'],['Kuzey Muhafızı',40,'Northern Warden']];
  const count=Object.values(account.counters).reduce((a,b)=>a+b,0);
- return `<section class="server-expedition">${campaignHeader}
-  ${officialNextGoalMarkup(officialNextGoal(game,account,now))}
-  <div class="server-summary"><div><b>${cleared.size} / 8</b><small>${local('Hikâye bölgesi','Story regions')}</small></div><div><b>${Object.values(account.campaignStars).reduce((a,b)=>a+b,0)} / 24</b><small>${local('Sefer yıldızı','Expedition stars')}</small></div><div><b>${n(teamPower(game))}</b><small>${local('Sunucu takım gücü','Server party power')}</small></div><div><b>${n(account.mazeFloor)} / 16</b><small>${local('Labirent','Labyrinth')}</small></div></div>
-  ${missionUi}${resultUi}
+ return `<section class="server-expedition ${mission?'in-battle':''}">${missionUi}
+  ${mission||showVictory?'':campaignHeader}
+  ${mission||showVictory?'':officialNextGoalMarkup(officialNextGoal(game,account,now))}
+  ${mission?'':`<div class="server-summary"><div><b>${cleared.size} / 8</b><small>${local('Hikâye bölgesi','Story regions')}</small></div><div><b>${Object.values(account.campaignStars).reduce((a,b)=>a+b,0)} / 24</b><small>${local('Sefer yıldızı','Expedition stars')}</small></div><div><b>${n(teamPower(game))}</b><small>${local('Sunucu takım gücü','Server party power')}</small></div><div><b>${n(account.mazeFloor)} / 16</b><small>${local('Labirent','Labyrinth')}</small></div></div>`}
+  ${resultUi}
   <article class="sf-bot-entry"><div><strong>${fm('bot')}</strong><p>${fm('botHint')}</p></div><button class="secondary" data-real-bot-practice>${fm('bot')}</button></article>
   ${longRoadMarkup(account,now)}
   ${shadow?.battle?shadowPanel:''}
