@@ -13,6 +13,8 @@ import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {RIGGED_ASSETS,riggedModelForUnit,riggedAnimationForUnit,officialRiggedWorldPosition} from './official-rigged-contract-v264.js';
 import {combatAppearance,combatCameraFrame,battlefieldScatter} from './official-rigged-style-v265.js';
 import {createRiggedEquipment,riggedEquipmentBone} from './official-rigged-equipment-v266.js';
+import {ANATOMICAL_MODEL} from './official-anatomical-v267.js';
+import {prepareAnatomicalClips,applyAnatomicalPreset} from './official-anatomical-motion-v267.js';
 
 const bounded=(v,a,b)=>Math.min(b,Math.max(a,v));
 const RAD=Math.PI/180;
@@ -147,6 +149,8 @@ function appearance(model,team,stage){
 }
 function prepareActor(gltf,unit,scene,quality){
  const root=new THREE.Group(),model=cloneSkinned(gltf.scene);
+ const human=gltf.starfortAnatomical===true;
+ if(human)applyAnatomicalPreset(model,unit);
  root.add(model);
  // Real GLBs use a .01 scene root plus 100x inverse-bind matrices.
  // A world-space Box3 of the undeformed mesh is ~1mm tall but GPU-skinned
@@ -165,18 +169,22 @@ function prepareActor(gltf,unit,scene,quality){
  const targetHeight=unit.type==='boss'?3.55:unit.team===0?2.75:2.48;
  const scale=targetHeight/height;
  const style=combatAppearance(unit);
- // A little taller and narrower than the source stylised figures.
- model.scale.set(scale*style.build*.91,scale*1.05,scale*.88);
+ // True MakeHuman mesh dimensions are retained: no cartoon squash/stretch.
+ // Keep the legacy proportion adjustment only for the fallback Gobkit figures.
+ if(human)model.scale.set(scale*(.97+(style.build-1)*.35),scale,
+    scale*(.97+(style.build-1)*.35));
+ else model.scale.set(scale*style.build*.91,scale*1.05,scale*.88);
  // Per-actor material clones: color schemes must never leak to a second hero.
  const ownedMaterials=[];
  model.traverse(obj=>{
-  if(obj.isBone&&obj.name===riggedEquipmentBone('head'))obj.scale.multiplyScalar(style.head);
+  if(!human&&obj.isBone&&obj.name===riggedEquipmentBone('head'))obj.scale.multiplyScalar(style.head);
   if(!obj.isMesh)return;
   const finish=mat=>{
    if(!mat?.isMaterial)return mat;
    const copy=mat.clone();ownedMaterials.push(copy);
-   if(copy.color)copy.color.lerp(new THREE.Color(style.tint),.22);
-   if('metalness' in copy)copy.metalness=Math.max(copy.metalness||0,style.metal);
+   // Never tint human skin pastel or turn it into reflective metal.
+   if(!human&&copy.color)copy.color.lerp(new THREE.Color(style.tint),.22);
+   if(!human&&'metalness' in copy)copy.metalness=Math.max(copy.metalness||0,style.metal);
    if('roughness' in copy)copy.roughness=Math.min(.88,Math.max(.48,copy.roughness||.7));
    return copy;
   };
@@ -191,12 +199,12 @@ function prepareActor(gltf,unit,scene,quality){
  slash.rotation.set(.13,0,Math.PI/2);
  slash.position.set(unit.team===0?.52:-.52,1.38,.23);
  slash.visible=false;root.add(slash);
- const equipment=createRiggedEquipment(root,model,unit,{quality});
+ const equipment=createRiggedEquipment(root,model,unit,{quality,rig:human?'human':'gobkit'});
  const mixer=new THREE.AnimationMixer(model),actions=new Map();
  for(const clip of gltf.animations){
-  if(!['Idle','Run','Walk','Attack','Special','Hit','Death'].includes(clip.name))continue;
+  if(!['Idle','Run','Walk','Attack','Special','Guard','Hit','Death'].includes(clip.name))continue;
   const action=mixer.clipAction(clip);
-  if(['Attack','Special','Hit','Death'].includes(clip.name)){
+  if(['Attack','Special','Guard','Hit','Death'].includes(clip.name)){
    action.setLoop(THREE.LoopOnce,1);action.clampWhenFinished=true;
   }else action.setLoop(THREE.LoopRepeat,Infinity);
   actions.set(clip.name,action);
@@ -207,11 +215,12 @@ function prepareActor(gltf,unit,scene,quality){
  root.rotation.y=unit.team===0?Math.PI/2:-Math.PI/2;
  scene.add(root);
  return {root,mixer,actions,current:null,lastActionKey:null,lastPosition:root.position.clone(),
-  ring,slash,equipment,ownedMaterials,style,team:unit.team,name:riggedModelForUnit(unit)};
+  ring,slash,equipment,ownedMaterials,style,team:unit.team,
+  name:human?ANATOMICAL_MODEL.name:riggedModelForUnit(unit)};
 }
 function setActorClip(actor,name,unit,room){
  if(!actor.actions.has(name))name='Idle';
- const trigger=name==='Attack'||name==='Special'||name==='Hit';
+ const trigger=name==='Attack'||name==='Special'||name==='Guard'||name==='Hit';
  const key=room.turn+':'+name+':'+unit.action;
  if(actor.current===name&&(!trigger||actor.lastActionKey===key))return;
  const next=actor.actions.get(name);if(!next)return;
@@ -362,6 +371,13 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
    }
    assets.set(name,gltf);
   }));
+  // The official game now renders human-proportioned, textured MakeHuman figures.
+  // These models and locomotion tracks are CC0; combat gestures are authored here.
+  const realistic=prepareAnatomicalClips(await loader.loadAsync(assetUrl(ANATOMICAL_MODEL.name)));
+  let humanSkin=false;
+  realistic.scene.traverse(obj=>{if(obj.isSkinnedMesh)humanSkin=true;});
+  if(!humanSkin)throw Error('Anatomical source lacks an animated human skin');
+  realistic.starfortAnatomical=true;assets.set(ANATOMICAL_MODEL.name,realistic);
  }catch(error){renderer.dispose();throw new Error('Rigged character files could not be prepared: '+error.message);}
  let stage=-1,stageCleanup=()=>{},lastTime=null,lastRoom=null,drawn=0,actors=new Map(),qualityName=quality;
  const impacts=createImpact(scene);
@@ -389,7 +405,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
   const active=new Set();
   for(const unit of roster){
    if(!unit||!unit.id||unit.hp<=0)continue;
-   const id=String(unit.id),modelKey=riggedModelForUnit(unit),gltf=assets.get(modelKey);
+   const id=String(unit.id),modelKey=ANATOMICAL_MODEL.name,gltf=assets.get(modelKey);
    if(!gltf)continue;
    const point=officialRiggedWorldPosition(unit);if(!point)continue;
    active.add(id);
@@ -399,7 +415,8 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
    const distance=actor.root.position.distanceTo(target);
    actor.root.position.lerp(target,animate?1-Math.exp(-11*delta):1);
    actor.root.rotation.y=unit.team===0?Math.PI/2:-Math.PI/2;
-   const desired=animate?riggedAnimationForUnit(unit,distance>.10):'Idle';
+   const original=animate?riggedAnimationForUnit(unit,distance>.10):'Idle';
+   const desired=animate&&unit.action==='guard'?'Guard':original;
    setActorClip(actor,desired,unit,room);
    actor.mixer.update(animate?delta:0);
    actor.equipment.update(time,desired,animate);
