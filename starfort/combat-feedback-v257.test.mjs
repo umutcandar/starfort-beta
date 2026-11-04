@@ -6,6 +6,7 @@ import {officialBattleDelta} from './official-battle-bridge.js';
 import {createState} from './rules.js';
 import {setLocale,SUPPORTED_LOCALES} from './locale-v243.js';
 import {labeledBattleAction} from './first-minutes-v255.js';
+import {sceneText} from './locale-official-scene-v247.js';
 import {STARTUP_FLAGS,chromeArguments,launchChrome} from './scripts/chrome-devtools-launch.mjs';
 const source=name=>readFileSync(new URL(name,import.meta.url),'utf8');
 const now=Date.UTC(2026,10,4,9);
@@ -76,7 +77,9 @@ test('all 14 languages show translated Feint/Rally/hero skill in the actual figh
     const text=labeledBattleAction(action);
     assert.ok(text&&text!==action,lang+' '+action);
     const html=officialCombatScene(state,battle({lastAction:action}));
-    assert.ok(html.includes(text),lang+' battle caption '+action);
+    const caption=action.startsWith('skill:')?sceneText('actorSkill',{hero:'Lyra'}):
+      ['strike','guard'].includes(action)?sceneText(action):text;
+    assert.ok(html.includes(caption),lang+' battle caption '+action);
     assert.doesNotMatch(html,/>feint</i);
     assert.doesNotMatch(html,/>rally</i);
    }
