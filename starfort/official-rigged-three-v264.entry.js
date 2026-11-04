@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {clone as cloneSkinned} from 'three/addons/utils/SkeletonUtils.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {RIGGED_ASSETS,riggedModelForUnit,riggedAnimationForUnit,officialRiggedWorldPosition} from './official-rigged-contract-v264.js';
 import {combatAppearance,combatCameraFrame,battlefieldScatter} from './official-rigged-style-v265.js';
 
@@ -310,13 +311,22 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.37;
  renderer.shadowMap.enabled=quality!=='performance';renderer.shadowMap.type=THREE.PCFSoftShadowMap;
- const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(43,1,.08,140);
- const hemi=new THREE.HemisphereLight(0xa6d8fc,0x453e2f,2.2);scene.add(hemi);
- const sun=new THREE.DirectionalLight(0xffe4bd,4.4);sun.position.set(-7,12,8);
+ const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(38,1,.08,140);
+ // Local studio environment adds physically based reflections to real metal armour.
+ // No runtime external HDR downloads, so a missing CDN never breaks the battle.
+ let environmentTexture=null;
+ if(quality!=='performance'){
+  const generator=new THREE.PMREMGenerator(renderer),roomEnvironment=new RoomEnvironment();
+  environmentTexture=generator.fromScene(roomEnvironment).texture;
+  scene.environment=environmentTexture;
+  roomEnvironment.dispose();generator.dispose();
+ }
+ const hemi=new THREE.HemisphereLight(0xaac6da,0x3c3129,1.5);scene.add(hemi);
+ const sun=new THREE.DirectionalLight(0xffddb0,3.35);sun.position.set(-7,12,8);
  sun.castShadow=quality!=='performance';sun.shadow.mapSize.set(quality==='ultra'?2048:1024,quality==='ultra'?2048:1024);
  sun.shadow.camera.left=-17;sun.shadow.camera.right=17;sun.shadow.camera.top=12;sun.shadow.camera.bottom=-12;
  sun.shadow.normalBias=.015;scene.add(sun,sun.target);
- const rim=new THREE.DirectionalLight(0x8ac9fc,2.0);rim.position.set(4,6,-9);scene.add(rim);
+ const rim=new THREE.DirectionalLight(0x91b8dc,1.35);rim.position.set(4,6,-9);scene.add(rim);
  const loader=new GLTFLoader();
  const assets=new Map();let disposed=false;
  try{
@@ -410,6 +420,6 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
     actor.slash.geometry.dispose();actor.slash.material.dispose();
     actor.ring.geometry.dispose();actor.ring.material.dispose();
    }
-   actors.clear();assets.clear();renderer.dispose();}
+   actors.clear();assets.clear();environmentTexture?.dispose();renderer.dispose();}
  };
 }
