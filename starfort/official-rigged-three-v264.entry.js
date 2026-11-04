@@ -200,36 +200,104 @@ function setActorClip(actor,name,unit,room){
  next.reset().fadeIn(.16).play();
  actor.current=name;actor.lastActionKey=key;
 }
+/** GPU primitives follow accepted server turn FX only; no predicted damage. */
 function createImpact(scene){
- const impacts=new Map();
+ const impacts=new Map(),life=1.9;
+ const create=(item)=>{
+  const kind=item.type||'impact',friendly=item.team===0;
+  const hex=kind==='heal'?0x6cf6c4:kind==='ward'?0x76bfff:
+    kind==='spell'?(friendly?0x9cbbff:0xba78ef):
+    friendly?0xffc177:0xfa6a58;
+  const group=new THREE.Group();
+  group.position.set((item.x-50)*.235,.16,(item.y-30)*.17);
+  const components=[],add=(geo,mat,x=0,y=0,z=0)=>{
+   const mesh=new THREE.Mesh(geo,mat);mesh.position.set(x,y,z);
+   group.add(mesh);components.push(mesh);return mesh;
+  };
+  const glow=(opacity=.8)=>new THREE.MeshBasicMaterial({color:hex,transparent:true,opacity,
+   depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide});
+  const ring=add(new THREE.TorusGeometry(kind==='ward'?1.05:.66,.045,7,42),glow(.53));
+  ring.rotation.x=-Math.PI/2;ring.position.y=.12;
+  let arc=null,orb=null,field=null;
+  if(kind==='slash'||kind==='flank'||kind==='impact'){
+   arc=add(new THREE.TorusGeometry(.88,.065,8,52,Math.PI*1.32),glow(.74),0,1.22,0);
+   arc.rotation.set(.16,kind==='flank'?-.6:.4,Math.PI*.13);
+  }else if(kind==='spell'){
+   orb=add(new THREE.IcosahedronGeometry(.22,2),glow(.9),-2.8,1.25,0);
+   add(new THREE.SphereGeometry(.37,10,8),glow(.24),0,1.25,0);
+  }else if(kind==='ward'){
+   field=add(new THREE.SphereGeometry(1.16,18,12,0,Math.PI*2,0,Math.PI*.75),
+    new THREE.MeshBasicMaterial({color:hex,transparent:true,opacity:.15,
+      depthWrite:false,side:THREE.DoubleSide}),0,.12,0);
+  }else if(kind==='heal'){
+   const sigil=add(new THREE.TorusGeometry(.96,.025,5,54),glow(.38),0,.08,0);
+   sigil.rotation.x=-Math.PI/2;
+   const ray=add(new THREE.CylinderGeometry(.08,.36,2.2,12,1,true),
+    new THREE.MeshBasicMaterial({color:hex,transparent:true,opacity:.18,
+      depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide}),0,1.13,0);
+   ray.rotation.y=.35;
+  }
+  // Short physically directional sparks. Every effect uses a stable visual seed.
+  const count=kind==='heal'||kind==='ward'?8:18,geometry=new THREE.BufferGeometry();
+  const pos=new Float32Array(count*3),vel=new Float32Array(count*3);
+  const seed=Math.abs(Math.trunc(Number(item.t||0)*1e5))%9973;
+  for(let i=0;i<count;i++){
+   const theta=(i*2.399963+seed*.173),lift=.22+(i%7)*.085;
+   vel[i*3]=Math.cos(theta)*(1.25+(i%5)*.21);
+   vel[i*3+1]=lift*3.1;
+   vel[i*3+2]=Math.sin(theta)*(1.25+(i%4)*.24);
+  }
+  geometry.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const particles=new THREE.Points(geometry,
+   new THREE.PointsMaterial({color:hex,size:.105,transparent:true,opacity:.89,
+    depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true}));
+  group.add(particles);
+  const lamp=new THREE.PointLight(hex,1.5,5.4,2);
+  lamp.position.y=1.25;group.add(lamp);
+  scene.add(group);
+  return {group,kind,ring,arc,orb,field,particles,vel,lamp,components};
+ };
+ function clear(rec){
+  scene.remove(rec.group);
+  for(const mesh of rec.components){
+   mesh.geometry.dispose();mesh.material.dispose();
+  }
+  rec.particles.geometry.dispose();rec.particles.material.dispose();
+ }
  function update(fx,time,quality){
-  const keys=new Set();
+  const alive=new Set();
   for(const item of fx||[]){
    if(!Number.isFinite(item.t)||!Number.isFinite(item.x)||!Number.isFinite(item.y))continue;
-   const age=time-item.t;if(age<0||age>1.9)continue;
-   const key=item.t+':'+item.type+':'+item.team;keys.add(key);
+   const age=time-item.t;if(age<0||age>life)continue;
+   const key=item.t+':'+item.type+':'+item.team+':'+(item.heroId||'');alive.add(key);
    let rec=impacts.get(key);
-   if(!rec){
-    const kind=item.type||'impact';
-    const color=item.team===1?0xff6558:kind==='heal'?0x65efbc:kind==='ward'?0x72cfff:0xe9b66d;
-    const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.8,depthWrite:false,
-      blending:THREE.AdditiveBlending});
-    const mesh=new THREE.Mesh(kind==='heal'||kind==='ward'
-      ?new THREE.TorusGeometry(1.2,.1,7,36):new THREE.IcosahedronGeometry(.32,1),mat);
-    mesh.position.set((item.x-50)*.235,kind==='spell'?2.1:.65,(item.y-30)*.17);
-    if(kind==='heal'||kind==='ward')mesh.rotation.x=-Math.PI/2;
-    scene.add(mesh);rec={mesh,kind};impacts.set(key,rec);
+   if(!rec){rec=create(item);impacts.set(key,rec);}
+   const p=bounded(age/life,0,1),flash=Math.exp(-Math.pow((p-.41)/.19,2));
+   rec.ring.scale.setScalar(.5+2.2*p);
+   rec.ring.material.opacity=(1-p)*.45;
+   if(rec.arc){
+    rec.arc.scale.setScalar(.55+flash*1.1);
+    rec.arc.rotation.z+=.009;
+    rec.arc.material.opacity=Math.min(.85,flash);
    }
-   const p=bounded(age/1.9,0,1),size=rec.kind==='heal'||rec.kind==='ward'?.8+p*1.7:1+p*3.5;
-   rec.mesh.scale.setScalar(size);
-   rec.mesh.material.opacity=(1-p)*.78;
-   if(rec.kind==='spell')rec.mesh.position.x=((item.x-50)-12+p*22)*.235;
+   if(rec.orb){
+    rec.orb.position.x=-2.8+3.0*bounded(p*2.6,0,1);
+    rec.orb.scale.setScalar(.65+flash*1.6);
+    rec.orb.material.opacity=Math.min(.96,.25+flash);
+   }
+   if(rec.field){rec.field.scale.setScalar(.75+flash*.35);rec.field.material.opacity=.14*(1-p);}
+   const arr=rec.particles.geometry.attributes.position;
+   for(let i=0;i<arr.count;i++){
+    const k=i*3,t=bounded((p-.10)*2.8,0,1.7);
+    arr.setXYZ(i,rec.vel[k]*t,.6+rec.vel[k+1]*t-1.6*t*t,rec.vel[k+2]*t);
+   }
+   arr.needsUpdate=true;
+   rec.particles.material.opacity=(1-p)*.75;
+   rec.lamp.intensity=(quality==='performance'?.6:1.5)*flash;
   }
-  for(const [key,rec]of impacts)if(!keys.has(key)){
-   scene.remove(rec.mesh);rec.mesh.geometry.dispose();rec.mesh.material.dispose();impacts.delete(key);
-  }
+  for(const [key,rec] of impacts)if(!alive.has(key)){clear(rec);impacts.delete(key);}
  }
- function dispose(){for(const rec of impacts.values()){scene.remove(rec.mesh);rec.mesh.geometry.dispose();rec.mesh.material.dispose();}impacts.clear();}
+ function dispose(){for(const rec of impacts.values())clear(rec);impacts.clear();}
  return {update,dispose};
 }
 export async function createRiggedBattle(canvas,{quality='balanced',reducedMotion=false}={}){
