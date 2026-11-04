@@ -4,6 +4,7 @@
 import {createBattleRenderer} from './battle-render-adapter.js';
 import {officialBattleRoom,officialMissionIdentity} from './official-battle-bridge.js';
 import {CAMERA_DEFAULT,orbitCamera,zoomCamera} from './official-3d-camera-v259.js';
+import {cinematicCameraShot} from './official-3d-camera-shots-v260.js';
 const KEY='starfort:official-3d-v228';
 export function officialGraphicsPreference(store){
  try{return store?.getItem(KEY)==='2d'?'2d':'3d';}catch{return '3d';}
@@ -35,8 +36,9 @@ export function createOfficialBattleDirector({store=null,onModeChange=()=>{},mot
   if(lastPaint&&drawClock-lastPaint<minimum){frameId=requestAnimationFrame(frame);return;}
   lastPaint=drawClock;
   const now=Date.now(),room=officialBattleRoom(party,active,{now,previous});
+  const shot=cinematicCameraShot(previous,active,now,camera,{reducedMotion:motionPreference});
   if(room){
-   try{renderer.render(room,room.you,now/1000,{quality:root.clientWidth<560?'performance':'balanced',cameraMode:'cinematic',cameraYaw:camera.yaw,cameraDistance:camera.distance,reducedMotion:motionPreference});}
+   try{renderer.render(room,room.you,now/1000,{quality:root.clientWidth<560?'performance':'balanced',cameraMode:'cinematic',cameraYaw:shot.yaw,cameraDistance:shot.distance,reducedMotion:motionPreference});}
    catch(error){console.warn('Resmî 3D çizimi devre dışı:',error);release();onModeChange('sprites');return;}
   }
   frameId=requestAnimationFrame(frame);

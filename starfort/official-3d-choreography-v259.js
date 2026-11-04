@@ -30,7 +30,7 @@ export function officialStrikeWindow(previous,mission,now=Date.now()){
  const waveAdvanced=mission.wave>previous.wave;
  return Object.freeze({
   age:elapsed/1000,progress:clamp(elapsed/OFFICIAL_CLASH_MS,0,1),
-  enemyHit,playerHit,waveAdvanced,action:waveAdvanced?'reinforce':String(mission.lastAction||'strike'),
+  enemyHit,playerHit,healed:Math.max(0,mission.playerHp-previous.playerHp),waveAdvanced,action:waveAdvanced?'reinforce':String(mission.lastAction||'strike'),
   heroId:isSkill(mission.lastAction)?mission.lastAction.slice(6):null
  });
 }
@@ -72,13 +72,16 @@ export function officialBattleFormation(team,enemyIds,window=null){
 export function officialClashEffects(window,now=Date.now()){
  if(!window||window.action==='reinforce')return [];
  const p=window.progress,age=window.age;
+ const baseTime=now/1000-age;
  const effects=[];
+ if(window.action==='guard')effects.push(Object.freeze({x:31,y:30,type:'ward',team:0,progress:p,t:baseTime}));
  if(window.enemyHit>0)effects.push(Object.freeze({
   x:54,y:30,type:isSkill(window.action)?'spell':window.action==='feint'?'flank':'slash',
-  team:0,age,progress:p,t:now/1000-age
+  team:0,heroId:window.heroId,age,progress:p,t:baseTime
  }));
  if(window.playerHit>0)effects.push(Object.freeze({
-  x:46,y:30,type:'impact',team:1,age,progress:p,t:now/1000
+  x:46,y:30,type:'impact',team:1,age,progress:p,t:baseTime
  }));
+ if(window.healed>0)effects.push(Object.freeze({x:32,y:30,type:'heal',team:0,heroId:window.heroId,age,progress:p,t:baseTime}));
  return effects;
 }

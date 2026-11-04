@@ -9,6 +9,7 @@ import {displayStage} from './locale-game-content-v245.js';
 import {displaySecondAct} from './locale-act-two-v245.js';
 import {sceneText,sceneMood,sceneBossAbility,sceneStageEnemy} from './locale-official-scene-v247.js';
 import {labeledBattleAction} from './first-minutes-v255.js';
+import {cinematicCombatMarkup} from './official-cinematic-v260.js';
 const rects={aldren:[1,0,560],lyra:[1,560,525],rovan:[1,1085,451],mira:[2,0,575],doran:[2,575,565],vesper:[2,1140,396],eira:[3,0,505],raider:['enemies',0,512],caster:['enemies',512,528],boss:['enemies',1040,496]};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function officialSpriteStyle(id){
@@ -50,6 +51,7 @@ export function officialCombatScene(game,mission,combatDelta=null){
   ${encounter?`<div class="act2-environment" aria-hidden="true"><i></i><i></i><i></i><i></i></div>`:''}
   ${bossAbility?`<div class="act2-ability-aura ${bossAbility.active?'active':''}" aria-hidden="true"><span>${bossAbility.icon}</span></div>`:''}
   <div class="official-3d-viewport" data-official-3d-view aria-hidden="true"></div>
+  ${cinematicCombatMarkup(mission,team,combatDelta)}
   <span class="official-3d-camera-hint" aria-hidden="true">↔ ⟳ · + −</span>
   <button class="official-render-switch" type="button" data-official-render-toggle aria-pressed="false" title="${esc(sceneText('switchTitle'))}">${esc(sceneText('switchOn'))}</button>
   <div class="battle-biome"><strong>${esc(act2?displaySecondAct(act2.stage)?.zone:displayStage(stage)?.name||atmosphere.name)}</strong><small>${esc(act2?displaySecondAct(act2.stage)?.lore:sceneMood(stage.id)||atmosphere.mood)}</small></div>
