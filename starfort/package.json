@@ -19,7 +19,8 @@
     "i18n:inventory": "node scripts/i18n-live-inventory-v247.mjs --summary",
     "qa:production-live": "node scripts/real-account-production-qa.mjs",
     "build:rigged3d": "node scripts/build-rigged3d.mjs",
-    "prestart:cloud": "npm run build:rigged3d"
+    "prestart:cloud": "npm run build:rigged3d",
+    "postinstall": "npm run build:rigged3d"
   },
   "engines": {
     "node": ">=20"
