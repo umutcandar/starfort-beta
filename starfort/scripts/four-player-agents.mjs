@@ -103,7 +103,9 @@ try{
    const details=await evaluate('(()=>{const stage=document.querySelector(".official-combat-scene"),canvas=stage?.querySelector(".official-3d-canvas");return {visible:!!stage,loaded:stage?.classList.contains("is-3d"),loading:stage?.classList.contains("is-loading-rigs"),hasCanvas:!!canvas,canvasWidth:canvas?.width,renderStatus:stage?.querySelector("[data-official-render-state]")?.textContent};})()');
    throw Error(error.message+' '+JSON.stringify(details));
   }
-  const real3D=await evaluate('(()=>{const v=document.querySelector(".official-combat-scene.is-3d"),c=v.querySelector("canvas");return {width:c.width,height:c.height,mode:v.querySelector("[data-official-render-state]")?.textContent};})()');
+  await wait('(()=>{const stage=document.querySelector(".official-combat-scene.is-3d");return !!stage&&Number(stage.dataset.officialAnatomicalActors)>=1&&Number(stage.dataset.officialDrawCalls)>5;})()',
+    'verified anatomical human rigs must actually render, not merely load a generic 3D canvas');
+  const real3D=await evaluate('(()=>{const v=document.querySelector(".official-combat-scene.is-3d"),c=v.querySelector("canvas");return {width:c.width,height:c.height,anatomicalActors:Number(v.dataset.officialAnatomicalActors),drawCalls:Number(v.dataset.officialDrawCalls),mode:v.querySelector("[data-official-render-state]")?.textContent};})()');
   pass('REAL skinned 3D models loaded and a WebGL frame rendered',real3D);
   await screenshot('rigged-3d-ready');
   assert.equal(await evaluate('!!document.querySelector(".official-hit-floater")'),false,
