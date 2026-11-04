@@ -24,6 +24,33 @@ export function createGameAudio({storage=globalThis.localStorage,Audio=globalThi
    oscillator.connect(gain);gain.connect(master);
    oscillator.start(t);oscillator.stop(t+length+.03);
  }
+ // Procedural original sword/shield/spell timbres. Generated only when opt-in audio is enabled.
+ function noiseBurst(length=.16,{volume=.12,center=1200,delay=0}={}){
+   if(!enabled||!start()||typeof context.createBuffer!=='function')return;
+   const count=Math.max(1,Math.ceil(context.sampleRate*length));
+   const buffer=context.createBuffer(1,count,context.sampleRate),out=buffer.getChannelData(0);
+   let seed=(Math.floor(context.currentTime*100000)+32719)>>>0;
+   for(let i=0;i<count;i++){
+     seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+     const p=i/count;out[i]=(seed/2147483648-1)*Math.pow(1-p,2.3);
+   }
+   const source=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain();
+   const t=context.currentTime+delay;
+   source.buffer=buffer;filter.type='bandpass';filter.frequency.setValueAtTime(center,t);
+   filter.Q.value=.8;gain.gain.setValueAtTime(.001,t);
+   gain.gain.exponentialRampToValueAtTime(Math.max(.002,volume),t+.012);
+   gain.gain.exponentialRampToValueAtTime(.001,t+length);
+   source.connect(filter);filter.connect(gain);gain.connect(master);
+   source.start(t);source.stop(t+length+.015);
+ }
+ function battleCue(name){
+   if(!enabled)return;
+   if(name==='sword'){noiseBurst(.21,{center:1600,volume:.20});tone(205,.095,{type:'triangle',volume:.10,delay:.05});}
+   if(name==='bow'){noiseBurst(.12,{center:2400,volume:.09});tone(570,.12,{type:'triangle',volume:.12});}
+   if(name==='spell'){tone(296,.30,{volume:.11});tone(587,.38,{delay:.08,type:'sine',volume:.18});noiseBurst(.20,{center:2900,volume:.12,delay:.06});}
+   if(name==='shield'){noiseBurst(.24,{center:840,volume:.15});tone(160,.18,{type:'triangle',volume:.21});}
+   if(name==='heavy'){noiseBurst(.31,{center:410,volume:.19});tone(105,.26,{type:'sawtooth',volume:.14});}
+ }
  function ambient(){
    if(!enabled || !context || context.state==='suspended')return;
    // A sparse original 4-note motif, softer in the village than in combat.
@@ -33,6 +60,7 @@ export function createGameAudio({storage=globalThis.localStorage,Audio=globalThi
  }
  function cue(name){
    if(!enabled)return;
+   if(['sword','bow','spell','shield','heavy'].includes(name))battleCue(name);
    if(name==='click')tone(540,.08,{volume:.12});
    if(name==='equip'){tone(392,.1,{volume:.20});tone(587.33,.18,{delay:.1,volume:.16});}
    if(name==='hit')tone(130,.13,{type:'triangle',volume:.18});
