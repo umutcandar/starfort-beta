@@ -9,6 +9,7 @@ import {createBattleMotion} from './battle-motion.js';
 import {fetchGLB} from './graphics-gltf.js';
 import {drawOfficial3DBattlefield} from './graphics-3d-battlefield-v259.js';
 import {drawOfficialFantasyEffects} from './graphics-3d-fantasy-v260.js';
+import {drawCharacterDetail} from './graphics-3d-characters-v260.js';
 
 const VERT=`#version 300 es
 precision highp float;
@@ -128,7 +129,7 @@ function drawActor(mesh,item,pose,time,hero,quality,reducedMotion){
     mesh.segment([grip[0]+.38*scale,grip[1],grip[2]],
       [grip[0]+.15*scale,grip[1]-.88*scale,grip[2]],.035*scale,.035*scale,WHITE);
     mesh.segment([grip[0],grip[1],grip[2]],[grip[0]+1.55*scale,grip[1],grip[2]],.06*scale,.07*scale,GOLD);
-  }else if(role==='mage'||item.type==='caster'){
+  }else if(role==='mage'||role==='healer'||item.type==='caster'){
     mesh.segment([grip[0],grip[1]-.1*scale,grip[2]],[grip[0]+.25*scale,grip[1]+2.1*scale,grip[2]],.14*scale,.18*scale,item.team?RED:GOLD);
     mesh.prism(grip[0]+.25*scale,grip[1]+2.2*scale,grip[2],.4*scale,.75*scale,
       item.team?[.97,.41,.56]:[.38,.77,.98],7);
@@ -156,6 +157,7 @@ function drawActor(mesh,item,pose,time,hero,quality,reducedMotion){
     mesh.box(x,shoulder+.96*scale,z,1.45*scale,.27*scale,.96*scale,GOLD,{yaw});
     for(const dx of [-.55,.55])mesh.pyramid(x+dx*scale,shoulder+1.05*scale,z,.32*scale,.85*scale,GOLD,5);
   }
+  if(item.heroId||boss)drawCharacterDetail(mesh,item,{x,z,scale,shoulder,hip,time,quality,poseState});
   if(poseState.glow>.1){const wave=poseState.glow;
     mesh.prism(x,.20,z,1.7*scale,.12,[.16*wave,.60*wave,.93*wave],12);
     mesh.prism(x,shoulder+1.5*scale,z,.32*scale,.8,[.35,.80,.97],6);
