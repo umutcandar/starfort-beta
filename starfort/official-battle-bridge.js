@@ -53,7 +53,8 @@ export function officialBattleDelta(before,after){
  if(!before||officialMissionIdentity(before)!==officialMissionIdentity(after))return {turn:after.turn,damage:0,received:0,action:after.lastAction,initial:true};
  if(after.turn<=before.turn)return null;
  return Object.freeze({turn:after.turn,waveAdvanced:after.wave>before.wave,damage:after.wave>before.wave?Math.max(0,before.enemyHp):Math.max(0,before.enemyHp-after.enemyHp),
-  received:Math.max(0,before.playerHp-after.playerHp),action:after.lastAction,initial:false});
+  received:Math.max(0,before.playerHp-after.playerHp),
+  healed:Math.max(0,after.playerHp-before.playerHp),action:after.lastAction,initial:false});
 }
 export function officialBattleOutcome(before,report){
  if(!before||!report||typeof report.won!=='boolean')return null;
