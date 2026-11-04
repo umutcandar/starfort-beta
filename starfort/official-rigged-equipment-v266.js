@@ -13,6 +13,11 @@ const BONES=Object.freeze({
  shoulderR:'wx9ery',wristR:'vsfhv4',shoulderL:'tuy4up',wristL:'deh583',
  thighR:'xamxkb',shinR:'gpwkp6',thighL:'u3pz5t',shinL:'q4udtn'
 });
+const HUMAN_BONES=Object.freeze({
+ pelvis:'pelvis',chest:'spine_03',neck:'neck_01',head:'head',
+ shoulderR:'upperarm_r',wristR:'hand_r',shoulderL:'upperarm_l',wristL:'hand_l',
+ thighR:'thigh_r',shinR:'calf_r',thighL:'thigh_l',shinL:'calf_l'
+});
 // Identified from skins[].joints and the rest-pose parent/translation tree,
 // not guessed from the randomized node labels.
 const HERO_KITS=Object.freeze({
@@ -34,7 +39,7 @@ export function riggedGearProfile(unit){
  return unit?.team===0?(HERO_KITS[unit?.heroId]||HERO_KITS.aldren):
   (ENEMY_KITS[unit?.type]||ENEMY_KITS.raider);
 }
-export function riggedEquipmentBone(slot){return BONES[slot]||null;}
+export function riggedEquipmentBone(slot,rig='gobkit'){return (rig==='human'?HUMAN_BONES:BONES)[slot]||null;}
 
 const sin=Math.sin,PI=Math.PI;
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
@@ -42,7 +47,7 @@ const vec=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
 const tmpWorld=new THREE.Vector3(),tmpQuat=new THREE.Quaternion(),tmpRootQuat=new THREE.Quaternion();
 const inv=new THREE.Quaternion(),localQ=new THREE.Quaternion();
 
-export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',reducedMotion=false}={}){
+export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',reducedMotion=false,rig='gobkit'}={}){
  const kit=riggedGearProfile(unit),style=combatAppearance(unit);
  const isBoss=unit?.type==='boss',scale=isBoss?1.23:1;
  const decoration=new THREE.Group();decoration.name='STARFORT-original-armour-'+(unit?.heroId||unit?.type||'unit');
@@ -81,7 +86,7 @@ export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',r
  const cone=(g,material,x,y,z,r,h)=>cylinder(g,material,x,y,z,0,r,h,detail);
  const anchor=(slot,position)=>{
   const g=new THREE.Group();g.position.copy(position);decoration.add(g);
-  const bone=model.getObjectByName(BONES[slot]);
+  const bone=model.getObjectByName(riggedEquipmentBone(slot,rig));
   anchors.push({group:g,position:position.clone(),bone:bone?.isBone?bone:null,
    start:null,restRotation:null});
   return g;
