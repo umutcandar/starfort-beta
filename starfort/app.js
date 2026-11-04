@@ -607,7 +607,7 @@ function renderContractCards() {
 }
 function renderExpedition() {
   if(villageSignedIn()){
-    workspaceEl.innerHTML=firstMinuteGuide(accountProgressSnapshot)+accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow(),selectedRealm,lastCombatDelta,warfrontOwner===accountSession()?.user?.id?warfrontSnapshot:null,shadowOwner===accountSession()?.user?.id?shadowSnapshot:null,shadowReportDismissedAt,
+    workspaceEl.innerHTML=(accountProgressSnapshot?.mission||victoryVisible?'':firstMinuteGuide(accountProgressSnapshot))+accountExpeditionMarkup(villageView(),accountProgressSnapshot,constructionUiNow(),selectedRealm,lastCombatDelta,warfrontOwner===accountSession()?.user?.id?warfrontSnapshot:null,shadowOwner===accountSession()?.user?.id?shadowSnapshot:null,shadowReportDismissedAt,
       {audioEnabled:gameAudio.enabled,voiceEnabled:shadowDirector.voiceEnabled,render3D:shadowDirector.quality3D},victoryVisible);
     shadowDirector.mount(workspaceEl.querySelector('.shadow-active-battle'),shadowSnapshot?.battle);
     official3D.sync(workspaceEl,villageView().team,accountProgressSnapshot?.mission,accountProgressOwner);
