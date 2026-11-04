@@ -114,17 +114,25 @@ function appearance(model,team,stage){
 function prepareActor(gltf,unit,scene){
  const root=new THREE.Group(),model=cloneSkinned(gltf.scene);
  root.add(model);
- const box=new THREE.Box3().setFromObject(model),size=new THREE.Vector3();box.getSize(size);
- // Some real GLBs are authored in millimetre-scale source units. Normalize
- // skinned geometry by measured height; tiny ≠ invalid. A 1 mm Archer is valid.
- if(!Number.isFinite(size.y)||size.y<1e-7||size.y>1000)throw Error('Character geometry has no finite usable height: '+riggedModelForUnit(unit));
+ // Real GLBs use a .01 scene root plus 100x inverse-bind matrices.
+ // A world-space Box3 of the undeformed mesh is ~1mm tall but GPU-skinned
+ // vertices span ~.18m. Using world Box3 would zoom into a giant character.
+ // The raw SkinnedMesh POSITION attribute is the reliable normalization input.
+ const localHeights=[];
+ model.traverse(object=>{
+  if(!object.isSkinnedMesh)return;
+  if(!object.geometry.boundingBox)object.geometry.computeBoundingBox();
+  const bb=object.geometry.boundingBox;
+  if(bb&&Number.isFinite(bb.max.y-bb.min.y))localHeights.push(bb.max.y-bb.min.y);
+ });
+ const height=Math.max(0,...localHeights);
+ if(!Number.isFinite(height)||height<1e-6||height>1000)
+  throw Error('Unusable animated mesh dimensions for '+riggedModelForUnit(unit));
  const targetHeight=unit.type==='boss'?3.55:unit.team===0?2.5:2.25;
- const scale=targetHeight/size.y;
+ const scale=targetHeight/height;
  model.scale.setScalar(scale);
  const bounds=new THREE.Box3().setFromObject(model);
- model.position.y-=bounds.min.y;
- const marker=new THREE.Mesh(new THREE.SphereGeometry(.27,12,8),new THREE.MeshBasicMaterial({color:unit.team===0?0x19ff00:0xff00ff,depthTest:false}));
- marker.position.set(0,4,0);root.add(marker);
+ if(Number.isFinite(bounds.min.y))model.position.y-=Math.max(-.6,Math.min(.6,bounds.min.y));
  const ring=appearance(root,unit.team);
  const mixer=new THREE.AnimationMixer(model),actions=new Map();
  for(const clip of gltf.animations){
@@ -263,10 +271,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
   camera.position.set(Math.sin(yaw)*distance,5.2+distance*.15,Math.cos(yaw)*distance);
   camera.lookAt(0,1.45,0);
   renderer.render(scene,camera);drawn++;
-  if(drawn===3){
-   const measures=[...actors.values()].map(a=>{const b=new THREE.Box3().setFromObject(a.root);return {name:a.name,position:a.root.position.toArray().map(v=>Number(v.toFixed(3))),min:b.min.toArray().map(v=>Number(v.toFixed(3))),max:b.max.toArray().map(v=>Number(v.toFixed(3)))};});
-   console.warn('3D rigged scene measures',JSON.stringify({camera:camera.position.toArray(),target:[0,1.45,0],actors:measures}));
-  }
+
  }
  return {
   mode:'rigged3d',kind:'rigged-webgl2',ready:Promise.resolve(true),canvas,render,resize,
