@@ -25,7 +25,7 @@ const colors=[
 ];
 const assetUrl=name=>new URL('./'+name+'.glb',import.meta.url).href;
 function material(hex,roughness=.86){return new THREE.MeshStandardMaterial({color:hex,roughness,metalness:.06});}
-function setShadow(o,enabled=true){o.traverse(obj=>{if(obj.isMesh){obj.castShadow=enabled;obj.receiveShadow=true;}});}
+function setShadow(o,enabled=true){o.traverse(obj=>{if(obj.isMesh){obj.castShadow=enabled;obj.receiveShadow=true;obj.frustumCulled=false;}});}
 function addMesh(scene,geometry,mat,x,y,z,{rotY=0,shadow=true}={}){
  const obj=new THREE.Mesh(geometry,mat);obj.position.set(x,y,z);obj.rotation.y=rotY;
  obj.castShadow=shadow;obj.receiveShadow=true;scene.add(obj);return obj;
@@ -123,6 +123,8 @@ function prepareActor(gltf,unit,scene){
  model.scale.setScalar(scale);
  const bounds=new THREE.Box3().setFromObject(model);
  model.position.y-=bounds.min.y;
+ const marker=new THREE.Mesh(new THREE.SphereGeometry(.27,12,8),new THREE.MeshBasicMaterial({color:unit.team===0?0x19ff00:0xff00ff,depthTest:false}));
+ marker.position.set(0,4,0);root.add(marker);
  const ring=appearance(root,unit.team);
  const mixer=new THREE.AnimationMixer(model),actions=new Map();
  for(const clip of gltf.animations){
