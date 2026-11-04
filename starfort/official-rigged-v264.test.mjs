@@ -35,6 +35,21 @@ test('8 actual local GLBs (not boxes) are textured, skinned and contain all 7 or
   assert.ok((meta.images||[]).length>0 ||(meta.textures||[]).length>0 || (meta.materials||[]).length>0);
  }
 });
+test('prevent giant shader-skinned fighters: scale from local mesh vertices, never shrunk GLB scene bounds',()=>{
+ const engine=source('./official-rigged-three-v264.entry.js');
+ assert.match(engine,/object\.isSkinnedMesh/);
+ assert.match(engine,/const height=Math\.max\(0,\.\.\.localHeights\)/);
+ assert.match(engine,/const scale=targetHeight\/height/);
+ assert.doesNotMatch(engine,/targetHeight\/size\.y/);
+ for(const name of Object.keys(RIGGED_ASSETS)){
+  const data=readFileSync(new URL(name+'.glb',dir));
+  const json=parseMeta(data);
+  const heights=(json.meshes||[]).flatMap(mesh=>(mesh.primitives||[]).map(p=>{
+   const pos=json.accessors?.[p.attributes?.POSITION];return pos?.min&&pos?.max?pos.max[1]-pos.min[1]:0;
+  }));
+  assert.ok(heights.some(y=>y>.02&&y<20),name+' must have valid unscaled local geometry dimensions');
+ }
+});
 test('Three.js production bundle exists on same-origin static server with working model urls',()=>{
  const bundled=new URL('./'+RIGGED_BUNDLE,root);
  assert.ok(existsSync(bundled));
