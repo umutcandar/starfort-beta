@@ -63,6 +63,12 @@ await build({
  outfile:resolve(dir,RIGGED_BUNDLE),minify:true,
  sourcemap:false,logLevel:'warning',legalComments:'none'
 });
+await build({
+ entryPoints:[join(dir,'hero-model-viewer.entry.js')],
+ bundle:true,format:'esm',platform:'browser',target:['es2022'],
+ outfile:join(DEST,'hero-viewer.js'),minify:true,
+ sourcemap:false,logLevel:'warning',legalComments:'none'
+});
 await writeFile(join(DEST,'MODEL-LICENSE.txt'),
  RIGGED_LICENSE+'\nhttps://gobkit.com/freebies\nhttps://creativecommons.org/publicdomain/zero/1.0/\n'+
  Object.entries(RIGGED_ASSETS).map(([k,v])=>k+': '+v).join('\n')+'\n'+

@@ -5,7 +5,6 @@
  * by its fighter and explicitly disposed with that fighter.
  */
 import * as THREE from 'three';
-import {addHeroRegalia} from './hero-regalia.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {combatAppearance} from './official-rigged-style-v265.js';
 
@@ -244,10 +243,6 @@ export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',r
   const aura=add(offhand,new THREE.TorusGeometry(.29,.018,6,34),bright,-.08,-.13,.2);
   aura.rotation.x=.32;
  }
- if(unit?.team===0){
-  addHeroRegalia(unit.heroId,{body,head,shoulderL,shoulderR,kneeL,kneeR,weapon,offhand,add,box,tube,ell,cylinder,
-   metal,bright,black,cloth,emissive,rich:quality!=='performance'});
- }
  // Organic cloth cape with vertex deformation — follows torso, never cardboard-stiff.
  let cape=null,baseCape=null;
  if(kit.cape){
@@ -337,7 +332,7 @@ export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',r
     const attr=cape.geometry.attributes.position;
     for(let i=0;i<attr.count;i++){
      const k=i*3,t=clamp(.38-baseCape[k+1],0,1.65)/1.65;
-     const wind=sin(time*1.75+t*3.5+baseCape[k]*1.4)*.16*t*t;
+     const wind=sin(time*1.75+i*.29)*(.04+.14*t*t);
      attr.setXYZ(i,baseCape[k]+wind*.38,baseCape[k+1],
        baseCape[k+2]+wind+(action==='Run'?.21*t:0));
     }

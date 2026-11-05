@@ -3,13 +3,13 @@
  * The rig itself remains the independently licensed CC0 Gobkit humanoid GLB.
  */
 const HERO_STYLE=Object.freeze({
- aldren:{accent:0xecc27b,steel:0x9eacb8,tint:0x293d59,build:1.07,head:0.91,metal:0.28},
- lyra:{accent:0x8ed9fa,steel:0x8390b3,tint:0x4d497a,build:0.94,head:0.90,metal:0.06},
- rovan:{accent:0xb3dd86,steel:0x716d61,tint:0x345547,build:0.97,head:0.91,metal:0.09},
- mira:{accent:0xffd8a5,steel:0xac916e,tint:0xb9a182,build:0.93,head:0.90,metal:0.07},
- doran:{accent:0xe6a071,steel:0x646c75,tint:0x563833,build:1.12,head:0.90,metal:0.34},
- vesper:{accent:0xc4a0f9,steel:0x4f5968,tint:0x493955,build:0.94,head:0.88,metal:0.12},
- eira:{accent:0xb1eeff,steel:0x99b2a5,tint:0x36617b,build:0.96,head:0.90,metal:0.08}
+ aldren:{accent:0xecc27b,steel:0x9eacb8,tint:0xe5eff8,build:1.07,head:0.91,metal:0.28},
+ lyra:{accent:0x8ed9fa,steel:0x8390b3,tint:0xd7e4ff,build:0.94,head:0.90,metal:0.06},
+ rovan:{accent:0xb3dd86,steel:0x716d61,tint:0xc7d8bd,build:0.97,head:0.91,metal:0.09},
+ mira:{accent:0xffd8a5,steel:0xac916e,tint:0xffe5d0,build:0.93,head:0.90,metal:0.07},
+ doran:{accent:0xe6a071,steel:0x646c75,tint:0xc1d0d4,build:1.12,head:0.90,metal:0.34},
+ vesper:{accent:0xc4a0f9,steel:0x4f5968,tint:0xc8bfdb,build:0.94,head:0.88,metal:0.12},
+ eira:{accent:0xa9e8b8,steel:0x99b2a5,tint:0xdaeee1,build:0.96,head:0.90,metal:0.08}
 });
 const ENEMY_STYLE=Object.freeze({
  raider:{accent:0xec816c,steel:0x6f554e,tint:0xe1b9af,build:1.0,head:0.90,metal:0.17},
