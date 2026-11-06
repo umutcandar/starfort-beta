@@ -138,11 +138,17 @@ def identity_head(hero,arm):
         for v in obj.data.vertices:
             v.co=Vector((-(v.co.x-cx)*factor,-(v.co.y-cy)*factor,(v.co.z-low)*factor))
         bm=bmesh.new();bm.from_mesh(obj.data)
-        bmesh.ops.delete(bm,geom=[f for f in bm.faces if f.calc_center_median().z<2.12 or abs(f.calc_center_median().x)>.36],context='FACES')
+        cutoff=2.24 if hero=='rovan' else 2.12
+        bmesh.ops.delete(bm,geom=[f for f in bm.faces if f.calc_center_median().z<cutoff or abs(f.calc_center_median().x)>.36],context='FACES')
         isolated=[v for v in bm.verts if not v.link_faces]
         if isolated:bmesh.ops.delete(bm,geom=isolated,context='VERTS')
         bm.to_mesh(obj.data);bm.free()
         for v in obj.data.vertices:v.co*=1.6594/2.6
+        # Vertices were rotated 180 degrees above. Imported split normals
+        # cannot keep their old direction after that coordinate-space change.
+        obj.data.normals_split_custom_set([(0,0,0)]*len(obj.data.loops))
+        for face in obj.data.polygons:face.use_smooth=True
+        obj.data.update()
         obj.name='identity_head';obj.parent=arm
         obj.vertex_groups.clear();group=obj.vertex_groups.new(name='head');collar=obj.vertex_groups.new(name='spine_03')
         for v in obj.data.vertices:
@@ -379,6 +385,8 @@ def build(hero):
     boots(hero,arm,leather)
     breastplate(hero,arm,steel,material('aged_brass',(.38,.23,.065),.78,.4))
     if hero!='rovan':skirt(hero,arm,portrait)
+    if hero=='rovan':
+        region_copy(body,'base__neck',lambda p:1.37<p.z<1.47 and abs(p.x)<.115,cloth,arm,.008)
     bpy.data.objects.remove(body,do_unlink=True)
     author_hands(arm,material('skin' if hero not in ['aldren','doran','vesper'] else 'gloves',(.30,.15,.09) if hero not in ['aldren','doran','vesper'] else (.035,.022,.016),0,.8))
     cape(hero,arm,cloth)

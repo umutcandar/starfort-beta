@@ -17,6 +17,10 @@ assert.ok(string.morphTargetDictionary.Draw!==undefined,'actual deforming string
 assert.ok(limbs.morphTargetDictionary.Draw!==undefined,'actual bending limbs');
 assert.notEqual(node('rovan_arrow_shaft').geometry,string.geometry,'independent arrow geometry');
 const mixer=new THREE.AnimationMixer(root);
+const idle=gltf.animations.find(clip=>clip.name==='Idle');
+mixer.clipAction(idle).play();mixer.setTime(0);root.updateMatrixWorld(true);
+const headReady=node('head').getWorldQuaternion(new THREE.Quaternion());
+mixer.stopAllAction();
 const attack=gltf.animations.find(clip=>clip.name==='Attack');
 assert.ok(attack,'archery clip');
 mixer.clipAction(attack).play();
@@ -29,6 +33,12 @@ function ringCenter(mesh,start){
 sample(.2);
 const loose=string.morphTargetInfluences[string.morphTargetDictionary.Draw];
 sample(.59);
+const shoulderL=node('upperarm_l').getWorldPosition(new THREE.Vector3());
+const shoulderR=node('upperarm_r').getWorldPosition(new THREE.Vector3());
+assert.ok(shoulderL.z>shoulderR.z+.20,'body turns side-on toward the shot');
+assert.ok(node('head').getWorldQuaternion(new THREE.Quaternion()).angleTo(headReady)<.15,'head keeps looking at target');
+assert.ok(shoulderL.distanceTo(node('hand_l').getWorldPosition(new THREE.Vector3()))>.40,'holding arm extends toward the target');
+assert.ok(node('hand_r').getWorldPosition(new THREE.Vector3()).distanceTo(node('head').getWorldPosition(new THREE.Vector3()))<.22,'drawing hand anchors near cheek');
 assert.ok(string.morphTargetInfluences[string.morphTargetDictionary.Draw]>.95,'string reaches full draw');
 assert.ok(loose<.05,'draw starts after nocking');
 const nock=ringCenter(string,8);

@@ -19,11 +19,22 @@ def prepare(arm):
     bpy.context.scene.frame_set(1);bpy.context.view_layer.update()
 
 
+def apply_pose(arm,pose):
+    # Convert from the stored evaluated parent matrices, so assigning a child
+    # never requires re-evaluating the entire skinned scene bone by bone.
+    for bone in arm.pose.bones:
+        options={'invert':True}
+        if bone.parent:
+            options.update(parent_matrix=pose[bone.parent.name],parent_matrix_local=bone.parent.bone.matrix_local)
+        bone.rotation_mode='QUATERNION'
+        bone.matrix_basis=bone.bone.convert_local_to_pose(pose[bone.name],bone.bone.matrix_local,**options)
+
+
 def bake(arm,name,poses):
     action=bpy.data.actions.new(name);arm.animation_data.action=action
     for frame,pose in enumerate(poses,1):
+        apply_pose(arm,pose)
         for b in arm.pose.bones:
-            b.rotation_mode='QUATERNION';b.matrix=pose[b.name];bpy.context.view_layer.update()
             for path in ['rotation_quaternion','location','scale']:b.keyframe_insert(path,frame=frame)
     strip(arm,name,action)
     return action
@@ -55,11 +66,11 @@ def tune_pole(arm,bone_name,joint_name,pole,steps=32):
     constraint.pole_angle=min(candidates)[1]
 
 
-def ready_clips(arm,pose):
+def ready_clips(arm,pose,side_on=False):
     for track in list(arm.animation_data.nla_tracks):
         if track.name=='Idle':arm.animation_data.nla_tracks.remove(track)
-    for b in arm.pose.bones:
-        b.rotation_mode='QUATERNION';b.matrix=pose[b.name];bpy.context.view_layer.update()
+        else:track.mute=True
+    apply_pose(arm,pose);bpy.context.view_layer.update()
     arms=[b.name for b in arm.pose.bones if any(n in b.name for n in ['clavicle_','upperarm_','lowerarm_','hand_','index_','middle_','ring_','pinky_','thumb_'])]
     for track in arm.animation_data.nla_tracks:
         if track.name not in ['Walk','Run']:continue
@@ -72,10 +83,15 @@ def ready_clips(arm,pose):
                     curve=action.fcurves.find(data_path,index=index) or action.fcurves.new(data_path,index=index)
                     curve.keyframe_points.clear()
                     curve.keyframe_points.insert(1,value);curve.keyframe_points.insert(action.frame_range[1],value)
+        if side_on:
+            for name in ['pelvis','head']:
+                path=f'pose.bones["{name}"].rotation_quaternion'
+                for index,value in enumerate(arm.pose.bones[name].rotation_quaternion):
+                    curve=action.fcurves.find(path,index=index) or action.fcurves.new(path,index=index)
+                    curve.keyframe_points.clear();curve.keyframe_points.insert(1,value);curve.keyframe_points.insert(action.frame_range[1],value)
     idle=[]
     for frame in range(1,73):
-        for b in arm.pose.bones:
-            b.rotation_mode='QUATERNION';b.matrix=pose[b.name];bpy.context.view_layer.update()
+        apply_pose(arm,pose)
         bone=arm.pose.bones['spine_03'];bone.rotation_quaternion=bone.rotation_quaternion@Quaternion((1,0,0),math.sin((frame-1)/72*math.tau)*.008)
         bpy.context.view_layer.update();idle.append({b.name:b.matrix.copy() for b in arm.pose.bones})
     bake(arm,'Idle',idle)
@@ -83,11 +99,11 @@ def ready_clips(arm,pose):
 
 def reactions(arm,ready):
     for name,frames in [('Guard',40),('Hit',28)]:
+        for track in arm.animation_data.nla_tracks:track.mute=True
         poses=[]
         for frame in range(1,frames+1):
             pulse=math.sin((frame-1)/(frames-1)*math.pi)**2
-            for bone in arm.pose.bones:
-                bone.rotation_mode='QUATERNION';bone.matrix=ready[bone.name];bpy.context.view_layer.update()
+            apply_pose(arm,ready)
             spine=arm.pose.bones['spine_03']
             spine.rotation_quaternion=spine.rotation_quaternion@Quaternion((1,0,0),(-.16 if name=='Hit' else .08)*pulse)
             bpy.context.view_layer.update();poses.append({b.name:b.matrix.copy() for b in arm.pose.bones})
@@ -117,12 +133,15 @@ def archery(arm):
     for s in ['l','r']:
         target=bpy.data.objects.new('archery_wrist_'+s,None);bpy.context.collection.objects.link(target);target.rotation_mode='QUATERNION'
         pole=bpy.data.objects.new('archery_elbow_'+s,None);bpy.context.collection.objects.link(pole)
-        pole.location=((.45,-.20,1.20) if s=='l' else (-.43,.22,1.42))
+        pole.location=((.20,-.38,1.27) if s=='l' else (-.22,.22,1.46))
         ik=arm.pose.bones['lowerarm_'+s].constraints.new('IK');ik.target=target;ik.pole_target=pole;ik.chain_count=2
         copy=arm.pose.bones['hand_'+s].constraints.new('COPY_ROTATION');copy.target=target;copy.target_space='WORLD';copy.owner_space='WORLD'
         targets[s]=target
-    targets['l'].location=Vector((.16,-.43,1.43))-palm_offsets['l']+Vector((.018,0,0))
-    targets['r'].location=Vector((.16,-.05,1.43))-palm_offsets['r']+Vector((.018,0,0))
+    for name,angle in [('pelvis',-1.05),('head',1.05)]:
+        bone=arm.pose.bones[name];bone.rotation_mode='QUATERNION'
+        bone.rotation_quaternion=Quaternion(bone.bone.matrix_local.to_quaternion().inverted()@Vector((0,0,1)),angle)
+    targets['l'].location=Vector((-.05,-.64,1.43))-palm_offsets['l']+Vector((.018,0,0))
+    targets['r'].location=Vector((-.05,-.02,1.43))-palm_offsets['r']+Vector((.018,0,0))
     for side in ['l','r']:
         tune_pole(arm,'lowerarm_'+side,'lowerarm_'+side,bpy.data.objects['archery_elbow_'+side])
     finger_targets={}
@@ -137,8 +156,8 @@ def archery(arm):
     for frame in range(1,duration+1):
         phase=(frame-1)/(duration-1);release_phase=(release-1)/(duration-1)
         lift=a.smooth(0,1,phase/.24) if phase<.81 else a.smooth(1,0,(phase-.81)/.19)
-        pull=a.smooth(0,.28,(phase-.30)/.26) if frame<release else a.smooth(.28,0,(phase-release_phase)/.035)
-        grip=Vector((.16,-.43,1.43));nock=grip+Vector((0,.10+(.28 if frame>=release else pull),0))
+        pull=a.smooth(0,.50,(phase-.30)/.26) if frame<release else a.smooth(.50,0,(phase-release_phase)/.035)
+        grip=Vector((-.05,-.64,1.43));nock=grip+Vector((0,.12+(.50 if frame>=release else pull),0))
         reach=a.smooth(0,1,(phase-.08)/.20) if phase<.80 else a.smooth(1,0,(phase-.80)/.20)
         targets['l'].location=ready['l'].lerp(grip-palm_offsets['l']+Vector((.018,0,0)),lift)
         targets['r'].location=ready['r'].lerp(nock-palm_offsets['r']+Vector((.018,0,0)),reach)
@@ -160,58 +179,70 @@ def archery(arm):
         if frame==1:
             for (side,family),(target,pole) in finger_targets.items():
                 tune_pole(arm,f'{family}_03_{side}',f'{family}_02_{side}',pole,16)
-        for name,angle in [('spine_01',.04),('spine_02',.06),('spine_03',.04)]:
-            bone=arm.pose.bones[name];bone.rotation_mode='XYZ';bone.rotation_euler.z=angle*lift
+        # A side-on stance lets the bow arm extend while the drawing hand
+        # anchors at the cheek. Rotation axes are world-up expressed in each
+        # native bone's rest frame, not its unrelated local Euler Z axis.
+        turn=.70+.35*lift
+        for name,angle in [('pelvis',-turn),('head',turn)]:
+            bone=arm.pose.bones[name];bone.rotation_mode='QUATERNION'
+            axis=bone.bone.matrix_local.to_quaternion().inverted()@Vector((0,0,1))
+            bone.rotation_quaternion=Quaternion(axis,angle)
         bpy.context.view_layer.update();evaluated=arm.evaluated_get(bpy.context.evaluated_depsgraph_get())
-        poses.append({b.name:b.matrix.copy() for b in evaluated.pose.bones});pulls.append(pull/.28)
+        poses.append({b.name:b.matrix.copy() for b in evaluated.pose.bones});pulls.append(pull/.50)
     for b in arm.pose.bones:
         for c in list(b.constraints):b.constraints.remove(c)
     for o in list(bpy.data.objects):
         if o.name.startswith('archery_'):bpy.data.objects.remove(o,do_unlink=True)
     bake(arm,'Attack',poses)
     ready_pose=poses[0]
-    ready_clips(arm,ready_pose)
+    ready_clips(arm,ready_pose,side_on=True)
     reactions(arm,ready_pose)
     # Parent transform accounts for Blender's bone-tail parenting convention.
     bow=bpy.data.objects.new('rovan_bow',None);bpy.context.collection.objects.link(bow)
     bow.parent=arm;bow.parent_type='BONE';bow.parent_bone='hand_l'
-    desired=Matrix.Rotation(math.pi,4,'Z');desired.translation=Vector((.16,-.43,1.43))
-    hand=rotations['l'].to_matrix().to_4x4();hand.translation=Vector((.16,-.43,1.43))-palm_offsets['l']+Vector((.018,0,0))
+    desired=Matrix.Rotation(math.pi,4,'Z');desired.translation=Vector((-.05,-.64,1.43))
+    hand=rotations['l'].to_matrix().to_4x4();hand.translation=Vector((-.05,-.64,1.43))-palm_offsets['l']+Vector((.018,0,0))
     bow.matrix_basis=(hand@Matrix.Translation((0,arm.data.bones['hand_l'].length,0))).inverted()@desired
-    bow['equipment_slot']='weapon';bow['draw_distance']=.28
+    bow['equipment_slot']='weapon';bow['draw_distance']=.50
     wood=a.material('polished_yew',(.085,.038,.012),0,.44);gold=a.material('antique_brass',(.36,.21,.065),.75,.36)
     leather=a.material('wrapped_grip',(.035,.020,.012),0,.85);fiber=a.material('flax',(.62,.52,.34),0,.85)
     steel=a.material('forged_arrowhead',(.22,.26,.28),.8,.3);feather=a.material('forest_fletching',(.035,.10,.047),0,.8)
     points=[]
     for i in range(65):
-        z=-.55+1.10*i/64;y=.075*math.sin(abs(z)/.55*math.pi)-.10*(abs(z)/.55)**5
+        z=-.62+1.24*i/64;y=.075*math.sin(abs(z)/.62*math.pi)-.12*(abs(z)/.62)**5
         points.append((0,y,z))
     limbs=a.tube('rovan_bow_limbs',points,.016,wood,bow);limbs.shape_key_add(name='Basis');key=limbs.shape_key_add(name='Draw')
     for v in key.data:
-        t=(abs(v.co.z)/.55)**3;v.co.y-=.035*t;v.co.z*=1-.025*t
+        t=(abs(v.co.z)/.62)**3;v.co.y-=.055*t;v.co.z*=1-.025*t
     a.tube('rovan_bow_grip',[(0,0,-.07),(0,0,.07)],.023,leather,bow)
-    for side in [-1,1]:a.tube('rovan_bow_inlay_'+str(side),[(.015,p[1],p[2]) for p in points if .12<abs(p[2])<.50 and p[2]*side>0],.003,gold,bow)
-    string=a.tube('rovan_bowstring',[(0,-.10,-.55),(0,-.10,0),(0,-.10,.55)],.0018,fiber,bow)
+    inlays=[]
+    for side in [-1,1]:
+        inlay=a.tube('rovan_bow_inlay_'+str(side),[(.015,p[1],p[2]) for p in points if .12<abs(p[2])<.57 and p[2]*side>0],.003,gold,bow)
+        inlay.shape_key_add(name='Basis');key=inlay.shape_key_add(name='Draw')
+        for v in key.data:
+            t=(abs(v.co.z)/.62)**3;v.co.y-=.055*t;v.co.z*=1-.025*t
+        inlays.append(inlay)
+    string=a.tube('rovan_bowstring',[(0,-.12,-.62),(0,-.12,0),(0,-.12,.62)],.0018,fiber,bow)
     string.shape_key_add(name='Basis');key=string.shape_key_add(name='Draw')
     for i,v in enumerate(key.data):
-        if i//8==1:v.co.y-=.28
-        else:v.co.y-=.035;v.co.z*=.975
+        if i//8==1:v.co.y-=.50
+        else:v.co.y-=.055;v.co.z*=.975
     arrow=bpy.data.objects.new('rovan_arrow',None);bpy.context.collection.objects.link(arrow);arrow.parent=bow
     a.tube('rovan_arrow_shaft',[(0,0,0),(0,.58,0)],.0035,wood,arrow)
     a.mesh('rovan_arrow_head',[(0,.65,0),(-.017,.56,0),(0,.57,.009),(.017,.56,0),(0,.57,-.009)],[(0,1,2),(0,2,3),(0,3,4),(0,4,1),(1,4,3,2)],steel,arrow)
     for angle in [0,math.tau/3,2*math.tau/3]:
         fin=a.mesh('rovan_arrow_feather',[(0,.02,0),(.018,.025,0),(.016,.08,0),(0,.12,0)],[(0,1,2,3)],feather,arrow);fin.rotation_euler.y=angle
-    for obj in [limbs,string]:
+    for obj in [limbs,string]+inlays:
         keys=obj.data.shape_keys;keys.animation_data_create();keys.animation_data.action=bpy.data.actions.new('Attack')
         for frame,pull in enumerate(pulls,1):keys.key_blocks['Draw'].value=pull;keys.key_blocks['Draw'].keyframe_insert('value',frame=frame)
         strip(keys,'Attack',keys.animation_data.action)
     arrow.animation_data_create();arrow.animation_data.action=bpy.data.actions.new('Attack')
     for frame,pull in enumerate(pulls,1):
-        arrow.location=(0,-.10-.28*pull,0) if frame<release else (0,-.38+(frame-release)*.30,0)
+        arrow.location=(0,-.12-.50*pull,0) if frame<release else (0,-.62+(frame-release)*.30,0)
         visible=15<frame<release+10;arrow.scale=(1,1,1) if visible else (.0001,)*3
         arrow.keyframe_insert('location',frame=frame);arrow.keyframe_insert('scale',frame=frame)
     strip(arrow,'Attack',arrow.animation_data.action)
-    for owner in [arm,limbs.data.shape_keys,string.data.shape_keys,arrow]:
+    for owner in [arm,limbs.data.shape_keys,string.data.shape_keys,arrow]+[o.data.shape_keys for o in inlays]:
         attack=next(t for t in owner.animation_data.nla_tracks if t.name=='Attack');strip(owner,'Special',attack.strips[0].action.copy())
     for t in arm.animation_data.nla_tracks:t.mute=False
     scene.frame_set(1);bpy.context.view_layer.update()
@@ -342,13 +373,16 @@ def combat(arm,hero):
                         targets[side].location=ready[side]+Vector((sign*.06*wind-sign*.30*hit,-.03*wind-.40*hit,.58*wind+.05*hit))
                         targets[side].rotation_quaternion=Quaternion((1,0,0),-.28*wind+1.45*hit)@rest[side].to_quaternion()
                     if hero=='doran':targets['l'].location=targets['r'].location+Vector((.10,.02,-.16))
-                bone=arm.pose.bones['spine_03'];bone.rotation_mode='XYZ';bone.rotation_euler.z=-.19*wind+.20*hit;bone.rotation_euler.x=.06*hit
-                bone=arm.pose.bones['pelvis'];bone.rotation_mode='XYZ';bone.rotation_euler.z=-.07*wind+.07*hit
+                for name,twist,lean in [('spine_03',-.19*wind+.20*hit,.06*hit),('pelvis',-.07*wind+.07*hit,0)]:
+                    bone=arm.pose.bones[name];bone.rotation_mode='QUATERNION'
+                    inverse=bone.bone.matrix_local.to_quaternion().inverted()
+                    bone.rotation_quaternion=Quaternion(inverse@Vector((0,0,1)),twist)@Quaternion(inverse@Vector((1,0,0)),lean)
             elif clip=='Guard':
                 targets['l'].location+=Vector((-.08,-.28,.24))*pulse
                 targets['r'].location+=Vector((.05,-.13,.30))*pulse
             elif clip=='Hit':
-                b=arm.pose.bones['spine_03'];b.rotation_mode='XYZ';b.rotation_euler.x=-.20*pulse;b.rotation_euler.z=.08*pulse
+                b=arm.pose.bones['spine_03'];b.rotation_mode='QUATERNION';inverse=b.bone.matrix_local.to_quaternion().inverted()
+                b.rotation_quaternion=Quaternion(inverse@Vector((1,0,0)),-.20*pulse)@Quaternion(inverse@Vector((0,1,0)),.08*pulse)
             bpy.context.view_layer.update();evaluated=arm.evaluated_get(bpy.context.evaluated_depsgraph_get())
             poses.append({b.name:b.matrix.copy() for b in evaluated.pose.bones})
         captured[clip]=poses

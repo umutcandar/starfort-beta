@@ -25,6 +25,22 @@ for(const hero of heroes){
  assert.ok(slots.has('weapon')&&slots.has('armor')&&slots.has('cloak'),hero+' has modular equipment nodes');
  assert.ok(normalMaps>0,hero+' exports normal maps, not unsupported Blender nodes');
  assert.ok(root.getObjectByName('identity_head'),hero+' preserves source identity');
+ const head=root.getObjectByName('identity_head');let aligned=0,checked=0;
+ head.traverse(mesh=>{
+  if(!mesh.isMesh)return;
+  const geometry=mesh.geometry,position=geometry.attributes.position,normal=geometry.attributes.normal,index=geometry.index;
+  const count=index?index.count:position.count;
+  for(let i=0;i<count;i+=39){
+   if(i+2>=count)break;
+   const ids=[0,1,2].map(k=>index?index.getX(i+k):i+k);
+   const points=ids.map(id=>new THREE.Vector3().fromBufferAttribute(position,id));
+   const face=points[1].sub(points[0]).cross(points[2].sub(points[0]));
+   if(face.lengthSq()<1e-14)continue;
+   const smooth=ids.reduce((sum,id)=>sum.add(new THREE.Vector3().fromBufferAttribute(normal,id)),new THREE.Vector3());
+   checked++;if(face.dot(smooth)>0)aligned++;
+  }
+ });
+ assert.ok(checked>0&&aligned/checked>.90,hero+' head normals follow the rotated geometry');
  let plate=0;
  root.traverse(o=>{if(o.userData.armor_style==='plate'&&o.isMesh)plate++;});
  assert.ok(plate>=3,hero+' has actual optional armour geometry');
