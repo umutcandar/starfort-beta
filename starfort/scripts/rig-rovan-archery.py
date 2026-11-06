@@ -201,4 +201,5 @@ def build(arm,body):
     scene.frame_set(1);bpy.context.view_layer.update()
     arm['animation_review']='independent bow limbs, string morph, hand IK, arrow release'
 
-base.rig('rovan',postprocess=build,model_file=base.ASSETS/'rovan-unarmed.glb',source_file=base.ASSETS/'source/rovan-unarmed.png',output_file=base.ASSETS/'rovan-archery-experiment.glb')
+if __name__=='__main__':
+    base.rig('rovan',postprocess=build,model_file=base.ASSETS/'rovan-unarmed.glb',source_file=base.ASSETS/'source/rovan-unarmed.png',output_file=base.ASSETS/'rovan-archery-experiment.glb')

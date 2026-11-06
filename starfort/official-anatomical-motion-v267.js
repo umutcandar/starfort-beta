@@ -88,6 +88,9 @@ export function applyAnatomicalPreset(model,unit){
  model.traverse(obj=>{
   const dict=obj.morphTargetDictionary,weights=obj.morphTargetInfluences;
   if(!dict||!weights)return;
+  // The pinned donor enables every target, including mutually exclusive
+  // gender, age and proportion shapes. Start from the neutral body.
+  weights.fill(0);
   for(const [name,value]of Object.entries(values)){
    const slot=dict[name];if(Number.isInteger(slot)&&slot>=0&&slot<weights.length){
     weights[slot]=Math.max(0,Math.min(1,value));updated++;

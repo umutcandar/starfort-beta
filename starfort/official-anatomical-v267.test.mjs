@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync,statSync} from 'node:fs';
 import {ANATOMICAL_MODEL,ANATOMICAL_HERO_PRESETS,anatomicalPreset} from './official-anatomical-v267.js';
+import {applyAnatomicalPreset} from './official-anatomical-motion-v267.js';
 const src=p=>readFileSync(new URL(p,import.meta.url),'utf8');
 test('production build contains actual CC0 MakeHuman anatomical skinned GLB',()=>{
  const file=new URL('./'+ANATOMICAL_MODEL.file,import.meta.url);
@@ -40,4 +41,16 @@ test('seven heroes have explicit anatomical appearance presets',()=>{
  assert.equal(Object.keys(ANATOMICAL_HERO_PRESETS).length,7);
  assert.ok(anatomicalPreset({team:1,type:'boss'}).build>
    anatomicalPreset({team:1,type:'raider'}).build);
+});
+test('donor morph defaults cannot combine incompatible bodies or leak between heroes',()=>{
+ const names=['gender_female','gender_male','age_old','age_child','weight_heavy','weight_light','height_tall','height_short','eyes_closed'];
+ const mesh={morphTargetDictionary:Object.fromEntries(names.map((n,i)=>[n,i])),morphTargetInfluences:names.map(()=>1)};
+ const model={traverse:fn=>fn(mesh)};
+ applyAnatomicalPreset(model,{team:0,heroId:'doran'});
+ const value=name=>mesh.morphTargetInfluences[names.indexOf(name)];
+ assert.equal(value('gender_male'),1);assert.equal(value('gender_female'),0);
+ assert.equal(value('age_child'),0);assert.equal(value('eyes_closed'),0);
+ applyAnatomicalPreset(model,{team:0,heroId:'lyra'});
+ assert.equal(value('gender_female'),1);assert.equal(value('gender_male'),0);
+ assert.equal(value('weight_heavy'),0);assert.equal(value('height_short'),0);
 });
