@@ -46,14 +46,18 @@ function release(root){
 }
 async function select(id){
  const request=++selection;document.querySelector('#status').textContent='Model yükleniyor…';
- document.querySelector('#reference').src=`assets/heroes-3d/source/${id}.png`;
+ const experimental=id==='rovan'&&new URLSearchParams(location.search).get('experiment')==='archery';
+ document.querySelector('#reference').src=`assets/heroes-3d/source/${experimental?'rovan-unarmed':id}.png`;
  document.querySelector('#name').textContent=labels[heroes.indexOf(id)];
  for(const b of document.querySelectorAll('[data-id]'))b.setAttribute('aria-pressed',String(b.dataset.id===id));
  try{
-  const gltf=await loader.loadAsync(`assets/heroes-3d/${id}-rigged.glb`);
+  const file=experimental?'rovan-archery-experiment.glb':id+'-rigged.glb';
+  const gltf=await loader.loadAsync('assets/heroes-3d/'+file);
   if(request!==selection){release(gltf.scene);return;}
   if(actor){mixer?.stopAllAction();mixer?.uncacheRoot(actor);scene.remove(actor);release(actor);}
   actor=gltf.scene;
+  actor.userData.heroId=id;
+  actor.userData.archery=experimental;
   const box=new THREE.Box3().setFromObject(actor),size=box.getSize(new THREE.Vector3());
   actor.scale.setScalar(2.6/size.y);
   const center=box.getCenter(new THREE.Vector3());
@@ -66,8 +70,9 @@ async function select(id){
   updatePause();
   actor.userData.clips=gltf.animations;
   playClip(document.querySelector('#motion').value);
-  controls.reset();controls.target.set(0,1.2,0);camera.position.set(.15,1.4,5.6);
-  document.querySelector('#status').textContent='Model hazır';
+  controls.reset();controls.target.set(0,1.2,0);
+  if(experimental)camera.position.set(3.2,1.7,4.5);else camera.position.set(.15,1.4,5.6);
+  document.querySelector('#status').textContent=experimental?'Deneysel atış · Gövde düzeltmesi sürüyor':'Model hazır';
  }catch(error){document.querySelector('#status').textContent='Model açılamadı. '+error.message;}
 }
 document.querySelector('#heroes').onclick=e=>{const id=e.target.closest('[data-id]')?.dataset.id;if(id)select(id);};
@@ -75,7 +80,17 @@ new ResizeObserver(()=>{
  const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
 }).observe(canvas);
 const clock=new THREE.Clock();
-renderer.setAnimationLoop(()=>{const delta=Math.min(clock.getDelta(),.05);mixer?.update(delta);controls.update();renderer.render(scene,camera);});
+renderer.setAnimationLoop(()=>{const delta=Math.min(clock.getDelta(),.05);mixer?.update(delta);
+ if(currentAction){
+  const progress=currentAction.time/currentAction.getClip().duration;
+  const timeline=document.querySelector('#timeline');
+  if(document.activeElement!==timeline)timeline.value=String(progress*100);
+  const phase=document.querySelector('#phase');
+  phase.textContent=actor?.userData.archery&&['Attack','Special'].includes(currentAction.getClip().name)
+   ?progress<.24?'Yayı kaldır':progress<.30?'Oku yerleştir':progress<.56?'Kirişi çek':progress<.66?'Nişan al':progress<.80?'Oku bırak':'Toparlan'
+   :'';
+ }
+ controls.update();renderer.render(scene,camera);});
 function playClip(name){
  if(!mixer||!actor)return;
  const clip=actor.userData.clips.find(c=>c.name===name);
@@ -89,6 +104,13 @@ function playClip(name){
 document.querySelector('#motion').addEventListener('change',e=>playClip(e.target.value));
 document.querySelector('#pause-motion').addEventListener('click',e=>{
  paused=!paused;updatePause();
+});
+document.querySelector('#timeline').addEventListener('input',e=>{
+ if(!currentAction||!mixer)return;
+ paused=true;updatePause();mixer.stopAllAction();
+ currentAction.reset().stopFading().setEffectiveWeight(1).play();
+ currentAction.time=Number(e.target.value)/100*currentAction.getClip().duration;
+ mixer.update(0);
 });
 document.querySelector('#speed').addEventListener('change',e=>{speed=Number(e.target.value);updatePause();});
 document.querySelector('#full-body').addEventListener('click',()=>{controls.target.set(0,1.2,0);camera.position.set(.15,1.4,5.6);controls.update();});

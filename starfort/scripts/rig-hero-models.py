@@ -23,10 +23,10 @@ POSES = {
 }
 
 
-def rig(hero):
+def rig(hero, postprocess=None, model_file=None, source_file=None, output_file=None):
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
-    bpy.ops.import_scene.gltf(filepath=str(ASSETS / f'{hero}-reconstructed.glb'))
+    bpy.ops.import_scene.gltf(filepath=str(model_file or ASSETS / f'{hero}-reconstructed.glb'))
     meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
     # Imported meshes keep their original textures and topology.
     for obj in meshes:
@@ -44,7 +44,7 @@ def rig(hero):
                                 (vertex.co.y-center[1])*factor,
                                 (vertex.co.z-low[2])*factor))
     # Read PNG dimensions without adding a Pillow dependency to Blender.
-    header = (ASSETS / 'source' / f'{hero}.png').read_bytes()
+    header = Path(source_file or ASSETS / 'source' / f'{hero}.png').read_bytes()
     width, height = int.from_bytes(header[16:20], 'big'), int.from_bytes(header[20:24], 'big')
     def point(uv):
         return Vector(((.5-uv[0])*2.6*width/height, .0, (1-uv[1])*2.6))
@@ -175,11 +175,14 @@ def rig(hero):
         track.mute=True
     for track in arm.animation_data.nla_tracks:track.mute=False
     bpy.context.scene.frame_set(1)
-    destination=ASSETS/f'{hero}-rigged.glb'
+    if postprocess:
+        postprocess(arm,meshes)
+    destination=Path(output_file or ASSETS/f'{hero}-rigged.glb')
     bpy.ops.export_scene.gltf(filepath=str(destination),export_format='GLB',
         export_animations=True,export_animation_mode='NLA_TRACKS',export_skins=True,
         export_all_influences=False,export_force_sampling=True,export_extras=True)
     print('RIGGED',hero,destination.stat().st_size,flush=True)
 
-args=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else list(POSES)
-for name in args:rig(name)
+if __name__ == '__main__':
+    args=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else list(POSES)
+    for name in args:rig(name)

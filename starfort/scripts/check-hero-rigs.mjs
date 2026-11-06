@@ -41,6 +41,7 @@ for(const name of names){
  }
  const mixer=new THREE.AnimationMixer(gltf.scene);
  let animatedDisplacement=0;
+ const walkingStart=new Map();
  for(const clip of gltf.animations){
   const action=mixer.clipAction(clip);action.play();
   for(const t of [0,.25,.5,.75,1]){
@@ -50,7 +51,11 @@ for(const name of names){
      const v=new THREE.Vector3().fromBufferAttribute(mesh.geometry.attributes.position,i);
      const rest=v.clone();
      mesh.applyBoneTransform(i,v);
-     if(clip.name==='Walk')animatedDisplacement=Math.max(animatedDisplacement,v.distanceTo(rest));
+     if(clip.name==='Walk'){
+      const key=mesh.uuid+':'+i;
+      if(t===0)walkingStart.set(key,v.clone());
+      else animatedDisplacement=Math.max(animatedDisplacement,v.distanceTo(walkingStart.get(key)));
+     }
      assert.ok(v.toArray().every(Number.isFinite),name+' '+clip.name);
      assert.ok(v.length()<7,name+' '+clip.name+' runaway vertex');
     }
