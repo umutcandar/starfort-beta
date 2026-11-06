@@ -108,7 +108,7 @@ export function createOfficialBattleDirector({store=null,onModeChange=()=>{},mot
    const module=await import(premiumRiggedBundleUrl(host));
    if(typeof module.createRiggedBattle!=='function')throw Error('Real 3D engine missing');
    const instance=await module.createRiggedBattle(fresh,{quality:spot.clientWidth<560?'performance':'balanced',
-     reducedMotion:motionPreference});
+     reducedMotion:motionPreference,heroIds:party});
    if(disposed||id!==generation||preferred!=='3d'||!active){instance.dispose();fresh.remove();return;}
    renderer=instance;canvas=fresh;pendingCanvas=null;mode='rigged3d';
    attachInput(canvas);displayMode(root);stop();frameId=requestAnimationFrame(frame);

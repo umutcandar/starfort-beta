@@ -150,6 +150,7 @@ function appearance(model,team,stage){
 function prepareActor(gltf,unit,scene,quality){
  const root=new THREE.Group(),model=cloneSkinned(gltf.scene);
  const human=gltf.starfortAnatomical===true;
+ const portrait=gltf.starfortPortrait===true;
  if(human)applyAnatomicalPreset(model,unit);
  root.add(model);
  // Real GLBs use a .01 scene root plus 100x inverse-bind matrices.
@@ -171,20 +172,21 @@ function prepareActor(gltf,unit,scene,quality){
  const style=combatAppearance(unit);
  // True MakeHuman mesh dimensions are retained: no cartoon squash/stretch.
  // Keep the legacy proportion adjustment only for the fallback Gobkit figures.
- if(human)model.scale.set(scale*(.97+(style.build-1)*.35),scale,
+ if(portrait){model.scale.setScalar(scale);model.rotation.y=Math.PI;}
+ else if(human)model.scale.set(scale*(.97+(style.build-1)*.35),scale,
     scale*(.97+(style.build-1)*.35));
  else model.scale.set(scale*style.build*.91,scale*1.05,scale*.88);
  // Per-actor material clones: color schemes must never leak to a second hero.
  const ownedMaterials=[];
  model.traverse(obj=>{
-  if(!human&&obj.isBone&&obj.name===riggedEquipmentBone('head'))obj.scale.multiplyScalar(style.head);
+  if(!human&&!portrait&&obj.isBone&&obj.name===riggedEquipmentBone('head'))obj.scale.multiplyScalar(style.head);
   if(!obj.isMesh)return;
   const finish=mat=>{
    if(!mat?.isMaterial)return mat;
    const copy=mat.clone();ownedMaterials.push(copy);
    // Never tint human skin pastel or turn it into reflective metal.
-   if(!human&&copy.color)copy.color.lerp(new THREE.Color(style.tint),.22);
-   if(!human&&'metalness' in copy)copy.metalness=Math.max(copy.metalness||0,style.metal);
+   if(!human&&!portrait&&copy.color)copy.color.lerp(new THREE.Color(style.tint),.22);
+   if(!human&&!portrait&&'metalness' in copy)copy.metalness=Math.max(copy.metalness||0,style.metal);
    if('roughness' in copy)copy.roughness=Math.min(.88,Math.max(.48,copy.roughness||.7));
    return copy;
   };
@@ -199,7 +201,7 @@ function prepareActor(gltf,unit,scene,quality){
  slash.rotation.set(.13,0,Math.PI/2);
  slash.position.set(unit.team===0?.52:-.52,1.38,.23);
  slash.visible=false;root.add(slash);
- const equipment=createRiggedEquipment(root,model,unit,{quality,rig:human?'human':'gobkit'});
+ const equipment=portrait?{update(){},dispose(){}}:createRiggedEquipment(root,model,unit,{quality,rig:human?'human':'gobkit'});
  const mixer=new THREE.AnimationMixer(model),actions=new Map();
  for(const clip of gltf.animations){
   if(!['Idle','Run','Walk','Attack','Special','Guard','Hit','Death'].includes(clip.name))continue;
@@ -216,7 +218,7 @@ function prepareActor(gltf,unit,scene,quality){
  scene.add(root);
  return {root,mixer,actions,current:null,lastActionKey:null,lastPosition:root.position.clone(),
   ring,slash,equipment,ownedMaterials,style,team:unit.team,
-  name:human?ANATOMICAL_MODEL.name:riggedModelForUnit(unit)};
+  name:portrait?'portrait-'+unit.heroId:human?ANATOMICAL_MODEL.name:riggedModelForUnit(unit)};
 }
 function setActorClip(actor,name,unit,room){
  if(!actor.actions.has(name))name='Idle';
@@ -330,7 +332,7 @@ function createImpact(scene){
  function dispose(){for(const rec of impacts.values())clear(rec);impacts.clear();}
  return {update,dispose};
 }
-export async function createRiggedBattle(canvas,{quality='balanced',reducedMotion=false}={}){
+export async function createRiggedBattle(canvas,{quality='balanced',reducedMotion=false,heroIds=['aldren','lyra','rovan','mira','doran','vesper','eira']}={}){
  if(!canvas||typeof window==='undefined')throw Error('Rigged battles require a browser canvas');
  const context=canvas.getContext('webgl2',{antialias:true,alpha:false,depth:true,
   powerPreference:'high-performance'});
@@ -378,6 +380,15 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
   realistic.scene.traverse(obj=>{if(obj.isSkinnedMesh)humanSkin=true;});
   if(!humanSkin)throw Error('Anatomical source lacks an animated human skin');
   realistic.starfortAnatomical=true;assets.set(ANATOMICAL_MODEL.name,realistic);
+  const supported=new Set(['aldren','lyra','rovan','mira','doran','vesper','eira']);
+  await Promise.all([...new Set(heroIds)].filter(id=>supported.has(id)).map(async id=>{
+   const url=new URL('../heroes-3d/'+id+'-rigged.glb',import.meta.url).href;
+   const model=await loader.loadAsync(url);
+   if(!model.animations.some(c=>c.name==='Idle')||!model.animations.some(c=>c.name==='Attack'))throw Error('Hero animations missing: '+id);
+   let skinned=false;model.scene.traverse(o=>{if(o.isSkinnedMesh)skinned=true;});
+   if(!skinned)throw Error('Hero skin missing: '+id);
+   model.starfortPortrait=true;assets.set('portrait-'+id,model);
+  }));
  }catch(error){renderer.dispose();throw new Error('Rigged character files could not be prepared: '+error.message);}
  let stage=-1,stageCleanup=()=>{},lastTime=null,lastRoom=null,drawn=0,actors=new Map(),qualityName=quality;
  const impacts=createImpact(scene);
@@ -405,7 +416,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
   const active=new Set();
   for(const unit of roster){
    if(!unit||!unit.id||unit.hp<=0)continue;
-   const id=String(unit.id),modelKey=ANATOMICAL_MODEL.name,gltf=assets.get(modelKey);
+   const id=String(unit.id),modelKey=unit.team===0&&assets.has('portrait-'+unit.heroId)?'portrait-'+unit.heroId:ANATOMICAL_MODEL.name,gltf=assets.get(modelKey);
    if(!gltf)continue;
    const point=officialRiggedWorldPosition(unit);if(!point)continue;
    active.add(id);
@@ -452,7 +463,8 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
   toWorld(){return {x:-1e6,y:-1e6};},
   stats(){return {mode:'rigged3d',skinnedModels:assets.size,animatedActors:actors.size,frames:drawn,
    anatomicalActors:[...actors.values()].filter(a=>a.name===ANATOMICAL_MODEL.name).length,
-   equipmentActors:[...actors.values()].filter(a=>a.equipment).length,
+   equipmentActors:[...actors.values()].filter(a=>!a.name.startsWith('portrait-')&&a.equipment).length,
+   portraitActors:[...actors.values()].filter(a=>a.name.startsWith('portrait-')).length,
    drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
    pipeline:'textured-PBR-skeletal-modular',quality:qualityName};},
   dispose(){if(disposed)return;disposed=true;stageCleanup();impacts.dispose();
