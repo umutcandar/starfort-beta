@@ -1,27 +1,45 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 const canvas=document.querySelector('canvas');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();
 scene.background=new THREE.Color('#101b22');
+const studio=new RoomEnvironment();
+const generator=new THREE.PMREMGenerator(renderer);
+const environment=generator.fromScene(studio).texture;
+scene.environment=environment;
+studio.dispose();generator.dispose();
 const camera=new THREE.PerspectiveCamera(35,1,.01,40);
 camera.position.set(.15,1.4,5.6);
 const controls=new OrbitControls(camera,canvas);
 controls.target.set(0,1.2,0);controls.enableDamping=true;
-controls.minDistance=1;controls.maxDistance=7;
-scene.add(new THREE.HemisphereLight(0xe2efff,0x3e302c,2));
-for(const [color,power,x,y,z] of [[0xffe7c5,2,3,5,4],[0xa9c9ff,2,-4,3,-2]]){
- const light=new THREE.DirectionalLight(color,power);light.position.set(x,y,z);scene.add(light);
+controls.minDistance=.65;controls.maxDistance=7;
+scene.add(new THREE.HemisphereLight(0xe2efff,0x3e302c,.9));
+for(const [color,power,x,y,z] of [[0xffe7c5,2.6,3,5,4],[0xa9c9ff,1.8,-4,3,-2]]){
+ const light=new THREE.DirectionalLight(color,power);light.position.set(x,y,z);
+ if(z>0){light.castShadow=true;light.shadow.mapSize.set(1024,1024);light.shadow.normalBias=.025;light.shadow.camera.left=-3;light.shadow.camera.right=3;light.shadow.camera.top=4;light.shadow.camera.bottom=-3;}
+ scene.add(light);
 }
 const pedestal=new THREE.Mesh(new THREE.CylinderGeometry(.83,.87,.08,64),new THREE.MeshStandardMaterial({color:0x243641,roughness:.7}));
-pedestal.position.y=-.06;scene.add(pedestal);
+pedestal.receiveShadow=true;pedestal.position.y=-.06;scene.add(pedestal);
 const heroes=['aldren','lyra','rovan','mira','doran','vesper','eira'];
 const labels=['Aldren','Lyra','Rovan','Mira','Doran','Vesper','Eira'];
 const loader=new GLTFLoader();let actor=null,selection=0,mixer=null,currentAction=null;
+let paused=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let speed=1;
+const pauseButton=document.querySelector('#pause-motion');
+function updatePause(){
+ if(mixer)mixer.timeScale=paused?0:speed;
+ pauseButton.textContent=paused?'Hareketi sürdür':'Hareketi duraklat';
+}
+updatePause();
 document.querySelector('#heroes').innerHTML=heroes.map((id,i)=>`<button data-id="${id}" aria-pressed="false">${labels[i]}</button>`).join('');
 function release(root){
  root.traverse(o=>{if(o.isMesh){o.geometry.dispose();for(const m of [].concat(o.material)){for(const value of Object.values(m))if(value?.isTexture)value.dispose();m.dispose();}}});
@@ -42,7 +60,10 @@ async function select(id){
   actor.position.set(-center.x*actor.scale.x,-box.min.y*actor.scale.y,-center.z*actor.scale.z);
   actor.rotation.y=Math.PI;
   scene.add(actor);
+  actor.traverse(object=>{if(object.isMesh){object.castShadow=true;object.receiveShadow=true;}});
   mixer=new THREE.AnimationMixer(actor);
+  currentAction=null;
+  updatePause();
   actor.userData.clips=gltf.animations;
   playClip(document.querySelector('#motion').value);
   controls.reset();controls.target.set(0,1.2,0);camera.position.set(.15,1.4,5.6);
@@ -59,16 +80,19 @@ function playClip(name){
  if(!mixer||!actor)return;
  const clip=actor.userData.clips.find(c=>c.name===name);
  if(!clip)return;
- currentAction?.stop();
- currentAction=mixer.clipAction(clip);
- currentAction.reset().play();
+ const next=mixer.clipAction(clip);
+ if(next===currentAction)return;
+ currentAction?.fadeOut(.18);
+ next.reset().fadeIn(.18).play();
+ currentAction=next;
 }
 document.querySelector('#motion').addEventListener('change',e=>playClip(e.target.value));
 document.querySelector('#pause-motion').addEventListener('click',e=>{
- if(!mixer)return;
- mixer.timeScale=mixer.timeScale?0:1;
- e.target.textContent=mixer.timeScale?'Hareketi duraklat':'Hareketi sürdür';
+ paused=!paused;updatePause();
 });
+document.querySelector('#speed').addEventListener('change',e=>{speed=Number(e.target.value);updatePause();});
+document.querySelector('#full-body').addEventListener('click',()=>{controls.target.set(0,1.2,0);camera.position.set(.15,1.4,5.6);controls.update();});
+document.querySelector('#face-view').addEventListener('click',()=>{controls.target.set(0,2.25,0);camera.position.set(.08,2.3,1.65);controls.update();});
 const requested=new URLSearchParams(location.search).get('hero');
 select(heroes.includes(requested)?requested:'aldren');
-window.addEventListener('pagehide',()=>{selection++;renderer.setAnimationLoop(null);controls.dispose();if(actor)release(actor);renderer.dispose();},{once:true});
+window.addEventListener('pagehide',()=>{selection++;renderer.setAnimationLoop(null);controls.dispose();if(actor)release(actor);pedestal.geometry.dispose();pedestal.material.dispose();environment.dispose();renderer.dispose();},{once:true});

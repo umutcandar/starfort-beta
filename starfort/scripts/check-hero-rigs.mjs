@@ -16,6 +16,29 @@ for(const name of names){
   const weights=mesh.geometry.attributes.skinWeight;
   for(let i=0;i<weights.count;i++)assert.ok(Math.abs(weights.getX(i)+weights.getY(i)+weights.getZ(i)+weights.getW(i)-1)<.002,'normalized weights');
  }
+ // Rigid accessories keep pairwise distances even during an attack.
+ if(['aldren','lyra','mira','eira'].includes(name)){
+  for(const mesh of meshes){
+   const count=mesh.userData.rigid_accessory_vertices;
+   assert.ok(count>100,name+' accessory binding metadata');
+   const hand=name==='eira'?'hand_L':'hand_R';
+   const joint=mesh.skeleton.bones.findIndex(b=>b.name===hand);
+   const indices=mesh.geometry.attributes.skinIndex;
+   const weights=mesh.geometry.attributes.skinWeight;
+   const bound=[];
+   for(let i=0;i<weights.count;i++)if(indices.getX(i)===joint&&weights.getX(i)>.9999)bound.push(i);
+   assert.ok(bound.length>=count,name+' accessory vertices stay on their hand');
+   const pair=[bound[0],bound[bound.length-1]];
+   const point=index=>mesh.applyBoneTransform(index,new THREE.Vector3().fromBufferAttribute(mesh.geometry.attributes.position,index));
+   gltf.scene.updateMatrixWorld(true);mesh.skeleton.update();
+   const restDistance=point(pair[0]).distanceTo(point(pair[1]));
+   const probe=new THREE.AnimationMixer(gltf.scene);
+   const attack=gltf.animations.find(c=>c.name==='Attack');probe.clipAction(attack).play();probe.setTime(attack.duration*.42);
+   gltf.scene.updateMatrixWorld(true);mesh.skeleton.update();
+   assert.ok(Math.abs(point(pair[0]).distanceTo(point(pair[1]))-restDistance)<.0001,name+' rigid accessory length');
+   probe.stopAllAction();probe.uncacheRoot(gltf.scene);
+  }
+ }
  const mixer=new THREE.AnimationMixer(gltf.scene);
  let animatedDisplacement=0;
  for(const clip of gltf.animations){

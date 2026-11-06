@@ -90,12 +90,38 @@ def rig(hero):
         scores=np.take_along_axis(distance,indices,axis=1)
         weights=np.exp(-(scores-scores[:,0,None])/.014)
         weights/=weights.sum(1)[:,None]
+        # Staff shafts and the shield remain rigid in their grip. Soft envelopes
+        # would otherwise bend long weapons toward the nearest head/chest bone.
+        u = .5 - coords[:,0] / (2.6*width/height)
+        v = 1 - coords[:,2] / 2.6
+        rigid = np.zeros(len(coords), dtype=bool)
+        hand = 'hand_R'
+        if hero in ('lyra','mira'):
+            rigid = (u > .82) & (v < .86)
+        elif hero == 'eira':
+            rigid = (u < .26) & (v < .92)
+            hand = 'hand_L'
+        elif hero == 'aldren':
+            rigid = (u > .72) & (v > .34) & (v < .68)
+        bone_index = next(i for i,j in enumerate(joints) if j[0] == hand)
+        indices[rigid,0] = bone_index
+        weights[rigid] = [1,0,0,0]
+        obj['rigid_accessory_vertices'] = int(rigid.sum())
         groups=[obj.vertex_groups.new(name=j[0]) for j in joints]
         for vi in range(len(coords)):
             for bi,w in zip(indices[vi],weights[vi]):
                 if w>.0001:groups[int(bi)].add([vi],float(w),'REPLACE')
         modifier=obj.modifiers.new('Source pose skin','ARMATURE');modifier.object=arm
         obj.parent=arm
+    def gesture(phase):
+        # A slower wind-up, fast release, then a longer recovery.
+        keys = [(0,0),(.24,-.30),(.42,1),(.58,.55),(1,0)]
+        for (a,x),(b,y) in zip(keys,keys[1:]):
+            if phase <= b:
+                t = (phase-a)/(b-a)
+                eased = t*t*(3-2*t)
+                return x+(y-x)*eased
+        return 0
     scene=bpy.context.scene;scene.render.fps=24
     clips=[('Idle',72),('Walk',32),('Run',24),('Attack',24),('Special',40),('Guard',32),('Hit',16),('Death',40)]
     for name,duration in clips:
@@ -105,16 +131,29 @@ def rig(hero):
             for b in arm.pose.bones:
                 b.rotation_mode='XYZ';b.rotation_euler=(0,0,0);b.location=(0,0,0)
             def turn(bone,axis,angle):arm.pose.bones[bone].rotation_euler[axis]=angle
-            if name=='Idle':turn('chest',0,math.sin(phase*math.tau)*.012)
+            if name=='Idle':
+                turn('chest',0,math.sin(phase*math.tau)*.012)
+                turn('head',2,math.sin(phase*math.tau)*.009)
+
             if name in ['Walk','Run']:
                 swing=math.sin(phase*math.tau)
                 for side,sign in [('L',1),('R',-1)]:
-                    turn('thigh_'+side,0,swing*.12*sign)
+                    turn('thigh_'+side,0,swing*(.17 if name=='Run' else .12)*sign)
                     turn('calf_'+side,0,max(0,-swing*sign)*.18)
                     turn('upperarm_'+side,0,-swing*.06*sign)
                 arm.pose.bones['pelvis'].location.y=abs(swing)*.015
             if name=='Attack':
-                turn('chest',1,pulse*.12);turn('upperarm_L',0,-pulse*.28);turn('forearm_L',0,pulse*.18)
+                strike = gesture(phase)
+                if hero in ('lyra','mira','eira'):
+                    turn('forearm_L',0,-strike*.14)
+                    turn('chest',0,-strike*.035)
+                elif hero == 'rovan':
+                    turn('forearm_R',0,strike*.18)
+                    turn('chest',1,strike*.055)
+                else:
+                    turn('chest',1,strike*.14)
+                    turn('upperarm_L',0,-strike*.31)
+                    turn('forearm_L',0,strike*.20)
             if name=='Special':
                 for side in ['L','R']:turn('upperarm_'+side,0,-pulse*.15)
                 turn('chest',0,-pulse*.045)
@@ -139,7 +178,7 @@ def rig(hero):
     destination=ASSETS/f'{hero}-rigged.glb'
     bpy.ops.export_scene.gltf(filepath=str(destination),export_format='GLB',
         export_animations=True,export_animation_mode='NLA_TRACKS',export_skins=True,
-        export_all_influences=False,export_force_sampling=True)
+        export_all_influences=False,export_force_sampling=True,export_extras=True)
     print('RIGGED',hero,destination.stat().st_size,flush=True)
 
 args=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else list(POSES)
