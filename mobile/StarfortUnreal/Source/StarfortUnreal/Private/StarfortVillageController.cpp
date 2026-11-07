@@ -69,6 +69,8 @@ void AStarfortVillageController::OpenVillageScreen()
   ActiveVillageScreen->OnHeroesRequested.AddUniqueDynamic(this,&AStarfortVillageController::HandleHeroesRequested);
   ActiveVillageScreen->OnBattlesRequested.AddUniqueDynamic(this,&AStarfortVillageController::HandleBattlesRequested);
   ActiveVillageScreen->OnAllianceRequested.AddUniqueDynamic(this,&AStarfortVillageController::HandleAllianceRequested);
+  ActiveVillageScreen->OnRefreshRequested.AddUniqueDynamic(this,&AStarfortVillageController::RefreshVillage);
+  ActiveVillageScreen->OnSignOutRequested.AddUniqueDynamic(this,&AStarfortVillageController::HandleLogoutRequested);
  }
  if (!ActiveVillageScreen->IsInViewport()) ActiveVillageScreen->AddToViewport();
  SetInputMode(FInputModeGameAndUI());
@@ -146,4 +148,9 @@ void AStarfortVillageController::HandleRouteUnavailable(FString SafeReason)
 {
  if (ActiveVillageScreen && ActiveVillageScreen->TxtConnectionStatus)
   ActiveVillageScreen->TxtConnectionStatus->SetText(FText::FromString(SafeReason));
+}
+
+void AStarfortVillageController::HandleLogoutRequested()
+{
+ if (Online) Online->SignOut();
 }
