@@ -88,6 +88,74 @@ class NativeSmoke(unittest.TestCase):
   spec=(R/"Docs/VillageBattle_VisualAndNativeContract.md").read_text()
   for phrase in ["not cryptographic verification","Not yet present","Widget Blueprints","Unreal Editor","Android/iOS"]:
    self.assertIn(phrase,spec)
+ def test_supabase_native_account_contract(self):
+  root=R/"Source/StarfortUnreal"
+  h=(root/"Public/StarfortOnlineSubsystem.h").read_text()
+  c=(root/"Private/StarfortOnlineSubsystem.cpp").read_text()
+  config=(R/"Config/DefaultGame.ini").read_text()
+  build=(root/"StarfortUnreal.Build.cs").read_text()
+  for dep in ['"Http"','"Json"','"JsonUtilities"']:self.assertIn(dep,build)
+  for x in ["UGameInstanceSubsystem","SignIn","SignOut","LoadVillage","RequestVillageUpgrade","LoadProgress",
+            "OnVillageReady","OnProgressReady","OnSignedOut"]:self.assertIn(x,h)
+  for path in ["/auth/v1/token?grant_type=password","/auth/v1/user",
+               "/auth/v1/token?grant_type=refresh_token",
+               "/rest/v1/rpc/sfb_village_api","/rest/v1/rpc/sfb_starfort_progress"]:
+   self.assertIn(path,c)
+  for key in ['"p_action"','"p_building"','"p_request_id"','"p_room_id"','"p_target"','"p_aux"']:
+   self.assertIn(key,c)
+  self.assertIn('SessionGeneration',c)
+  self.assertIn('Root->TryGetStringField(TEXT("source")',c) if False else None
+  self.assertIn('Root->TryGetStringField(TEXT("source"),Source)',c)
+  self.assertIn('Out.bServerVerified=true',c)
+  self.assertIn('FGuid::NewGuid()',c)
+  self.assertIn('bVillagePending',c)
+  self.assertIn('https://ftbbzqzgafmallrfimnt.supabase.co',config)
+  self.assertIn('sb_publishable_',config)
+  self.assertNotIn("service_role",config.lower())
+  self.assertNotIn("service_role",c.lower())
+  self.assertNotIn("UE_LOG(LogTemp, Log, TEXT(\"Bearer",c)
+ def test_login_and_village_events_are_connected(self):
+  root=R/"Source/StarfortUnreal"
+  login=(root/"Private/StarfortLoginScreen.cpp").read_text()
+  ctrl=(root/"Private/StarfortVillageController.cpp").read_text()
+  h=(root/"Public/StarfortVillageController.h").read_text()
+  self.assertIn('SetIsPassword(true)',login)
+  self.assertIn('InputPassword->SetText(FText::GetEmpty())',login)
+  self.assertIn('GetSubsystem<UStarfortOnlineSubsystem>()',ctrl)
+  self.assertIn('OnSignedIn.AddUniqueDynamic',ctrl)
+  self.assertIn('OnVillageReady.AddUniqueDynamic',ctrl)
+  self.assertIn('OnUpgradeRequested.AddUniqueDynamic',ctrl)
+  self.assertIn('Online->LoadVillage()',ctrl)
+  self.assertIn('Online->RequestVillageUpgrade(BuildingId)',ctrl)
+  self.assertIn('LoginScreenClass',h)
+  self.assertIn('!Online->IsSignedIn()',ctrl)
+ def test_native_scene_navigation_refuses_unshipped_maps(self):
+  root=R/"Source/StarfortUnreal"
+  router=(root/"Private/StarfortSceneRouter.cpp").read_text()
+  controller=(root/"Private/StarfortVillageController.cpp").read_text()
+  for requirement in ['GetSubsystem<UStarfortOnlineSubsystem>()','FPackageName::DoesPackageExist',
+                      '/Game/Maps/L_StarfortVillage','/Game/Maps/L_RoyalGunnerStudio',
+                      '/Game/Maps/L_StarfortBattle','/Game/Maps/L_StarfortAlliance']:
+   self.assertIn(requirement,router)
+  for handler in ['HandleHeroesRequested','HandleBattlesRequested','HandleAllianceRequested',
+                  'HandleRouteUnavailable']:
+   self.assertIn(handler,controller)
+  self.assertNotIn("WebView",controller)
+ def test_premium_asset_gate_is_release_blocking(self):
+  import subprocess
+  root=R/"ContentPipeline"
+  manifest=json.loads((root/"required_premium_assets.json").read_text())
+  assert len(manifest["assets"])==12
+  for asset in manifest["assets"]:
+   self.assertFalse(asset["mobile_reviewed"])
+   self.assertFalse(asset["device_reviewed"])
+  script=R/"Tools/validate_premium_art.py"
+  success=subprocess.run(["python3",str(script),"--schema-only"],capture_output=True,text=True,check=False)
+  self.assertEqual(success.returncode,0,success.stdout+success.stderr)
+  self.assertFalse(json.loads(success.stdout)["release_ready"])
+  blocked=subprocess.run(["python3",str(script),"--release"],capture_output=True,text=True,check=False)
+  self.assertEqual(blocked.returncode,2,blocked.stdout+blocked.stderr)
+  self.assertFalse(json.loads(blocked.stdout)["release_ready"])
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))
