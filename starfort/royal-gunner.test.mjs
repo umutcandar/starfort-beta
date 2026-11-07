@@ -4,10 +4,15 @@ import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import {createRiggedEquipment,riggedGearProfile} from './official-rigged-equipment-v266.js';
 import {combatAppearance} from './official-rigged-style-v265.js';
+import {ROYAL_GUNNER_LABELS} from './royal-gunner-locale.js';
 
 const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
 const unit={team:0,heroId:'rovan',hp:100,action:'attack'};
 
+test('3D hero preview link has all fourteen game languages',()=>{
+ assert.equal(Object.keys(ROYAL_GUNNER_LABELS).length,14);
+ for(const label of Object.values(ROYAL_GUNNER_LABELS))assert.ok(label.includes('3D')&&label.length>12);
+});
 test('Royal Gunner is a real animated 3D visual skin, not a fake image or server hero ID',()=>{
  const profile=riggedGearProfile(unit);
  assert.equal(profile.kind,'royal-gunner');
