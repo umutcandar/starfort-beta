@@ -1,3 +1,0 @@
-The following public, publishable Supabase values must live in Config/DefaultGame.ini
-under [/Script/StarfortUnreal.StarfortOnlineSettings] (added to the actual file
-by this feature branch). Never place a Supabase service-role key in an app build.
