@@ -17,20 +17,18 @@ void AStarfortMobilePlayerController::BeginPlay()
  Online->OnProgressReady.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleProgress);
  Online->OnFailure.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleOnlineError);
  Online->OnSignedOut.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleSignedOut);
- if(HeroScreenClass)
- {
-  ShowHeroScreen();
-  Online->LoadProgress();
- }
- else UE_LOG(LogTemp,Warning,TEXT("STARFORT: supply native WBP_HeroScreen in PlayerController Blueprint."));
+ ShowHeroScreen();
+ Online->LoadProgress();
 }
 
 void AStarfortMobilePlayerController::ShowHeroScreen()
 {
- if(!HeroScreenClass || !IsLocalController() || !Online || !Online->IsSignedIn()) return;
+ if(!IsLocalController() || !Online || !Online->IsSignedIn()) return;
  if(!ActiveHeroScreen)
  {
-  ActiveHeroScreen=CreateWidget<UStarfortHeroScreen>(this,HeroScreenClass);
+  TSubclassOf<UStarfortHeroScreen> NativeClass=HeroScreenClass;
+  if(!NativeClass) NativeClass=UStarfortHeroScreen::StaticClass();
+  ActiveHeroScreen=CreateWidget<UStarfortHeroScreen>(this,NativeClass);
   if(!ActiveHeroScreen) return;
   ActiveHeroScreen->OnFirePreviewRequested.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleFirePreview);
   ActiveHeroScreen->OnInspectRequested.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleInspectPreview);

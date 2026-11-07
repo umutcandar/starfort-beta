@@ -1,4 +1,5 @@
 #include "StarfortVillageScreen.h"
+#include "StarfortNativeWidgetFactory.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Containers/Set.h"
@@ -6,10 +7,13 @@
 void UStarfortVillageScreen::NativeOnInitialized()
 {
  Super::NativeOnInitialized();
+ FStarfortNativeWidgetFactory::BuildVillage(this);
  if (BtnUpgrade) BtnUpgrade->OnClicked.AddDynamic(this,&UStarfortVillageScreen::UpgradeClicked);
  if (BtnHeroes) BtnHeroes->OnClicked.AddDynamic(this,&UStarfortVillageScreen::HeroesClicked);
  if (BtnBattles) BtnBattles->OnClicked.AddDynamic(this,&UStarfortVillageScreen::BattlesClicked);
  if (BtnAlliance) BtnAlliance->OnClicked.AddDynamic(this,&UStarfortVillageScreen::AllianceClicked);
+ if (BtnRefresh) BtnRefresh->OnClicked.AddUniqueDynamic(this,&UStarfortVillageScreen::RefreshClicked);
+ if (BtnSignOut) BtnSignOut->OnClicked.AddUniqueDynamic(this,&UStarfortVillageScreen::SignOutClicked);
  SetWaitingForServer();
 }
 
@@ -119,3 +123,6 @@ void UStarfortVillageScreen::UpgradeClicked()
 void UStarfortVillageScreen::HeroesClicked() { OnHeroesRequested.Broadcast(); }
 void UStarfortVillageScreen::BattlesClicked() { OnBattlesRequested.Broadcast(); }
 void UStarfortVillageScreen::AllianceClicked() { OnAllianceRequested.Broadcast(); }
+
+void UStarfortVillageScreen::RefreshClicked() { OnRefreshRequested.Broadcast(); }
+void UStarfortVillageScreen::SignOutClicked() { OnSignOutRequested.Broadcast(); }

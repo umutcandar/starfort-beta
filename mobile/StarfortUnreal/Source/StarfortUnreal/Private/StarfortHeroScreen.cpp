@@ -1,4 +1,5 @@
 #include "StarfortHeroScreen.h"
+#include "StarfortNativeWidgetFactory.h"
 #include "Components/Button.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -7,6 +8,7 @@
 void UStarfortHeroScreen::NativeOnInitialized()
 {
  Super::NativeOnInitialized();
+ FStarfortNativeWidgetFactory::BuildHero(this);
  if (BtnInspect) BtnInspect->OnClicked.AddDynamic(this, &UStarfortHeroScreen::InspectClicked);
  if (BtnFirePreview) BtnFirePreview->OnClicked.AddDynamic(this, &UStarfortHeroScreen::FireClicked);
  if (BtnBack) BtnBack->OnClicked.AddDynamic(this, &UStarfortHeroScreen::BackClicked);

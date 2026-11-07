@@ -1,10 +1,12 @@
 #include "StarfortCampaignScreen.h"
+#include "StarfortNativeWidgetFactory.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 
 void UStarfortCampaignScreen::NativeOnInitialized()
 {
  Super::NativeOnInitialized();
+ FStarfortNativeWidgetFactory::BuildCampaign(this);
  StageButtons={BtnStage1,BtnStage2,BtnStage3,BtnStage4,
   BtnStage5,BtnStage6,BtnStage7,BtnStage8};
  if(BtnStage1) BtnStage1->OnClicked.AddUniqueDynamic(this,&UStarfortCampaignScreen::Stage1);

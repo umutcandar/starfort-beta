@@ -1,4 +1,5 @@
 #include "StarfortBattleScreen.h"
+#include "StarfortNativeWidgetFactory.h"
 #include "Components/Button.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -7,6 +8,7 @@
 void UStarfortBattleScreen::NativeOnInitialized()
 {
  Super::NativeOnInitialized();
+ FStarfortNativeWidgetFactory::BuildBattle(this);
  if (BtnStrike) BtnStrike->OnClicked.AddDynamic(this, &UStarfortBattleScreen::StrikeClicked);
  if (BtnGuard) BtnGuard->OnClicked.AddDynamic(this, &UStarfortBattleScreen::GuardClicked);
  if (BtnFeint) BtnFeint->OnClicked.AddDynamic(this, &UStarfortBattleScreen::FeintClicked);

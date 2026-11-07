@@ -20,18 +20,18 @@ void AStarfortBattleController::BeginPlay()
  Online->OnFailure.AddUniqueDynamic(this,&AStarfortBattleController::OnlineFailed);
  Online->OnSignedOut.AddUniqueDynamic(this,&AStarfortBattleController::SignedOut);
 
- if(BattleScreenClass)
- {
-  BattleScreen=CreateWidget<UStarfortBattleScreen>(this,BattleScreenClass);
-  if(BattleScreen)
-   BattleScreen->OnActionRequested.AddUniqueDynamic(this,&AStarfortBattleController::ActionRequested);
- }
- if(CampaignScreenClass)
- {
-  CampaignScreen=CreateWidget<UStarfortCampaignScreen>(this,CampaignScreenClass);
-  if(CampaignScreen)
-   CampaignScreen->OnStageRequested.AddUniqueDynamic(this,&AStarfortBattleController::StageRequested);
- }
+ // Blueprint layouts override the native QA bootstrap widgets when available.
+ TSubclassOf<UStarfortBattleScreen> NativeBattle=BattleScreenClass;
+ if (!NativeBattle) NativeBattle=UStarfortBattleScreen::StaticClass();
+ BattleScreen=CreateWidget<UStarfortBattleScreen>(this,NativeBattle);
+ if(BattleScreen)
+  BattleScreen->OnActionRequested.AddUniqueDynamic(this,&AStarfortBattleController::ActionRequested);
+
+ TSubclassOf<UStarfortCampaignScreen> NativeCampaign=CampaignScreenClass;
+ if (!NativeCampaign) NativeCampaign=UStarfortCampaignScreen::StaticClass();
+ CampaignScreen=CreateWidget<UStarfortCampaignScreen>(this,NativeCampaign);
+ if(CampaignScreen)
+  CampaignScreen->OnStageRequested.AddUniqueDynamic(this,&AStarfortBattleController::StageRequested);
  if(BattleStageClass && GetWorld())
  {
   Stage=GetWorld()->SpawnActor<AStarfortBattleStage>(BattleStageClass,

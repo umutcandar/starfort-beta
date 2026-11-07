@@ -1,5 +1,15 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## First launch and test on real Unreal builds — v66 source milestone
+
+The native bootstrap now starts the actual account/village GameMode in the engine Entry map, not an empty hero preview. `FStarfortNativeWidgetFactory` constructs responsive gold/navy UMG login, village, campaign, battle and hero QA panels **without** needing Widget Blueprints. Authored visual Blueprints take priority when present. A real sign-in, server-owned resources, retry/logout and first menus can therefore be compiled for a phone once UE+SDKs are available.
+
+`Tools/create_native_maps.py` generates 4 genuine Unreal `.umap` worlds *inside the editor*, with correct GameMode overrides and no fake blocky castle/mannequins. `Tools/native_mobile_build.py` builds smoke APK/IPA using installed Unreal UAT and mobile SDKs. `--dry-run` means **no executable is built**. `--profile release` blocks on missing art, maps, Widget Blueprints and device evidence.
+
+**There are still no produced or tested IPA/APK binaries, production-quality licensed 3D heroes/fortress assets, or authored visual UI.** Source-only CI passing is not proof of engine compilation or phone compatibility.
+
+Full setup and verification instructions: `Docs/FirstNativeBoot_TR.md`.
+
 ## Native story campaign and real battle loop — latest milestone
 
 `UStarfortCampaignScreen` now presents eight authenticated story chapters and 1–3 server-issued campaign stars. `AStarfortBattleController` and `AStarfortBattleGameMode` bind this to a native UMG battle HUD and a licensed 3D Unreal stage once its Blueprint assets exist.
