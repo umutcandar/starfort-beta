@@ -84,14 +84,31 @@ void AStarfortBattleStage::PresentVerifiedTurn(const FStarfortVerifiedBattleTurn
   LastConfirmedTurn=-1;
  }
  if (Snapshot.Turn<=LastConfirmedTurn) return;
- const bool bValidHit=Snapshot.Turn>0 && Snapshot.VerifiedDamageDealt>0 &&
+ const bool bValidTurn=Snapshot.Turn>0 &&
   Snapshot.HeroHP>=0 && Snapshot.EnemyHP>=0;
  LastConfirmedTurn=Snapshot.Turn;
- if (!bValidHit) return;
- // Effect follows an accepted server turn only. It never changes HP or drops.
- if (VerifiedShotMontage)
+ if (!bValidTurn) return;
+
+ const FString& Action=Snapshot.LastAction;
+ UAnimMontage* Montage=nullptr;
+ if (Action==TEXT("guard")) Montage=GuardMontage;
+ else if (Action==TEXT("feint")) Montage=FeintMontage;
+ else if (Action==TEXT("rally")) Montage=RallyMontage;
+ else if (Action.StartsWith(TEXT("skill:"))) Montage=HeroSkillMontage;
+ else if (Action==TEXT("strike")) Montage=VerifiedShotMontage;
+
+ // Server may return "Dalga 2 başladı" rather than a combat command
+ // on the wave boundary. Never fabricate an attack montage for that case.
+ if (Montage)
+ {
   if (UAnimInstance* Anim=HeroRig->GetAnimInstance())
-   Anim->Montage_Play(VerifiedShotMontage);
- if (ImpactSystem) ConfirmedImpactFX->Activate(true);
- CinemaArm->TargetArmLength=1120.f;
+   Anim->Montage_Play(Montage);
+ }
+
+ const bool bAttack=Action==TEXT("strike") || Action==TEXT("feint") ||
+  Action.StartsWith(TEXT("skill:"));
+ if (bAttack && Snapshot.VerifiedDamageDealt>0 && ImpactSystem)
+  ConfirmedImpactFX->Activate(true);
+ if (bAttack) CinemaArm->TargetArmLength=1120.f;
+}
 }
