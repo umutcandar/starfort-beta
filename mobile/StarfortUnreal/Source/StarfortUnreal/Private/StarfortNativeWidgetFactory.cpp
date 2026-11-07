@@ -17,6 +17,7 @@
 #include "Components/OverlaySlot.h"
 #include "Components/ProgressBar.h"
 #include "Components/SafeZone.h"
+#include "Components/ScaleBox.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
@@ -70,9 +71,14 @@ static UVerticalBox* BeginPanel(UUserWidget* Screen,float Width,float Height)
  Panel->SetBrushColor(UStarfortVisualTheme::PanelNavy());
  Panel->SetPadding(FMargin(22.f));
  Size->SetContent(Panel);
- UOverlaySlot* Slot=Overlay->AddChildToOverlay(Size);
- Slot->SetHorizontalAlignment(HAlign_Center);
- Slot->SetVerticalAlignment(VAlign_Center);
+ // Scale-to-fit is a functional early mobile fallback; the final authored
+ // HUD uses device-specific responsive zones and 48dp touch targets.
+ UScaleBox* Fit=Tree->ConstructWidget<UScaleBox>();
+ Fit->SetStretch(EStretch::ScaleToFit);
+ Fit->SetContent(Size);
+ UOverlaySlot* Slot=Overlay->AddChildToOverlay(Fit);
+ Slot->SetHorizontalAlignment(HAlign_Fill);
+ Slot->SetVerticalAlignment(VAlign_Fill);
 
  UVerticalBox* Column=Tree->ConstructWidget<UVerticalBox>();
  Panel->SetContent(Column);
