@@ -4,6 +4,8 @@
 #include "StarfortMobilePlayerController.generated.h"
 
 class UStarfortHeroScreen;
+class UStarfortOnlineSubsystem;
+struct FStarfortProgressSummary;
 
 /**
  * Native iOS/Android UI host. Designer supplies WBP_HeroScreen derived from
@@ -24,8 +26,13 @@ public:
 protected:
  UPROPERTY(Transient, BlueprintReadOnly, Category="STARFORT|UI")
  TObjectPtr<UStarfortHeroScreen> ActiveHeroScreen;
+ UPROPERTY(Transient) TObjectPtr<UStarfortOnlineSubsystem> Online;
 
  UFUNCTION() void HandleFirePreview();
  UFUNCTION() void HandleInspectPreview();
  UFUNCTION() void HandleCloseScreen();
+ UFUNCTION() void HandleUpgradeRequested();
+ UFUNCTION() void HandleProgress(const FStarfortProgressSummary& Progress);
+ UFUNCTION() void HandleOnlineError(FString SafeReason);
+ UFUNCTION() void HandleSignedOut();
 };
