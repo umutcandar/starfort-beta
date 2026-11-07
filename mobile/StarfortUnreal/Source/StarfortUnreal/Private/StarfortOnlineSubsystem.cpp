@@ -432,8 +432,10 @@ void UStarfortOnlineSubsystem::RequestVillageUpgrade(FName BuildingId)
     FStarfortVerifiedVillage Snapshot;
     if(!Ok || !ParseVillage(Root,WeakThis->UserId,Snapshot))
     {
-     // Outcome can be unknown on network failure: do not retry with a new id.
-     WeakThis->Fail(TEXT("Geliştirme doğrulanamadı. Önce köyü yenile."));
+     // An unknown POST outcome must NOT be retried with a new mutation ID.
+     // A read-only GET reconciles the actual server-owned balances and level.
+     WeakThis->Fail(TEXT("Geliştirme yanıtı doğrulanamadı. Köy yeniden okunuyor."));
+     WeakThis->LoadVillage();
      return;
     }
     WeakThis->OnVillageReady.Broadcast(Snapshot);
