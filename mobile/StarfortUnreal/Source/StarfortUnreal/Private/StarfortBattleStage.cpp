@@ -112,15 +112,25 @@ void AStarfortBattleStage::SetAllVisible(bool bVisible)
 UStarfortHeroCombatAsset* AStarfortBattleStage::FindApprovedHero(
  const FString& HeroId) const
 {
- UStarfortHeroCombatAsset* Found=nullptr;
- for (UStarfortHeroCombatAsset* Candidate:HeroArtCatalog)
+ const FStarfortHeroArtEntry* Match=nullptr;
+ for (const FStarfortHeroArtEntry& Entry:HeroArtCatalog)
  {
-  if (!Candidate || Candidate->HeroId.ToString()!=HeroId) continue;
-  // Two conflicting entries for a named hero are a fail-closed asset error.
-  if (Found) return nullptr;
-  Found=Candidate;
+  if (Entry.HeroId.ToString()!=HeroId) continue;
+  // An ambiguous duplicate ID must not silently render the wrong character.
+  if (Match) return nullptr;
+  Match=&Entry;
  }
- return Found && Found->HasProductionReadyGeometryAndMotion() ? Found : nullptr;
+ if (!Match || Match->Art.IsNull()) return nullptr;
+
+ // Only load the hero named by the authenticated roster. The other four
+ // large UE models remain soft references rather than eager map-load assets.
+ // In the production UX, prefetch during the battle loading screen to
+ // avoid first-use blocking on a low-memory phone.
+ UStarfortHeroCombatAsset* Candidate=Match->Art.LoadSynchronous();
+ if (!Candidate || Candidate->HeroId.ToString()!=HeroId ||
+     !Candidate->HasProductionReadyGeometryAndMotion())
+  return nullptr;
+ return Candidate;
 }
 
 bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
@@ -153,6 +163,7 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
   // Actual rig and weapon are authored Unreal assets; nothing generated from
   // primitive cubes, UI images or browser screenshots in this path.
   Rigs[I]->SetSkeletalMesh(Art->HeroMesh);
+  Rigs[I]->SetAnimInstanceClass(Art->AnimInstanceClass.Get());
   Weapons[I]->SetStaticMesh(Art->WeaponMesh);
   if (!Rigs[I]->DoesSocketExist(Art->WeaponSocket) ||
       !Weapons[I]->DoesSocketExist(Art->ImpactSocket))
