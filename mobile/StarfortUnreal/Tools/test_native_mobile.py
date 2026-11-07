@@ -401,6 +401,29 @@ class NativeSmoke(unittest.TestCase):
   editor=(R/"Tools/create_native_maps.py").read_text()
   self.assertIn("StarfortBattleStage",editor)
   self.assertIn("spawn_actor_from_class(",editor)
+ def test_mobile_soft_reference_anim_blueprint_and_roster_cleanup(self):
+  root=R/"Source/StarfortUnreal"
+  asset_h=(root/"Public/StarfortHeroCombatAsset.h").read_text()
+  asset_cpp=(root/"Private/StarfortHeroCombatAsset.cpp").read_text()
+  stage_h=(root/"Public/StarfortBattleStage.h").read_text()
+  stage_cpp=(root/"Private/StarfortBattleStage.cpp").read_text()
+  controller=(root/"Private/StarfortBattleController.cpp").read_text()
+  for token in ["TSubclassOf<UAnimInstance> AnimInstanceClass","SpecialEffect",
+                "BasicAttackSound","SpecialAttackSound"]:
+   self.assertIn(token,asset_h)
+  for token in ["!AnimInstanceClass","SpecialEffect &&",
+                "BasicAttackSound && SpecialAttackSound"]:
+   self.assertIn(token,asset_cpp)
+  for token in ["FStarfortHeroArtEntry","TSoftObjectPtr<UStarfortHeroCombatAsset>",
+                "TArray<FStarfortHeroArtEntry> HeroArtCatalog",
+                "ClearBattlePresentation"]:
+   self.assertIn(token,stage_h)
+  for token in ["Entry.Art.IsNull()","Match->Art.LoadSynchronous()",
+                "SetAnimInstanceClass(Art->AnimInstanceClass.Get())",
+                "ClearBattlePresentation()","ActiveHeroArt.Reset()",
+                "SetSkeletalMesh(nullptr)","SetStaticMesh(nullptr)"]:
+   self.assertIn(token,stage_cpp)
+  self.assertGreaterEqual(controller.count("Stage->ClearBattlePresentation()"),3)
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))
