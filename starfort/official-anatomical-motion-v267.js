@@ -97,3 +97,37 @@ export function applyAnatomicalPreset(model,unit){
  return updated;
 }
 export function anatomicalClipNames(){return Object.freeze(['Idle','Walk','Run',...Object.keys(poses)]);}
+
+/** Rifle-specific original skeletal motion for Rovan / Royal Gunner.
+ * These visual-only tracks never request damage or modify the server turn.
+ * Both arms maintain a two-hand firing silhouette while the upper torso absorbs recoil.
+ */
+export function createRoyalGunnerActionClips(model){
+ const variants={
+  Attack:{
+   duration:.76,times:[0,.12,.24,.34,.47,.76],
+   joints:{
+    spine_03:[[0,0,0],[-.055,-.08,0],[-.13,-.12,.03],[.13,.02,-.04],[.02,0,0],[0,0,0]],
+    upperarm_r:[[0,0,0],[-.56,-.12,.20],[-.65,-.18,.29],[-.86,-.20,.39],[-.55,-.13,.20],[0,0,0]],
+    lowerarm_r:[[0,0,0],[-.31,0,.10],[-.45,0,.11],[-.54,0,.18],[-.28,0,.06],[0,0,0]],
+    upperarm_l:[[0,0,0],[-.65,.16,-.28],[-.83,.16,-.40],[-.84,.13,-.40],[-.65,.16,-.28],[0,0,0]],
+    lowerarm_l:[[0,0,0],[-.47,-.12,-.04],[-.58,-.14,-.07],[-.59,-.14,-.07],[-.48,-.12,-.04],[0,0,0]]
+   }
+  },
+  Special:{
+   duration:1.3,times:[0,.16,.37,.57,.75,1.3],
+   joints:{
+    spine_03:[[0,0,0],[-.14,0,0],[-.21,-.06,0],[.22,.0,0],[.10,0,0],[0,0,0]],
+    upperarm_r:[[0,0,0],[-.45,-.13,.12],[-.70,-.17,.22],[-1.08,-.16,.22],[-.68,-.13,.16],[0,0,0]],
+    lowerarm_r:[[0,0,0],[-.19,0,0],[-.38,0,0],[-.62,0,.14],[-.38,0,0],[0,0,0]],
+    upperarm_l:[[0,0,0],[-.45,.13,-.20],[-.84,.16,-.30],[-1.04,.13,-.34],[-.84,.16,-.30],[0,0,0]],
+    lowerarm_l:[[0,0,0],[-.23,-.16,0],[-.52,-.12,0],[-.62,-.12,0],[-.52,-.12,0],[0,0,0]],
+    pelvis:[[0,0,0],[.04,0,0],[.08,0,0],[.12,0,0],[.07,0,0],[0,0,0]]
+   }
+  }
+ };
+ return new Map(Object.entries(variants).map(([name,pose])=>[
+  name,new THREE.AnimationClip(name,pose.duration,Object.entries(pose.joints)
+   .map(([joint,angles])=>quaternionTrack(model,joint,angles,pose.times)))
+ ]));
+}
