@@ -89,7 +89,11 @@ void AStarfortBattleController::ProgressReady(const FStarfortProgressSummary& Pr
 {
  if(CampaignScreen) CampaignScreen->ApplyVerifiedProgress(Progress);
  if(Progress.bInMission) ShowBattle();
- else OpenCampaign();
+ else
+ {
+  if(Stage) Stage->ClearBattlePresentation();
+  OpenCampaign();
+ }
 }
 void AStarfortBattleController::TurnReady(const FStarfortVerifiedBattleTurn& Turn)
 {
@@ -98,6 +102,7 @@ void AStarfortBattleController::TurnReady(const FStarfortVerifiedBattleTurn& Tur
 }
 void AStarfortBattleController::MissionFinished(bool bWon,int32 Stars)
 {
+ if(Stage) Stage->ClearBattlePresentation();
  OpenCampaign();
  if(CampaignScreen) CampaignScreen->ShowResult(bWon,Stars);
  // Reconcile XP, next-stage unlock and rewards by a read-only fetch.
@@ -116,6 +121,7 @@ void AStarfortBattleController::OnlineFailed(FString SafeReason)
 }
 void AStarfortBattleController::SignedOut()
 {
+ if(Stage) Stage->ClearBattlePresentation();
  if(BattleScreen) {BattleScreen->SetWaitingForServer();BattleScreen->RemoveFromParent();}
  if(CampaignScreen) {CampaignScreen->SetWaitingForServer();CampaignScreen->RemoveFromParent();}
 }
