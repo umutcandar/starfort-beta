@@ -57,6 +57,7 @@ static UVerticalBox* BeginPanel(UUserWidget* Screen,float Width,float Height)
 
  UBorder* Root=Tree->ConstructWidget<UBorder>();
  Root->SetBrushColor(UStarfortVisualTheme::DeepNavy());
+ Root->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
  Root->SetPadding(FMargin(8.f));
 
  USafeZone* Safe=Tree->ConstructWidget<USafeZone>();
