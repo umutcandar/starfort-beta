@@ -155,6 +155,69 @@ class NativeSmoke(unittest.TestCase):
   blocked=subprocess.run(["python3",str(script),"--release"],capture_output=True,text=True,check=False)
   self.assertEqual(blocked.returncode,2,blocked.stdout+blocked.stderr)
   self.assertFalse(json.loads(blocked.stdout)["release_ready"])
+ def test_real_server_campaign_and_hero_training_contract(self):
+  src=R/"Source/StarfortUnreal"
+  header=(src/"Public/StarfortOnlineSubsystem.h").read_text()
+  cpp=(src/"Private/StarfortOnlineSubsystem.cpp").read_text()
+  for key in ["ClearedStages","StoryStars","PlayerMaxHP","EnemyMaxHP",
+              "MissionStartedAt","MissionId","ResultStars","OnMissionResult",
+              "OnBattleReady","StartStoryStage","SubmitBattleAction","AbandonMission","TrainHero"]:
+   self.assertIn(key,header)
+  for action in ["mission_start","mission_turn","mission_abandon","hero"]:
+   self.assertIn('TEXT("'+action+'")',cpp)
+  for field in ['"cleared"','"campaignStars"','"startedAt"','"lastTurnAt"',
+                '"playerMaxHp"','"enemyMaxHp"','"lastReport"','"stars"']:
+   self.assertIn('TEXT('+field+')',cpp)
+  for guard in ["!IsAllowedBattleAction(ActionId)","!IsAllowedHero(HeroId)",
+                "Stage<1 || Stage>8","bProgressPending","Action==TEXT(\"get\")",
+                "FGuid::NewGuid().ToString","LastMissionId==Snapshot.MissionId",
+                "OnBattleReady.Broadcast(Battle)"]:
+   self.assertIn(guard,cpp)
+  self.assertNotIn("Out.ResultStars=3;",cpp)
+  self.assertNotIn("OnMissionResult.Broadcast(true,3)",cpp)
+  self.assertIn('if (Action!=TEXT("get")) LoadProgress();',cpp)
+  self.assertNotIn("HeroHP -=",cpp)
+  self.assertNotIn("EnemyHP -=",cpp)
+ def test_native_campaign_level_ratings_and_battle_screen_are_connected(self):
+  src=R/"Source/StarfortUnreal"
+  ch=(src/"Public/StarfortCampaignScreen.h").read_text()
+  cc=(src/"Private/StarfortCampaignScreen.cpp").read_text()
+  controller=(src/"Private/StarfortBattleController.cpp").read_text()
+  game=(src/"Private/StarfortBattleGameMode.cpp").read_text()
+  for token in ["BtnStage1","BtnStage8","RequestStage","ApplyVerifiedProgress","OnStageRequested"]:
+   self.assertIn(token,ch)
+  for token in ["Progress.ClearedStages.Num()+1","Progress.StoryStars",
+                "bPending=true","OnStageRequested.Broadcast(Stage)"]:
+   self.assertIn(token,cc)
+  for token in ["Online->StartStoryStage(StageId)","Online->SubmitBattleAction(ActionId)",
+                "Online->LoadProgress()","Stage->PresentVerifiedTurn(Turn)",
+                "CampaignScreen->ShowResult(bWon,Stars)","Online->OnSignedOut"]:
+   self.assertIn(token,controller)
+  self.assertIn('ASpectatorPawn::StaticClass()',game)
+  self.assertIn('AStarfortBattleController::StaticClass()',game)
+ def test_native_hero_panel_never_invents_attack_or_equipment_stats(self):
+  src=R/"Source/StarfortUnreal"
+  hero=(src/"Private/StarfortHeroScreen.cpp").read_text()
+  controller=(src/"Private/StarfortMobilePlayerController.cpp").read_text()
+  self.assertIn("ApplyVerifiedRosterLevel",hero)
+  self.assertIn("SetWaitingForServer();",hero)
+  self.assertIn("Level<1 || Level>20",hero)
+  self.assertIn('TEXT("rovan")',controller)
+  self.assertIn('Online->TrainHero(TEXT("rovan"))',controller)
+  self.assertIn('Online->LoadProgress()',controller)
+  self.assertIn('HandleOnlineError',controller)
+  self.assertIn('HandleSignedOut',controller)
+ def test_mission_actions_match_legacy_server_contract(self):
+  source=(R.parents[1]/"starfort/account-progression.js").read_text()
+  sql=(R.parents[1]/"starfort/sql/starfort-v225-account-progression.sql").read_text()
+  native=(R/"Source/StarfortUnreal/Private/StarfortOnlineSubsystem.cpp").read_text()
+  for action in ["mission_start","mission_turn","mission_abandon","hero"]:
+   self.assertIn("'"+action+"'",source)
+   self.assertIn("TEXT(\""+action+"\")",native)
+  self.assertIn("sfb_starfort_progress",source)
+  self.assertIn("sfb_starfort_progress",native)
+  self.assertIn("p_request_id",sql)
+  self.assertIn("p_action='mission_turn'",sql)
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))
