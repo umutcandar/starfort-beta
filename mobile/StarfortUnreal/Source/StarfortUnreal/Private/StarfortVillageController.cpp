@@ -3,6 +3,7 @@
 #include "StarfortVillageScreen.h"
 #include "StarfortLoginScreen.h"
 #include "StarfortOnlineSubsystem.h"
+#include "StarfortSceneRouter.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
 #include "Engine/GameInstance.h"
@@ -24,6 +25,8 @@ void AStarfortVillageController::BeginPlay()
  Online->OnSignedOut.AddUniqueDynamic(this,&AStarfortVillageController::HandleSignedOut);
  Online->OnVillageReady.AddUniqueDynamic(this,&AStarfortVillageController::HandleVillageSnapshot);
  Online->OnFailure.AddUniqueDynamic(this,&AStarfortVillageController::HandleOnlineFailure);
+ if (UStarfortSceneRouter* Router=GetGameInstance()->GetSubsystem<UStarfortSceneRouter>())
+  Router->OnRouteUnavailable.AddUniqueDynamic(this,&AStarfortVillageController::HandleRouteUnavailable);
  if (Online->IsSignedIn()) HandleSignedIn(Online->GetUserId());
  else OpenLoginScreen();
 }
@@ -57,6 +60,9 @@ void AStarfortVillageController::OpenVillageScreen()
   if (!ActiveVillageScreen) return;
   ActiveVillageScreen->OnUpgradeRequested.AddUniqueDynamic(
    this,&AStarfortVillageController::HandleUpgradeRequested);
+  ActiveVillageScreen->OnHeroesRequested.AddUniqueDynamic(this,&AStarfortVillageController::HandleHeroesRequested);
+  ActiveVillageScreen->OnBattlesRequested.AddUniqueDynamic(this,&AStarfortVillageController::HandleBattlesRequested);
+  ActiveVillageScreen->OnAllianceRequested.AddUniqueDynamic(this,&AStarfortVillageController::HandleAllianceRequested);
  }
  if (!ActiveVillageScreen->IsInViewport()) ActiveVillageScreen->AddToViewport();
  SetInputMode(FInputModeGameAndUI());
@@ -113,4 +119,25 @@ void AStarfortVillageController::HandleUpgradeRequested(FName BuildingId)
 {
  if (!Online || !Online->IsSignedIn() || BuildingId.IsNone()) return;
  Online->RequestVillageUpgrade(BuildingId);
+}
+
+void AStarfortVillageController::HandleHeroesRequested()
+{
+ if (UStarfortSceneRouter* Router=GetGameInstance()->GetSubsystem<UStarfortSceneRouter>())
+  Router->OpenHeroHall();
+}
+void AStarfortVillageController::HandleBattlesRequested()
+{
+ if (UStarfortSceneRouter* Router=GetGameInstance()->GetSubsystem<UStarfortSceneRouter>())
+  Router->OpenBattle();
+}
+void AStarfortVillageController::HandleAllianceRequested()
+{
+ if (UStarfortSceneRouter* Router=GetGameInstance()->GetSubsystem<UStarfortSceneRouter>())
+  Router->OpenAlliance();
+}
+void AStarfortVillageController::HandleRouteUnavailable(FString SafeReason)
+{
+ if (ActiveVillageScreen && ActiveVillageScreen->TxtConnectionStatus)
+  ActiveVillageScreen->TxtConnectionStatus->SetText(FText::FromString(SafeReason));
 }
