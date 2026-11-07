@@ -9,7 +9,7 @@ const LABELS=Object.freeze({
  de:'✦ Königlicher Schütze · 3D ansehen',
  it:'✦ Tiratore reale · Visualizza in 3D',
  ru:'✦ Королевский стрелок · Просмотр 3D',
- ar:'✦ الرامي الملكي · عرض ثلاثي الأبعاد',
+ ar:'✦ الرامي الملكي · عرض 3D',
  hi:'✦ शाही निशानेबाज़ · 3D में देखें',
  id:'✦ Penembak Kerajaan · Lihat 3D',
  ja:'✦ 王家の銃士 · 3Dで見る',
