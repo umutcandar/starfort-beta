@@ -7,7 +7,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {clone as cloneSkinned} from 'three/addons/utils/SkeletonUtils.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {ANATOMICAL_MODEL} from './official-anatomical-v267.js';
-import {prepareAnatomicalClips,applyAnatomicalPreset} from './official-anatomical-motion-v267.js';
+import {prepareAnatomicalClips,applyAnatomicalPreset,createRoyalGunnerActionClips} from './official-anatomical-motion-v267.js';
 import {createRiggedEquipment} from './official-rigged-equipment-v266.js';
 
 const canvas=document.querySelector('#hero-canvas');
@@ -149,7 +149,9 @@ async function start(){
    {quality:compact?'performance':'balanced',rig:'human',reducedMotion:reduced});
  scene.add(root);
  mixer=new THREE.AnimationMixer(model);
- for(const animation of gltf.animations)actions.set(animation.name,mixer.clipAction(animation));
+ const gunnerClips=createRoyalGunnerActionClips(model);
+ for(const animation of gltf.animations)
+  actions.set(animation.name,mixer.clipAction(gunnerClips.get(animation.name)||animation));
  mixer.addEventListener('finished',event=>{
   if(event.action===activeAction&&(actionName==='Attack'||actionName==='Special'))clip('Idle');
  });
