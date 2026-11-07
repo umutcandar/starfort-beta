@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "UObject/SoftObjectPtr.h"
 #include "StarfortBattleStage.generated.h"
 
 class USceneComponent;
@@ -13,6 +14,21 @@ class UNiagaraSystem;
 class UAnimMontage;
 class UStarfortHeroCombatAsset;
 struct FStarfortVerifiedBattleTurn;
+
+/** Server ID -> softly referenced authored hero art.
+ * The seven heroes are not all pulled into mobile RAM at once.
+ */
+USTRUCT(BlueprintType)
+struct STARFORTUNREAL_API FStarfortHeroArtEntry
+{
+ GENERATED_BODY()
+
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Hero Assets")
+ FName HeroId = NAME_None;
+
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Hero Assets")
+ TSoftObjectPtr<UStarfortHeroCombatAsset> Art;
+};
 
 /**
  * Three REAL skeletal heroes + enemy. No procedural character substitutes.
@@ -74,7 +90,7 @@ public:
 
  /** Assign real licensed UStarfortHeroCombatAsset assets in a BP-derived stage. */
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Hero Assets")
- TArray<TObjectPtr<UStarfortHeroCombatAsset>> HeroArtCatalog;
+ TArray<FStarfortHeroArtEntry> HeroArtCatalog;
 
  /** Must follow human visual signoff and physical mobile-device review. */
  UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="STARFORT|Quality")
@@ -108,6 +124,7 @@ private:
 
  FString ActiveRoomId;
  TArray<FString> ActiveTeamIds;
+ UPROPERTY(Transient)
  TArray<TObjectPtr<UStarfortHeroCombatAsset>> ActiveHeroArt;
  int32 LastConfirmedTurn = -1;
  int32 LastConfirmedWave = 0;
