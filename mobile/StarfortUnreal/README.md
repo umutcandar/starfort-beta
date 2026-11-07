@@ -1,5 +1,13 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## Authenticated native account bridge (current source milestone)
+
+The new `UStarfortOnlineSubsystem` connects **directly from Unreal C++** to the same Supabase Auth and server-owned village/progression RPCs used by the legacy client. It implements in-memory sign-in, bearer validation, expiring-token refresh, immutable account identity per request, authenticated village loading and server-issued building upgrade requests. The village HUD reacts to validated responses only; unknown network outcomes are not retried with a fresh idempotency key.
+
+`UStarfortLoginScreen` and `UStarfortSceneRouter` prepare native UMG login and transitions to authored UE maps. The router deliberately rejects missing maps. `ContentPipeline/required_premium_assets.json` defines 12 required premium-quality 3D art deliverables. `python3 Tools/validate_premium_art.py --release` stays red until licensed textured models, LODs, reviewed animations and mobile device evidence exist.
+
+See `Docs/NativeAccountBridge_TR.md` for setup, authentication limitations, source contracts and remaining work. **No APK/IPA, UE Editor compilation, credential persistence, social OAuth, finished UMG Blueprints, production art or live-device verification has been performed.**
+
 ## Native premium village and cinematic battle — development update
 
 The Unreal C++ source now also contains:
