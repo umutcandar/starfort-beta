@@ -214,6 +214,33 @@ bool AStarfortBattleStage::HasApprovedStage() const
  return true;
 }
 
+void AStarfortBattleStage::ClearBattlePresentation()
+{
+ bThreeHeroTeamReady=false;
+ ActiveRoomId.Empty();
+ ActiveTeamIds.Reset();
+ LastConfirmedTurn=-1;
+ LastConfirmedWave=0;
+
+ // Hide immediately, then drop the three expensive selected hero rigs.
+ // No old player character remains after a different account signs in.
+ SetAllVisible(false);
+ for (USkeletalMeshComponent* Rig:
+      {HeroRig.Get(),HeroRig2.Get(),HeroRig3.Get()})
+ {
+  if (!Rig) continue;
+  Rig->SetAnimInstanceClass(nullptr);
+  Rig->SetSkeletalMesh(nullptr);
+ }
+ for (UStaticMeshComponent* Weapon:
+      {HeroWeapon.Get(),HeroWeapon2.Get(),HeroWeapon3.Get()})
+  if (Weapon) Weapon->SetStaticMesh(nullptr);
+ for (UNiagaraComponent* FX:
+      {HeroSpecialFX1.Get(),HeroSpecialFX2.Get(),HeroSpecialFX3.Get()})
+  if (FX) FX->SetAsset(nullptr);
+ ActiveHeroArt.Reset();
+}
+
 void AStarfortBattleStage::BeginPlay()
 {
  Super::BeginPlay();
