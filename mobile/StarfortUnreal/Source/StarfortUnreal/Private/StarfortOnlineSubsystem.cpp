@@ -473,14 +473,26 @@ bool UStarfortOnlineSubsystem::ParseProgress(const TSharedPtr<FJsonObject>& Root
   const TSharedPtr<FJsonObject> Report=Root->GetObjectField(TEXT("lastReport"));
   int64 Stage=0,StarsEarned=0;
   bool Won=false;
-  if (!Report.IsValid() || !Report->TryGetBoolField(TEXT("won"),Won) ||
-      !IsIntegerField(Report,TEXT("stage"),1,8,Stage) ||
-      !IsIntegerField(Report,TEXT("stars"),0,3,StarsEarned) ||
-      (Won && StarsEarned==0) || (!Won && StarsEarned!=0))
+  bool bAbandoned=false;
+  if (!Report.IsValid() || !Report->TryGetBoolField(TEXT("won"),Won))
    return false;
-  Out.bHasResult=true; Out.bWon=Won;
-  Out.ResultStage=static_cast<int32>(Stage);
-  Out.ResultStars=static_cast<int32>(StarsEarned);
+  Report->TryGetBoolField(TEXT("abandoned"),bAbandoned);
+  // The production RPC intentionally returns {won:false,abandoned:true,at}
+  // without stage/stars on retreat. Do not discard the entire account.
+  if (bAbandoned)
+  {
+   if (Won) return false;
+  }
+  else
+  {
+   if (!IsIntegerField(Report,TEXT("stage"),1,8,Stage) ||
+       !IsIntegerField(Report,TEXT("stars"),0,3,StarsEarned) ||
+       (Won && StarsEarned==0) || (!Won && StarsEarned!=0))
+    return false;
+   Out.bHasResult=true; Out.bWon=Won;
+   Out.ResultStage=static_cast<int32>(Stage);
+   Out.ResultStars=static_cast<int32>(StarsEarned);
+  }
  }
  else if (!Root->HasTypedField<EJson::Null>(TEXT("lastReport"))) return false;
 
