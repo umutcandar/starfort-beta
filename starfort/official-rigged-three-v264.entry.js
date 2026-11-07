@@ -431,7 +431,7 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
    }
   }
   for(const [id,actor]of actors)if(!active.has(id)){scene.remove(actor.root);
-   actor.mixer.stopAllAction();actor.ownedMaterials.forEach(m=>m.dispose());
+   actor.mixer.stopAllAction();actor.equipment.dispose();actor.ownedMaterials.forEach(m=>m.dispose());
    actor.slash.geometry.dispose();actor.slash.material.dispose();
    actor.ring.geometry.dispose();actor.ring.material.dispose();actors.delete(id);}
   impacts.update(room.fx,time,qualityName);

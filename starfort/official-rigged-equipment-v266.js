@@ -23,7 +23,7 @@ const HUMAN_BONES=Object.freeze({
 const HERO_KITS=Object.freeze({
  aldren:{kind:'knight',weapon:'sword',offhand:'shield',head:'visor',cape:true,plate:true},
  lyra:{kind:'cleric',weapon:'staff',offhand:'orb',head:'hood',cape:true,plate:false},
- rovan:{kind:'ranger',weapon:'bow',offhand:'quiver',head:'hood',cape:true,plate:false},
+ rovan:{kind:'royal-gunner',weapon:'energy-cannon',offhand:'support',head:'open',cape:true,plate:true},
  mira:{kind:'sorceress',weapon:'firestaff',offhand:'orb',head:'crown',cape:true,plate:false},
  doran:{kind:'guardian',weapon:'hammer',offhand:'shield',head:'visor',cape:true,plate:true},
  vesper:{kind:'assassin',weapon:'dagger',offhand:'dagger',head:'mask',cape:true,plate:false},
@@ -62,7 +62,13 @@ export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',r
   side:THREE.DoubleSide});
  const emissive=new THREE.MeshStandardMaterial({color:style.accent,emissive:style.accent,
   emissiveIntensity:.52,metalness:.25,roughness:.26});
- const mat=[metal,bright,black,leather,cloth,emissive];
+ // The Royal Gunner's sapphire reaction chamber remains visually distinct from gold armour.
+ const energy=new THREE.MeshStandardMaterial({color:0x2f8fe7,emissive:0x126afa,
+  emissiveIntensity:1.9,metalness:.25,roughness:.18});
+ const hair=new THREE.MeshStandardMaterial({color:0xc79555,metalness:.1,roughness:.76});
+ const flashMat=new THREE.MeshBasicMaterial({color:0x8bcfff,transparent:true,
+  opacity:.82,depthWrite:false,blending:THREE.AdditiveBlending});
+ const mat=[metal,bright,black,leather,cloth,emissive,energy,hair,flashMat];
  mat.forEach(m=>materials.add(m));
  const add=(group,geo,material,x=0,y=0,z=0)=>{
   geometries.add(geo);
@@ -155,6 +161,23 @@ export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',r
   hood.rotation.y=PI/4;
   ell(head,black,0,-.04,.18,.31,.27,.25);
   tube(head,[[-.31,-.11,.30],[0,-.29,.38],[.31,-.11,.30]],.06,bright);
+ }else if(kit.head==='open'){
+  // Keep the anatomical GLB face uncovered; build separated blond hair tufts.
+  // No giant opaque helmet or cartoon visor over the realistic human head.
+  for(let i=0;i<10;i++){
+   const angle=i*PI*2/10;
+   const tuft=ell(head,hair,sin(angle)*.245,.31+sin(i*1.7)*.055,Math.cos(angle)*.205,
+     .16,.22,.13);
+   tuft.rotation.z=-sin(angle)*.38;
+  }
+  ell(head,hair,0,.46,-.09,.30,.12,.29);
+  for(let i=0;i<5;i++){
+   const lock=ell(head,hair,-.23+i*.105,.38+i*.025,.20,.09,.20,.11);
+   lock.rotation.z=-.55;
+  }
+  // Back of the tall royal tunic collar sits below the head, not through the jaw.
+  box(body,bright,-.34,.44,-.16,.11,.28,.22,-.14);
+  box(body,bright,.34,.44,-.16,.11,.28,.22,.14);
  }else if(kit.head==='mask'){
   ell(head,black,0,-.04,.12,.34,.32,.35);
   box(head,metal,0,-.10,.396,.46,.15,.055);
@@ -175,6 +198,28 @@ export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',r
  for(const x of [-.26,.26])ell(body,bright,x,.30,.25,.10,.13,.11);
  if(kit.kind==='overlord'){
   for(const x of [-.33,.33])cone(shoulderR,bright,x,.30,-.13,.13,.57);
+ }
+ if(kit.kind==='royal-gunner'){
+  // Gold heraldic plates, blue cartridges, dark leather harness and gilded pauldrons.
+  const star=add(body,new THREE.OctahedronGeometry(.16,0),bright,0,.19,.48);
+  star.scale.set(.8,1.1,.45);
+  for(const side of [-1,1]){
+   box(body,leather,side*.23,.01,.47,.085,.66,.11,-side*.18);
+   for(let i=0;i<5;i++){
+    const feather=ell(side===1?shoulderR:shoulderL,bright,
+      side*(.07+i*.052),.19-i*.073,.13,.075,.17-i*.014,.075);
+    feather.rotation.z=-side*.42;
+   }
+   const shin=side===1?kneeR:kneeL;
+   box(shin,bright,0,-.19,.27,.16,.36,.06);
+   ell(shin,energy,0,.045,.292,.055,.07,.026);
+  }
+  // Royal ammo cells are ornamental and do not change real server inventory.
+  for(let i=0;i<4;i++){
+   const x=-.33+i*.12;
+   cylinder(body,bright,x,-.64,.48,.055,.055,.30,10);
+   cylinder(body,energy,x,-.62,.48,.049,.049,.16,10);
+  }
  }
  // All weapon meshes follow forearm rotation relative to the first rig pose.
  const weapon=new THREE.Group();foreR.add(weapon);
@@ -211,6 +256,54 @@ export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',r
   const crystal=add(g,new THREE.OctahedronGeometry(flame?.24:.19,0),emissive,0,1.66,0);
   crystal.rotation.y=.4;
  }
+ // Along the local Y-axis before a 90-degree turn; works with the existing hand rig.
+ let royalMuzzle=null,royalBarrel=null;
+ function makeRoyalCannon(g){
+  const cannon=new THREE.Group();cannon.rotation.z=-PI/2;
+  cannon.position.set(-.05,.18,.12);g.add(cannon);
+  royalBarrel=cannon;
+  // Rear stock and leather pistol grip.
+  box(cannon,metal,0,-.47,0,.34,.58,.23);
+  box(cannon,bright,0,-.75,.01,.42,.12,.29);
+  box(cannon,leather,0,-.25,-.20,.12,.43,.13,-.2);
+  box(cannon,black,0,.08,-.10,.34,.62,.33);
+  box(cannon,metal,0,.18,0,.37,.70,.29);
+  for(const sign of [-1,1]){
+   box(cannon,bright,sign*.21,.13,.02,.065,.66,.25);
+   box(cannon,bright,sign*.23,.49,.01,.11,.24,.21,sign*.10);
+  }
+  // Blue reactor core is a REAL illuminated 3D volume, not an image plane.
+  cylinder(cannon,energy,0,.23,.02,.185,.185,.31,detail);
+  for(let i=0;i<3;i++){
+   const ring=cylinder(cannon,bright,0,.06+i*.17,.02,.225,.225,.045,detail);
+   ring.scale.z=.85;
+  }
+  // Reinforced muzzle and concentric blue energy barrel.
+  cylinder(cannon,black,0,.89,0,.205,.205,1.03,detail);
+  cylinder(cannon,energy,0,.89,0,.147,.147,.99,detail);
+  for(let i=0;i<5;i++){
+   const band=cylinder(cannon,i%2?metal:bright,0,.59+i*.155,0,.215,.215,.055,detail);
+   band.scale.z=.88;
+  }
+  cylinder(cannon,bright,0,1.43,0,.29,.26,.17,detail);
+  cylinder(cannon,black,0,1.54,0,.245,.245,.065,detail);
+  cylinder(cannon,energy,0,1.58,0,.175,.175,.035,detail);
+  // Decorated scope, sight lenses and golden engraved wing-like fins.
+  cylinder(cannon,black,0,.01,.43,.10,.10,.43,detail);
+  cylinder(cannon,bright,0,.22,.43,.125,.125,.09,detail);
+  cylinder(cannon,energy,0,.27,.43,.075,.075,.02,detail);
+  for(let side of [-1,1]){
+   for(let i=0;i<4;i++){
+    const wing=ell(cannon,bright,side*(.20+i*.082),.19-i*.07,.13,
+      .12,.22-i*.022,.06);
+    wing.rotation.z=side*.5;
+   }
+   tube(cannon,[[side*.18,.31,.16],[side*.26,.62,.16],
+     [side*.23,1.07,.13]],.026,bright);
+  }
+  royalMuzzle=ell(cannon,flashMat,0,1.73,0,.17,.30,.17);
+  royalMuzzle.visible=false;
+ }
  function makeBow(g){
   tube(g,[[0,-.20,0],[.22,.08,0],[.35,.51,0],[.22,.98,0],[0,1.25,0]],.066,leather);
   tube(g,[[0,-.20,0],[-.035,.54,0],[0,1.25,0]],.016,bright);
@@ -221,6 +314,7 @@ export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',r
  else if(kit.weapon==='axe')makeAxe(weapon);
  else if(kit.weapon==='hammer')makeHammer(weapon);
  else if(kit.weapon==='bow')makeBow(weapon);
+ else if(kit.weapon==='energy-cannon')makeRoyalCannon(weapon);
  else makeStaff(weapon,kit.weapon==='firestaff',kit.weapon==='branch');
  const offhand=new THREE.Group();foreL.add(offhand);
  offhand.position.set(-.04,-.29,.25);
@@ -231,6 +325,9 @@ export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',r
   tube(offhand,[[-.34,.17,.275],[-.39,-.13,.32],[-.08,-.65,.29],[.23,-.13,.32],[.18,.17,.275]],.031,bright);
  }else if(kit.offhand==='dagger'){
   blade(offhand,.63,.08);offhand.rotation.z=.4;
+ }else if(kit.offhand==='support'){
+  // Left gauntlet is left free for a natural two-handed gun pose.
+  ell(offhand,bright,0,-.09,.015,.16,.10,.15);
  }else if(kit.offhand==='quiver'){
   const quiver=anchor('chest',vec(-.40,1.43,-.39));
   cylinder(quiver,leather,0,.08,0,.16,.13,.72);
@@ -325,6 +422,15 @@ export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',r
     localQ.multiply(inv);
     a.group.quaternion.identity().slerp(localQ,kit.weapon==='bow'?.4:.58);
    }
+  }
+  if(royalMuzzle){
+   const firing=animate&&(action==='Attack'||action==='Special');
+   // Combat passes authenticated actions; the separate model viewer also permits manual previews.
+   const recoil=firing?Math.pow(Math.max(0,sin(time*17)),6):0;
+   royalBarrel.position.y=.18-recoil*.095;
+   royalMuzzle.visible=firing&&recoil>.15;
+   royalMuzzle.scale.set(.17*(1+recoil*1.25),.30*(1+recoil*1.5),.17*(1+recoil*1.25));
+   flashMat.opacity=.38+recoil*.52;
   }
   if(cape&&baseCape&&!(reducedMotion||!animate)){
    frameCounter++;

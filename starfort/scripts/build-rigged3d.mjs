@@ -63,6 +63,13 @@ await build({
  outfile:resolve(dir,RIGGED_BUNDLE),minify:true,
  sourcemap:false,logLevel:'warning',legalComments:'none'
 });
+// The hero showroom shares the exact production gear/rig and is rebuilt on deploy.
+await build({
+ entryPoints:[join(dir,'royal-gunner-preview.entry.js')],
+ bundle:true,format:'esm',platform:'browser',target:['es2022'],
+ outfile:resolve(DEST,'royal-gunner-viewer.js'),minify:true,
+ sourcemap:false,logLevel:'warning',legalComments:'none'
+});
 await writeFile(join(DEST,'MODEL-LICENSE.txt'),
  RIGGED_LICENSE+'\nhttps://gobkit.com/freebies\nhttps://creativecommons.org/publicdomain/zero/1.0/\n'+
  Object.entries(RIGGED_ASSETS).map(([k,v])=>k+': '+v).join('\n')+'\n'+

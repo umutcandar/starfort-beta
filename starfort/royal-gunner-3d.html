@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111924">
+<title>STARFORT — Kraliyet Nişancısı 3D</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#101924;color:#f7e7c4;font-family:system-ui,-apple-system,sans-serif}
+main{max-width:1240px;margin:auto;padding:clamp(12px,3vw,28px)}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+a{color:#f6d8a0}h1{font-size:clamp(22px,3.6vw,39px);margin:6px 0}small{letter-spacing:.15em;color:#b5c3d5}
+p{max-width:66ch;color:#b6c7d6;font-size:14px;line-height:1.6}
+.stage{height:min(66dvh,690px);min-height:350px;position:relative;overflow:hidden;border:1px solid #91764b80;border-radius:20px;
+background:radial-gradient(ellipse at 48% 35%,#415068 0%,#273346 48%,#111823 100%);touch-action:none}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+#loading{position:absolute;left:16px;top:16px;background:#101b2edb;border:1px solid #8f744a70;padding:10px 13px;border-radius:10px;color:#f8dfaf;font-size:13px;max-width:calc(100% - 32px)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button,.return{font:inherit;border:1px solid #c8a36588;border-radius:10px;background:#233246;color:#f4e6c6;padding:11px 15px;cursor:pointer;text-decoration:none}
+button[aria-pressed="true"]{background:#a97a35;color:#101927;border-color:#f7d08d}
+button:focus-visible,a:focus-visible{outline:3px solid #7bcbff;outline-offset:2px}
+.legend{font-size:12px;color:#9caec1;margin-top:12px}
+body.embed main{padding:0}body.embed header,body.embed .legend{display:none}
+body.embed .stage{height:100dvh;min-height:100dvh;border:0;border-radius:0}
+body.embed .controls{position:absolute;bottom:12px;left:12px;right:12px;justify-content:center}
+</style>
+</head>
+<body>
+<main>
+<header><div><small>STARFORT / HERO SHOWCASE</small><h1>Kraliyet Nişancısı</h1><p>Rovan'ın yeni üç boyutlu görsel kimliği. Altın zırh, kızıl pelerin, mavi enerji çekirdeği ve hareketli silah. Bu ekran gerçek 3D geometri gösterir; oynanış değerlerini değiştirmez.</p></div><a class="return" href="./">Oyuna dön</a></header>
+<div class="stage" id="stage"><canvas id="hero-canvas" aria-label="Döndürülebilir 3D Kraliyet Nişancısı modeli"></canvas><div id="loading" role="status">3D karakter hazırlanıyor…</div></div>
+<div class="controls" aria-label="3D kahraman animasyonları">
+<button type="button" data-clip="Idle" aria-pressed="true">Duruş</button>
+<button type="button" data-clip="Walk" aria-pressed="false">Yürü</button>
+<button type="button" data-clip="Attack" aria-pressed="false">Ateş et</button>
+<button type="button" data-clip="Special" aria-pressed="false">Özel yetenek</button>
+<button type="button" data-camera="reset">Kamerayı sıfırla</button>
+</div>
+<p class="legend">Sürükle: karakteri döndür · Fare tekerleği / iki parmak: yakınlaştır · Performans için cihaz çözünürlüğü sınırlandırılır. Görsel tasarım konseptten uyarlanmıştır; resimdeki birebir yüksek poligonlu model henüz üretilmedi.</p>
+</main>
+<script type="module" src="assets/rigged/royal-gunner-viewer.js"></script>
+</body>
+</html>

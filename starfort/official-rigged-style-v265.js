@@ -5,7 +5,7 @@
 const HERO_STYLE=Object.freeze({
  aldren:{accent:0xecc27b,steel:0x9eacb8,tint:0xe5eff8,build:1.07,head:0.91,metal:0.28},
  lyra:{accent:0x8ed9fa,steel:0x8390b3,tint:0xd7e4ff,build:0.94,head:0.90,metal:0.06},
- rovan:{accent:0xb3dd86,steel:0x716d61,tint:0xc7d8bd,build:0.97,head:0.91,metal:0.09},
+ rovan:{accent:0xf1c777,steel:0xb0bcca,tint:0x7b2840,build:1.07,head:0.91,metal:0.49},
  mira:{accent:0xffd8a5,steel:0xac916e,tint:0xffe5d0,build:0.93,head:0.90,metal:0.07},
  doran:{accent:0xe6a071,steel:0x646c75,tint:0xc1d0d4,build:1.12,head:0.90,metal:0.34},
  vesper:{accent:0xc4a0f9,steel:0x4f5968,tint:0xc8bfdb,build:0.94,head:0.88,metal:0.12},
