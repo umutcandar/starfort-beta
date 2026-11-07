@@ -19,6 +19,7 @@
 #include "Components/SafeZone.h"
 #include "Components/ScaleBox.h"
 #include "Components/SizeBox.h"
+#include "Components/Spacer.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
@@ -136,6 +137,41 @@ static UProgressBar* Bar(UWidgetTree* Tree,UVerticalBox* Parent,
  Result->SetPercent(0.f);
  Parent->AddChildToVerticalBox(Result)->SetPadding(FMargin(2.f,9.f));
  return Result;
+}
+
+static bool BeginBattleOverlay(UUserWidget* Screen,
+ UVerticalBox*& Top,UVerticalBox*& Bottom)
+{
+ UWidgetTree* Tree=GetTree(Screen);
+ if(!Tree) return false;
+
+ // A native, transparent-center HUD: REAL Unreal scene is visible in the
+ // middle instead of being covered by the previous opaque 920x650 panel.
+ USafeZone* Safe=Tree->ConstructWidget<USafeZone>();
+ Safe->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+ UVerticalBox* Shell=Tree->ConstructWidget<UVerticalBox>();
+ Safe->SetContent(Shell);
+
+ UBorder* TopBorder=Tree->ConstructWidget<UBorder>();
+ TopBorder->SetBrushColor(UStarfortVisualTheme::PanelNavy());
+ TopBorder->SetPadding(FMargin(12.f,6.f));
+ Top=Tree->ConstructWidget<UVerticalBox>();
+ TopBorder->SetContent(Top);
+ Shell->AddChildToVerticalBox(TopBorder)->SetPadding(FMargin(10.f,5.f));
+
+ USpacer* WorldWindow=Tree->ConstructWidget<USpacer>();
+ UVerticalBoxSlot* WorldSlot=Shell->AddChildToVerticalBox(WorldWindow);
+ WorldSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+
+ UBorder* FooterBorder=Tree->ConstructWidget<UBorder>();
+ FooterBorder->SetBrushColor(UStarfortVisualTheme::PanelNavy());
+ FooterBorder->SetPadding(FMargin(12.f,6.f));
+ Bottom=Tree->ConstructWidget<UVerticalBox>();
+ FooterBorder->SetContent(Bottom);
+ Shell->AddChildToVerticalBox(FooterBorder)->SetPadding(FMargin(10.f,5.f));
+
+ Tree->RootWidget=Safe;
+ return true;
 }
 }
 
@@ -265,67 +301,63 @@ bool FStarfortNativeWidgetFactory::BuildBattle(UStarfortBattleScreen* Screen)
 {
  UWidgetTree* Tree=NativeUI::GetTree(Screen);
  if(!Tree) return false;
- UVerticalBox* Column=NativeUI::BeginPanel(Screen,920.f,650.f);
- if(!Column) return false;
- NativeUI::AddTextLine(Tree,Column,TEXT("STARFORT  ·  TAKTİK MUHAREBE"),30,
-  UStarfortVisualTheme::Gold());
+ UVerticalBox* Top=nullptr;
+ UVerticalBox* Bottom=nullptr;
+ if(!NativeUI::BeginBattleOverlay(Screen,Top,Bottom)) return false;
 
- UHorizontalBox* Header=NativeUI::Row(Tree,Column);
+ UHorizontalBox* Header=NativeUI::Row(Tree,Top);
  Screen->TxtWave=NativeUI::NamedValue(Tree,Header,TEXT("DALGA"),
   UStarfortVisualTheme::Gold());
  Screen->TxtTurn=NativeUI::NamedValue(Tree,Header,TEXT("TUR"),
   UStarfortVisualTheme::EnergyBlue());
- Screen->TxtVerifiedDamage=NativeUI::NamedValue(Tree,Header,TEXT("ONAYLI HASAR"),
+ Screen->TxtVerifiedDamage=NativeUI::NamedValue(Tree,Header,TEXT("HASAR"),
   FLinearColor::White);
-
  Screen->TxtEnemyIntent=Tree->ConstructWidget<UTextBlock>();
  Screen->TxtEnemyIntent->SetColorAndOpacity(
   FSlateColor(UStarfortVisualTheme::Crimson()));
- Column->AddChildToVerticalBox(Screen->TxtEnemyIntent)->SetPadding(FMargin(5.f,12.f));
- UHorizontalBox* Health=NativeUI::Row(Tree,Column);
- Screen->TxtHeroHP=NativeUI::NamedValue(Tree,Health,TEXT("KAHRAMAN CAN"),
+ Top->AddChildToVerticalBox(Screen->TxtEnemyIntent)->SetPadding(FMargin(4.f,3.f));
+ UHorizontalBox* Health=NativeUI::Row(Tree,Top);
+ Screen->TxtHeroHP=NativeUI::NamedValue(Tree,Health,TEXT("KAHRAMAN"),
   FLinearColor::White);
- Screen->TxtEnemyHP=NativeUI::NamedValue(Tree,Health,TEXT("DÜŞMAN CAN"),
+ Screen->TxtEnemyHP=NativeUI::NamedValue(Tree,Health,TEXT("DÜŞMAN"),
   FLinearColor::White);
- Screen->ProgressHeroHP=NativeUI::Bar(Tree,Column,
+ Screen->ProgressHeroHP=NativeUI::Bar(Tree,Top,
   UStarfortVisualTheme::EnergyBlue());
- Screen->ProgressEnemyHP=NativeUI::Bar(Tree,Column,
+ Screen->ProgressEnemyHP=NativeUI::Bar(Tree,Top,
   UStarfortVisualTheme::Crimson());
 
- NativeUI::AddTextLine(Tree,Column,
-  TEXT("TAKTİK SEÇ · Düşmanın hamlesine göre karşılık ver"),17,
+ NativeUI::AddTextLine(Tree,Bottom,
+  TEXT("TAKTİK KOMUTLAR · Düşman niyetine göre karar ver"),16,
   UStarfortVisualTheme::Gold());
- UHorizontalBox* Actions=NativeUI::Row(Tree,Column);
+ UHorizontalBox* Actions=NativeUI::Row(Tree,Bottom);
  NativeUI::ButtonRow(Tree,Actions,Screen->BtnStrike,TEXT("SALDIRI"));
- NativeUI::ButtonRow(Tree,Actions,Screen->BtnGuard,TEXT("KORUNMA"));
- NativeUI::ButtonRow(Tree,Actions,Screen->BtnFeint,TEXT("KALKAN KIR"));
- NativeUI::ButtonRow(Tree,Actions,Screen->BtnRally,TEXT("İYİLEŞ / TOPARLA"));
+ NativeUI::ButtonRow(Tree,Actions,Screen->BtnGuard,TEXT("SAVUNMA"));
+ NativeUI::ButtonRow(Tree,Actions,Screen->BtnFeint,TEXT("ALDATMA"));
+ NativeUI::ButtonRow(Tree,Actions,Screen->BtnRally,TEXT("TOPARLANMA"));
 
- NativeUI::AddTextLine(Tree,Column,
-  TEXT("TAKIM YETENEKLERİ · Her kahramanın bekleme süresi ayrı"),17,
+ NativeUI::AddTextLine(Tree,Bottom,
+  TEXT("ÜÇ KAHRAMAN · HER BİRİNİN ÖZEL YETENEĞİ"),16,
   UStarfortVisualTheme::Gold());
- UHorizontalBox* Skills=NativeUI::Row(Tree,Column);
+ UHorizontalBox* Skills=NativeUI::Row(Tree,Bottom);
  NativeUI::ButtonRow(Tree,Skills,Screen->BtnHeroSkill,TEXT("1. YETENEK"));
  NativeUI::ButtonRow(Tree,Skills,Screen->BtnSkill2,TEXT("2. YETENEK"));
  NativeUI::ButtonRow(Tree,Skills,Screen->BtnSkill3,TEXT("3. YETENEK"));
- UHorizontalBox* SkillLabels=NativeUI::Row(Tree,Column);
- Screen->TxtSkill1=NativeUI::NamedValue(Tree,SkillLabels,TEXT("1"),
+ UHorizontalBox* Labels=NativeUI::Row(Tree,Bottom);
+ Screen->TxtSkill1=NativeUI::NamedValue(Tree,Labels,TEXT("1"),
   FLinearColor::White);
- Screen->TxtSkill2=NativeUI::NamedValue(Tree,SkillLabels,TEXT("2"),
+ Screen->TxtSkill2=NativeUI::NamedValue(Tree,Labels,TEXT("2"),
   FLinearColor::White);
- Screen->TxtSkill3=NativeUI::NamedValue(Tree,SkillLabels,TEXT("3"),
+ Screen->TxtSkill3=NativeUI::NamedValue(Tree,Labels,TEXT("3"),
   FLinearColor::White);
 
- Screen->TxtCooldownHint=Tree->ConstructWidget<UTextBlock>();
- Screen->TxtCooldownHint->SetColorAndOpacity(
-  FSlateColor(UStarfortVisualTheme::EnergyBlue()));
- Column->AddChildToVerticalBox(Screen->TxtCooldownHint)->SetPadding(FMargin(3.f,10.f));
- Screen->TxtBattleStatus=Tree->ConstructWidget<UTextBlock>();
- Screen->TxtBattleStatus->SetColorAndOpacity(FSlateColor(FLinearColor::White));
- Column->AddChildToVerticalBox(Screen->TxtBattleStatus)->SetPadding(FMargin(3.f,10.f));
- NativeUI::AddTextLine(Tree,Column,
+ UHorizontalBox* Status=NativeUI::Row(Tree,Bottom);
+ Screen->TxtCooldownHint=NativeUI::NamedValue(Tree,Status,TEXT("HAMLE"),
+  UStarfortVisualTheme::EnergyBlue());
+ Screen->TxtBattleStatus=NativeUI::NamedValue(Tree,Status,TEXT("SUNUCU"),
+  FLinearColor::White);
+ NativeUI::AddTextLine(Tree,Bottom,
   TEXT("3D savaş ve efektler için onaylı yüksek kaliteli modeller gerekir."),
-  13,FLinearColor(0.73f,0.77f,0.83f,1.f));
+  12,FLinearColor(0.73f,0.77f,0.83f,1.f));
  return true;
 }
 
