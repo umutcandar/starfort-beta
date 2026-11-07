@@ -43,3 +43,11 @@ ContentPipeline/server_hero_art_mapping.json planlanan Unreal varlık yolların�
 ## Önemli teslim sınırı
 
 Bu paket C++ kaynakları, şeffaf UMG QA arayüzü, veri asset tanımı, kalite kapıları ve Editor sahne betiğidir. Gerçek yüksek detaylı skinned 3D modeller, .uasset animasyon ve müzik/VO dosyaları henüz üretilmedi. Unreal Editor ile C++ derleme ve telefon kurulumu yapılmadı. Testlerin yeşil olması AAA 3D görsellerin hazır olduğu anlamına gelmez.
+
+## Mobil bellek ve güvenli hesap geçişi
+
+- HeroArtCatalog, yedi büyük kahraman modelini doğrudan belleğe almak yerine HeroId + TSoftObjectPtr<UStarfortHeroCombatAsset> eşleştirmesi tutar. Sunucunun seçtiği üç kahraman dışındaki asset'ler savaş açılışında yüklenmez.
+- Data Asset içindeki AnimInstanceClass gerçek skeleton ile uyumlu bir Anim Blueprint olmak zorundadır; aksi halde Montage_Play görünür animasyon üretmeyebilir. Savaş başlamadan önce üç varlık yüklenirken oluşabilecek takılmayı önlemek için üretim sürümünde asenkron yükleme ve giriş yükleme ekranı eklenmelidir. Bu pakette ilk kullanım LoadSynchronous ile çalışır; performans ölçülmeden kusursuz olduğu iddia edilmez.
+- Bir savaş sona erdiğinde, köy/sefer ekranına dönüldüğünde veya hesap değiştirildiğinde ClearBattlePresentation eski üç karakteri, silahları ve efektleri temizler. Başka hesaba ait kahramanlar ekranda kalmaz.
+- Blueprint Stage üzerinden her bir HeroArtCatalog satırına hem Server ID (aldren, lyra, rovan, mira, doran, vesper, eira), hem Soft Asset referansını ata. Uygun ID ile olmayan, duplikasyon olan veya gerçek AnimBP bulunmayan varlık reddedilir.
+- Bu kalite kapısı tek başına modelin gerçekçiliğini ölçmez; yüksek poligonlu bir oyuncak da yapısal testlerden geçebilir. İnsan görsel onayı ve gerçek telefon kalite kontrolü zorunludur.
