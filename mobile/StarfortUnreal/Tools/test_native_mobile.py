@@ -9,7 +9,7 @@ class NativeSmoke(unittest.TestCase):
   self.assertEqual(j["Modules"][0]["Name"],"StarfortUnreal")
  def test_native_landscape(self):
   c=(R/"Config/DefaultEngine.ini").read_text()
-  self.assertIn("GlobalDefaultGameMode=/Script/StarfortUnreal.StarfortMobileGameMode",c)
+  self.assertIn("GlobalDefaultGameMode=/Script/StarfortUnreal.StarfortVillageGameMode",c)
   self.assertIn("Orientation=Landscape",c)
   self.assertIn("bSupportsPortraitOrientation=False",c)
  def test_scene_is_rigged(self):
@@ -218,6 +218,61 @@ class NativeSmoke(unittest.TestCase):
   self.assertIn("sfb_starfort_progress",native)
   self.assertIn("p_request_id",sql)
   self.assertIn("p_action='mission_turn'",sql)
+ def test_native_boot_login_without_any_widget_blueprints(self):
+  src=R/"Source/StarfortUnreal"
+  factory=(src/"Private/StarfortNativeWidgetFactory.cpp").read_text()
+  factory_h=(src/"Public/StarfortNativeWidgetFactory.h").read_text()
+  village=(src/"Private/StarfortVillageController.cpp").read_text()
+  battle=(src/"Private/StarfortBattleController.cpp").read_text()
+  hero=(src/"Private/StarfortMobilePlayerController.cpp").read_text()
+  for widget in ("BuildLogin","BuildVillage","BuildCampaign","BuildBattle","BuildHero"):
+   self.assertIn(widget+"(",factory)
+   self.assertIn(widget+"(",factory_h)
+  for label in ("USafeZone","UScaleBox","ScaleToFit","SelfHitTestInvisible","STARFORT",
+                "InputEmail","InputPassword","BtnSignIn","BtnUpgrade","BtnHeroes",
+                "BtnBattles","BtnStage8","BtnHeroSkill"):
+   self.assertIn(label,factory)
+  for class_name in ("UStarfortLoginScreen::StaticClass()", "UStarfortVillageScreen::StaticClass()"):
+   self.assertIn(class_name,village)
+  for class_name in ("UStarfortBattleScreen::StaticClass()","UStarfortCampaignScreen::StaticClass()"):
+   self.assertIn(class_name,battle)
+  self.assertIn("UStarfortHeroScreen::StaticClass()",hero)
+  self.assertIn("SetIsPassword(true)",(src/"Private/StarfortLoginScreen.cpp").read_text())
+  self.assertIn("OnRefreshRequested",village)
+  self.assertIn("OnSignOutRequested",village)
+  self.assertNotIn("WebView",factory)
+ def test_real_editor_level_generator_is_safe_and_native(self):
+  src=(R/"Tools/create_native_maps.py").read_text()
+  compile(src,"create_native_maps.py","exec")
+  for name in ("L_StarfortVillage","L_RoyalGunnerStudio",
+               "L_StarfortBattle","L_StarfortAlliance"):
+   self.assertIn(name,src)
+  for word in ("LevelEditorSubsystem","new_level(","default_game_mode",
+               "does_asset_exist(","save_current_level()","preserving existing"):
+   self.assertIn(word,src)
+  project=json.loads((R/"StarfortUnreal.uproject").read_text())
+  python_plugin=next(p for p in project["Plugins"] if p["Name"]=="PythonScriptPlugin")
+  self.assertTrue(python_plugin["Enabled"])
+ def test_mobile_build_preflight_does_not_fabricate_release(self):
+  import subprocess
+  script=R/"Tools/native_mobile_build.py"
+  compile(script.read_text(),"native_mobile_build.py","exec")
+  for platform in ("ios","android"):
+   smoke=subprocess.run(["python3",str(script),"--platform",platform,
+                         "--profile","smoke","--dry-run"],capture_output=True,text=True)
+   self.assertEqual(smoke.returncode,0,smoke.stdout+smoke.stderr)
+   payload=json.loads(smoke.stdout)
+   self.assertTrue(payload["dry_run"])
+   self.assertFalse(payload["production_ready"])
+   self.assertFalse(payload["editor_compiled"])
+   self.assertIn("BuildCookRun",payload["command"])
+   self.assertIn("/Engine/Maps/Entry"," ".join(payload["command"]))
+   production=subprocess.run(["python3",str(script),"--platform",platform,
+                              "--profile","release","--dry-run"],capture_output=True,text=True)
+   self.assertEqual(production.returncode,2,production.stdout+production.stderr)
+   blockers=json.loads(production.stdout)
+   self.assertTrue(blockers["missing"])
+   self.assertFalse(blockers["production_ready"])
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))
