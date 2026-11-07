@@ -465,6 +465,63 @@ bool UStarfortOnlineSubsystem::ParseProgress(const TSharedPtr<FJsonObject>& Root
   Out.MissionLastTurnAt=LastTurnAt;
   Out.MissionId=FString::Printf(TEXT("%s:%d:%lld"),
    *Mode,static_cast<int32>(Stage),static_cast<long long>(StartedAt));
+
+  // v2.55 server-owned combat metadata. Old single-wave saved missions
+  // may omit these fields; new three-wave encounters must supply them together.
+  const bool bWaveFields=Mission->HasField(TEXT("wave")) ||
+   Mission->HasField(TEXT("waves")) || Mission->HasField(TEXT("waveTurn"));
+  if (bWaveFields)
+  {
+   int64 Wave=0,Waves=0,WaveTurn=0;
+   if (!IsIntegerField(Mission,TEXT("wave"),1,3,Wave) ||
+       !IsIntegerField(Mission,TEXT("waves"),1,3,Waves) ||
+       !IsIntegerField(Mission,TEXT("waveTurn"),0,36,WaveTurn) ||
+       (Waves!=1 && Waves!=3) || Wave>Waves ||
+       WaveTurn>Turn || (WaveTurn==0 && Turn==0 && Wave!=1) ||
+       (Waves==3 && Mode!=TEXT("story") && Mode!=TEXT("act2")))
+    return false;
+   Out.MissionWave=static_cast<int32>(Wave);
+   Out.MissionWaves=static_cast<int32>(Waves);
+   Out.MissionWaveTurn=static_cast<int32>(WaveTurn);
+  }
+  FString Intent;
+  if (Mission->HasField(TEXT("enemyIntent")))
+  {
+   if (!Mission->TryGetStringField(TEXT("enemyIntent"),Intent) ||
+       (Intent!=TEXT("strike") && Intent!=TEXT("crush") &&
+        Intent!=TEXT("shield") && Intent!=TEXT("drain") &&
+        Intent!=TEXT("sunder") && Intent!=TEXT("eclipse")))
+    return false;
+  }
+  Out.EnemyIntent=Intent;
+  if (Mission->HasField(TEXT("lastAction")))
+  {
+   FString LastAction;
+   if (!Mission->TryGetStringField(TEXT("lastAction"),LastAction) ||
+       LastAction.Len()>96) return false;
+   Out.LastAction=LastAction;
+  }
+  if (Mission->HasField(TEXT("lastRallyTurn")))
+  {
+   int64 Rally=0;
+   if (!IsIntegerField(Mission,TEXT("lastRallyTurn"),0,36,Rally) ||
+       Rally>Turn) return false;
+   Out.LastRallyTurn=static_cast<int32>(Rally);
+  }
+  if (Mission->HasField(TEXT("cooldowns")))
+  {
+   if (!Mission->HasTypedField<EJson::Object>(TEXT("cooldowns"))) return false;
+   const TSharedPtr<FJsonObject> Cooldowns=Mission->GetObjectField(TEXT("cooldowns"));
+   if (!Cooldowns.IsValid() || Cooldowns->Values.Num()>3) return false;
+   for (const auto& Entry:Cooldowns->Values)
+   {
+    int64 ReadyTurn=0;
+    if (!Out.Team.Contains(Entry.Key) ||
+        !IsIntegerField(Cooldowns,*Entry.Key,1,40,ReadyTurn) ||
+        ReadyTurn>Turn+4) return false;
+    Out.SkillCooldownTurns.Add(Entry.Key,static_cast<int32>(ReadyTurn));
+   }
+  }
  }
  else if (!Root->HasTypedField<EJson::Null>(TEXT("mission"))) return false;
 
@@ -715,6 +772,15 @@ void UStarfortOnlineSubsystem::AcceptProgressPayload(
   Battle.EnemyHP=Snapshot.EnemyHP;
   Battle.EnemyMaxHP=Snapshot.EnemyMaxHP;
   Battle.VerifiedDamageDealt=Damage;
+  Battle.TeamHeroes=Snapshot.Team;
+  Battle.SkillCooldownTurns=Snapshot.SkillCooldownTurns;
+  Battle.EnemyIntent=Snapshot.EnemyIntent;
+  Battle.LastAction=Snapshot.LastAction;
+  Battle.Wave=Snapshot.MissionWave;
+  Battle.Waves=Snapshot.MissionWaves;
+  Battle.WaveTurn=Snapshot.MissionWaveTurn;
+  Battle.LastRallyTurn=Snapshot.LastRallyTurn;
+  Battle.LastTurnAtUnixMs=Snapshot.MissionLastTurnAt;
   Battle.bServerVerified=true;
   // The IDs below are VALID INPUT SHAPES, not promises of cooldown readiness.
   // Server checks every action again; its rejection is never shown as success.
