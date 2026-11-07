@@ -111,4 +111,3 @@ void AStarfortBattleStage::PresentVerifiedTurn(const FStarfortVerifiedBattleTurn
   ConfirmedImpactFX->Activate(true);
  if (bAttack) CinemaArm->TargetArmLength=1120.f;
 }
-}
