@@ -19,6 +19,7 @@ const compact=matchMedia('(max-width: 760px)').matches;
 const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
 if(new URLSearchParams(location.search).get('embed')==='1')document.body.classList.add('embed');
 let disposed=false,renderer=null,gear=null,mixer=null,model=null,environment=null,raf=0;
+const actions=new Map();
 let azimuth=.54,zoom=5.9,actionName='Idle',activeAction=null;
 const camera=new THREE.PerspectiveCamera(38,1,.07,100);
 const scene=new THREE.Scene();
@@ -42,7 +43,7 @@ function resize(){
 }
 function clip(name){
  if(!mixer)return;
- const next=mixer.existingAction(name);
+ const next=actions.get(name);
  if(!next)return;
  if(activeAction===next&&name!=='Attack'&&name!=='Special')return;
  if(activeAction&&activeAction!==next)activeAction.fadeOut(.14);
@@ -148,7 +149,7 @@ async function start(){
    {quality:compact?'performance':'balanced',rig:'human',reducedMotion:reduced});
  scene.add(root);
  mixer=new THREE.AnimationMixer(model);
- for(const animation of gltf.animations)mixer.clipAction(animation);
+ for(const animation of gltf.animations)actions.set(animation.name,mixer.clipAction(animation));
  mixer.addEventListener('finished',event=>{
   if(event.action===activeAction&&(actionName==='Attack'||actionName==='Special'))clip('Idle');
  });
