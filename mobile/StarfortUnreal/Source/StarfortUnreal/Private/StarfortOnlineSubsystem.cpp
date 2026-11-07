@@ -9,6 +9,7 @@
 #include "Interfaces/IHttpResponse.h"
 #include "Misc/DateTime.h"
 #include "Misc/Guid.h"
+#include "Misc/DefaultValueHelper.h"
 #include "Containers/Set.h"
 
 namespace StarfortOnline
@@ -160,6 +161,8 @@ void UStarfortOnlineSubsystem::SignOut()
  bRefreshPending=false;
  bVillagePending=false;
  bProgressPending=false;
+ bLastProgressValid=false;
+ LastMissionId.Empty(); LastMissionTurn=-1; LastEnemyHP=0;
  RefreshWaiters.Reset();
  OnSignedOut.Broadcast();
 }
@@ -385,42 +388,114 @@ bool UStarfortOnlineSubsystem::ParseProgress(const TSharedPtr<FJsonObject>& Root
 {
  using namespace StarfortOnline;
  if (!IsServer(Root) || !Root->HasTypedField<EJson::Object>(TEXT("heroes")) ||
-     !Root->HasTypedField<EJson::Array>(TEXT("team"))) return false;
+     !Root->HasTypedField<EJson::Array>(TEXT("team")) ||
+     !Root->HasTypedField<EJson::Array>(TEXT("cleared")) ||
+     !Root->HasTypedField<EJson::Object>(TEXT("campaignStars")) ||
+     !Root->HasField(TEXT("mission")) || !Root->HasField(TEXT("lastReport")))
+  return false;
  const TSharedPtr<FJsonObject> Heroes=Root->GetObjectField(TEXT("heroes"));
  if (!Heroes.IsValid() || Heroes->Values.Num()>UE_ARRAY_COUNT(HeroIds)) return false;
  TSet<FString> Known;
- for(const TCHAR* HeroId:HeroIds) Known.Add(FString(HeroId));
- for(const auto& Field:Heroes->Values)
+ for (const TCHAR* HeroId:HeroIds) Known.Add(FString(HeroId));
+ for (const auto& Field:Heroes->Values)
  {
   int64 Level=0;
-  if (!Known.Contains(Field.Key) ||
-      !IsIntegerField(Heroes,*Field.Key,1,20,Level)) return false;
+  if (!Known.Contains(Field.Key) || !IsIntegerField(Heroes,*Field.Key,1,20,Level))
+   return false;
   Out.HeroLevels.Add(Field.Key,static_cast<int32>(Level));
  }
  const TArray<TSharedPtr<FJsonValue>>& Team=Root->GetArrayField(TEXT("team"));
  if (Team.Num()!=3) return false;
  TSet<FString> UniqueTeam;
- for(const TSharedPtr<FJsonValue>& Item:Team)
+ for (const TSharedPtr<FJsonValue>& Entry:Team)
  {
   FString Id;
-  if(!Item.IsValid() || !Item->TryGetString(Id) ||
-     !Out.HeroLevels.Contains(Id) || UniqueTeam.Contains(Id)) return false;
-  Out.Team.Add(Id);
+  if (!Entry.IsValid() || !Entry->TryGetString(Id) ||
+      !Out.HeroLevels.Contains(Id) || UniqueTeam.Contains(Id)) return false;
   UniqueTeam.Add(Id);
+  Out.Team.Add(Id);
  }
+ const TArray<TSharedPtr<FJsonValue>>& Cleared=Root->GetArrayField(TEXT("cleared"));
+ if (Cleared.Num()>8) return false;
+ for (int32 I=0;I<Cleared.Num();++I)
+ {
+  double Stage=0;
+  if (!Cleared[I].IsValid() || !Cleared[I]->TryGetNumber(Stage) ||
+      Stage!=I+1) return false;
+  Out.ClearedStages.Add(I+1);
+ }
+ const TSharedPtr<FJsonObject> Stars=Root->GetObjectField(TEXT("campaignStars"));
+ if (!Stars.IsValid() || Stars->Values.Num()>8) return false;
+ for (const auto& Entry:Stars->Values)
+ {
+  int32 Stage=0;
+  int64 Rating=0;
+  if (!FDefaultValueHelper::ParseInt(Entry.Key,Stage) ||
+      !Out.ClearedStages.Contains(Stage) ||
+      !IsIntegerField(Stars,*Entry.Key,1,3,Rating)) return false;
+  Out.StoryStars.Add(Stage,static_cast<int32>(Rating));
+ }
+
  if (Root->HasTypedField<EJson::Object>(TEXT("mission")))
  {
   const TSharedPtr<FJsonObject> Mission=Root->GetObjectField(TEXT("mission"));
-  int64 Turn=0,PlayerHp=0,EnemyHp=0;
-  if (!IsIntegerField(Mission,TEXT("turn"),0,36,Turn) ||
-      !IsIntegerField(Mission,TEXT("playerHp"),0,100000,PlayerHp) ||
-      !IsIntegerField(Mission,TEXT("enemyHp"),0,100000,EnemyHp))
+  int64 Turn=0,Stage=0,PlayerHP=0,EnemyHP=0,PlayerMax=0,EnemyMax=0;
+  int64 StartedAt=0,LastTurnAt=0;
+  FString Mode;
+  if (!Mission.IsValid() ||
+      !Mission->TryGetStringField(TEXT("mode"),Mode) ||
+      (Mode!=TEXT("story") && Mode!=TEXT("act2") && Mode!=TEXT("veteran") && Mode!=TEXT("rift") && Mode!=TEXT("maze") && Mode!=TEXT("boss")) ||
+      !IsIntegerField(Mission,TEXT("stage"),1,8,Stage) ||
+      !IsIntegerField(Mission,TEXT("turn"),0,36,Turn) ||
+      !IsIntegerField(Mission,TEXT("playerHp"),0,100000,PlayerHP) ||
+      !IsIntegerField(Mission,TEXT("enemyHp"),0,100000,EnemyHP) ||
+      !IsIntegerField(Mission,TEXT("playerMaxHp"),1,100000,PlayerMax) ||
+      !IsIntegerField(Mission,TEXT("enemyMaxHp"),1,100000,EnemyMax) ||
+      !IsIntegerField(Mission,TEXT("startedAt"),1000000000000LL,20000000000000LL,StartedAt) ||
+      !IsIntegerField(Mission,TEXT("lastTurnAt"),1000000000000LL,20000000000000LL,LastTurnAt) ||
+      PlayerHP>PlayerMax || EnemyHP>EnemyMax || LastTurnAt<StartedAt)
    return false;
   Out.bInMission=true;
+  Out.MissionMode=Mode;
+  Out.MissionStage=static_cast<int32>(Stage);
   Out.MissionTurn=static_cast<int32>(Turn);
-  Out.PlayerHP=PlayerHp;
-  Out.EnemyHP=EnemyHp;
+  Out.PlayerHP=PlayerHP; Out.EnemyHP=EnemyHP;
+  Out.PlayerMaxHP=PlayerMax; Out.EnemyMaxHP=EnemyMax;
+  Out.MissionStartedAt=StartedAt;
+  Out.MissionLastTurnAt=LastTurnAt;
+  Out.MissionId=FString::Printf(TEXT("%s:%d:%lld"),
+   *Mode,static_cast<int32>(Stage),static_cast<long long>(StartedAt));
  }
+ else if (!Root->HasTypedField<EJson::Null>(TEXT("mission"))) return false;
+
+ if (Root->HasTypedField<EJson::Object>(TEXT("lastReport")))
+ {
+  const TSharedPtr<FJsonObject> Report=Root->GetObjectField(TEXT("lastReport"));
+  int64 Stage=0,StarsEarned=0;
+  bool Won=false;
+  bool bAbandoned=false;
+  if (!Report.IsValid() || !Report->TryGetBoolField(TEXT("won"),Won))
+   return false;
+  Report->TryGetBoolField(TEXT("abandoned"),bAbandoned);
+  // The production RPC intentionally returns {won:false,abandoned:true,at}
+  // without stage/stars on retreat. Do not discard the entire account.
+  if (bAbandoned)
+  {
+   if (Won) return false;
+  }
+  else
+  {
+   if (!IsIntegerField(Report,TEXT("stage"),1,8,Stage) ||
+       !IsIntegerField(Report,TEXT("stars"),0,3,StarsEarned) ||
+       (Won && StarsEarned==0) || (!Won && StarsEarned!=0))
+    return false;
+   Out.bHasResult=true; Out.bWon=Won;
+   Out.ResultStage=static_cast<int32>(Stage);
+   Out.ResultStars=static_cast<int32>(StarsEarned);
+  }
+ }
+ else if (!Root->HasTypedField<EJson::Null>(TEXT("lastReport"))) return false;
+
  Out.bServerVerified=true;
  return true;
 }
@@ -509,36 +584,148 @@ void UStarfortOnlineSubsystem::RequestVillageUpgrade(FName BuildingId)
 }
 void UStarfortOnlineSubsystem::LoadProgress()
 {
- if (bProgressPending) return;
+ SubmitProgressAction(TEXT("get"),TEXT(""),TEXT(""));
+}
+bool UStarfortOnlineSubsystem::IsAllowedHero(const FString& Id)
+{
+ for (const TCHAR* HeroId : StarfortOnline::HeroIds)
+  if (Id==HeroId) return true;
+ return false;
+}
+bool UStarfortOnlineSubsystem::IsAllowedBattleAction(const FString& Action)
+{
+ if (Action==TEXT("strike") || Action==TEXT("guard") ||
+     Action==TEXT("feint") || Action==TEXT("rally")) return true;
+ if (!Action.StartsWith(TEXT("skill:"))) return false;
+ return IsAllowedHero(Action.RightChop(6));
+}
+void UStarfortOnlineSubsystem::StartStoryStage(int32 Stage)
+{
+ if (Stage<1 || Stage>8)
+ {
+  Fail(TEXT("Geçersiz hikâye bölümü."));
+  return;
+ }
+ SubmitProgressAction(TEXT("mission_start"),FString::FromInt(Stage),TEXT(""));
+}
+void UStarfortOnlineSubsystem::SubmitBattleAction(const FString& ActionId)
+{
+ if (!IsAllowedBattleAction(ActionId))
+ {
+  Fail(TEXT("Savaş hamlesi geçersiz."));
+  return;
+ }
+ SubmitProgressAction(TEXT("mission_turn"),TEXT(""),ActionId);
+}
+void UStarfortOnlineSubsystem::AbandonMission()
+{
+ SubmitProgressAction(TEXT("mission_abandon"),TEXT(""),TEXT(""));
+}
+void UStarfortOnlineSubsystem::TrainHero(const FString& HeroId)
+{
+ if (!IsAllowedHero(HeroId))
+ {
+  Fail(TEXT("Kahraman kimliği geçersiz."));
+  return;
+ }
+ SubmitProgressAction(TEXT("hero"),HeroId,TEXT(""));
+}
+void UStarfortOnlineSubsystem::SubmitProgressAction(const FString& Action,
+ const FString& Target,const FString& Aux)
+{
+ if (bProgressPending) return; // never dispatch concurrent mutations
+ if (Action!=TEXT("get") && Action!=TEXT("mission_start") &&
+     Action!=TEXT("mission_turn") && Action!=TEXT("mission_abandon") &&
+     Action!=TEXT("hero")) return;
  bProgressPending=true;
  const TWeakObjectPtr<UStarfortOnlineSubsystem> WeakThis(this);
- WithFreshSession([WeakThis](bool Ready)
+ WithFreshSession([WeakThis,Action,Target,Aux](bool Ready)
  {
-  if(!WeakThis.IsValid()) return;
-  if(!Ready)
+  if (!WeakThis.IsValid()) return;
+  if (!Ready)
   {
    WeakThis->bProgressPending=false;
-   WeakThis->Fail(TEXT("Kahraman verisi için oturum gerekli."));
+   WeakThis->Fail(TEXT("Hesap işlemi için tekrar giriş yap."));
    return;
   }
   const TSharedPtr<FJsonObject> Body=MakeShared<FJsonObject>();
-  Body->SetStringField(TEXT("p_action"),TEXT("get"));
-  Body->SetField(TEXT("p_target"),MakeShared<FJsonValueNull>());
-  Body->SetField(TEXT("p_aux"),MakeShared<FJsonValueNull>());
-  Body->SetField(TEXT("p_request_id"),MakeShared<FJsonValueNull>());
-  WeakThis->RequestJson(TEXT("/rest/v1/rpc/sfb_starfort_progress"),TEXT("POST"),
-   StarfortOnline::ToJson(Body),WeakThis->AccessToken,
-   [WeakThis](bool Ok,const TSharedPtr<FJsonObject>& Root)
+  Body->SetStringField(TEXT("p_action"),Action);
+  if (Target.IsEmpty()) Body->SetField(TEXT("p_target"),MakeShared<FJsonValueNull>());
+  else Body->SetStringField(TEXT("p_target"),Target);
+  if (Aux.IsEmpty()) Body->SetField(TEXT("p_aux"),MakeShared<FJsonValueNull>());
+  else Body->SetStringField(TEXT("p_aux"),Aux);
+  // An unknown network outcome must not cause an automatic retry of a mutation.
+  if (Action==TEXT("get"))
+   Body->SetField(TEXT("p_request_id"),MakeShared<FJsonValueNull>());
+  else
+   Body->SetStringField(TEXT("p_request_id"),
+    FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphens));
+  WeakThis->RequestJson(TEXT("/rest/v1/rpc/sfb_starfort_progress"),
+   TEXT("POST"),StarfortOnline::ToJson(Body),WeakThis->AccessToken,
+   [WeakThis,Action](bool Ok,const TSharedPtr<FJsonObject>& Root)
    {
-    if(!WeakThis.IsValid()) return;
+    if (!WeakThis.IsValid()) return;
     WeakThis->bProgressPending=false;
-    FStarfortProgressSummary Snapshot;
-    if(!Ok || !ParseProgress(Root,Snapshot))
-    {
-     WeakThis->Fail(TEXT("Kahraman ilerlemesi doğrulanamadı."));
-     return;
-    }
-    WeakThis->OnProgressReady.Broadcast(Snapshot);
+    WeakThis->AcceptProgressPayload(Ok,Root,Action);
    });
  });
+}
+void UStarfortOnlineSubsystem::AcceptProgressPayload(
+ bool bOk,const TSharedPtr<FJsonObject>& Root,const FString& Action)
+{
+ FStarfortProgressSummary Snapshot;
+ if (!bOk || !ParseProgress(Root,Snapshot))
+ {
+  bLastProgressValid=false;
+  LastMissionId.Empty();
+  LastMissionTurn=-1;
+  LastEnemyHP=0;
+  Fail(TEXT("İlerleme sunucusu yanıtı doğrulanamadı. Durum yeniden okunuyor."));
+  // GET only. NEVER repeat a mutation with a different idempotency key.
+  if (Action!=TEXT("get")) LoadProgress();
+  return;
+ }
+ int64 Damage=0;
+ const bool bContinuing=bLastProgressValid && Snapshot.bInMission &&
+  LastMissionId==Snapshot.MissionId && Snapshot.MissionTurn>LastMissionTurn;
+ if (bContinuing)
+  Damage=FMath::Max<int64>(0,LastEnemyHP-Snapshot.EnemyHP);
+ bLastProgressValid=true;
+ if (Snapshot.bInMission)
+ {
+  LastMissionId=Snapshot.MissionId;
+  LastMissionTurn=Snapshot.MissionTurn;
+  LastEnemyHP=Snapshot.EnemyHP;
+ }
+ else
+ {
+  LastMissionId.Empty();
+  LastMissionTurn=-1;
+  LastEnemyHP=0;
+ }
+
+ OnProgressReady.Broadcast(Snapshot);
+ if (Snapshot.bInMission)
+ {
+  FStarfortVerifiedBattleTurn Battle;
+  Battle.RoomId=Snapshot.MissionId;
+  Battle.Turn=Snapshot.MissionTurn;
+  Battle.HeroHP=Snapshot.PlayerHP;
+  Battle.HeroMaxHP=Snapshot.PlayerMaxHP;
+  Battle.EnemyHP=Snapshot.EnemyHP;
+  Battle.EnemyMaxHP=Snapshot.EnemyMaxHP;
+  Battle.VerifiedDamageDealt=Damage;
+  Battle.bServerVerified=true;
+  // The IDs below are VALID INPUT SHAPES, not promises of cooldown readiness.
+  // Server checks every action again; its rejection is never shown as success.
+  if (Battle.HeroHP>0 && Battle.EnemyHP>0)
+  {
+   Battle.ServerAllowedActions={TEXT("strike"),TEXT("guard"),TEXT("feint"),TEXT("rally")};
+   for (const FString& HeroId:Snapshot.Team)
+    Battle.ServerAllowedActions.Add(TEXT("skill:")+HeroId);
+  }
+  OnBattleReady.Broadcast(Battle);
+ }
+ else if (Action==TEXT("mission_turn") && Snapshot.bHasResult)
+  OnMissionResult.Broadcast(Snapshot.bWon,Snapshot.ResultStars);
 }

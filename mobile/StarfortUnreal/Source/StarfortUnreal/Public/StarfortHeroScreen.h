@@ -43,6 +43,7 @@ class STARFORTUNREAL_API UStarfortHeroScreen : public UUserWidget
 
 public:
  UFUNCTION(BlueprintCallable, Category="STARFORT|Hero") void ApplyVerifiedHero(const FStarfortHeroSnapshot& NewSnapshot);
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Hero") void ApplyVerifiedRosterLevel(const FString& HeroId, int32 Level);
  UFUNCTION(BlueprintCallable, Category="STARFORT|Hero") void SetWaitingForServer();
  UFUNCTION(BlueprintPure, Category="STARFORT|Hero") bool HasVerifiedHero() const { return bHasVerifiedHero; }
 
@@ -75,4 +76,5 @@ private:
  UFUNCTION() void BackClicked();
  UFUNCTION() void UpgradeClicked();
  UPROPERTY(Transient) bool bHasVerifiedHero = false;
+ bool bUpgradePending=false;
 };

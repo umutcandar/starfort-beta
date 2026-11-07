@@ -17,6 +17,7 @@ void UStarfortHeroScreen::NativeOnInitialized()
 void UStarfortHeroScreen::SetWaitingForServer()
 {
  bHasVerifiedHero = false;
+ bUpgradePending = false;
  // Do not present fabricated numbers while the server snapshot is absent.
  const FText Placeholder=FText::FromString(TEXT("—"));
  if (TxtHeroName) TxtHeroName->SetText(FText::FromString(TEXT("Kahraman yükleniyor")));
@@ -30,6 +31,25 @@ void UStarfortHeroScreen::SetWaitingForServer()
  if (TxtConnectionStatus) TxtConnectionStatus->SetText(FText::FromString(TEXT("Sunucu doğrulaması bekleniyor")));
  if (ProgressShards) ProgressShards->SetPercent(0.f);
  if (BtnUpgrade) BtnUpgrade->SetIsEnabled(false);
+}
+
+void UStarfortHeroScreen::ApplyVerifiedRosterLevel(const FString& HeroId,int32 Level)
+{
+ // The current authenticated progress RPC supplies hero level, NOT attack,
+ // defense, rarity, shard count or detailed stats. Never invent those.
+ if(HeroId!=TEXT("rovan") || Level<1 || Level>20)
+ {
+  SetWaitingForServer();return;
+ }
+ SetWaitingForServer();
+ bHasVerifiedHero=true;
+ if(TxtHeroName) TxtHeroName->SetText(FText::FromString(TEXT("Rovan · Kraliyet Nişancısı")));
+ if(TxtLevel)
+  TxtLevel->SetText(FText::Format(FText::FromString(TEXT("Seviye {0} / 20")),
+   FText::AsNumber(Level)));
+ if(TxtConnectionStatus)
+  TxtConnectionStatus->SetText(FText::FromString(TEXT("Sunucu kahramanı doğrulandı")));
+ if(BtnUpgrade) BtnUpgrade->SetIsEnabled(Level<20);
 }
 
 void UStarfortHeroScreen::ApplyVerifiedHero(const FStarfortHeroSnapshot& NewSnapshot)
@@ -46,6 +66,7 @@ void UStarfortHeroScreen::ApplyVerifiedHero(const FStarfortHeroSnapshot& NewSnap
   return;
  }
  bHasVerifiedHero = true;
+ bUpgradePending = false;
  if (TxtHeroName) TxtHeroName->SetText(NewSnapshot.DisplayName);
  if (TxtRarity) TxtRarity->SetText(NewSnapshot.Rarity);
  if (TxtLevel)
@@ -77,5 +98,10 @@ void UStarfortHeroScreen::BackClicked() { OnBackRequested.Broadcast(); }
 void UStarfortHeroScreen::UpgradeClicked()
 {
  // Caller must perform an authenticated server request; no local level change.
- if (bHasVerifiedHero) OnUpgradeRequested.Broadcast();
+ if (bHasVerifiedHero && !bUpgradePending)
+ {
+  bUpgradePending=true;
+  if(BtnUpgrade) BtnUpgrade->SetIsEnabled(false);
+  OnUpgradeRequested.Broadcast();
+ }
 }
