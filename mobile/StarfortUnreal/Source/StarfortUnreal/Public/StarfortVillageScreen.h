@@ -63,6 +63,10 @@ public:
  FStarfortVillageNavigation OnBattlesRequested;
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Village")
  FStarfortVillageNavigation OnAllianceRequested;
+ UPROPERTY(BlueprintAssignable, Category="STARFORT|Village")
+ FStarfortVillageNavigation OnRefreshRequested;
+ UPROPERTY(BlueprintAssignable, Category="STARFORT|Village")
+ FStarfortVillageNavigation OnSignOutRequested;
 
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtVillageName;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtGold;
@@ -76,6 +80,8 @@ public:
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnHeroes;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnBattles;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnAlliance;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnRefresh;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnSignOut;
 
 protected:
  virtual void NativeOnInitialized() override;
@@ -84,6 +90,8 @@ private:
  UFUNCTION() void HeroesClicked();
  UFUNCTION() void BattlesClicked();
  UFUNCTION() void AllianceClicked();
+ UFUNCTION() void RefreshClicked();
+ UFUNCTION() void SignOutClicked();
  FStarfortVerifiedVillage VerifiedSnapshot;
  FName SelectedBuildingId = NAME_None;
  bool bHasVerifiedVillage = false;
