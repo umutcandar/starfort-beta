@@ -73,7 +73,7 @@ void ARoyalGunnerPreviewPawn::BeginPlay()
  RoyalCannon->AttachToComponent(HeroBody, FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocketName);
  if (RoyalCannon->DoesSocketExist(MuzzleSocketName))
   MuzzleFlash->AttachToComponent(RoyalCannon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, MuzzleSocketName);
- if (MuzzleSystem) MuzzleFlash->SetAsset(MuzzleSystem);
+ if (MuzzleSystem) MuzzleFlash->SetAsset(MuzzleSystem, true);
 }
 
 void ARoyalGunnerPreviewPawn::Tick(float DeltaSeconds)
