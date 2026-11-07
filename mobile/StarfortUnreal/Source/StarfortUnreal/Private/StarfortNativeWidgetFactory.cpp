@@ -265,40 +265,67 @@ bool FStarfortNativeWidgetFactory::BuildBattle(UStarfortBattleScreen* Screen)
 {
  UWidgetTree* Tree=NativeUI::GetTree(Screen);
  if(!Tree) return false;
- UVerticalBox* Column=NativeUI::BeginPanel(Screen,840.f,480.f);
+ UVerticalBox* Column=NativeUI::BeginPanel(Screen,920.f,650.f);
  if(!Column) return false;
- NativeUI::AddTextLine(Tree,Column,TEXT("STARFORT  ·  MUHAREBE"),30,
+ NativeUI::AddTextLine(Tree,Column,TEXT("STARFORT  ·  TAKTİK MUHAREBE"),30,
   UStarfortVisualTheme::Gold());
+
  UHorizontalBox* Header=NativeUI::Row(Tree,Column);
+ Screen->TxtWave=NativeUI::NamedValue(Tree,Header,TEXT("DALGA"),
+  UStarfortVisualTheme::Gold());
  Screen->TxtTurn=NativeUI::NamedValue(Tree,Header,TEXT("TUR"),
   UStarfortVisualTheme::EnergyBlue());
  Screen->TxtVerifiedDamage=NativeUI::NamedValue(Tree,Header,TEXT("ONAYLI HASAR"),
   FLinearColor::White);
 
+ Screen->TxtEnemyIntent=Tree->ConstructWidget<UTextBlock>();
+ Screen->TxtEnemyIntent->SetColorAndOpacity(
+  FSlateColor(UStarfortVisualTheme::Crimson()));
+ Column->AddChildToVerticalBox(Screen->TxtEnemyIntent)->SetPadding(FMargin(5.f,12.f));
  UHorizontalBox* Health=NativeUI::Row(Tree,Column);
- Screen->TxtHeroHP=NativeUI::NamedValue(Tree,Health,TEXT("KAHRAMAN"),
+ Screen->TxtHeroHP=NativeUI::NamedValue(Tree,Health,TEXT("KAHRAMAN CAN"),
   FLinearColor::White);
- Screen->TxtEnemyHP=NativeUI::NamedValue(Tree,Health,TEXT("DÜŞMAN"),
+ Screen->TxtEnemyHP=NativeUI::NamedValue(Tree,Health,TEXT("DÜŞMAN CAN"),
   FLinearColor::White);
  Screen->ProgressHeroHP=NativeUI::Bar(Tree,Column,
   UStarfortVisualTheme::EnergyBlue());
  Screen->ProgressEnemyHP=NativeUI::Bar(Tree,Column,
   UStarfortVisualTheme::Crimson());
- NativeUI::AddTextLine(Tree,Column,
-  TEXT("Savaş efektleri, onaylı 3D rig ve sunucu hamlesi gerektirir."),
-  14,FLinearColor(0.73f,0.77f,0.83f,1.f));
 
+ NativeUI::AddTextLine(Tree,Column,
+  TEXT("TAKTİK SEÇ · Düşmanın hamlesine göre karşılık ver"),17,
+  UStarfortVisualTheme::Gold());
  UHorizontalBox* Actions=NativeUI::Row(Tree,Column);
- NativeUI::ButtonRow(Tree,Actions,Screen->BtnStrike,TEXT("SALDIR"));
- NativeUI::ButtonRow(Tree,Actions,Screen->BtnGuard,TEXT("SAVUN"));
- NativeUI::ButtonRow(Tree,Actions,Screen->BtnFeint,TEXT("ALDAT"));
- NativeUI::ButtonRow(Tree,Actions,Screen->BtnRally,TEXT("TOPARLA"));
- UHorizontalBox* HeroSkill=NativeUI::Row(Tree,Column);
- NativeUI::ButtonRow(Tree,HeroSkill,Screen->BtnHeroSkill,
-  TEXT("KAHRAMAN YETENEĞİ"));
+ NativeUI::ButtonRow(Tree,Actions,Screen->BtnStrike,TEXT("SALDIRI"));
+ NativeUI::ButtonRow(Tree,Actions,Screen->BtnGuard,TEXT("KORUNMA"));
+ NativeUI::ButtonRow(Tree,Actions,Screen->BtnFeint,TEXT("KALKAN KIR"));
+ NativeUI::ButtonRow(Tree,Actions,Screen->BtnRally,TEXT("İYİLEŞ / TOPARLA"));
+
+ NativeUI::AddTextLine(Tree,Column,
+  TEXT("TAKIM YETENEKLERİ · Her kahramanın bekleme süresi ayrı"),17,
+  UStarfortVisualTheme::Gold());
+ UHorizontalBox* Skills=NativeUI::Row(Tree,Column);
+ NativeUI::ButtonRow(Tree,Skills,Screen->BtnHeroSkill,TEXT("1. YETENEK"));
+ NativeUI::ButtonRow(Tree,Skills,Screen->BtnSkill2,TEXT("2. YETENEK"));
+ NativeUI::ButtonRow(Tree,Skills,Screen->BtnSkill3,TEXT("3. YETENEK"));
+ UHorizontalBox* SkillLabels=NativeUI::Row(Tree,Column);
+ Screen->TxtSkill1=NativeUI::NamedValue(Tree,SkillLabels,TEXT("1"),
+  FLinearColor::White);
+ Screen->TxtSkill2=NativeUI::NamedValue(Tree,SkillLabels,TEXT("2"),
+  FLinearColor::White);
+ Screen->TxtSkill3=NativeUI::NamedValue(Tree,SkillLabels,TEXT("3"),
+  FLinearColor::White);
+
+ Screen->TxtCooldownHint=Tree->ConstructWidget<UTextBlock>();
+ Screen->TxtCooldownHint->SetColorAndOpacity(
+  FSlateColor(UStarfortVisualTheme::EnergyBlue()));
+ Column->AddChildToVerticalBox(Screen->TxtCooldownHint)->SetPadding(FMargin(3.f,10.f));
  Screen->TxtBattleStatus=Tree->ConstructWidget<UTextBlock>();
  Screen->TxtBattleStatus->SetColorAndOpacity(FSlateColor(FLinearColor::White));
- Column->AddChildToVerticalBox(Screen->TxtBattleStatus)->SetPadding(FMargin(4.f,14.f));
+ Column->AddChildToVerticalBox(Screen->TxtBattleStatus)->SetPadding(FMargin(3.f,10.f));
+ NativeUI::AddTextLine(Tree,Column,
+  TEXT("3D savaş ve efektler için onaylı yüksek kaliteli modeller gerekir."),
+  13,FLinearColor(0.73f,0.77f,0.83f,1.f));
  return true;
 }
 
