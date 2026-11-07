@@ -418,7 +418,7 @@ class NativeSmoke(unittest.TestCase):
                 "TArray<FStarfortHeroArtEntry> HeroArtCatalog",
                 "ClearBattlePresentation"]:
    self.assertIn(token,stage_h)
-  for token in ["Entry.Art.IsNull()","Match->Art.LoadSynchronous()",
+  for token in ["Match->Art.IsNull()","Match->Art.LoadSynchronous()",
                 "SetAnimInstanceClass(Art->AnimInstanceClass.Get())",
                 "ClearBattlePresentation()","ActiveHeroArt.Reset()",
                 "SetSkeletalMesh(nullptr)","SetStaticMesh(nullptr)"]:
