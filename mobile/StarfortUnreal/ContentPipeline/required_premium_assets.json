@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "engine": "Unreal Engine 5.8",
+  "platforms": [
+    "iOS",
+    "Android"
+  ],
+  "orientation": "landscape",
+  "visual_reference": "Approved Royal Gunner premium hero concept (chat reference, not production geometry)",
+  "quality_policy": "No toy-style geometry, unlicensed source, flat material or unrigged hero as a release asset. Release also requires human art direction and real-device QA.",
+  "assets": [
+    {
+      "key": "royal_gunner",
+      "kind": "rigged_character",
+      "name": "Kraliyet Nişancısı",
+      "bones": 40,
+      "animations": [
+        "idle",
+        "walk",
+        "run",
+        "aim",
+        "fire",
+        "special",
+        "hit",
+        "death"
+      ],
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "royal_energy_cannon",
+      "kind": "weapon",
+      "name": "Mavi Enerji Topu",
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness",
+        "emissive"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "enemy_raider",
+      "kind": "rigged_character",
+      "name": "Kül Akıncısı",
+      "bones": 24,
+      "animations": [
+        "idle",
+        "run",
+        "attack",
+        "hit",
+        "death"
+      ],
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "enemy_caster",
+      "kind": "rigged_character",
+      "name": "Gölge Büyücüsü",
+      "bones": 24,
+      "animations": [
+        "idle",
+        "cast",
+        "hit",
+        "death"
+      ],
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "castle_keep",
+      "kind": "environment",
+      "name": "Kraliyet Karargâhı",
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "castle_gate",
+      "kind": "environment",
+      "name": "Kale Kapısı",
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "castle_wall",
+      "kind": "environment",
+      "name": "Kale Suru",
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "castle_barracks",
+      "kind": "environment",
+      "name": "Kışla",
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "castle_farm",
+      "kind": "environment",
+      "name": "Çiftlik",
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "castle_forge",
+      "kind": "environment",
+      "name": "Demirhane",
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "castle_observatory",
+      "kind": "environment",
+      "name": "Gözlemevi",
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "battle_arena",
+      "kind": "environment",
+      "name": "Kuşatma Alanı",
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    }
+  ]
+}
