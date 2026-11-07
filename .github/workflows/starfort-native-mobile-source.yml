@@ -1,0 +1,17 @@
+name: STARFORT Native Mobile Source QA
+on:
+  pull_request:
+    paths:
+      - 'mobile/StarfortUnreal/**'
+      - '.github/workflows/starfort-native-mobile-source.yml'
+  push:
+    paths:
+      - 'mobile/StarfortUnreal/**'
+      - '.github/workflows/starfort-native-mobile-source.yml'
+jobs:
+  source-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate native Unreal mobile source constraints (not an Unreal compile)
+        run: python3 mobile/StarfortUnreal/Tools/test_native_mobile.py
