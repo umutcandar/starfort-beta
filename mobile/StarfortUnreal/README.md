@@ -1,5 +1,16 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## Native premium village and cinematic battle — development update
+
+The Unreal C++ source now also contains:
+- UStarfortVisualTheme: shared gold, navy, sapphire and crimson design tokens for the approved hero-screen visual language.
+- AStarfortVillageGameMode, AStarfortVillageController, AStarfortVillageCameraPawn, and AStarfortVillageBuilding: a native isometric world with drag/pinch and tap-to-inspect 3D buildings.
+- UStarfortVillageScreen: read-only authenticated village UI including resources, building details and server-request-only upgrades.
+- UStarfortBattleScreen: tactical combat HUD with server-listed strike/guard/feint/rally/skill action IDs, single-flight commands and verified HP.
+- AStarfortBattleStage: Unreal camera/mesh presenter with Niagara FX triggered only by a new server-confirmed hit.
+
+**These are C++ entrypoints, not finished production screens.** Real Unreal .umap fortress/battle arenas, Unreal UMG Widget Blueprints, artist-approved buildings, rigged hero/enemy models, an authenticated native API adapter, and iOS/Android test builds are pending. Read Docs/VillageBattle_VisualAndNativeContract.md to author levels and interfaces. The previous web version remains untouched, but it is not the intended new client.
+
 **Target:** native iOS / Android landscape game. **Not a website, WebView, HTML game, or Pixel Streaming product.**
 
 This new Unreal 5.8 C++ project is the beginning of the mobile-only migration. It contains a native GameMode, a skeletal-mesh Royal Gunner showroom Pawn, touch orbit/pinch, a gun mesh and Niagara effect attachment, mobile renderer/device settings and a quality gate. Missing real character assets deliberately remain invisible rather than displaying a toy low-poly substitute.

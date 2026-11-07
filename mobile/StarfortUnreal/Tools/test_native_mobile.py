@@ -35,6 +35,59 @@ class NativeSmoke(unittest.TestCase):
   self.assertIn('FInputModeGameAndUI',controller)
   self.assertIn('PlayerControllerClass = AStarfortMobilePlayerController::StaticClass()',mode)
   self.assertIn('fictional placeholder',spec)
+ def test_village_is_native_three_d_and_touch_first(self):
+  root=R/"Source/StarfortUnreal"
+  camera=(root/"Private/StarfortVillageCameraPawn.cpp").read_text()
+  building=(root/"Private/StarfortVillageBuilding.cpp").read_text()
+  mode=(root/"Private/StarfortVillageGameMode.cpp").read_text()
+  controller=(root/"Private/StarfortVillageController.cpp").read_text()
+  for token in ["GetInputTouchState", "DeprojectScreenPositionToWorld", "LineTraceSingleByChannel", "ZoomBy", "PanByScreenDelta", "IsWorldStagePosition"]:
+   self.assertIn(token,camera)
+  for token in ["bArtApprovedForMobile", "GetStaticMesh()", "SetRenderCustomDepth"]:
+   self.assertIn(token,building)
+  self.assertIn("DefaultPawnClass=AStarfortVillageCameraPawn::StaticClass()",mode)
+  self.assertIn("PlayerControllerClass=AStarfortVillageController::StaticClass()",mode)
+  self.assertIn("CreateWidget<UStarfortVillageScreen>",controller)
+  self.assertIn("RequestBuildingDetails(BuildingId)",controller)
+ def test_village_upgrades_remain_authoritative(self):
+  root=R/"Source/StarfortUnreal"
+  h=(root/"Public/StarfortVillageScreen.h").read_text()
+  c=(root/"Private/StarfortVillageScreen.cpp").read_text()
+  for token in ["bServerVerified", "bServerAllowsUpgrade", "OnUpgradeRequested", "TxtStarEssence"]:
+   self.assertIn(token,h)
+  for token in ["!NewSnapshot.bServerVerified", "bUpgradePending", "OnUpgradeRequested.Broadcast", "SetWaitingForServer()", "KnownIds"]:
+   self.assertIn(token,c)
+  self.assertNotIn("gold +=",c.lower())
+ def test_battle_action_is_only_server_requested(self):
+  root=R/"Source/StarfortUnreal"
+  h=(root/"Public/StarfortBattleScreen.h").read_text()
+  c=(root/"Private/StarfortBattleScreen.cpp").read_text()
+  for token in ["ServerAllowedActions", "VerifiedDamageDealt", "OnActionRequested", "BtnHeroSkill"]:
+   self.assertIn(token,h)
+  for token in ["NewTurn.Turn<=Latest.Turn","!IsKnownAction(ActionId)", "bCommandPending=true", "OnActionRequested.Broadcast(ActionId)", "Latest.ServerAllowedActions.Contains(ActionId)"]:
+   self.assertIn(token,c)
+  self.assertNotIn("HeroHP -=",c)
+  self.assertNotIn("EnemyHP -=",c)
+ def test_battle_stage_needs_real_rig_and_confirmed_hit(self):
+  root=R/"Source/StarfortUnreal"
+  h=(root/"Public/StarfortBattleStage.h").read_text()
+  c=(root/"Private/StarfortBattleStage.cpp").read_text()
+  self.assertIn("USkeletalMeshComponent",h)
+  self.assertIn("bArtApprovedForMobile",h)
+  for token in ["HasApprovedStage()", "Snapshot.bServerVerified", "LastConfirmedTurn", "VerifiedDamageDealt>0", "Montage_Play", "ConfirmedImpactFX->Activate(true)"]:
+   self.assertIn(token,c)
+ def test_global_premium_style_tokens_are_shared(self):
+  root=R/"Source/StarfortUnreal"
+  h=(root/"Public/StarfortVisualTheme.h").read_text()
+  c=(root/"Private/StarfortVisualTheme.cpp").read_text()
+  for color in ["Gold","DeepNavy","PanelNavy","EnergyBlue","Crimson"]:
+   self.assertIn(color+"()",h)
+   self.assertIn(color+"()",c)
+  self.assertIn("MinimumTouchTargetDp()",c)
+ def test_real_editor_assets_and_api_are_not_misrepresented(self):
+  spec=(R/"Docs/VillageBattle_VisualAndNativeContract.md").read_text()
+  for phrase in ["not cryptographic verification","Not yet present","Widget Blueprints","Unreal Editor","Android/iOS"]:
+   self.assertIn(phrase,spec)
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))
