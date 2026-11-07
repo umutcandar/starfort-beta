@@ -38,9 +38,13 @@ void AStarfortVillageController::OnPossess(APawn* InPawn)
 }
 void AStarfortVillageController::OpenLoginScreen()
 {
- if (!IsLocalController() || !LoginScreenClass) return;
+ if (!IsLocalController()) return;
  if (!ActiveLoginScreen)
-  ActiveLoginScreen=CreateWidget<UStarfortLoginScreen>(this,LoginScreenClass);
+ {
+  TSubclassOf<UStarfortLoginScreen> NativeClass=LoginScreenClass;
+  if (!NativeClass) NativeClass=UStarfortLoginScreen::StaticClass();
+  ActiveLoginScreen=CreateWidget<UStarfortLoginScreen>(this,NativeClass);
+ }
  if (ActiveLoginScreen && !ActiveLoginScreen->IsInViewport())
  {
   ActiveLoginScreen->AddToViewport(90);
@@ -52,11 +56,13 @@ void AStarfortVillageController::OpenLoginScreen()
 }
 void AStarfortVillageController::OpenVillageScreen()
 {
- if (!IsLocalController() || !Online || !Online->IsSignedIn() || !VillageScreenClass)
+ if (!IsLocalController() || !Online || !Online->IsSignedIn())
   return;
  if (!ActiveVillageScreen)
  {
-  ActiveVillageScreen=CreateWidget<UStarfortVillageScreen>(this,VillageScreenClass);
+  TSubclassOf<UStarfortVillageScreen> NativeClass=VillageScreenClass;
+  if (!NativeClass) NativeClass=UStarfortVillageScreen::StaticClass();
+  ActiveVillageScreen=CreateWidget<UStarfortVillageScreen>(this,NativeClass);
   if (!ActiveVillageScreen) return;
   ActiveVillageScreen->OnUpgradeRequested.AddUniqueDynamic(
    this,&AStarfortVillageController::HandleUpgradeRequested);
