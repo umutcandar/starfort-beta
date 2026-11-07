@@ -9,7 +9,7 @@ test('seven heroes own distinct weapons, helmets, silhouettes and CC0 rig anchor
  const styles=heroIds.map(heroId=>riggedGearProfile({team:0,heroId}));
  assert.equal(styles.length,7);
  assert.equal(new Set(styles.map(s=>s.kind)).size,7);
- assert.equal(styles.find(s=>s.kind==='ranger').weapon,'bow');
+ assert.equal(styles.find(s=>s.kind==='royal-gunner').weapon,'energy-cannon');
  assert.equal(styles.find(s=>s.kind==='guardian').weapon,'hammer');
  assert.equal(styles.find(s=>s.kind==='assassin').offhand,'dagger');
  assert.equal(styles.find(s=>s.kind==='sorceress').weapon,'firestaff');
