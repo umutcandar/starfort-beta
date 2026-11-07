@@ -40,6 +40,10 @@ public:
 
  UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="STARFORT|Quality") bool bArtApprovedForMobile = false;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage") TObjectPtr<UAnimMontage> VerifiedShotMontage;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage") TObjectPtr<UAnimMontage> GuardMontage;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage") TObjectPtr<UAnimMontage> FeintMontage;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage") TObjectPtr<UAnimMontage> RallyMontage;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage") TObjectPtr<UAnimMontage> HeroSkillMontage;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage") TObjectPtr<UNiagaraSystem> ImpactSystem;
 
 private:
