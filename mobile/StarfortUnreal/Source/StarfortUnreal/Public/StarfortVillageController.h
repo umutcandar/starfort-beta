@@ -45,4 +45,5 @@ private:
  UFUNCTION() void HandleBattlesRequested();
  UFUNCTION() void HandleAllianceRequested();
  UFUNCTION() void HandleRouteUnavailable(FString SafeReason);
+ UFUNCTION() void HandleLogoutRequested();
 };
