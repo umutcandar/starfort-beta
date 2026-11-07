@@ -1,5 +1,15 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## Native story campaign and real battle loop — latest milestone
+
+`UStarfortCampaignScreen` now presents eight authenticated story chapters and 1–3 server-issued campaign stars. `AStarfortBattleController` and `AStarfortBattleGameMode` bind this to a native UMG battle HUD and a licensed 3D Unreal stage once its Blueprint assets exist.
+
+`UStarfortOnlineSubsystem` now supports actual `mission_start`, `mission_turn`, `mission_abandon` and `hero` RPC actions against the **existing** Supabase account. Mission identity, HP, max HP, round index, result and stars are parsed from the server response. Unsupported actions, stale requests and duplicate in-flight mutations are rejected. No local reward, battle damage or hero level is invented. Uncertain mutations reconcile with a read-only `get` instead of replaying the operation.
+
+Rovan's native hero screen consumes his server-backed level through `ApplyVerifiedRosterLevel`. Attack/defense/rarity values remain **unavailable** until a real authenticated detailed-stats API is added. No guest mode.
+
+**Important:** These are native C++/UMG controller and data contracts. Real Unreal `.umap`/Widget Blueprints and the high-quality 3D assets have not been created or compiled; the app is not yet playable on a phone. The authoritative missing-work and release criteria are in `Docs/MobileFullGameMilestones_TR.md`.
+
 ## Authenticated native account bridge (current source milestone)
 
 The new `UStarfortOnlineSubsystem` connects **directly from Unreal C++** to the same Supabase Auth and server-owned village/progression RPCs used by the legacy client. It implements in-memory sign-in, bearer validation, expiring-token refresh, immutable account identity per request, authenticated village loading and server-issued building upgrade requests. The village HUD reacts to validated responses only; unknown network outcomes are not retried with a fresh idempotency key.
