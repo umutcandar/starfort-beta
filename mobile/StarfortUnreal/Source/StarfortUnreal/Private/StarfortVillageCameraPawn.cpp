@@ -82,7 +82,12 @@ void AStarfortVillageCameraPawn::TryPickBuilding(const FVector2D& Point)
   return;
  AStarfortVillageBuilding* Building = Cast<AStarfortVillageBuilding>(Hit.GetActor());
  if (Building && Building->HasApprovedDisplayMesh())
+ {
+  if (HighlightedBuilding.IsValid()) HighlightedBuilding->SetSelectionHighlight(false);
+  HighlightedBuilding=Building;
+  Building->SetSelectionHighlight(true);
   OnBuildingSelected.Broadcast(Building->GetBuildingId());
+ }
 }
 void AStarfortVillageCameraPawn::ReadTouchGestures()
 {
