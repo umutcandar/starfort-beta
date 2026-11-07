@@ -115,7 +115,7 @@ private:
  void SubmitProgressAction(const FString& Action, const FString& Target,
   const FString& Aux);
  void AcceptProgressPayload(bool bOk, const TSharedPtr<class FJsonObject>& Root,
-  bool bActionRequested);
+  const FString& Action);
  static bool IsAllowedBattleAction(const FString& ActionId);
  static bool IsAllowedHero(const FString& HeroId);
 };
