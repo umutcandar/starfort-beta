@@ -16,6 +16,7 @@ void UStarfortVillageScreen::NativeOnInitialized()
 void UStarfortVillageScreen::SetWaitingForServer()
 {
  bHasVerifiedVillage = false;
+ bUpgradePending = false;
  SelectedBuildingId = NAME_None;
  VerifiedSnapshot = FStarfortVerifiedVillage();
  const FText Empty = FText::FromString(TEXT("—"));
@@ -54,6 +55,7 @@ void UStarfortVillageScreen::ApplyVerifiedVillage(const FStarfortVerifiedVillage
  }
  VerifiedSnapshot=NewSnapshot;
  bHasVerifiedVillage=true;
+ bUpgradePending=false;
  if (TxtVillageName) TxtVillageName->SetText(NewSnapshot.VillageName);
  if (TxtGold) TxtGold->SetText(FText::AsNumber(NewSnapshot.Gold));
  if (TxtWood) TxtWood->SetText(FText::AsNumber(NewSnapshot.Wood));
@@ -84,7 +86,7 @@ bool UStarfortVillageScreen::FocusBuilding(FName BuildingId)
    TxtBuildingLevel->SetText(FText::Format(FText::FromString(TEXT("Seviye {0}/{1}")),
     FText::AsNumber(Building.Level), FText::AsNumber(Building.MaxLevel)));
   if (BtnUpgrade)
-   BtnUpgrade->SetIsEnabled(Building.bServerAllowsUpgrade && Building.Level<Building.MaxLevel);
+   BtnUpgrade->SetIsEnabled(!bUpgradePending && Building.bServerAllowsUpgrade && Building.Level<Building.MaxLevel);
   return true;
  }
  SelectedBuildingId=NAME_None;
@@ -100,13 +102,14 @@ void UStarfortVillageScreen::RequestBuildingDetails(FName BuildingId)
 }
 void UStarfortVillageScreen::UpgradeClicked()
 {
- if (!bHasVerifiedVillage || SelectedBuildingId.IsNone()) return;
+ if (!bHasVerifiedVillage || bUpgradePending || SelectedBuildingId.IsNone()) return;
  for (const FStarfortVerifiedBuilding& Building:VerifiedSnapshot.Buildings)
  {
   if (Building.BuildingId==SelectedBuildingId &&
       Building.bServerAllowsUpgrade && Building.Level<Building.MaxLevel)
   {
    // Authorization and costs are ALWAYS checked again by the remote server.
+   bUpgradePending = true;
    if (BtnUpgrade) BtnUpgrade->SetIsEnabled(false);
    OnUpgradeRequested.Broadcast(SelectedBuildingId);
    return;
