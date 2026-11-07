@@ -23,7 +23,7 @@
   ],
   "design_standard": "Approved cinematic Royal Gunner portrait and high-detail mobile UE rig. Reference art is not a mesh.",
   "asset_creation_status": "planned_only_no_unreal_assets_exist",
-  "heros": [
+  "heroes": [
     {
       "server_id": "aldren",
       "display_name": "Aldren",
