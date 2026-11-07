@@ -38,6 +38,19 @@ static bool IsIntegerField(const TSharedPtr<FJsonObject>& Data, const TCHAR* Key
  Out=static_cast<int64>(N);
  return true;
 }
+static bool IsDateOnly(const FString& Date)
+{
+ if (Date.Len()!=10 || Date[4]!=TEXT('-') || Date[7]!=TEXT('-')) return false;
+ for (int32 I=0;I<10;++I)
+  if (I!=4 && I!=7 && !FChar::IsDigit(Date[I])) return false;
+ return true;
+}
+static bool IsBuildingId(const FString& Id)
+{
+ for (const TCHAR* Allowed : BuildingIds)
+  if (Id==Allowed) return true;
+ return false;
+}
 static bool IsServer(const TSharedPtr<FJsonObject>& Root)
 {
  bool Ok=false;
@@ -285,8 +298,19 @@ bool UStarfortOnlineSubsystem::ParseVillage(const TSharedPtr<FJsonObject>& Root,
  if (!IsServer(Root) || !IsValidId(AuthenticatedUserId) ||
      !Root->HasTypedField<EJson::Object>(TEXT("res")) ||
      !Root->HasTypedField<EJson::Object>(TEXT("buildings"))) return false;
- int64 Revision=0;
- if (!IsIntegerField(Root,TEXT("revision"),0,INT64_MAX,Revision)) return false;
+ int64 Revision=0, ServerNow=0, LastCollected=0, Mastery=0;
+ if (!IsIntegerField(Root,TEXT("revision"),0,INT64_MAX,Revision) ||
+     !IsIntegerField(Root,TEXT("serverNow"),0,9007199254740991LL,ServerNow) ||
+     !IsIntegerField(Root,TEXT("lastCollected"),0,9007199254740991LL,LastCollected) ||
+     !IsIntegerField(Root,TEXT("mastery"),0,24,Mastery)) return false;
+ if (!Root->HasField(TEXT("construction")) ||
+     !Root->HasField(TEXT("lastDailyReward"))) return false;
+ if (!Root->HasTypedField<EJson::Null>(TEXT("lastDailyReward")))
+ {
+  FString Daily;
+  if (!Root->TryGetStringField(TEXT("lastDailyReward"),Daily) ||
+      !IsDateOnly(Daily)) return false;
+ }
  const TSharedPtr<FJsonObject> Res=Root->GetObjectField(TEXT("res"));
  const TSharedPtr<FJsonObject> Buildings=Root->GetObjectField(TEXT("buildings"));
  if (!Res.IsValid() || !Buildings.IsValid()) return false;
@@ -295,6 +319,47 @@ bool UStarfortOnlineSubsystem::ParseVillage(const TSharedPtr<FJsonObject>& Root,
      !IsIntegerField(Res,TEXT("stone"),0,MaxResources,Out.Stone) ||
      !IsIntegerField(Res,TEXT("aether"),0,MaxResources,Out.StarEssence)) return false;
  const bool bConstructionActive=Root->HasTypedField<EJson::Object>(TEXT("construction"));
+ if (!bConstructionActive && !Root->HasTypedField<EJson::Null>(TEXT("construction")))
+  return false;
+ if (bConstructionActive)
+ {
+  const TSharedPtr<FJsonObject> Construction=Root->GetObjectField(TEXT("construction"));
+  FString Building;
+  int64 FromLevel=0, StartedAt=0, EndsAt=0;
+  if (!Construction.IsValid() || !Construction->TryGetStringField(TEXT("id"),Building) ||
+      !IsBuildingId(Building) ||
+      !IsIntegerField(Construction,TEXT("fromLevel"),1,20,FromLevel) ||
+      !IsIntegerField(Construction,TEXT("startedAt"),0,9007199254740991LL,StartedAt) ||
+      !IsIntegerField(Construction,TEXT("endsAt"),0,9007199254740991LL,EndsAt) ||
+      EndsAt<=StartedAt) return false;
+  int64 CurrentLevel=0;
+  if (!IsIntegerField(Buildings,*Building,1,20,CurrentLevel) ||
+      CurrentLevel!=FromLevel) return false;
+ }
+ if (Root->HasTypedField<EJson::String>(TEXT("tradeDay")))
+ {
+  FString Date;
+  if (!Root->TryGetStringField(TEXT("tradeDay"),Date) || !IsDateOnly(Date))
+   return false;
+ }
+ if (Root->HasField(TEXT("tradeDay")) &&
+     !Root->HasTypedField<EJson::String>(TEXT("tradeDay")) &&
+     !Root->HasTypedField<EJson::Null>(TEXT("tradeDay"))) return false;
+ if (Root->HasField(TEXT("tradeRoutes")))
+ {
+  if (!Root->HasTypedField<EJson::Array>(TEXT("tradeRoutes"))) return false;
+  const TArray<TSharedPtr<FJsonValue>>& Routes=Root->GetArrayField(TEXT("tradeRoutes"));
+  if (Routes.Num()>2) return false;
+  TSet<FString> UniqueRoutes;
+  for (const TSharedPtr<FJsonValue>& RouteValue:Routes)
+  {
+   FString Route;
+   if (!RouteValue.IsValid() || !RouteValue->TryGetString(Route) ||
+       (Route!=TEXT("wood") && Route!=TEXT("stone") && Route!=TEXT("aether")) ||
+       UniqueRoutes.Contains(Route)) return false;
+   UniqueRoutes.Add(Route);
+  }
+ }
  Out.Buildings.Empty();
  for (int32 i=0;i<UE_ARRAY_COUNT(BuildingIds);++i)
  {
