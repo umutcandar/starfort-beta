@@ -217,6 +217,9 @@ bool FStarfortNativeWidgetFactory::BuildVillage(UStarfortVillageScreen* Screen)
  NativeUI::ButtonRow(Tree,Nav,Screen->BtnHeroes,TEXT("KAHRAMANLAR"));
  NativeUI::ButtonRow(Tree,Nav,Screen->BtnBattles,TEXT("SEFERLER"));
  NativeUI::ButtonRow(Tree,Nav,Screen->BtnAlliance,TEXT("İTTİFAK"));
+ UHorizontalBox* AccountActions=NativeUI::Row(Tree,Column);
+ NativeUI::ButtonRow(Tree,AccountActions,Screen->BtnRefresh,TEXT("KÖYÜ YENİLE"));
+ NativeUI::ButtonRow(Tree,AccountActions,Screen->BtnSignOut,TEXT("ÇIKIŞ YAP"));
  Screen->TxtConnectionStatus=Tree->ConstructWidget<UTextBlock>();
  Screen->TxtConnectionStatus->SetColorAndOpacity(
   FSlateColor(UStarfortVisualTheme::EnergyBlue()));
