@@ -1,5 +1,11 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## Native tactical combat v67 — meaningful hero skills and wave alerts
+
+The existing authoritative SQL battle has 3 enemy waves, enemy intent hints, 3 individually cooldown-limited hero skills, rally cooldown and a minimum action interval. The previous mobile UMG HUD did not expose those mechanics. The new native `FStarfortVerifiedBattleTurn` and `UStarfortBattleScreen` now show **wave number, telegraphed enemy intent, all three named skills with individual cooldowns and live action readiness**, reading server state rather than inventing abilities.
+
+`AStarfortBattleStage` now exposes distinct artist-assignable fire, guard, feint, rally and special attack montages, played only for **server-confirmed** turns. No animations or high-resolution 3D assets are shipped yet, so this is **code/QA interface functionality**, not a polished battle replay. See `Docs/TacticalCombat_v67_TR.md` for action logic and remaining real-device acceptance criteria.
+
 ## First launch and test on real Unreal builds — v66 source milestone
 
 The native bootstrap now starts the actual account/village GameMode in the engine Entry map, not an empty hero preview. `FStarfortNativeWidgetFactory` constructs responsive gold/navy UMG login, village, campaign, battle and hero QA panels **without** needing Widget Blueprints. Authored visual Blueprints take priority when present. A real sign-in, server-owned resources, retry/logout and first menus can therefore be compiled for a phone once UE+SDKs are available.

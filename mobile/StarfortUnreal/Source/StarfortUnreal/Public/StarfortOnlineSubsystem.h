@@ -24,6 +24,13 @@ struct FStarfortProgressSummary
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") int64 MissionStartedAt = 0;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") int64 MissionLastTurnAt = 0;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") int32 MissionTurn = 0;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") int32 MissionWave = 1;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") int32 MissionWaves = 1;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") int32 MissionWaveTurn = 0;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") int32 LastRallyTurn = 0;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") FString EnemyIntent;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") FString LastAction;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") TMap<FString,int32> SkillCooldownTurns;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") int64 PlayerHP = 0;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") int64 EnemyHP = 0;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") int64 PlayerMaxHP = 0;

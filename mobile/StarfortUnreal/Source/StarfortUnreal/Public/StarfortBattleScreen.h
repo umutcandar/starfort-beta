@@ -20,6 +20,15 @@ struct FStarfortVerifiedBattleTurn
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") int64 EnemyMaxHP = 0;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") int64 VerifiedDamageDealt = 0;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") TArray<FString> ServerAllowedActions;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") TArray<FString> TeamHeroes;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") TMap<FString,int32> SkillCooldownTurns;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") FString EnemyIntent;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") FString LastAction;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") int32 Wave = 1;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") int32 Waves = 1;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") int32 WaveTurn = 0;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") int32 LastRallyTurn = 0;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") int64 LastTurnAtUnixMs = 0;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") bool bServerVerified = false;
 };
 
@@ -51,6 +60,12 @@ public:
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtEnemyHP;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtVerifiedDamage;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtBattleStatus;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtEnemyIntent;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtWave;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtSkill1;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtSkill2;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtSkill3;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtCooldownHint;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UProgressBar> ProgressHeroHP;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UProgressBar> ProgressEnemyHP;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnStrike;
@@ -58,19 +73,31 @@ public:
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnFeint;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnRally;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnHeroSkill;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnSkill1;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnSkill2;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnSkill3;
 
 protected:
  virtual void NativeOnInitialized() override;
+ virtual void NativeTick(const FGeometry& MyGeometry,float InDeltaTime) override;
 private:
  UFUNCTION() void StrikeClicked();
  UFUNCTION() void GuardClicked();
  UFUNCTION() void FeintClicked();
  UFUNCTION() void RallyClicked();
  UFUNCTION() void HeroSkillClicked();
+ UFUNCTION() void Skill1Clicked();
+ UFUNCTION() void Skill2Clicked();
+ UFUNCTION() void Skill3Clicked();
+ bool IsReadyForCommand(const FString& ActionId) const;
+ bool IsLocalThrottleElapsed() const;
+ FString SkillActionAt(int32 Slot) const;
+ void ShowSkillState();
  void RefreshButtons();
  bool IsKnownAction(const FString& ActionId) const;
  FStarfortVerifiedBattleTurn Latest;
  bool bHasVerifiedTurn=false;
  bool bCommandPending=false;
  FString ActiveHeroSkill;
+ bool bLastThrottleReady = true;
 };
