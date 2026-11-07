@@ -1,0 +1,17 @@
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vscode/
+.idea/
+*.sln
+*.xcworkspace
+*.xcodeproj
+*.ipa
+*.apk
+*.aab
+*.p12
+*.mobileprovision
+!Source/
+!Config/
+!Content/
