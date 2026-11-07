@@ -8,6 +8,7 @@ class UStaticMesh;
 class UAnimMontage;
 class UNiagaraSystem;
 class USoundBase;
+class UAnimInstance;
 
 /**
  * Art-directed, authored UE asset for ONE approved STARFORT hero.
@@ -37,6 +38,9 @@ public:
 
  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character|Sockets")
  FName ImpactSocket = TEXT("muzzle");
+
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character|Animations")
+ TSubclassOf<UAnimInstance> AnimInstanceClass;
 
  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character|Animations")
  TObjectPtr<UAnimMontage> StrikeMontage;
