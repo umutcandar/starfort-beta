@@ -6,6 +6,7 @@
 class USceneComponent;
 class USpringArmComponent;
 class UCameraComponent;
+class AStarfortVillageBuilding;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStarfortBuildingSelection, FName, BuildingId);
 
@@ -49,4 +50,5 @@ private:
  FVector2D TouchOrigin = FVector2D::ZeroVector;
  float DragDistance = 0.f;
  float LastPinchDistance = 0.f;
+ TWeakObjectPtr<AStarfortVillageBuilding> HighlightedBuilding;
 };
