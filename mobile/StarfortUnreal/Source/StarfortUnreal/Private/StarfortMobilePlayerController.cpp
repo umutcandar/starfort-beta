@@ -23,6 +23,7 @@ void AStarfortMobilePlayerController::ShowHeroScreen()
   ActiveHeroScreen->OnBackRequested.AddDynamic(this, &AStarfortMobilePlayerController::HandleCloseScreen);
  }
  if (!ActiveHeroScreen->IsInViewport()) ActiveHeroScreen->AddToViewport();
+ SetInputMode(FInputModeGameAndUI());
  // Snapshot remains unverified until a signed-in API response is explicitly applied.
  ActiveHeroScreen->SetWaitingForServer();
 }
@@ -31,6 +32,7 @@ void AStarfortMobilePlayerController::HideHeroScreen()
 {
  if (ActiveHeroScreen && ActiveHeroScreen->IsInViewport())
   ActiveHeroScreen->RemoveFromParent();
+ SetInputMode(FInputModeGameOnly());
 }
 
 void AStarfortMobilePlayerController::HandleFirePreview()
