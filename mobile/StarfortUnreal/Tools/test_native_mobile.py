@@ -144,7 +144,7 @@ class NativeSmoke(unittest.TestCase):
   import subprocess
   root=R/"ContentPipeline"
   manifest=json.loads((root/"required_premium_assets.json").read_text())
-  assert len(manifest["assets"])==12
+  self.assertEqual(len(manifest["assets"]),18)
   for asset in manifest["assets"]:
    self.assertFalse(asset["mobile_reviewed"])
    self.assertFalse(asset["device_reviewed"])
@@ -324,6 +324,83 @@ class NativeSmoke(unittest.TestCase):
   self.assertIn("Snapshot.VerifiedDamageDealt>0",c)
   self.assertIn("Snapshot.Turn<=LastConfirmedTurn",c)
   self.assertEqual(c.count("{"),c.count("}"),"unbalanced native battle stage braces")
+ def test_three_distinct_mobile_hero_assets_are_required(self):
+  root=R/"Source/StarfortUnreal"
+  h=(root/"Public/StarfortHeroCombatAsset.h").read_text()
+  cpp=(root/"Private/StarfortHeroCombatAsset.cpp").read_text()
+  for item in ["UPrimaryDataAsset","HeroId","HeroMesh","WeaponMesh",
+               "StrikeMontage","GuardMontage","FeintMontage","RallyMontage",
+               "SpecialMontage","SpecialEffect","BasicAttackSound",
+               "SpecialAttackSound","bArtApprovedForMobile","AuthoredMobileLODCount"]:
+   self.assertIn(item,h)
+  for guard in ["bArtApprovedForMobile","AuthoredMobileLODCount < 3",
+                "GetRefSkeleton().GetNum() < 40","StrikeMontage && GuardMontage",
+                "RallyMontage && SpecialMontage"]:
+   self.assertIn(guard,cpp)
+  manifest=json.loads((R/"ContentPipeline/required_premium_assets.json").read_text())
+  hero_ids={"hero_aldren","hero_lyra","royal_gunner","hero_mira",
+            "hero_doran","hero_vesper","hero_eira"}
+  records={x["key"]:x for x in manifest["assets"]}
+  self.assertEqual(len(records),18)
+  self.assertTrue(hero_ids.issubset(records))
+  for key in hero_ids:
+   self.assertEqual(records[key]["bones"],40)
+   self.assertGreaterEqual(records[key]["min_lods"],3)
+   self.assertTrue({"strike","guard","feint","rally","special"}.issubset(
+    set(records[key]["animations"])))
+   self.assertIsNone(records[key]["source_file"])
+   self.assertFalse(records[key]["mobile_reviewed"])
+  mapping=json.loads((R/"ContentPipeline/server_hero_art_mapping.json").read_text())
+  self.assertEqual(len(mapping["heroes"]),7)
+  self.assertEqual(len(set(mapping["server_authoritative_roster"])),7)
+  self.assertEqual(mapping["stage_components"],["HeroRig","HeroRig2","HeroRig3"])
+  self.assertTrue(all(not x["artist_approved"] for x in mapping["heroes"]))
+  self.assertEqual(set(mapping["server_authoritative_roster"]),
+   {x["server_id"] for x in mapping["heroes"]})
+ def test_three_hero_unreal_stage_uses_exact_verified_party_order(self):
+  root=R/"Source/StarfortUnreal"
+  h=(root/"Public/StarfortBattleStage.h").read_text()
+  cpp=(root/"Private/StarfortBattleStage.cpp").read_text()
+  for name in ["HeroRig","HeroRig2","HeroRig3","HeroWeapon","HeroWeapon2",
+               "HeroWeapon3","HeroSpecialFX1","HeroSpecialFX2",
+               "HeroSpecialFX3","HeroArtCatalog","EnemyRig","CinemaArm",
+               "HasConfiguredThreeHeroTeam","ConfigureTeam","FindApprovedHero"]:
+   self.assertIn(name,h)
+  for token in ["Snapshot.TeamHeroes","ActiveTeamIds!=Snapshot.TeamHeroes",
+                "ConfigureTeam(Snapshot.TeamHeroes)","VerifiedTeam.Num()!=3",
+                "Unique.Contains(HeroId)","FindApprovedHero(HeroId)",
+                "HasProductionReadyGeometryAndMotion()",
+                "Rigs[I]->SetSkeletalMesh(Art->HeroMesh)",
+                "Weapons[I]->SetStaticMesh(Art->WeaponMesh)",
+                "DoesSocketExist(Art->WeaponSocket)","DoesSocketExist(Art->ImpactSocket)",
+                "Art->SpecialMontage","ActiveTeamIds[I]!=SkilledHero",
+                "VerifiedDamage>0","ConfirmedImpactFX->Activate(true)",
+                "LastConfirmedTurn=Snapshot.Turn","bNewRoom && Snapshot.Turn>0"]:
+   self.assertIn(token,cpp)
+  self.assertIn("SetAllVisible(false);",cpp)
+  self.assertIn("LastConfirmedWave",cpp)
+  self.assertEqual(cpp.count("{"),cpp.count("}"),"unbalanced native stage braces")
+ def test_cinematic_3d_center_is_not_blocked_by_opaque_qa_panel(self):
+  root=R/"Source/StarfortUnreal"
+  factory=(root/"Private/StarfortNativeWidgetFactory.cpp").read_text()
+  begin=factory.index("bool FStarfortNativeWidgetFactory::BuildBattle(")
+  end=factory.index("bool FStarfortNativeWidgetFactory::BuildHero(",begin)
+  battle=factory[begin:end]
+  self.assertIn("BeginBattleOverlay",factory)
+  self.assertIn("USpacer",factory)
+  self.assertIn("FSlateChildSize(ESlateSizeRule::Fill)",factory)
+  self.assertIn("Tree->RootWidget=Safe",factory)
+  self.assertNotIn("BeginPanel(Screen",battle)
+  self.assertIn("BeginBattleOverlay(Screen,Top,Bottom)",battle)
+  self.assertIn("Screen->TxtEnemyHP",battle)
+  self.assertIn("Screen->BtnHeroSkill",battle)
+  controller=(root/"Private/StarfortBattleController.cpp").read_text()
+  self.assertIn("AStarfortBattleStage::StaticClass()",controller)
+  self.assertIn("TActorIterator<AStarfortBattleStage>",controller)
+  self.assertIn("SetViewTarget(Stage)",controller)
+  editor=(R/"Tools/create_native_maps.py").read_text()
+  self.assertIn("StarfortBattleStage",editor)
+  self.assertIn("spawn_actor_from_class(",editor)
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))
