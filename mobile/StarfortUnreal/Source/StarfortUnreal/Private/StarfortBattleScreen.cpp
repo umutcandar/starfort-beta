@@ -64,7 +64,7 @@ void UStarfortBattleScreen::ApplyVerifiedTurn(const FStarfortVerifiedBattleTurn&
   }
   Unique.Add(Action);
  }
- if (bHasVerifiedTurn && NewTurn.RoomId==Latest.RoomId && NewTurn.Turn<Latest.Turn)
+ if (bHasVerifiedTurn && NewTurn.RoomId==Latest.RoomId && NewTurn.Turn<=Latest.Turn)
  {
   UE_LOG(LogTemp, Warning, TEXT("STARFORT: stale battle turn ignored"));
   return;
