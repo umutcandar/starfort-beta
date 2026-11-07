@@ -87,4 +87,5 @@ private:
  FStarfortVerifiedVillage VerifiedSnapshot;
  FName SelectedBuildingId = NAME_None;
  bool bHasVerifiedVillage = false;
+ bool bUpgradePending = false;
 };
