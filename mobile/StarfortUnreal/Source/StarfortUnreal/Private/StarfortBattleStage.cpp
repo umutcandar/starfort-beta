@@ -177,14 +177,14 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
   SpecialFX[I]->AttachToComponent(Weapons[I],
    FAttachmentTransformRules::SnapToTargetNotIncludingScale,
    Art->ImpactSocket);
-  SpecialFX[I]->SetAsset(Art->SpecialEffect);
+  SpecialFX[I]->SetAsset(Art->SpecialEffect, true);
 
   ActiveHeroArt.Add(Art);
   ActiveTeamIds.Add(HeroId);
  }
 
  bThreeHeroTeamReady=true;
- if (ImpactSystem) ConfirmedImpactFX->SetAsset(ImpactSystem);
+ if (ImpactSystem) ConfirmedImpactFX->SetAsset(ImpactSystem, true);
  SetAllVisible(true);
  return true;
 }
@@ -237,7 +237,7 @@ void AStarfortBattleStage::ClearBattlePresentation()
   if (Weapon) Weapon->SetStaticMesh(nullptr);
  for (UNiagaraComponent* FX:
       {HeroSpecialFX1.Get(),HeroSpecialFX2.Get(),HeroSpecialFX3.Get()})
-  if (FX) FX->SetAsset(nullptr);
+  if (FX) FX->SetAsset(nullptr, true);
  ActiveHeroArt.Reset();
 }
 
