@@ -17,7 +17,7 @@ AStarfortVillageBuilding::AStarfortVillageBuilding()
 
 bool AStarfortVillageBuilding::HasApprovedDisplayMesh() const
 {
- return !BuildingId.IsNone() && DetailedBuildingMesh &&
+ return bArtApprovedForMobile && !BuildingId.IsNone() && DetailedBuildingMesh &&
   DetailedBuildingMesh->GetStaticMesh() != nullptr &&
   DetailedBuildingMesh->GetNumMaterials() > 0;
 }
