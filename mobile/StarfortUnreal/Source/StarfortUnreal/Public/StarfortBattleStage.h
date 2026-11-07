@@ -50,6 +50,10 @@ public:
  UFUNCTION(BlueprintPure, Category="STARFORT|Combat")
  bool HasApprovedStage() const;
 
+ /** Clear old player's 3D party and pending effects on mission end/sign-out. */
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Combat")
+ void ClearBattlePresentation();
+
  UFUNCTION(BlueprintPure, Category="STARFORT|Combat")
  bool HasConfiguredThreeHeroTeam() const { return bThreeHeroTeamReady; }
 
