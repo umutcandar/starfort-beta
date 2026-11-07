@@ -104,7 +104,6 @@ class NativeSmoke(unittest.TestCase):
   for key in ['"p_action"','"p_building"','"p_request_id"','"p_room_id"','"p_target"','"p_aux"']:
    self.assertIn(key,c)
   self.assertIn('SessionGeneration',c)
-  self.assertIn('Root->TryGetStringField(TEXT("source")',c) if False else None
   self.assertIn('Root->TryGetStringField(TEXT("source"),Source)',c)
   self.assertIn('Out.bServerVerified=true',c)
   self.assertIn('FGuid::NewGuid()',c)
