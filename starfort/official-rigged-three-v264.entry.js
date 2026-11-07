@@ -14,7 +14,7 @@ import {RIGGED_ASSETS,riggedModelForUnit,riggedAnimationForUnit,officialRiggedWo
 import {combatAppearance,combatCameraFrame,battlefieldScatter} from './official-rigged-style-v265.js';
 import {createRiggedEquipment,riggedEquipmentBone} from './official-rigged-equipment-v266.js';
 import {ANATOMICAL_MODEL} from './official-anatomical-v267.js';
-import {prepareAnatomicalClips,applyAnatomicalPreset} from './official-anatomical-motion-v267.js';
+import {prepareAnatomicalClips,applyAnatomicalPreset,createRoyalGunnerActionClips} from './official-anatomical-motion-v267.js';
 
 const bounded=(v,a,b)=>Math.min(b,Math.max(a,v));
 const RAD=Math.PI/180;
@@ -201,7 +201,10 @@ function prepareActor(gltf,unit,scene,quality){
  slash.visible=false;root.add(slash);
  const equipment=createRiggedEquipment(root,model,unit,{quality,rig:human?'human':'gobkit'});
  const mixer=new THREE.AnimationMixer(model),actions=new Map();
- for(const clip of gltf.animations){
+ const gunnerClips=human&&unit?.team===0&&unit?.heroId==='rovan'
+  ?createRoyalGunnerActionClips(model):null;
+ for(const sourceClip of gltf.animations){
+  const clip=gunnerClips?.get(sourceClip.name)||sourceClip;
   if(!['Idle','Run','Walk','Attack','Special','Guard','Hit','Death'].includes(clip.name))continue;
   const action=mixer.clipAction(clip);
   if(['Attack','Special','Guard','Hit','Death'].includes(clip.name)){
@@ -423,7 +426,8 @@ export async function createRiggedBattle(canvas,{quality='balanced',reducedMotio
    const attack=animate&&(desired==='Attack'||desired==='Special');
    const phase=attack?(actor.actions.get(desired)?.time||0)/
      Math.max(.01,actor.actions.get(desired)?.getClip().duration||1):0;
-   actor.slash.visible=attack&&phase>.14&&phase<.78;
+   // Ranged hero uses his cannon muzzle, never the generic melee sword trail.
+   actor.slash.visible=unit?.heroId!=='rovan'&&attack&&phase>.14&&phase<.78;
    if(actor.slash.visible){
     actor.slash.rotation.y=(unit.team===0?1:-1)*(-.7+phase*2.2);
     actor.slash.scale.setScalar(.65+Math.sin(phase*Math.PI)*.75);
