@@ -1,5 +1,12 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## Three individually rigged heroes and see-through battle stage — v68
+
+The native battle renderer now supports **three separate skinned heroes**, each bound to the authenticated server roster order and its own weapon mesh, action montages, special Niagara FX and sounds. A named skill plays only on the matching hero. The former full-screen opaque QA battle menu was replaced with a transparent-center HUD so the actual Unreal 3D stage is visible between the top indicators and bottom tactical controls.
+
+Authoring uses `UStarfortHeroCombatAsset` (one licensed PBR rig/weapon/motion asset per server hero) and a quality-gated `HeroArtCatalog` on `AStarfortBattleStage`. The required production art manifest is now **18 entries**, including all seven player heroes. Initial route loading reuses a placed stage or creates the C++ scene, and the Editor map authoring tool places a native three-hero stage.
+
+**No real hero data assets, high-quality meshes, montage files, cinematic environment or physical-device builds are present yet.** Code and static QA do not prove a visual playable app. See `Docs/ThreeHeroCinematic_v68_TR.md` for exact import, asset and test steps.
 ## Native tactical combat v67 — meaningful hero skills and wave alerts
 
 The existing authoritative SQL battle has 3 enemy waves, enemy intent hints, 3 individually cooldown-limited hero skills, rally cooldown and a minimum action interval. The previous mobile UMG HUD did not expose those mechanics. The new native `FStarfortVerifiedBattleTurn` and `UStarfortBattleScreen` now show **wave number, telegraphed enemy intent, all three named skills with individual cooldowns and live action readiness**, reading server state rather than inventing abilities.
