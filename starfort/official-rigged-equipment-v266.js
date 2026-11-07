@@ -425,11 +425,11 @@ export function createRiggedEquipment(actorRoot,model,unit,{quality='balanced',r
   }
   if(royalMuzzle){
    const firing=animate&&(action==='Attack'||action==='Special');
-   // Only a server-reported attack can trigger recoil or muzzle glow.
+   // Combat passes authenticated actions; the separate model viewer also permits manual previews.
    const recoil=firing?Math.pow(Math.max(0,sin(time*17)),6):0;
    royalBarrel.position.y=.18-recoil*.095;
    royalMuzzle.visible=firing&&recoil>.15;
-   royalMuzzle.scale.setScalar(1+recoil*1.25);
+   royalMuzzle.scale.set(.17*(1+recoil*1.25),.30*(1+recoil*1.5),.17*(1+recoil*1.25));
    flashMat.opacity=.38+recoil*.52;
   }
   if(cape&&baseCape&&!(reducedMotion||!animate)){
