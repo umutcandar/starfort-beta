@@ -18,7 +18,7 @@ Eski web arayüzündeki `starfort/online-config.js`, `starfort/account-auth.js`,
 
 ## Görsel kalite ve 3D teslim kontrolü
 
-`ContentPipeline/required_premium_assets.json` içinde **12 ayrı gerçek 3D varlık** zorunlu: Royal Gunner iskeletli kahraman, enerji topu, 2 düşman sınıfı, karargâh, kapı, surlar, kışla, çiftlik, demirhane, rasathane ve savaş alanı. Her varlık için lisans, PBR dokuları, 3+ mobil LOD ve estetik onay tutulur. Iskeletli savaşçı için animasyonlar zorunludur.
+`ContentPipeline/required_premium_assets.json` içinde **18 ayrı gerçek 3D varlık** zorunlu: Royal Gunner dahil yedi iskeletli kahraman, enerji topu, iki düşman sınıfı, karargâh, kapı, surlar, kışla, çiftlik, demirhane, rasathane ve savaş alanı. Her varlık için lisans, PBR dokuları, 3+ mobil LOD ve estetik onay tutulur. Iskeletli savaşçı için animasyonlar zorunludur.
 
 ```bash
 python3 Tools/validate_premium_art.py --schema-only  # sözleşme biçimi; yayına hazır anlamına gelmez

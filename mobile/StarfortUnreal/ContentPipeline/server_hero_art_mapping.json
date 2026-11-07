@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "server_authoritative_roster": [
+    "aldren",
+    "lyra",
+    "rovan",
+    "mira",
+    "doran",
+    "vesper",
+    "eira"
+  ],
+  "stage_components": [
+    "HeroRig",
+    "HeroRig2",
+    "HeroRig3"
+  ],
+  "combat_actions": [
+    "strike",
+    "guard",
+    "feint",
+    "rally",
+    "special"
+  ],
+  "design_standard": "Approved cinematic Royal Gunner portrait and high-detail mobile UE rig. Reference art is not a mesh.",
+  "asset_creation_status": "planned_only_no_unreal_assets_exist",
+  "heroes": [
+    {
+      "server_id": "aldren",
+      "display_name": "Aldren",
+      "art_manifest_key": "hero_aldren",
+      "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Aldren",
+      "rig_socket": "weapon_r",
+      "weapon_fx_socket": "muzzle",
+      "artist_approved": false
+    },
+    {
+      "server_id": "lyra",
+      "display_name": "Lyra",
+      "art_manifest_key": "hero_lyra",
+      "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Lyra",
+      "rig_socket": "weapon_r",
+      "weapon_fx_socket": "muzzle",
+      "artist_approved": false
+    },
+    {
+      "server_id": "rovan",
+      "display_name": "Kraliyet Nişancısı",
+      "art_manifest_key": "royal_gunner",
+      "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Rovan",
+      "rig_socket": "weapon_r",
+      "weapon_fx_socket": "muzzle",
+      "artist_approved": false
+    },
+    {
+      "server_id": "mira",
+      "display_name": "Mira",
+      "art_manifest_key": "hero_mira",
+      "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Mira",
+      "rig_socket": "weapon_r",
+      "weapon_fx_socket": "muzzle",
+      "artist_approved": false
+    },
+    {
+      "server_id": "doran",
+      "display_name": "Doran",
+      "art_manifest_key": "hero_doran",
+      "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Doran",
+      "rig_socket": "weapon_r",
+      "weapon_fx_socket": "muzzle",
+      "artist_approved": false
+    },
+    {
+      "server_id": "vesper",
+      "display_name": "Vesper",
+      "art_manifest_key": "hero_vesper",
+      "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Vesper",
+      "rig_socket": "weapon_r",
+      "weapon_fx_socket": "muzzle",
+      "artist_approved": false
+    },
+    {
+      "server_id": "eira",
+      "display_name": "Eira",
+      "art_manifest_key": "hero_eira",
+      "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Eira",
+      "rig_socket": "weapon_r",
+      "weapon_fx_socket": "muzzle",
+      "artist_approved": false
+    }
+  ]
+}

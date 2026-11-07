@@ -7,7 +7,7 @@
   ],
   "orientation": "landscape",
   "visual_reference": "Approved Royal Gunner premium hero concept (chat reference, not production geometry)",
-  "quality_policy": "No toy-style geometry, unlicensed source, flat material or unrigged hero as a release asset. Release also requires human art direction and real-device QA.",
+  "quality_policy": "No toy-style geometry, unlicensed source, flat material or unrigged hero as a release asset. Release also requires human art direction and real-device QA. All 7 distinct player heroes require independently approved full-body skinned 3D rigs and action-specific combat animations.",
   "assets": [
     {
       "key": "royal_gunner",
@@ -20,6 +20,38 @@
         "run",
         "aim",
         "fire",
+        "special",
+        "hit",
+        "death",
+        "strike",
+        "guard",
+        "feint",
+        "rally"
+      ],
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "hero_aldren",
+      "kind": "rigged_character",
+      "name": "Aldren",
+      "bones": 40,
+      "animations": [
+        "idle",
+        "walk",
+        "run",
+        "strike",
+        "guard",
+        "feint",
+        "rally",
         "special",
         "hit",
         "death"
@@ -36,14 +68,26 @@
       "device_reviewed": false
     },
     {
-      "key": "royal_energy_cannon",
-      "kind": "weapon",
-      "name": "Mavi Enerji Topu",
+      "key": "hero_doran",
+      "kind": "rigged_character",
+      "name": "Doran",
+      "bones": 40,
+      "animations": [
+        "idle",
+        "walk",
+        "run",
+        "strike",
+        "guard",
+        "feint",
+        "rally",
+        "special",
+        "hit",
+        "death"
+      ],
       "material_channels": [
         "base_color",
         "normal",
-        "metallic_roughness",
-        "emissive"
+        "metallic_roughness"
       ],
       "min_lods": 3,
       "source_file": null,
@@ -52,14 +96,103 @@
       "device_reviewed": false
     },
     {
-      "key": "enemy_raider",
+      "key": "hero_eira",
       "kind": "rigged_character",
-      "name": "Kül Akıncısı",
-      "bones": 24,
+      "name": "Eira",
+      "bones": 40,
       "animations": [
         "idle",
+        "walk",
         "run",
-        "attack",
+        "strike",
+        "guard",
+        "feint",
+        "rally",
+        "special",
+        "hit",
+        "death"
+      ],
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "hero_lyra",
+      "kind": "rigged_character",
+      "name": "Lyra",
+      "bones": 40,
+      "animations": [
+        "idle",
+        "walk",
+        "run",
+        "strike",
+        "guard",
+        "feint",
+        "rally",
+        "special",
+        "hit",
+        "death"
+      ],
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "hero_mira",
+      "kind": "rigged_character",
+      "name": "Mira",
+      "bones": 40,
+      "animations": [
+        "idle",
+        "walk",
+        "run",
+        "strike",
+        "guard",
+        "feint",
+        "rally",
+        "special",
+        "hit",
+        "death"
+      ],
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "hero_vesper",
+      "kind": "rigged_character",
+      "name": "Vesper",
+      "bones": 40,
+      "animations": [
+        "idle",
+        "walk",
+        "run",
+        "strike",
+        "guard",
+        "feint",
+        "rally",
+        "special",
         "hit",
         "death"
       ],
@@ -97,9 +230,17 @@
       "device_reviewed": false
     },
     {
-      "key": "castle_keep",
-      "kind": "environment",
-      "name": "Kraliyet Karargâhı",
+      "key": "enemy_raider",
+      "kind": "rigged_character",
+      "name": "Kül Akıncısı",
+      "bones": 24,
+      "animations": [
+        "idle",
+        "run",
+        "attack",
+        "hit",
+        "death"
+      ],
       "material_channels": [
         "base_color",
         "normal",
@@ -112,13 +253,14 @@
       "device_reviewed": false
     },
     {
-      "key": "castle_gate",
-      "kind": "environment",
-      "name": "Kale Kapısı",
+      "key": "royal_energy_cannon",
+      "kind": "weapon",
+      "name": "Mavi Enerji Topu",
       "material_channels": [
         "base_color",
         "normal",
-        "metallic_roughness"
+        "metallic_roughness",
+        "emissive"
       ],
       "min_lods": 3,
       "source_file": null,
@@ -127,9 +269,9 @@
       "device_reviewed": false
     },
     {
-      "key": "castle_wall",
+      "key": "battle_arena",
       "kind": "environment",
-      "name": "Kale Suru",
+      "name": "Kuşatma Alanı",
       "material_channels": [
         "base_color",
         "normal",
@@ -187,6 +329,36 @@
       "device_reviewed": false
     },
     {
+      "key": "castle_gate",
+      "kind": "environment",
+      "name": "Kale Kapısı",
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
+      "key": "castle_keep",
+      "kind": "environment",
+      "name": "Kraliyet Karargâhı",
+      "material_channels": [
+        "base_color",
+        "normal",
+        "metallic_roughness"
+      ],
+      "min_lods": 3,
+      "source_file": null,
+      "license_id": null,
+      "mobile_reviewed": false,
+      "device_reviewed": false
+    },
+    {
       "key": "castle_observatory",
       "kind": "environment",
       "name": "Gözlemevi",
@@ -202,9 +374,9 @@
       "device_reviewed": false
     },
     {
-      "key": "battle_arena",
+      "key": "castle_wall",
       "kind": "environment",
-      "name": "Kuşatma Alanı",
+      "name": "Kale Suru",
       "material_channels": [
         "base_color",
         "normal",

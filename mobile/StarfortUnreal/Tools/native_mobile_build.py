@@ -80,7 +80,15 @@ def build_command(engine_dir, platform_name, profile):
         "RunUAT.bat" if platform.system() == "Windows" else "RunUAT.sh"
     )
     if profile == "smoke":
-        maps = "/Engine/Maps/Entry"
+        # Always boot the account/login test map; when the Editor has saved
+        # actual .umap scenes, include them in the package so the player can
+        # actually navigate to hero hall, three-hero battle and alliance.
+        # Without those assets, the smoke APK remains UI-only by design.
+        cooking = ["/Engine/Maps/Entry"]
+        for name in MAPS:
+            if (ROOT / "Content/Maps" / (name + ".umap")).is_file():
+                cooking.append("/Game/Maps/" + name)
+        maps = "+".join(cooking)
     else:
         maps = "+".join("/Game/Maps/" + name for name in MAPS)
     cmd = [str(run_uat), "BuildCookRun",

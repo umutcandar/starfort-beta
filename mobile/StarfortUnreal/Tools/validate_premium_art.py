@@ -11,9 +11,13 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 MANIFEST=ROOT/"ContentPipeline/required_premium_assets.json"
-REQUIRED={"royal_gunner","royal_energy_cannon","enemy_raider","enemy_caster",
+HERO_KEYS={"royal_gunner","hero_aldren","hero_lyra","hero_mira",
+           "hero_doran","hero_vesper","hero_eira"}
+REQUIRED=HERO_KEYS | {"royal_energy_cannon","enemy_raider","enemy_caster",
           "castle_keep","castle_gate","castle_wall","castle_barracks",
           "castle_farm","castle_forge","castle_observatory","battle_arena"}
+HERO_MOTIONS={"idle","run","strike","guard","feint","rally",
+              "special","hit","death"}
 KINDS={"rigged_character","weapon","environment"}
 CHANNELS={"base_color","normal","metallic_roughness","emissive"}
 SAFE_EXT={".glb",".gltf",".fbx",".uasset"}
@@ -39,11 +43,16 @@ def validate(require_art=False):
         if not set(a.get("material_channels",[])).issubset(CHANNELS):
             errors.append(f"{key}: invalid channel")
         if kind=="rigged_character":
-            if int(a.get("bones",0))<(40 if key=="royal_gunner" else 24):
+            if int(a.get("bones",0))<(40 if key in HERO_KEYS else 24):
                 errors.append(f"{key}: insufficient rig")
             clips=set(a.get("animations",[]))
-            if not {"idle","hit","death"}.issubset(clips) or (key=="royal_gunner" and not {"aim","fire","run","special"}.issubset(clips)):
-                errors.append(f"{key}: missing animation clips")
+            if key in HERO_KEYS:
+                if not HERO_MOTIONS.issubset(clips):
+                    errors.append(f"{key}: missing independently animated combat actions")
+                if key=="royal_gunner" and not {"aim","fire"}.issubset(clips):
+                    errors.append(f"{key}: missing aimed rifle animations")
+            elif not {"idle","hit","death"}.issubset(clips):
+                errors.append(f"{key}: missing enemy reaction animation clips")
         elif "bones" in a or "animations" in a:
             errors.append(f"{key}: non-character must not masquerade as a rig")
         file=a.get("source_file")

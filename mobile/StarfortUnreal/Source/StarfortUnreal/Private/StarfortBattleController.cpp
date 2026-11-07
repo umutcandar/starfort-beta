@@ -6,6 +6,7 @@
 #include "Components/TextBlock.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 
 void AStarfortBattleController::BeginPlay()
 {
@@ -32,11 +33,25 @@ void AStarfortBattleController::BeginPlay()
  CampaignScreen=CreateWidget<UStarfortCampaignScreen>(this,NativeCampaign);
  if(CampaignScreen)
   CampaignScreen->OnStageRequested.AddUniqueDynamic(this,&AStarfortBattleController::StageRequested);
- if(BattleStageClass && GetWorld())
+ // A level-placed, artist-authored battle stage wins. Otherwise create a
+ // native C++ stage so missing Widget Blueprints do not leave a blank camera.
+ // The stage itself refuses toy/unapproved meshes and stays empty until art.
+ if (GetWorld())
  {
-  Stage=GetWorld()->SpawnActor<AStarfortBattleStage>(BattleStageClass,
-   FVector::ZeroVector,FRotator::ZeroRotator);
-  if(Stage) SetViewTarget(Stage);
+  UClass* Desired=BattleStageClass
+   ? BattleStageClass.Get() : AStarfortBattleStage::StaticClass();
+  for (TActorIterator<AStarfortBattleStage> It(GetWorld());It;++It)
+  {
+   if (It->IsA(Desired))
+   {
+    Stage=*It;
+    break;
+   }
+  }
+  if (!Stage)
+   Stage=GetWorld()->SpawnActor<AStarfortBattleStage>(Desired,
+    FVector::ZeroVector,FRotator::ZeroRotator);
+  if (Stage) SetViewTarget(Stage);
  }
  SetInputMode(FInputModeGameAndUI());
  bShowMouseCursor=true;
@@ -74,7 +89,11 @@ void AStarfortBattleController::ProgressReady(const FStarfortProgressSummary& Pr
 {
  if(CampaignScreen) CampaignScreen->ApplyVerifiedProgress(Progress);
  if(Progress.bInMission) ShowBattle();
- else OpenCampaign();
+ else
+ {
+  if(Stage) Stage->ClearBattlePresentation();
+  OpenCampaign();
+ }
 }
 void AStarfortBattleController::TurnReady(const FStarfortVerifiedBattleTurn& Turn)
 {
@@ -83,6 +102,7 @@ void AStarfortBattleController::TurnReady(const FStarfortVerifiedBattleTurn& Tur
 }
 void AStarfortBattleController::MissionFinished(bool bWon,int32 Stars)
 {
+ if(Stage) Stage->ClearBattlePresentation();
  OpenCampaign();
  if(CampaignScreen) CampaignScreen->ShowResult(bWon,Stars);
  // Reconcile XP, next-stage unlock and rewards by a read-only fetch.
@@ -101,6 +121,7 @@ void AStarfortBattleController::OnlineFailed(FString SafeReason)
 }
 void AStarfortBattleController::SignedOut()
 {
+ if(Stage) Stage->ClearBattlePresentation();
  if(BattleScreen) {BattleScreen->SetWaitingForServer();BattleScreen->RemoveFromParent();}
  if(CampaignScreen) {CampaignScreen->SetWaitingForServer();CampaignScreen->RemoveFromParent();}
 }

@@ -65,6 +65,25 @@ def generate_levels():
         if sky:
             sky.set_actor_label("STARFORT_Skylight_Baseline_ArtToReview")
 
+        if asset.endswith("L_StarfortBattle"):
+            # Author a real UE actor with three separate skinned hero slots.
+            # No models are auto-filled; the asset quality gate hides them
+            # until the imported rig, weapons, animations and LODs are signed off.
+            stage_class = unreal.load_class(
+                None, "/Script/StarfortUnreal.StarfortBattleStage")
+            if not stage_class:
+                raise RuntimeError(
+                    "Compile StarfortBattleStage C++ before creating battle map")
+            stage = actors.spawn_actor_from_class(
+                stage_class,
+                unreal.Vector(0.0, 0.0, 0.0),
+                unreal.Rotator(0.0, 0.0, 0.0),
+            )
+            if not stage:
+                raise RuntimeError("Unable to place native 3-hero battle stage")
+            stage.set_actor_label(
+                "STARFORT_ThreeHeroStage_RequiresApprovedArtCatalog")
+
         if not level.save_current_level():
             raise RuntimeError(f"Failed to save Unreal world: {asset}")
         created.append(asset)
