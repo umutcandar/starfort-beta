@@ -19,6 +19,8 @@ public:
  UFUNCTION(BlueprintPure, Category="STARFORT|Village") FName GetBuildingId() const { return BuildingId; }
  UFUNCTION(BlueprintCallable, Category="STARFORT|Village") void SetSelectionHighlight(bool bSelected);
  UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="STARFORT|Village") FName BuildingId = NAME_None;
+ // Artist/QA must explicitly approve geometry, textures, LODs and mobile cost.
+ UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="STARFORT|Art") bool bArtApprovedForMobile = false;
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Art") TObjectPtr<USceneComponent> BuildingRoot;
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Art") TObjectPtr<UStaticMeshComponent> DetailedBuildingMesh;
 };
