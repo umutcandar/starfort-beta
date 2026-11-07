@@ -5,10 +5,30 @@ import * as THREE from 'three';
 import {createRiggedEquipment,riggedGearProfile} from './official-rigged-equipment-v266.js';
 import {combatAppearance} from './official-rigged-style-v265.js';
 import {ROYAL_GUNNER_LABELS} from './royal-gunner-locale.js';
+import {createRoyalGunnerActionClips} from './official-anatomical-motion-v267.js';
 
 const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
 const unit={team:0,heroId:'rovan',hp:100,action:'attack'};
 
+test('gunner has distinct two-handed rifle and charged-shot skeletal tracks',()=>{
+ const model=new THREE.Group();
+ for(const name of ['spine_03','upperarm_r','lowerarm_r','upperarm_l','lowerarm_l','pelvis']){
+  const bone=new THREE.Bone();bone.name=name;model.add(bone);
+ }
+ const clips=createRoyalGunnerActionClips(model);
+ assert.deepEqual([...clips.keys()],['Attack','Special']);
+ assert.ok(clips.get('Attack').duration>.5);
+ assert.ok(clips.get('Special').duration>clips.get('Attack').duration);
+ for(const clip of clips.values()){
+  assert.ok(clip.tracks.some(track=>track.name==='upperarm_l.quaternion'));
+  assert.ok(clip.tracks.some(track=>track.name==='upperarm_r.quaternion'));
+  assert.ok(clip.validate());
+ }
+ const production=read('./official-rigged-three-v264.entry.js');
+ assert.match(production,/createRoyalGunnerActionClips\(model\)/);
+ assert.match(production,/unit\?\.heroId==='rovan'/);
+ assert.match(production,/unit\?\.heroId!=='rovan'&&attack/);
+});
 test('3D hero preview link has all fourteen game languages',()=>{
  assert.equal(Object.keys(ROYAL_GUNNER_LABELS).length,14);
  for(const label of Object.values(ROYAL_GUNNER_LABELS))assert.ok(label.includes('3D')&&label.length>12);
