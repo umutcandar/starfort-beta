@@ -273,6 +273,57 @@ class NativeSmoke(unittest.TestCase):
    blockers=json.loads(production.stdout)
    self.assertTrue(blockers["missing"])
    self.assertFalse(blockers["production_ready"])
+ def test_three_wave_tactics_match_real_v255_server(self):
+  src=R/"Source/StarfortUnreal"
+  online_h=(src/"Public/StarfortOnlineSubsystem.h").read_text()
+  online_cpp=(src/"Private/StarfortOnlineSubsystem.cpp").read_text()
+  for name in ["MissionWave","MissionWaves","MissionWaveTurn",
+               "LastRallyTurn","EnemyIntent","LastAction","SkillCooldownTurns"]:
+   self.assertIn(name,online_h)
+   self.assertIn(name,online_cpp)
+  for value in ['TEXT("wave")','TEXT("waves")','TEXT("waveTurn")',
+                'TEXT("enemyIntent")','TEXT("cooldowns")','TEXT("lastRallyTurn")']:
+   self.assertIn(value,online_cpp)
+  for safety in ["Out.Team.Contains(Entry.Key)","ReadyTurn>Turn+4",
+                 "LastTurnAt<StartedAt","Out.SkillCooldownTurns.Add",
+                 "Battle.LastTurnAtUnixMs=Snapshot.MissionLastTurnAt"]:
+   self.assertIn(safety,online_cpp)
+  sql=(R.parents[1]/"starfort/sql/starfort-v255-first-minute-combat.sql").read_text()
+  for contract in ["'cooldowns'","'lastRallyTurn'","'enemyIntent'",
+                   "'waveTurn'","'waves'","'mission_turn'","'skill:%'"]:
+   self.assertIn(contract,sql)
+ def test_three_real_hero_skills_and_enemy_intent_hud(self):
+  src=R/"Source/StarfortUnreal"
+  h=(src/"Public/StarfortBattleScreen.h").read_text()
+  c=(src/"Private/StarfortBattleScreen.cpp").read_text()
+  factory=(src/"Private/StarfortNativeWidgetFactory.cpp").read_text()
+  for item in ["BtnSkill1","BtnSkill2","BtnSkill3","TxtEnemyIntent",
+               "TxtWave","TxtCooldownHint","TeamHeroes","SkillCooldownTurns"]:
+   self.assertIn(item,h)
+  for item in ["SkillActionAt(0)","SkillActionAt(1)","SkillActionAt(2)",
+               "BtnSkill2","BtnSkill3","TxtEnemyIntent","TxtWave"]:
+   self.assertIn(item,factory+c)
+  for item in ["IsReadyForCommand","LastRallyTurn","SkillCooldownTurns.Find",
+               "IsLocalThrottleElapsed","CurrentUtcMs()","Latest.Turn+1",
+               "IntentHint(NewTurn.EnemyIntent)","ShowSkillState()"]:
+   self.assertIn(item,c)
+  for intent in ["crush","shield","sunder","eclipse","drain","strike"]:
+   self.assertIn('TEXT("'+intent+'")',c)
+  self.assertIn("3D savaş ve efektler",factory)
+  self.assertNotIn('BtnHeroSkill,TEXT("KAHRAMAN YETENEĞİ")',factory)
+ def test_confirmed_combat_has_distinct_visual_montages(self):
+  src=R/"Source/StarfortUnreal"
+  h=(src/"Public/StarfortBattleStage.h").read_text()
+  c=(src/"Private/StarfortBattleStage.cpp").read_text()
+  for asset in ["VerifiedShotMontage","GuardMontage","FeintMontage",
+                "RallyMontage","HeroSkillMontage"]:
+   self.assertIn(asset,h)
+   self.assertIn(asset,c)
+  self.assertIn("Snapshot.LastAction",c)
+  self.assertIn("Snapshot.bServerVerified",c)
+  self.assertIn("Snapshot.VerifiedDamageDealt>0",c)
+  self.assertIn("Snapshot.Turn<=LastConfirmedTurn",c)
+  self.assertEqual(c.count("{"),c.count("}"),"unbalanced native battle stage braces")
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))
