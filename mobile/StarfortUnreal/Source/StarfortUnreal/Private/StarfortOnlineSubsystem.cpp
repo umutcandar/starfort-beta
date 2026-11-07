@@ -9,6 +9,7 @@
 #include "Interfaces/IHttpResponse.h"
 #include "Misc/DateTime.h"
 #include "Misc/Guid.h"
+#include "Misc/DefaultValueHelper.h"
 #include "Containers/Set.h"
 
 namespace StarfortOnline
@@ -160,6 +161,8 @@ void UStarfortOnlineSubsystem::SignOut()
  bRefreshPending=false;
  bVillagePending=false;
  bProgressPending=false;
+ bLastProgressValid=false;
+ LastMissionId.Empty(); LastMissionTurn=-1; LastEnemyHP=0;
  RefreshWaiters.Reset();
  OnSignedOut.Broadcast();
 }
@@ -385,42 +388,102 @@ bool UStarfortOnlineSubsystem::ParseProgress(const TSharedPtr<FJsonObject>& Root
 {
  using namespace StarfortOnline;
  if (!IsServer(Root) || !Root->HasTypedField<EJson::Object>(TEXT("heroes")) ||
-     !Root->HasTypedField<EJson::Array>(TEXT("team"))) return false;
+     !Root->HasTypedField<EJson::Array>(TEXT("team")) ||
+     !Root->HasTypedField<EJson::Array>(TEXT("cleared")) ||
+     !Root->HasTypedField<EJson::Object>(TEXT("campaignStars")) ||
+     !Root->HasField(TEXT("mission")) || !Root->HasField(TEXT("lastReport")))
+  return false;
  const TSharedPtr<FJsonObject> Heroes=Root->GetObjectField(TEXT("heroes"));
  if (!Heroes.IsValid() || Heroes->Values.Num()>UE_ARRAY_COUNT(HeroIds)) return false;
  TSet<FString> Known;
- for(const TCHAR* HeroId:HeroIds) Known.Add(FString(HeroId));
- for(const auto& Field:Heroes->Values)
+ for (const TCHAR* HeroId:HeroIds) Known.Add(FString(HeroId));
+ for (const auto& Field:Heroes->Values)
  {
   int64 Level=0;
-  if (!Known.Contains(Field.Key) ||
-      !IsIntegerField(Heroes,*Field.Key,1,20,Level)) return false;
+  if (!Known.Contains(Field.Key) || !IsIntegerField(Heroes,*Field.Key,1,20,Level))
+   return false;
   Out.HeroLevels.Add(Field.Key,static_cast<int32>(Level));
  }
  const TArray<TSharedPtr<FJsonValue>>& Team=Root->GetArrayField(TEXT("team"));
  if (Team.Num()!=3) return false;
  TSet<FString> UniqueTeam;
- for(const TSharedPtr<FJsonValue>& Item:Team)
+ for (const TSharedPtr<FJsonValue>& Entry:Team)
  {
   FString Id;
-  if(!Item.IsValid() || !Item->TryGetString(Id) ||
-     !Out.HeroLevels.Contains(Id) || UniqueTeam.Contains(Id)) return false;
-  Out.Team.Add(Id);
+  if (!Entry.IsValid() || !Entry->TryGetString(Id) ||
+      !Out.HeroLevels.Contains(Id) || UniqueTeam.Contains(Id)) return false;
   UniqueTeam.Add(Id);
+  Out.Team.Add(Id);
  }
+ const TArray<TSharedPtr<FJsonValue>>& Cleared=Root->GetArrayField(TEXT("cleared"));
+ if (Cleared.Num()>8) return false;
+ for (int32 I=0;I<Cleared.Num();++I)
+ {
+  double Stage=0;
+  if (!Cleared[I].IsValid() || !Cleared[I]->TryGetNumber(Stage) ||
+      Stage!=I+1) return false;
+  Out.ClearedStages.Add(I+1);
+ }
+ const TSharedPtr<FJsonObject> Stars=Root->GetObjectField(TEXT("campaignStars"));
+ if (!Stars.IsValid() || Stars->Values.Num()>8) return false;
+ for (const auto& Entry:Stars->Values)
+ {
+  int32 Stage=0;
+  int64 Rating=0;
+  if (!FDefaultValueHelper::ParseInt(Entry.Key,Stage) ||
+      !Out.ClearedStages.Contains(Stage) ||
+      !IsIntegerField(Stars,*Entry.Key,1,3,Rating)) return false;
+  Out.StoryStars.Add(Stage,static_cast<int32>(Rating));
+ }
+
  if (Root->HasTypedField<EJson::Object>(TEXT("mission")))
  {
   const TSharedPtr<FJsonObject> Mission=Root->GetObjectField(TEXT("mission"));
-  int64 Turn=0,PlayerHp=0,EnemyHp=0;
-  if (!IsIntegerField(Mission,TEXT("turn"),0,36,Turn) ||
-      !IsIntegerField(Mission,TEXT("playerHp"),0,100000,PlayerHp) ||
-      !IsIntegerField(Mission,TEXT("enemyHp"),0,100000,EnemyHp))
+  int64 Turn=0,Stage=0,PlayerHP=0,EnemyHP=0,PlayerMax=0,EnemyMax=0;
+  int64 StartedAt=0,LastTurnAt=0;
+  FString Mode;
+  if (!Mission.IsValid() ||
+      !Mission->TryGetStringField(TEXT("mode"),Mode) ||
+      !TSet<FString>({TEXT("story"),TEXT("act2"),TEXT("veteran"),TEXT("rift"),TEXT("maze"),TEXT("boss")}).Contains(Mode) ||
+      !IsIntegerField(Mission,TEXT("stage"),1,8,Stage) ||
+      !IsIntegerField(Mission,TEXT("turn"),0,36,Turn) ||
+      !IsIntegerField(Mission,TEXT("playerHp"),0,100000,PlayerHP) ||
+      !IsIntegerField(Mission,TEXT("enemyHp"),0,100000,EnemyHP) ||
+      !IsIntegerField(Mission,TEXT("playerMaxHp"),1,100000,PlayerMax) ||
+      !IsIntegerField(Mission,TEXT("enemyMaxHp"),1,100000,EnemyMax) ||
+      !IsIntegerField(Mission,TEXT("startedAt"),1000000000000LL,20000000000000LL,StartedAt) ||
+      !IsIntegerField(Mission,TEXT("lastTurnAt"),1000000000000LL,20000000000000LL,LastTurnAt) ||
+      PlayerHP>PlayerMax || EnemyHP>EnemyMax || LastTurnAt<StartedAt)
    return false;
   Out.bInMission=true;
+  Out.MissionMode=Mode;
+  Out.MissionStage=static_cast<int32>(Stage);
   Out.MissionTurn=static_cast<int32>(Turn);
-  Out.PlayerHP=PlayerHp;
-  Out.EnemyHP=EnemyHp;
+  Out.PlayerHP=PlayerHP; Out.EnemyHP=EnemyHP;
+  Out.PlayerMaxHP=PlayerMax; Out.EnemyMaxHP=EnemyMax;
+  Out.MissionStartedAt=StartedAt;
+  Out.MissionLastTurnAt=LastTurnAt;
+  Out.MissionId=FString::Printf(TEXT("%s:%d:%lld"),
+   *Mode,static_cast<int32>(Stage),static_cast<long long>(StartedAt));
  }
+ else if (!Root->HasTypedField<EJson::Null>(TEXT("mission"))) return false;
+
+ if (Root->HasTypedField<EJson::Object>(TEXT("lastReport")))
+ {
+  const TSharedPtr<FJsonObject> Report=Root->GetObjectField(TEXT("lastReport"));
+  int64 Stage=0,StarsEarned=0;
+  bool Won=false;
+  if (!Report.IsValid() || !Report->TryGetBoolField(TEXT("won"),Won) ||
+      !IsIntegerField(Report,TEXT("stage"),1,8,Stage) ||
+      !IsIntegerField(Report,TEXT("stars"),0,3,StarsEarned) ||
+      (Won && StarsEarned==0) || (!Won && StarsEarned!=0))
+   return false;
+  Out.bHasResult=true; Out.bWon=Won;
+  Out.ResultStage=static_cast<int32>(Stage);
+  Out.ResultStars=static_cast<int32>(StarsEarned);
+ }
+ else if (!Root->HasTypedField<EJson::Null>(TEXT("lastReport"))) return false;
+
  Out.bServerVerified=true;
  return true;
 }
