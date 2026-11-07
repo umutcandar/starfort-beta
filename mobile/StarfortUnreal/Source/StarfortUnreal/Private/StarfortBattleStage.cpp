@@ -326,5 +326,7 @@ void AStarfortBattleStage::PresentVerifiedTurn(
  }
  LastConfirmedTurn=Snapshot.Turn;
  if (Snapshot.Turn==0) return;
- PlayVerifiedPartyAction(Snapshot.LastAction,Snapshot.VerifiedDamageDealt);
+ const bool bServerHit=Snapshot.VerifiedDamageDealt>0;
+ PlayVerifiedPartyAction(Snapshot.LastAction,
+  bServerHit ? Snapshot.VerifiedDamageDealt : 0);
 }
