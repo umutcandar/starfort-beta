@@ -1,0 +1,23 @@
+name: STARFORT Unreal Native Mobile Foundation
+on:
+  push:
+    paths:
+      - 'unreal/**'
+      - '.github/workflows/starfort-native-unreal-qa.yml'
+  pull_request:
+    paths:
+      - 'unreal/**'
+      - '.github/workflows/starfort-native-unreal-qa.yml'
+jobs:
+  native-source-contract:
+    name: Native iOS and Android source contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate native platform settings, non-web client, and art quality gate
+        run: node --test unreal/scripts/native-mobile-contract.test.mjs
+      - name: Native Unreal compilation NOT covered
+        run: echo 'This job checks source/GLB metadata. UE5.8 editor, Xcode, Android SDK builds and physical phone QA are separate release blockers.'
