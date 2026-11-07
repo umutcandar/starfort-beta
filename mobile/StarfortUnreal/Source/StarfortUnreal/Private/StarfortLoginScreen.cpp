@@ -1,4 +1,5 @@
 #include "StarfortLoginScreen.h"
+#include "StarfortNativeWidgetFactory.h"
 #include "StarfortOnlineSubsystem.h"
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
@@ -8,6 +9,7 @@
 void UStarfortLoginScreen::NativeOnInitialized()
 {
  Super::NativeOnInitialized();
+ FStarfortNativeWidgetFactory::BuildLogin(this);
  if (InputPassword) InputPassword->SetIsPassword(true);
  if (BtnSignIn) BtnSignIn->OnClicked.AddUniqueDynamic(this,&UStarfortLoginScreen::SignInClicked);
  if (UGameInstance* Instance=GetGameInstance())
