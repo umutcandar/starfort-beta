@@ -12,6 +12,7 @@
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
 #include "Components/HorizontalBox.h"
+#include "Components/Image.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
@@ -365,45 +366,104 @@ bool FStarfortNativeWidgetFactory::BuildBattle(UStarfortBattleScreen* Screen)
 bool FStarfortNativeWidgetFactory::BuildHero(UStarfortHeroScreen* Screen)
 {
  UWidgetTree* Tree=NativeUI::GetTree(Screen);
- if(!Tree) return false;
- UVerticalBox* Column=NativeUI::BeginPanel(Screen,740.f,520.f);
- if(!Column) return false;
- NativeUI::AddTextLine(Tree,Column,
-  TEXT("STARFORT  ·  KRALİYET NİŞANCISI"),27,
-  UStarfortVisualTheme::Gold());
+ if(!Tree) return false; // A premium authored WBP takes precedence.
+ UVerticalBox* Page=NativeUI::BeginPanel(Screen,1120.f,680.f);
+ if(!Page) return false;
+ NativeUI::AddTextLine(Tree,Page,TEXT("STARFORT · SİNEMATİK KAHRAMANLAR"),
+  29,UStarfortVisualTheme::Gold());
+
+ // Four visually distinct characters using their existing backend IDs.
+ UHorizontalBox* Roster=NativeUI::Row(Tree,Page);
+ NativeUI::ButtonRow(Tree,Roster,Screen->BtnSelectRovan,TEXT("ROVAN"));
+ NativeUI::ButtonRow(Tree,Roster,Screen->BtnSelectAldren,TEXT("ALDREN"));
+ NativeUI::ButtonRow(Tree,Roster,Screen->BtnSelectLyra,TEXT("LYRA"));
+ NativeUI::ButtonRow(Tree,Roster,Screen->BtnSelectVesper,TEXT("VESPER"));
+
+ UHorizontalBox* Body=Tree->ConstructWidget<UHorizontalBox>();
+ Page->AddChildToVerticalBox(Body);
+
+ // This is an actual imported Unreal UI texture, NOT a 3D character rig.
+ UBorder* ArtFrame=Tree->ConstructWidget<UBorder>();
+ ArtFrame->SetBrushColor(FLinearColor(0.035f,0.055f,0.09f,1.f));
+ ArtFrame->SetPadding(FMargin(4.f));
+ USizeBox* ArtBox=Tree->ConstructWidget<USizeBox>();
+ ArtBox->SetWidthOverride(330.f);
+ ArtBox->SetHeightOverride(390.f);
+ UHorizontalBoxSlot* ArtSlot=Body->AddChildToHorizontalBox(ArtBox);
+ ArtSlot->SetPadding(FMargin(0.f,4.f,18.f,4.f));
+ ArtBox->SetContent(ArtFrame);
+ UScaleBox* ArtScale=Tree->ConstructWidget<UScaleBox>();
+ ArtScale->SetStretch(EStretch::ScaleToFit);
+ ArtFrame->SetContent(ArtScale);
+ Screen->ImgHeroSplash=Tree->ConstructWidget<UImage>();
+ Screen->ImgHeroSplash->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+ ArtScale->SetContent(Screen->ImgHeroSplash);
+
+ UVerticalBox* Right=Tree->ConstructWidget<UVerticalBox>();
+ UHorizontalBoxSlot* RightSlot=Body->AddChildToHorizontalBox(Right);
+ RightSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+ UHorizontalBox* Identity=NativeUI::Row(Tree,Right);
+ USizeBox* PortraitSize=Tree->ConstructWidget<USizeBox>();
+ PortraitSize->SetWidthOverride(82.f);
+ PortraitSize->SetHeightOverride(82.f);
+ UHorizontalBoxSlot* PortraitSlot=Identity->AddChildToHorizontalBox(PortraitSize);
+ PortraitSlot->SetPadding(FMargin(0.f,0.f,16.f,0.f));
+ Screen->ImgHeroPortrait=Tree->ConstructWidget<UImage>();
+ PortraitSize->SetContent(Screen->ImgHeroPortrait);
+
  Screen->TxtHeroName=Tree->ConstructWidget<UTextBlock>();
- Screen->TxtHeroName->SetColorAndOpacity(FSlateColor(FLinearColor::White));
- Column->AddChildToVerticalBox(Screen->TxtHeroName)->SetPadding(FMargin(2.f,5.f));
- UHorizontalBox* Stats=NativeUI::Row(Tree,Column);
+ Screen->TxtHeroName->SetColorAndOpacity(FSlateColor(UStarfortVisualTheme::Gold()));
+ Identity->AddChildToHorizontalBox(Screen->TxtHeroName)->SetPadding(FMargin(0.f,16.f));
+
+ UHorizontalBox* Stats=NativeUI::Row(Tree,Right);
  Screen->TxtLevel=NativeUI::NamedValue(Tree,Stats,TEXT("SEVİYE"),
   UStarfortVisualTheme::EnergyBlue());
  Screen->TxtRarity=NativeUI::NamedValue(Tree,Stats,TEXT("NADİRLİK"),
   FLinearColor::White);
- UHorizontalBox* Combat=NativeUI::Row(Tree,Column);
+ UHorizontalBox* Combat=NativeUI::Row(Tree,Right);
  Screen->TxtAttack=NativeUI::NamedValue(Tree,Combat,TEXT("SALDIRI"),
   FLinearColor::White);
  Screen->TxtDefense=NativeUI::NamedValue(Tree,Combat,TEXT("SAVUNMA"),
   FLinearColor::White);
- UHorizontalBox* More=NativeUI::Row(Tree,Column);
+ UHorizontalBox* More=NativeUI::Row(Tree,Right);
  Screen->TxtHealth=NativeUI::NamedValue(Tree,More,TEXT("CAN"),
   FLinearColor::White);
  Screen->TxtSpeed=NativeUI::NamedValue(Tree,More,TEXT("HIZ"),
   FLinearColor::White);
- Screen->TxtShardCount=NativeUI::NamedValue(Tree,NativeUI::Row(Tree,Column),
+ Screen->TxtShardCount=NativeUI::NamedValue(Tree,NativeUI::Row(Tree,Right),
   TEXT("PARÇA"),FLinearColor::White);
- Screen->ProgressShards=NativeUI::Bar(Tree,Column,
+ Screen->ProgressShards=NativeUI::Bar(Tree,Right,
   UStarfortVisualTheme::EnergyBlue());
 
- NativeUI::AddTextLine(Tree,Column,
-  TEXT("Görsel model yoksa düşük kaliteli manken kullanılmaz."),
-  14,FLinearColor(0.73f,0.77f,0.83f,1.f));
- UHorizontalBox* Actions=NativeUI::Row(Tree,Column);
+ NativeUI::AddTextLine(Tree,Right,
+  TEXT("ÖZEL YETENEK SANATI · Savaş gücü sunucudan doğrulanır"),
+  14,UStarfortVisualTheme::Gold());
+ UHorizontalBox* Skills=NativeUI::Row(Tree,Right);
+ Screen->ImgSkill1=Tree->ConstructWidget<UImage>();
+ Screen->ImgSkill2=Tree->ConstructWidget<UImage>();
+ Screen->ImgSkill3=Tree->ConstructWidget<UImage>();
+ Screen->ImgSkill4=Tree->ConstructWidget<UImage>();
+ for(UImage* Image: {Screen->ImgSkill1.Get(),Screen->ImgSkill2.Get(),
+                     Screen->ImgSkill3.Get(),Screen->ImgSkill4.Get()})
+ {
+  USizeBox* Box=Tree->ConstructWidget<USizeBox>();
+  Box->SetWidthOverride(65.f);
+  Box->SetHeightOverride(65.f);
+  Box->SetContent(Image);
+  Skills->AddChildToHorizontalBox(Box)->SetPadding(FMargin(0.f,0.f,12.f,0.f));
+ }
+ UHorizontalBox* Actions=NativeUI::Row(Tree,Right);
  NativeUI::ButtonRow(Tree,Actions,Screen->BtnInspect,TEXT("İNCELE"));
- NativeUI::ButtonRow(Tree,Actions,Screen->BtnFirePreview,TEXT("ATIŞ"));
+ NativeUI::ButtonRow(Tree,Actions,Screen->BtnFirePreview,TEXT("ÖNİZLE"));
  NativeUI::ButtonRow(Tree,Actions,Screen->BtnUpgrade,TEXT("EĞİT"));
  NativeUI::ButtonRow(Tree,Actions,Screen->BtnBack,TEXT("GERİ"));
+
  Screen->TxtConnectionStatus=Tree->ConstructWidget<UTextBlock>();
  Screen->TxtConnectionStatus->SetColorAndOpacity(FSlateColor(FLinearColor::White));
- Column->AddChildToVerticalBox(Screen->TxtConnectionStatus)->SetPadding(FMargin(2.f,10.f));
+ Right->AddChildToVerticalBox(Screen->TxtConnectionStatus)->SetPadding(FMargin(2.f,7.f));
+ Screen->TxtHeroArtStatus=Tree->ConstructWidget<UTextBlock>();
+ Screen->TxtHeroArtStatus->SetColorAndOpacity(
+  FSlateColor(FLinearColor(0.74f,0.8f,0.9f,1.f)));
+ Right->AddChildToVerticalBox(Screen->TxtHeroArtStatus)->SetPadding(FMargin(2.f,4.f));
  return true;
 }
