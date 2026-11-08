@@ -1,0 +1,231 @@
+{
+  "schema_version": 2,
+  "visual_generation": 2,
+  "engine": "Unreal Engine 5.8",
+  "style": "photorealistic dark-fantasy cinematic PBR with believable human proportions; tactile metal, cloth, skin; no toy geometry, no copycat faces",
+  "pipeline": "GLB skinned full-body character + three geometry LOD exports + separate GLB weapon, Unreal 5.8 skeletal mesh and AnimBP retarget, human signoff",
+  "min_skin_joints": 40,
+  "required_animations": [
+    "idle",
+    "walk",
+    "run",
+    "strike",
+    "guard",
+    "feint",
+    "rally",
+    "special",
+    "hit",
+    "death"
+  ],
+  "required_pbr": [
+    "baseColorTexture",
+    "normalTexture",
+    "metallicRoughnessTexture"
+  ],
+  "min_mobile_lods": 3,
+  "license_required": true,
+  "real_ios_android_qa_required": true,
+  "backend_contract": "Server hero IDs, unlock stage, level, skills, items and player purchases are never renamed or reset by this cosmetic migration",
+  "replace_scope": "native_3d_characters_only",
+  "legacy_policy": "Do not delete old web portraits until a separate web migration; never use them as native 3D models.",
+  "cutover": "all seven independently rigged and validated; on-device approval; keep old account IDs and progression",
+  "hero_count": 7,
+  "heroes": [
+    {
+      "id": "aldren",
+      "name": "Aldren",
+      "role": "tank",
+      "title": "Kül Muhafızı",
+      "height_cm": 188,
+      "visual": "Mature scarred Ash Warden, powerful grounded anatomy, asymmetric blackened iron and brushed bronze plate, blackened gold engraving, real woven crimson mantle, weathered steel kite shield, long knight sword, stern restrained face",
+      "silhouette": "broad shield-forward guardian; broadest shoulders and heavy vambraces",
+      "weapon": "kite shield and longsword",
+      "special_visual": "plant shield and unfold star-shaped protective barrier",
+      "primary_colors": [
+        "#1F2934",
+        "#9D7954",
+        "#8D3038"
+      ],
+      "face": "adult male, medium-dark hair, short beard, eyebrow scar",
+      "server_id": "aldren",
+      "source_dir": "ContentPipeline/Incoming/Heroes/v2/aldren",
+      "files": {
+        "body_lod0": "aldren_body_LOD0.glb",
+        "body_lod1": "aldren_body_LOD1.glb",
+        "body_lod2": "aldren_body_LOD2.glb",
+        "weapon": "aldren_weapon.glb"
+      },
+      "review_status": "not_generated",
+      "approved": false,
+      "notes": "This is an original character design brief, NOT a completed mesh or engine asset"
+    },
+    {
+      "id": "lyra",
+      "name": "Lyra",
+      "role": "mage",
+      "title": "Yıldız Dokuyucu",
+      "height_cm": 174,
+      "visual": "Elegant adult astral sorceress, authentic human anatomy, silver hair with loose braids, dark-indigo structured textile robe with intricate gold celestial-thread embroidery, leather corset and layered fabric motion, faceted turquoise crystal staff",
+      "silhouette": "tall flowing silhouette with staff and long asymmetric sleeves",
+      "weapon": "celestial staff",
+      "special_visual": "concentric constellations and luminous azure astral sigils",
+      "primary_colors": [
+        "#252641",
+        "#AE9CD8",
+        "#4DBEC6"
+      ],
+      "face": "adult woman, strong cheekbones, sharp violet eyes",
+      "server_id": "lyra",
+      "source_dir": "ContentPipeline/Incoming/Heroes/v2/lyra",
+      "files": {
+        "body_lod0": "lyra_body_LOD0.glb",
+        "body_lod1": "lyra_body_LOD1.glb",
+        "body_lod2": "lyra_body_LOD2.glb",
+        "weapon": "lyra_weapon.glb"
+      },
+      "review_status": "not_generated",
+      "approved": false,
+      "notes": "This is an original character design brief, NOT a completed mesh or engine asset"
+    },
+    {
+      "id": "rovan",
+      "name": "Rovan",
+      "role": "ranger",
+      "title": "Kraliyet Nişancısı",
+      "height_cm": 184,
+      "visual": "Premium Royal Gunner: adult blond male marksman, photoreal masculine face, athletic real proportions, elaborate brushed gold and blue steel armor with scratches, red cloth cape, immense dark steel precision star-energy rifle with luminous sapphire core. Keep same gameplay ID and ranger damage skills.",
+      "silhouette": "confident shoulder-high precision longgun with red cape; sleek golden armor",
+      "weapon": "blue-star energy rifle",
+      "special_visual": "charge blue light through rifle core, precision cyan projectile and restrained recoil",
+      "primary_colors": [
+        "#D2A85E",
+        "#243E5C",
+        "#BF3944"
+      ],
+      "face": "adult male, believable blond short hair, non-cartoon high detail",
+      "server_id": "rovan",
+      "source_dir": "ContentPipeline/Incoming/Heroes/v2/rovan",
+      "files": {
+        "body_lod0": "rovan_body_LOD0.glb",
+        "body_lod1": "rovan_body_LOD1.glb",
+        "body_lod2": "rovan_body_LOD2.glb",
+        "weapon": "rovan_weapon.glb"
+      },
+      "review_status": "not_generated",
+      "approved": false,
+      "notes": "This is an original character design brief, NOT a completed mesh or engine asset"
+    },
+    {
+      "id": "mira",
+      "name": "Mira",
+      "role": "healer",
+      "title": "Ay Rahibesi",
+      "height_cm": 171,
+      "visual": "Noble adult moon priestess, warm olive skin, long dark braided hair, ivory linen and pearl-gold ceremonial armor, layered silver filigree and lunar sigils, floating moonlight relic held with both palms",
+      "silhouette": "vertical crescent halo and flowing ivory layers; open hands",
+      "weapon": "moon reliquary",
+      "special_visual": "silver moon healing bloom that settles over allies with fine spark particles",
+      "primary_colors": [
+        "#E7DECE",
+        "#C7AF79",
+        "#6D93AC"
+      ],
+      "face": "adult woman, dignified features, calm focused gaze",
+      "server_id": "mira",
+      "source_dir": "ContentPipeline/Incoming/Heroes/v2/mira",
+      "files": {
+        "body_lod0": "mira_body_LOD0.glb",
+        "body_lod1": "mira_body_LOD1.glb",
+        "body_lod2": "mira_body_LOD2.glb",
+        "weapon": "mira_weapon.glb"
+      },
+      "review_status": "not_generated",
+      "approved": false,
+      "notes": "This is an original character design brief, NOT a completed mesh or engine asset"
+    },
+    {
+      "id": "doran",
+      "name": "Doran",
+      "role": "fighter",
+      "title": "Demir Yemin",
+      "height_cm": 196,
+      "visual": "Veteran battle-forge champion, rugged middle aged copper hair and braided beard, anatomically strong build, distressed black iron cuirass, gigantic hand-forged two handed axe, red forge mantle, scorched gauntlets",
+      "silhouette": "powerful wedge torso and large rough axe head",
+      "weapon": "two-handed war axe",
+      "special_visual": "twin brutal grounded strikes with ember sparks and recoil",
+      "primary_colors": [
+        "#433938",
+        "#B96544",
+        "#262C33"
+      ],
+      "face": "adult male, scarred copper-bearded veteran",
+      "server_id": "doran",
+      "source_dir": "ContentPipeline/Incoming/Heroes/v2/doran",
+      "files": {
+        "body_lod0": "doran_body_LOD0.glb",
+        "body_lod1": "doran_body_LOD1.glb",
+        "body_lod2": "doran_body_LOD2.glb",
+        "weapon": "doran_weapon.glb"
+      },
+      "review_status": "not_generated",
+      "approved": false,
+      "notes": "This is an original character design brief, NOT a completed mesh or engine asset"
+    },
+    {
+      "id": "vesper",
+      "name": "Vesper",
+      "role": "assassin",
+      "title": "Gölge Düellocusu",
+      "height_cm": 178,
+      "visual": "Adult female shadow duelist, realistic athletic anatomy, deep-brown skin, close cut black hair, burgundy leather armour above dark-silver chain, asymmetric violet silk sash, two independent curved daggers, intricate fine buckles",
+      "silhouette": "lean agile silhouette, twin opposing blades and short fitted coat",
+      "weapon": "paired curved daggers",
+      "special_visual": "short smoky dash with deliberate sword arcs; no teleporting without animation",
+      "primary_colors": [
+        "#3B2C39",
+        "#A35C7B",
+        "#4F5366"
+      ],
+      "face": "adult woman, precise focused expression",
+      "server_id": "vesper",
+      "source_dir": "ContentPipeline/Incoming/Heroes/v2/vesper",
+      "files": {
+        "body_lod0": "vesper_body_LOD0.glb",
+        "body_lod1": "vesper_body_LOD1.glb",
+        "body_lod2": "vesper_body_LOD2.glb",
+        "weapon": "vesper_weapon.glb"
+      },
+      "review_status": "not_generated",
+      "approved": false,
+      "notes": "This is an original character design brief, NOT a completed mesh or engine asset"
+    },
+    {
+      "id": "eira",
+      "name": "Eira",
+      "role": "mage",
+      "title": "Kutup Kâhini",
+      "height_cm": 175,
+      "visual": "Adult frost seer, pale freckled skin, copper-red braids, regal northern navy wool robe with soft white fur trim, silver stellar embroidery, ornate translucent ice staff, believable woven/fur PBR",
+      "silhouette": "striking fur neckline, tall ice crystal staff and braided hair",
+      "weapon": "ice crystal staff",
+      "special_visual": "shattered translucent ice rings and white-blue starlight",
+      "primary_colors": [
+        "#233C59",
+        "#ADCBD8",
+        "#DFE4E7"
+      ],
+      "face": "adult woman, detailed freckles and pale ice-blue eyes",
+      "server_id": "eira",
+      "source_dir": "ContentPipeline/Incoming/Heroes/v2/eira",
+      "files": {
+        "body_lod0": "eira_body_LOD0.glb",
+        "body_lod1": "eira_body_LOD1.glb",
+        "body_lod2": "eira_body_LOD2.glb",
+        "weapon": "eira_weapon.glb"
+      },
+      "review_status": "not_generated",
+      "approved": false,
+      "notes": "This is an original character design brief, NOT a completed mesh or engine asset"
+    }
+  ]
+}

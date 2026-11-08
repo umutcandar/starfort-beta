@@ -7,7 +7,7 @@
   ],
   "orientation": "landscape",
   "visual_reference": "Approved Royal Gunner premium hero concept (chat reference, not production geometry)",
-  "quality_policy": "No toy-style geometry, unlicensed source, flat material or unrigged hero as a release asset. Release also requires human art direction and real-device QA. All 7 distinct player heroes require independently approved full-body skinned 3D rigs and action-specific combat animations.",
+  "quality_policy": "No toy-style geometry, unlicensed source, flat material or unrigged hero as a release asset. Release also requires human art direction and real-device QA. All 7 distinct player heroes require independently approved full-body skinned 3D rigs and action-specific combat animations. Visual generation v2 only, no legacy web portraits/sprites or old shared animation fallback may be packaged as native heroes.",
   "assets": [
     {
       "key": "royal_gunner",
@@ -37,7 +37,10 @@
       "source_file": null,
       "license_id": null,
       "mobile_reviewed": false,
-      "device_reviewed": false
+      "device_reviewed": false,
+      "visual_generation": 2,
+      "legacy_sprite_or_portrait_allowed": false,
+      "model_review_id": null
     },
     {
       "key": "hero_aldren",
@@ -65,7 +68,10 @@
       "source_file": null,
       "license_id": null,
       "mobile_reviewed": false,
-      "device_reviewed": false
+      "device_reviewed": false,
+      "visual_generation": 2,
+      "legacy_sprite_or_portrait_allowed": false,
+      "model_review_id": null
     },
     {
       "key": "hero_doran",
@@ -93,7 +99,10 @@
       "source_file": null,
       "license_id": null,
       "mobile_reviewed": false,
-      "device_reviewed": false
+      "device_reviewed": false,
+      "visual_generation": 2,
+      "legacy_sprite_or_portrait_allowed": false,
+      "model_review_id": null
     },
     {
       "key": "hero_eira",
@@ -121,7 +130,10 @@
       "source_file": null,
       "license_id": null,
       "mobile_reviewed": false,
-      "device_reviewed": false
+      "device_reviewed": false,
+      "visual_generation": 2,
+      "legacy_sprite_or_portrait_allowed": false,
+      "model_review_id": null
     },
     {
       "key": "hero_lyra",
@@ -149,7 +161,10 @@
       "source_file": null,
       "license_id": null,
       "mobile_reviewed": false,
-      "device_reviewed": false
+      "device_reviewed": false,
+      "visual_generation": 2,
+      "legacy_sprite_or_portrait_allowed": false,
+      "model_review_id": null
     },
     {
       "key": "hero_mira",
@@ -177,7 +192,10 @@
       "source_file": null,
       "license_id": null,
       "mobile_reviewed": false,
-      "device_reviewed": false
+      "device_reviewed": false,
+      "visual_generation": 2,
+      "legacy_sprite_or_portrait_allowed": false,
+      "model_review_id": null
     },
     {
       "key": "hero_vesper",
@@ -205,7 +223,10 @@
       "source_file": null,
       "license_id": null,
       "mobile_reviewed": false,
-      "device_reviewed": false
+      "device_reviewed": false,
+      "visual_generation": 2,
+      "legacy_sprite_or_portrait_allowed": false,
+      "model_review_id": null
     },
     {
       "key": "enemy_caster",

@@ -315,10 +315,13 @@ class NativeSmoke(unittest.TestCase):
   src=R/"Source/StarfortUnreal"
   h=(src/"Public/StarfortBattleStage.h").read_text()
   c=(src/"Private/StarfortBattleStage.cpp").read_text()
-  for asset in ["VerifiedShotMontage","GuardMontage","FeintMontage",
-                "RallyMontage","HeroSkillMontage"]:
-   self.assertIn(asset,h)
-   self.assertIn(asset,c)
+  for old_generic in ["VerifiedShotMontage","HeroSkillMontage"]:
+   self.assertNotIn(old_generic,h)
+   self.assertNotIn(old_generic,c)
+  for action in ["StrikeMontage","GuardMontage","FeintMontage",
+                 "RallyMontage","SpecialMontage"]:
+   self.assertIn("Art->"+action,c)
+  self.assertIn("ActiveTeamIds[I]!=SkilledHero",c)
   self.assertIn("Snapshot.LastAction",c)
   self.assertIn("Snapshot.bServerVerified",c)
   self.assertIn("Snapshot.VerifiedDamageDealt>0",c)
