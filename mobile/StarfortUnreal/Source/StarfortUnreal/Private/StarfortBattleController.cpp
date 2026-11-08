@@ -33,7 +33,10 @@ void AStarfortBattleController::BeginPlay()
  if (!NativeBattle) NativeBattle=UStarfortBattleScreen::StaticClass();
  BattleScreen=CreateWidget<UStarfortBattleScreen>(this,NativeBattle);
  if(BattleScreen)
+ { 
   BattleScreen->OnActionRequested.AddUniqueDynamic(this,&AStarfortBattleController::ActionRequested);
+  BattleScreen->OnRetryRequested.AddUniqueDynamic(this,&AStarfortBattleController::RefreshBattle);
+ }
 
  TSubclassOf<UStarfortCampaignScreen> NativeCampaign=CampaignScreenClass;
  if (!NativeCampaign) NativeCampaign=UStarfortCampaignScreen::StaticClass();
@@ -90,6 +93,7 @@ void AStarfortBattleController::EndPlay(const EEndPlayReason::Type EndPlayReason
  if (BattleScreen)
  {
   BattleScreen->OnActionRequested.RemoveDynamic(this,&AStarfortBattleController::ActionRequested);
+  BattleScreen->OnRetryRequested.RemoveDynamic(this,&AStarfortBattleController::RefreshBattle);
   BattleScreen->RemoveFromParent();
   BattleScreen=nullptr;
  }
