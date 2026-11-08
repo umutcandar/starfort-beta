@@ -203,7 +203,9 @@ class NativeSmoke(unittest.TestCase):
   self.assertIn("SetWaitingForServer();",hero)
   self.assertIn("Level<1 || Level>20",hero)
   self.assertIn('TEXT("rovan")',controller)
-  self.assertIn('Online->TrainHero(TEXT("rovan"))',controller)
+  self.assertIn('Online->TrainHero(ActiveHeroScreen->GetSelectedHeroId())',controller)
+  self.assertIn("bHasVerifiedProgress",controller)
+  self.assertIn("CachedHeroLevels",controller)
   self.assertIn('Online->LoadProgress()',controller)
   self.assertIn('HandleOnlineError',controller)
   self.assertIn('HandleSignedOut',controller)
@@ -580,6 +582,65 @@ class NativeSmoke(unittest.TestCase):
   online=(root/"Private/StarfortOnlineSubsystem.cpp").read_text()
   self.assertIn("Önceki hesap işlemi devam ediyor",online)
   self.assertIn("Fail(TEXT(",online)
+ def test_four_hero_cinematic_gallery_uses_real_server_roster(self):
+  root=R/"Source/StarfortUnreal"
+  h=(root/"Public/StarfortHeroScreen.h").read_text()
+  c=(root/"Private/StarfortHeroScreen.cpp").read_text()
+  ch=(root/"Public/StarfortMobilePlayerController.h").read_text()
+  cc=(root/"Private/StarfortMobilePlayerController.cpp").read_text()
+  factory=(root/"Private/StarfortNativeWidgetFactory.cpp").read_text()
+  for hero in ["Rovan","Aldren","Lyra","Vesper"]:
+   self.assertIn("BtnSelect"+hero,h)
+   self.assertIn("BtnSelect"+hero,factory)
+   self.assertIn('TEXT("'+hero.lower()+'")',c)
+  for symbol in ["OnHeroSelected","ImgHeroSplash","ImgHeroPortrait",
+                 "ImgSkill1","ImgSkill2","ImgSkill3","ImgSkill4",
+                 "ActiveCard","ToggleHeroArtDetail","GetSelectedHeroId"]:
+   self.assertIn(symbol,h)
+  for marker in ["RefreshCinematicArt()","T_Rovan","T_",
+                 "TryLoad()","Sinematik 2D","SetBrushFromTexture",
+                 "OnHeroSelected.Broadcast(HeroId)","bShowingHeroCard"]:
+   self.assertIn(marker if marker!="T_Rovan" else "T_",c)
+  for marker in ["CachedHeroLevels=Progress.HeroLevels",
+                 "HandleHeroSelection(ActiveHeroScreen->GetSelectedHeroId())",
+                 "CachedHeroLevels.Find(HeroId)",
+                 "Online->TrainHero(ActiveHeroScreen->GetSelectedHeroId())",
+                 "OnHeroSelected.AddUniqueDynamic",
+                 "OnHeroSelected.RemoveDynamic"]:
+   self.assertIn(marker,cc)
+  self.assertIn("bHasVerifiedProgress=false;",cc)
+  self.assertIn("CachedHeroLevels.Empty();",cc)
+  self.assertIn("SetActorHiddenInGame(true)",cc)
+  self.assertIn('TEXT("3D YAKINDA")',factory)
+  self.assertIn("BtnFirePreview->SetIsEnabled(false)",factory)
+  self.assertIn("TObjectPtr<UButton>& OutButton",factory)
+  self.assertNotIn('Online->TrainHero(TEXT("rovan"))',cc)
+  self.assertNotIn("Gunner->FireEnergyCannon();",cc)
+ def test_import_cinematic_art_fails_closed_before_unreal_editor(self):
+  import runpy
+  src=R/"Tools/import_cinematic_hero_ui.py"
+  body=src.read_text(encoding="utf-8")
+  compile(body,str(src),"exec")
+  module=runpy.run_path(str(src))
+  self.assertEqual(module["CANONICAL"],("rovan","aldren","lyra","vesper"))
+  self.assertEqual(len(module["KINDS"]),7)
+  self.assertEqual(module["expected_filename"]("rovan","splash"),
+   "T_Rovan_Splash.png")
+  self.assertEqual(module["expected_filename"]("vesper","skill_04"),
+   "T_Vesper_Skill_04.png")
+  issues,rows=module["validate_package"]()
+  self.assertTrue(issues)
+  self.assertEqual(rows,[])
+  for check in ["hashlib.sha256(data).hexdigest()",
+                "unreal.AssetImportTask()","replace_existing",
+                "import_asset_tasks(tasks)",
+                "source_kind","cinematic_2d_ui_only",
+                "actual_3d_meshes_created"]:
+   if check=="expected\"":28":continue
+   self.assertIn(check,body)
+  cfg=(R/"Config/DefaultGame.ini").read_text()
+  self.assertIn('/Game/UI/HeroCinematicV1',cfg)
+  self.assertIn('DirectoriesToAlwaysCook',cfg)
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))
