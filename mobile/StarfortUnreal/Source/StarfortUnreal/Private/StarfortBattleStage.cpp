@@ -61,6 +61,13 @@ AStarfortBattleStage::AStarfortBattleStage()
  HeroSpecialFX3=CreateDefaultSubobject<UNiagaraComponent>(TEXT("HeroSpecialFX_Flank"));
  HeroSpecialFX3->SetupAttachment(HeroWeapon3);
 
+ HeroAuraFX1=CreateDefaultSubobject<UNiagaraComponent>(TEXT("HeroAuraFX_Leader"));
+ HeroAuraFX1->SetupAttachment(HeroRig);
+ HeroAuraFX2=CreateDefaultSubobject<UNiagaraComponent>(TEXT("HeroAuraFX_Middle"));
+ HeroAuraFX2->SetupAttachment(HeroRig2);
+ HeroAuraFX3=CreateDefaultSubobject<UNiagaraComponent>(TEXT("HeroAuraFX_Flank"));
+ HeroAuraFX3->SetupAttachment(HeroRig3);
+
  ConfirmedImpactFX=CreateDefaultSubobject<UNiagaraComponent>(TEXT("ConfirmedImpactFX"));
  // Real confirmed damage is shown at the enemy, not at the firing gun.
  ConfirmedImpactFX->SetupAttachment(EnemyRig);
@@ -79,6 +86,7 @@ AStarfortBattleStage::AStarfortBattleStage()
  }
  for (UNiagaraComponent* Effect:
       {HeroSpecialFX1.Get(),HeroSpecialFX2.Get(),HeroSpecialFX3.Get(),
+       HeroAuraFX1.Get(),HeroAuraFX2.Get(),HeroAuraFX3.Get(),
        ConfirmedImpactFX.Get()})
   Effect->SetAutoActivate(false);
 
@@ -103,6 +111,7 @@ void AStarfortBattleStage::SetAllVisible(bool bVisible)
   if (Weapon) Weapon->SetVisibility(bVisible);
  for (UNiagaraComponent* Effect:
       {HeroSpecialFX1.Get(),HeroSpecialFX2.Get(),HeroSpecialFX3.Get(),
+       HeroAuraFX1.Get(),HeroAuraFX2.Get(),HeroAuraFX3.Get(),
        ConfirmedImpactFX.Get()})
  {
   if (!Effect) continue;
@@ -303,6 +312,8 @@ bool AStarfortBattleStage::HasApprovedStage() const
 
 void AStarfortBattleStage::ClearBattlePresentation()
 {
+ if(GetWorld()) GetWorldTimerManager().ClearTimer(VerifiedImpactTimer);
+ ResetCinematicDirector();
  ++TeamLoadGeneration;
  bTeamLoadPending=false;
  if (TeamLoadHandle.IsValid())
@@ -334,7 +345,8 @@ void AStarfortBattleStage::ClearBattlePresentation()
       {HeroWeapon.Get(),HeroWeapon2.Get(),HeroWeapon3.Get()})
   if (Weapon) Weapon->SetStaticMesh(nullptr);
  for (UNiagaraComponent* FX:
-      {HeroSpecialFX1.Get(),HeroSpecialFX2.Get(),HeroSpecialFX3.Get()})
+      {HeroSpecialFX1.Get(),HeroSpecialFX2.Get(),HeroSpecialFX3.Get(),
+       HeroAuraFX1.Get(),HeroAuraFX2.Get(),HeroAuraFX3.Get()})
   if (FX) FX->SetAsset(nullptr, true);
  ActiveHeroArt.Reset();
 }
@@ -354,12 +366,99 @@ void AStarfortBattleStage::EndPlay(const EEndPlayReason::Type EndPlayReason)
  Super::EndPlay(EndPlayReason);
 }
 
+void AStarfortBattleStage::ResetCinematicDirector()
+{
+ DesiredArmLength=1510.f;
+ DesiredFOV=43.f;
+ DesiredFocus=FVector::ZeroVector;
+ DesiredLook=FRotator(-15.f,-10.f,0.f);
+ CameraBeatSeconds=0.f;
+}
+
 void AStarfortBattleStage::Tick(float DeltaTime)
 {
  Super::Tick(DeltaTime);
- if (CinemaArm)
+ if(CameraBeatSeconds>0.f)
+ {
+  CameraBeatSeconds=FMath::Max(0.f,CameraBeatSeconds-DeltaTime);
+  if(CameraBeatSeconds==0.f) ResetCinematicDirector();
+ }
+ if(CinemaArm)
+ {
   CinemaArm->TargetArmLength=FMath::FInterpTo(
-   CinemaArm->TargetArmLength,1510.f,DeltaTime,2.7f);
+   CinemaArm->TargetArmLength,DesiredArmLength,DeltaTime,5.f);
+  CinemaArm->SetRelativeLocation(FMath::VInterpTo(
+   CinemaArm->GetRelativeLocation(),DesiredFocus,DeltaTime,4.2f));
+  CinemaArm->SetRelativeRotation(FMath::RInterpTo(
+   CinemaArm->GetRelativeRotation(),DesiredLook,DeltaTime,3.8f));
+ }
+ if(CinemaCamera)
+  CinemaCamera->SetFieldOfView(FMath::FInterpTo(
+   CinemaCamera->FieldOfView,DesiredFOV,DeltaTime,4.f));
+}
+
+void AStarfortBattleStage::BeginCameraBeat(
+ const FString& Action,const FString& SkilledHero)
+{
+ if(!HasApprovedStage()) return;
+ // Compose focus from the authenticated team formation, not a fake event.
+ const bool bSkill=Action.StartsWith(TEXT("skill:"));
+ DesiredFocus=FVector(0.f,0.f,115.f);
+ DesiredLook=FRotator(-12.f,-12.f,0.f);
+ DesiredArmLength=1320.f;
+ DesiredFOV=39.f;
+ CameraBeatSeconds=1.12f;
+
+ if(Action==TEXT("guard"))
+ {
+  DesiredArmLength=1400.f;
+  DesiredFocus=FVector(-230.f,0.f,135.f);
+  DesiredFOV=41.f;
+  CameraBeatSeconds=0.96f;
+ }
+ else if(Action==TEXT("rally"))
+ {
+  DesiredArmLength=1740.f; // all three approved heroes stay on screen
+  DesiredFocus=FVector(-60.f,0.f,160.f);
+  DesiredFOV=45.f;
+  CameraBeatSeconds=1.4f;
+ }
+ else if(Action==TEXT("feint"))
+ {
+  DesiredArmLength=1230.f;
+  DesiredFocus=FVector(-120.f,-70.f,120.f);
+  DesiredFOV=38.f;
+ }
+ else if(bSkill)
+ {
+  const int32 Index=ActiveTeamIds.Find(SkilledHero);
+  USkeletalMeshComponent* Rigs[]={HeroRig.Get(),HeroRig2.Get(),HeroRig3.Get()};
+  if(Index==INDEX_NONE || !Rigs[Index]) return;
+  const FVector Caster=Rigs[Index]->GetRelativeLocation();
+  DesiredFocus=FVector(
+   FMath::Lerp(Caster.X,EnemyRig->GetRelativeLocation().X,0.28f),
+   Caster.Y*0.66f,135.f);
+  DesiredArmLength=SkilledHero==TEXT("vesper") ? 1110.f :
+   SkilledHero==TEXT("rovan") ? 1260.f :
+   SkilledHero==TEXT("aldren") ? 1210.f : 1370.f;
+  DesiredFOV=SkilledHero==TEXT("vesper") ? 35.f : 37.f;
+  CameraBeatSeconds=1.55f;
+ }
+}
+
+void AStarfortBattleStage::PlayDelayedVerifiedImpact(
+ uint64 PlaybackGeneration,const FString& PlaybackRoom,int32 PlaybackTurn)
+{
+ // A late hit may never leak into a new room/account or duplicate an old turn.
+ if(PlaybackGeneration!=TeamLoadGeneration ||
+    ActiveRoomId!=PlaybackRoom || LastConfirmedTurn!=PlaybackTurn ||
+    !HasApprovedStage())
+  return;
+ if(ImpactSystem && ConfirmedImpactFX)
+  ConfirmedImpactFX->Activate(true);
+ if(EnemyHitMontage && EnemyRig)
+  if(UAnimInstance* EnemyAnim=EnemyRig->GetAnimInstance())
+   EnemyAnim->Montage_Play(EnemyHitMontage);
 }
 
 void AStarfortBattleStage::PlayVerifiedPartyAction(
@@ -370,47 +469,97 @@ void AStarfortBattleStage::PlayVerifiedPartyAction(
  const bool bAttack=Action==TEXT("strike") || Action==TEXT("feint") || bSkill;
  const FString SkilledHero=bSkill?Action.RightChop(6):TEXT("");
 
+ // Skill hero must be in the actual authenticated roster. Otherwise ignore
+ // the action rather than playing every hero's ultimate or invented damage.
+ if(bSkill && !ActiveTeamIds.Contains(SkilledHero)) return;
+ BeginCameraBeat(Action,SkilledHero);
+
  USkeletalMeshComponent* Rigs[]={HeroRig.Get(),HeroRig2.Get(),HeroRig3.Get()};
- UNiagaraComponent* Effects[]={
+ UNiagaraComponent* WeaponFX[]={
   HeroSpecialFX1.Get(),HeroSpecialFX2.Get(),HeroSpecialFX3.Get()
+ };
+ UNiagaraComponent* AuraFX[]={
+  HeroAuraFX1.Get(),HeroAuraFX2.Get(),HeroAuraFX3.Get()
  };
  for (int32 I=0;I<3;++I)
  {
   if (bSkill && ActiveTeamIds[I]!=SkilledHero) continue;
 
   UStarfortHeroCombatAsset* Art=ActiveHeroArt[I].Get();
+  if(!Art || !Rigs[I]) continue;
   UAnimMontage* Montage=nullptr;
-  if (Action==TEXT("strike")) Montage=Art->StrikeMontage;
-  else if (Action==TEXT("guard")) Montage=Art->GuardMontage;
-  else if (Action==TEXT("feint")) Montage=Art->FeintMontage;
-  else if (Action==TEXT("rally")) Montage=Art->RallyMontage;
-  else if (bSkill) Montage=Art->SpecialMontage;
+  UNiagaraSystem* WeaponSystem=nullptr;
+  UNiagaraSystem* AuraSystem=nullptr;
+  if(Action==TEXT("strike"))
+  {
+   Montage=Art->StrikeMontage;
+   WeaponSystem=Art->StrikeEffect;
+  }
+  else if(Action==TEXT("guard"))
+  {
+   Montage=Art->GuardMontage;
+   AuraSystem=Art->GuardEffect;
+  }
+  else if(Action==TEXT("feint"))
+  {
+   Montage=Art->FeintMontage;
+   WeaponSystem=Art->FeintEffect;
+  }
+  else if(Action==TEXT("rally"))
+  {
+   Montage=Art->RallyMontage;
+   AuraSystem=Art->RallyEffect;
+  }
+  else if(bSkill)
+  {
+   Montage=Art->SpecialMontage;
+   WeaponSystem=Art->SpecialEffect;
+  }
 
-  // The user's redesigned heroes must never silently fall back to an old
-  // generic shot/swing montage: missing authored hero motion means no animation.
-
-  if (Montage)
-   if (UAnimInstance* Anim=Rigs[I]->GetAnimInstance())
+  // Only bespoke, approved motion; never fall back to a shared mannequin
+  // animation or use 2D concept art as world geometry.
+  if(Montage)
+   if(UAnimInstance* Anim=Rigs[I]->GetAnimInstance())
     Anim->Montage_Play(Montage);
+
+  if(WeaponFX[I])
+  {
+   WeaponFX[I]->DeactivateImmediate();
+   if(WeaponSystem)
+   {
+    WeaponFX[I]->SetAsset(WeaponSystem,true);
+    WeaponFX[I]->Activate(true);
+   }
+  }
+  if(AuraFX[I])
+  {
+   AuraFX[I]->DeactivateImmediate();
+   if(AuraSystem)
+   {
+    AuraFX[I]->SetAsset(AuraSystem,true);
+    AuraFX[I]->Activate(true);
+   }
+  }
 
   USoundBase* Sound=bSkill ? Art->SpecialAttackSound.Get():
    bAttack ? Art->BasicAttackSound.Get():nullptr;
-  if (Sound)
+  if(Sound)
    UGameplayStatics::PlaySoundAtLocation(this,Sound,Rigs[I]->GetComponentLocation());
-
-  // Only the selected named hero receives its own ultimate VFX.
-  if (bSkill && Art->SpecialEffect && Effects[I])
-   Effects[I]->Activate(true);
  }
 
- // The hit/impact is cosmetic and follows the server's confirmed damage.
- if (bAttack && VerifiedDamage>0)
+ if(GetWorld()) GetWorldTimerManager().ClearTimer(VerifiedImpactTimer);
+ // The 0.28s delay is cosmetic only; attack results always come from the
+ // verified RPC, and late callbacks are invalidated on turn/room changes.
+ if(bAttack && VerifiedDamage>0 && GetWorld())
  {
-  if (ImpactSystem) ConfirmedImpactFX->Activate(true);
-  if (EnemyHitMontage)
-   if (UAnimInstance* EnemyAnim=EnemyRig->GetAnimInstance())
-    EnemyAnim->Montage_Play(EnemyHitMontage);
-  if (CinemaArm) CinemaArm->TargetArmLength=1230.f;
+  const uint64 PlaybackGeneration=TeamLoadGeneration;
+  const FString PlaybackRoom=ActiveRoomId;
+  const int32 PlaybackTurn=LastConfirmedTurn;
+  const FTimerDelegate HitDelegate=FTimerDelegate::CreateUObject(this,
+   &AStarfortBattleStage::PlayDelayedVerifiedImpact,
+   PlaybackGeneration,PlaybackRoom,PlaybackTurn);
+  GetWorldTimerManager().SetTimer(
+   VerifiedImpactTimer,HitDelegate,0.28f,false);
  }
 }
 
@@ -455,7 +604,10 @@ void AStarfortBattleStage::PresentVerifiedTurn(
  if (Snapshot.Wave!=LastConfirmedWave)
  {
   LastConfirmedWave=Snapshot.Wave;
-  if (CinemaArm) CinemaArm->TargetArmLength=1730.f;
+  DesiredArmLength=1730.f;
+  DesiredFOV=45.f;
+  DesiredFocus=FVector::ZeroVector;
+  CameraBeatSeconds=1.1f;
  }
  LastConfirmedTurn=Snapshot.Turn;
  if (Snapshot.Turn==0) return;
