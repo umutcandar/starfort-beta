@@ -173,7 +173,9 @@ void UStarfortBattleScreen::ApplyVerifiedTurn(const FStarfortVerifiedBattleTurn&
      NewTurn.HeroMaxHP<=0 || NewTurn.EnemyMaxHP<=0 ||
      NewTurn.HeroHP<0 || NewTurn.HeroHP>NewTurn.HeroMaxHP ||
      NewTurn.EnemyHP<0 || NewTurn.EnemyHP>NewTurn.EnemyMaxHP ||
-     NewTurn.VerifiedDamageDealt<0 || NewTurn.ServerAllowedActions.Num()>16 ||
+     NewTurn.VerifiedDamageDealt<0 || NewTurn.VerifiedDamageReceived<0 ||
+     NewTurn.VerifiedDamageReceived>NewTurn.HeroMaxHP ||
+     NewTurn.ServerAllowedActions.Num()>16 ||
      NewTurn.TeamHeroes.Num()!=3 || NewTurn.SkillCooldownTurns.Num()>3 ||
      NewTurn.Wave<1 || NewTurn.Waves<1 || NewTurn.Waves>3 ||
      NewTurn.Wave>NewTurn.Waves || NewTurn.WaveTurn<0 ||
@@ -234,7 +236,13 @@ void UStarfortBattleScreen::ApplyVerifiedTurn(const FStarfortVerifiedBattleTurn&
    ? FText::AsNumber(NewTurn.VerifiedDamageDealt)
    : FText::FromString(TEXT("—")));
  if (TxtBattleStatus)
-  TxtBattleStatus->SetText(FText::FromString(TEXT("Sunucu hamlesi doğrulandı")));
+ {
+  const FString BattleSummary=NewTurn.VerifiedDamageReceived>0
+   ? FString::Printf(TEXT("Düşman karşı saldırısı: -%lld takım canı"),
+       static_cast<long long>(NewTurn.VerifiedDamageReceived))
+   : FString(TEXT("Sunucu hamlesi doğrulandı"));
+  TxtBattleStatus->SetText(FText::FromString(BattleSummary));
+ }
  if (ProgressHeroHP)
   ProgressHeroHP->SetPercent(FMath::Clamp(
    static_cast<float>(NewTurn.HeroHP)/NewTurn.HeroMaxHP,0.f,1.f));
