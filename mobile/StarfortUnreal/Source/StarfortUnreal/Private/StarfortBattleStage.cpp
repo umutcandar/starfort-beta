@@ -306,6 +306,13 @@ bool AStarfortBattleStage::HasApprovedStage() const
      !EnemyAttackMontage || !EnemyAttackSystem || !EnemyAttackSound ||
      !ConfirmedEnemyImpactSound)
   return false;
+ // The enemy needs authored attack AND hit motion, not a reused placeholder.
+ // The actual rigs and animation skeleton must also be compatible.
+ if (EnemyAttackMontage==EnemyHitMontage || EnemyAttackSystem==ImpactSystem ||
+     !EnemyRig->GetSkeletalMeshAsset()->GetSkeleton() ||
+     EnemyAttackMontage->GetSkeleton()!=EnemyRig->GetSkeletalMeshAsset()->GetSkeleton() ||
+     EnemyHitMontage->GetSkeleton()!=EnemyRig->GetSkeletalMeshAsset()->GetSkeleton())
+  return false;
  const USkeletalMeshComponent* Rigs[]={
   HeroRig.Get(),HeroRig2.Get(),HeroRig3.Get()
  };
