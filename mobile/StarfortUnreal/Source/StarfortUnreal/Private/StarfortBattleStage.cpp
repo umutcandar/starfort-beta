@@ -468,6 +468,9 @@ void AStarfortBattleStage::PlayVerifiedPartyAction(
  const bool bSkill=Action.StartsWith(TEXT("skill:"));
  const bool bAttack=Action==TEXT("strike") || Action==TEXT("feint") || bSkill;
  const FString SkilledHero=bSkill?Action.RightChop(6):TEXT("");
+ if(!bSkill && Action!=TEXT("strike") && Action!=TEXT("guard") &&
+    Action!=TEXT("feint") && Action!=TEXT("rally"))
+  return; // Never synthesize cinematic beats for an unknown server action.
 
  // Skill hero must be in the actual authenticated roster. Otherwise ignore
  // the action rather than playing every hero's ultimate or invented damage.
