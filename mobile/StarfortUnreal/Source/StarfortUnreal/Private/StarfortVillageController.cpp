@@ -30,6 +30,45 @@ void AStarfortVillageController::BeginPlay()
  if (Online->IsSignedIn()) HandleSignedIn(Online->GetUserId());
  else OpenLoginScreen();
 }
+void AStarfortVillageController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+ // Online is a GameInstance subsystem and survives OpenLevel. Detaching
+ // callbacks here prevents destroyed village screens from receiving combat
+ // events or a future signed-in player's village data.
+ if (Online)
+ {
+  Online->OnSignedIn.RemoveDynamic(this,&AStarfortVillageController::HandleSignedIn);
+  Online->OnSignedOut.RemoveDynamic(this,&AStarfortVillageController::HandleSignedOut);
+  Online->OnVillageReady.RemoveDynamic(this,&AStarfortVillageController::HandleVillageSnapshot);
+  Online->OnFailure.RemoveDynamic(this,&AStarfortVillageController::HandleOnlineFailure);
+ }
+ if (UGameInstance* Instance=GetGameInstance())
+ {
+  if (UStarfortSceneRouter* Router=Instance->GetSubsystem<UStarfortSceneRouter>())
+   Router->OnRouteUnavailable.RemoveDynamic(this,&AStarfortVillageController::HandleRouteUnavailable);
+ }
+ if (AStarfortVillageCameraPawn* Pawn=Cast<AStarfortVillageCameraPawn>(GetPawn()))
+  Pawn->OnBuildingSelected.RemoveDynamic(this,&AStarfortVillageController::HandleBuildingTapped);
+ if (ActiveVillageScreen)
+ {
+  ActiveVillageScreen->OnUpgradeRequested.RemoveDynamic(this,&AStarfortVillageController::HandleUpgradeRequested);
+  ActiveVillageScreen->OnHeroesRequested.RemoveDynamic(this,&AStarfortVillageController::HandleHeroesRequested);
+  ActiveVillageScreen->OnBattlesRequested.RemoveDynamic(this,&AStarfortVillageController::HandleBattlesRequested);
+  ActiveVillageScreen->OnAllianceRequested.RemoveDynamic(this,&AStarfortVillageController::HandleAllianceRequested);
+  ActiveVillageScreen->OnRefreshRequested.RemoveDynamic(this,&AStarfortVillageController::RefreshVillage);
+  ActiveVillageScreen->OnSignOutRequested.RemoveDynamic(this,&AStarfortVillageController::HandleLogoutRequested);
+  ActiveVillageScreen->RemoveFromParent();
+  ActiveVillageScreen=nullptr;
+ }
+ if (ActiveLoginScreen)
+ {
+  ActiveLoginScreen->RemoveFromParent();
+  ActiveLoginScreen=nullptr;
+ }
+ Online=nullptr;
+ Super::EndPlay(EndPlayReason);
+}
+
 void AStarfortVillageController::OnPossess(APawn* InPawn)
 {
  Super::OnPossess(InPawn);
@@ -112,10 +151,11 @@ void AStarfortVillageController::HandleVillageSnapshot(const FStarfortVerifiedVi
 }
 void AStarfortVillageController::HandleOnlineFailure(FString SafeReason)
 {
- // A failed upgrade must never optimistically level the building or deduct
- // currency. Force a fresh GET before allowing another mutation.
- if (ActiveVillageScreen) ActiveVillageScreen->SetWaitingForServer();
- UE_LOG(LogTemp, Warning, TEXT("STARFORT native request rejected; awaiting explicit refresh"));
+ // The generic service failure can originate from *hero progression* too.
+ // Do not wipe a valid village whenever some unrelated RPC fails. Keep
+ // the last server values visible but disable stale balance mutations.
+ if (ActiveVillageScreen) ActiveVillageScreen->MarkReadOnlyUntilRefresh(SafeReason);
+ UE_LOG(LogTemp, Warning, TEXT("STARFORT: village put in read-only mode; manual refresh available"));
 }
 void AStarfortVillageController::HandleBuildingTapped(FName BuildingId)
 {

@@ -37,6 +37,7 @@ void UStarfortBattleScreen::NativeOnInitialized()
  if (BtnSkill1) BtnSkill1->OnClicked.AddUniqueDynamic(this,&UStarfortBattleScreen::Skill1Clicked);
  if (BtnSkill2) BtnSkill2->OnClicked.AddUniqueDynamic(this,&UStarfortBattleScreen::Skill2Clicked);
  if (BtnSkill3) BtnSkill3->OnClicked.AddUniqueDynamic(this,&UStarfortBattleScreen::Skill3Clicked);
+ if (BtnRetry) BtnRetry->OnClicked.AddUniqueDynamic(this,&UStarfortBattleScreen::RetryClicked);
  SetWaitingForServer();
 }
 void UStarfortBattleScreen::NativeTick(const FGeometry& MyGeometry,float InDeltaTime)
@@ -280,4 +281,10 @@ void UStarfortBattleScreen::Skill3Clicked()
 {
  const FString Skill=SkillActionAt(2);
  if (!Skill.IsEmpty()) RequestAction(Skill);
+}
+
+void UStarfortBattleScreen::RetryClicked()
+{
+ // Only reload the server-owned turn. Never retry a timed-out attack/upgrade.
+ OnRetryRequested.Broadcast();
 }

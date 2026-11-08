@@ -7,6 +7,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
 
 void AStarfortBattleController::BeginPlay()
 {
@@ -14,7 +15,13 @@ void AStarfortBattleController::BeginPlay()
  if(!IsLocalController()) return;
  if(UGameInstance* Instance=GetGameInstance())
   Online=Instance->GetSubsystem<UStarfortOnlineSubsystem>();
- if(!Online || !Online->IsSignedIn()) return; // no guest battles
+ if(!Online || !Online->IsSignedIn())
+ {
+  // Directly opened stages and expired sessions must never show an
+  // empty world with no controls. Return to the native account-only entry.
+  if(GetWorld()) UGameplayStatics::OpenLevel(GetWorld(),FName(TEXT("/Engine/Maps/Entry")));
+  return;
+ }
  Online->OnProgressReady.AddUniqueDynamic(this,&AStarfortBattleController::ProgressReady);
  Online->OnBattleReady.AddUniqueDynamic(this,&AStarfortBattleController::TurnReady);
  Online->OnMissionResult.AddUniqueDynamic(this,&AStarfortBattleController::MissionFinished);
@@ -26,7 +33,10 @@ void AStarfortBattleController::BeginPlay()
  if (!NativeBattle) NativeBattle=UStarfortBattleScreen::StaticClass();
  BattleScreen=CreateWidget<UStarfortBattleScreen>(this,NativeBattle);
  if(BattleScreen)
+ { 
   BattleScreen->OnActionRequested.AddUniqueDynamic(this,&AStarfortBattleController::ActionRequested);
+  BattleScreen->OnRetryRequested.AddUniqueDynamic(this,&AStarfortBattleController::RefreshBattle);
+ }
 
  TSubclassOf<UStarfortCampaignScreen> NativeCampaign=CampaignScreenClass;
  if (!NativeCampaign) NativeCampaign=UStarfortCampaignScreen::StaticClass();
@@ -69,6 +79,39 @@ void AStarfortBattleController::BeginPlay()
  OpenCampaign();
  RefreshBattle();
 }
+void AStarfortBattleController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+ // A persistent GameInstance must never keep notifying an old level actor.
+ if (Online)
+ {
+  Online->OnProgressReady.RemoveDynamic(this,&AStarfortBattleController::ProgressReady);
+  Online->OnBattleReady.RemoveDynamic(this,&AStarfortBattleController::TurnReady);
+  Online->OnMissionResult.RemoveDynamic(this,&AStarfortBattleController::MissionFinished);
+  Online->OnFailure.RemoveDynamic(this,&AStarfortBattleController::OnlineFailed);
+  Online->OnSignedOut.RemoveDynamic(this,&AStarfortBattleController::SignedOut);
+ }
+ if (BattleScreen)
+ {
+  BattleScreen->OnActionRequested.RemoveDynamic(this,&AStarfortBattleController::ActionRequested);
+  BattleScreen->OnRetryRequested.RemoveDynamic(this,&AStarfortBattleController::RefreshBattle);
+  BattleScreen->RemoveFromParent();
+  BattleScreen=nullptr;
+ }
+ if (CampaignScreen)
+ {
+  CampaignScreen->OnStageRequested.RemoveDynamic(this,&AStarfortBattleController::StageRequested);
+  CampaignScreen->RemoveFromParent();
+  CampaignScreen=nullptr;
+ }
+ if (Stage)
+ {
+  Stage->ClearBattlePresentation();
+  Stage=nullptr;
+ }
+ Online=nullptr;
+ Super::EndPlay(EndPlayReason);
+}
+
 void AStarfortBattleController::OpenCampaign()
 {
  if(BattleScreen && BattleScreen->IsInViewport()) BattleScreen->RemoveFromParent();
@@ -135,4 +178,6 @@ void AStarfortBattleController::SignedOut()
  if(Stage) Stage->ClearBattlePresentation();
  if(BattleScreen) {BattleScreen->SetWaitingForServer();BattleScreen->RemoveFromParent();}
  if(CampaignScreen) {CampaignScreen->SetWaitingForServer();CampaignScreen->RemoveFromParent();}
+ // On token expiration the player must see login rather than a dead arena.
+ if(GetWorld()) UGameplayStatics::OpenLevel(GetWorld(),TEXT("/Engine/Maps/Entry"));
 }

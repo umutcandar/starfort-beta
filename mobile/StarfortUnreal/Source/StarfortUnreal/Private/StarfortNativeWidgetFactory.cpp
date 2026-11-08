@@ -355,6 +355,7 @@ bool FStarfortNativeWidgetFactory::BuildBattle(UStarfortBattleScreen* Screen)
   UStarfortVisualTheme::EnergyBlue());
  Screen->TxtBattleStatus=NativeUI::NamedValue(Tree,Status,TEXT("SUNUCU"),
   FLinearColor::White);
+ NativeUI::ButtonRow(Tree,Status,Screen->BtnRetry,TEXT("SUNUCUYU YENİLE"));
  NativeUI::AddTextLine(Tree,Bottom,
   TEXT("3D savaş ve efektler için onaylı yüksek kaliteli modeller gerekir."),
   12,FLinearColor(0.73f,0.77f,0.83f,1.f));

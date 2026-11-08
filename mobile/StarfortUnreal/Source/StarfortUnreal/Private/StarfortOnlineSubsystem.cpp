@@ -690,7 +690,13 @@ void UStarfortOnlineSubsystem::TrainHero(const FString& HeroId)
 void UStarfortOnlineSubsystem::SubmitProgressAction(const FString& Action,
  const FString& Target,const FString& Aux)
 {
- if (bProgressPending) return; // never dispatch concurrent mutations
+ if (bProgressPending)
+ {
+  // A silent rejection leaves the UMG command in permanent 'pending' state.
+  // Emit a safe error; never queue or replay an economic mutation.
+  Fail(TEXT("Önceki hesap işlemi devam ediyor. Son durum geldikten sonra tekrar dene."));
+  return;
+ }
  if (Action!=TEXT("get") && Action!=TEXT("mission_start") &&
      Action!=TEXT("mission_turn") && Action!=TEXT("mission_abandon") &&
      Action!=TEXT("hero")) return;

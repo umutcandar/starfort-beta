@@ -36,6 +36,21 @@ void UStarfortVillageScreen::SetWaitingForServer()
  if (BtnUpgrade) BtnUpgrade->SetIsEnabled(false);
 }
 
+void UStarfortVillageScreen::MarkReadOnlyUntilRefresh(const FString& SafeReason)
+{
+ // Preserving the last AUTHENTICATED numbers makes a recoverable connection
+ // drop less destructive. Never allow an upgrade using stale data, and
+ // make their status explicit rather than showing them as live balances.
+ bHasVerifiedVillage=false;
+ bUpgradePending=true;
+ if (BtnUpgrade) BtnUpgrade->SetIsEnabled(false);
+ if (TxtConnectionStatus)
+  TxtConnectionStatus->SetText(FText::FromString(
+   SafeReason.IsEmpty() ? TEXT("Bağlantı kesildi. Kaynaklar son doğrulanmış değerlerdir. Yenile.")
+                        : FString(TEXT("ÇEVRİMDIŞI · "))+SafeReason+
+                          TEXT(" · Gösterilen kaynaklar güncel olmayabilir. Yenile.")));
+}
+
 void UStarfortVillageScreen::ApplyVerifiedVillage(const FStarfortVerifiedVillage& NewSnapshot)
 {
  if (!NewSnapshot.bServerVerified || NewSnapshot.VillageId.IsEmpty() ||
