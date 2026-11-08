@@ -17,6 +17,8 @@ jobs:
         run: |
           python3 mobile/StarfortUnreal/Tools/test_native_mobile.py
           python3 mobile/StarfortUnreal/Tools/test_premium_native_release.py
+          python3 mobile/StarfortUnreal/Tools/test_verified_battle_motion_v79.py
+          python3 mobile/StarfortUnreal/Tools/test_original_battlefield_v79.py
           python3 mobile/StarfortUnreal/Tools/test_fab_character_review.py
           python3 mobile/StarfortUnreal/Tools/fab_character_review.py --contract
           python3 mobile/StarfortUnreal/Tools/audit_public_asset_hygiene.py

@@ -82,6 +82,7 @@ bool FStarfortThreeHeroSceneComponentsTest::RunTest(const FString& Parameters)
  TestNotNull(TEXT("Second weapon"),Stage->HeroWeapon2.Get());
  TestNotNull(TEXT("Third weapon"),Stage->HeroWeapon3.Get());
  TestNotNull(TEXT("Cinema camera"),Stage->CinemaCamera.Get());
+ TestNotNull(TEXT("Enemy attack Niagara component"),Stage->EnemyAttackFX.Get());
  TestFalse(TEXT("No licensed/approved art ships in the source-only test"),
   Stage->HasApprovedStage());
  TestFalse(TEXT("Three-hero formation is not configured without server roster"),
@@ -100,6 +101,8 @@ bool FStarfortServerSafetyDefaultsTest::RunTest(const FString& Parameters)
  TestFalse(TEXT("Untrusted/blank battle is never verified"),Turn.bServerVerified);
  TestEqual(TEXT("No remote room by default"),Turn.RoomId,FString());
  TestEqual(TEXT("No fabricated server damage"),Turn.VerifiedDamageDealt,
+  static_cast<int64>(0));
+ TestEqual(TEXT("No fabricated received damage"),Turn.VerifiedDamageReceived,
   static_cast<int64>(0));
  TestEqual(TEXT("No unsanctioned skills"),Turn.TeamHeroes.Num(),0);
 

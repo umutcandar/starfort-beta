@@ -108,6 +108,7 @@ private:
  FString LastMissionId;
  int32 LastMissionTurn = -1;
  int64 LastEnemyHP = 0;
+ int64 LastPlayerHP = 0;
  TArray<TFunction<void(bool)>> RefreshWaiters;
 
  void WithFreshSession(TFunction<void(bool)> OnReady);

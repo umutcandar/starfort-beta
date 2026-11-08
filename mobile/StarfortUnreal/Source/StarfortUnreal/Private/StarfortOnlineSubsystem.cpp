@@ -162,7 +162,7 @@ void UStarfortOnlineSubsystem::SignOut()
  bVillagePending=false;
  bProgressPending=false;
  bLastProgressValid=false;
- LastMissionId.Empty(); LastMissionTurn=-1; LastEnemyHP=0;
+ LastMissionId.Empty(); LastMissionTurn=-1; LastEnemyHP=0; LastPlayerHP=0;
  RefreshWaiters.Reset();
  OnSignedOut.Broadcast();
 }
@@ -743,28 +743,35 @@ void UStarfortOnlineSubsystem::AcceptProgressPayload(
   LastMissionId.Empty();
   LastMissionTurn=-1;
   LastEnemyHP=0;
+  LastPlayerHP=0;
   Fail(TEXT("İlerleme sunucusu yanıtı doğrulanamadı. Durum yeniden okunuyor."));
   // GET only. NEVER repeat a mutation with a different idempotency key.
   if (Action!=TEXT("get")) LoadProgress();
   return;
  }
  int64 Damage=0;
+ int64 DamageReceived=0;
  const bool bContinuing=bLastProgressValid && Snapshot.bInMission &&
   LastMissionId==Snapshot.MissionId && Snapshot.MissionTurn>LastMissionTurn;
  if (bContinuing)
+ {
   Damage=FMath::Max<int64>(0,LastEnemyHP-Snapshot.EnemyHP);
+  DamageReceived=FMath::Max<int64>(0,LastPlayerHP-Snapshot.PlayerHP);
+ }
  bLastProgressValid=true;
  if (Snapshot.bInMission)
  {
   LastMissionId=Snapshot.MissionId;
   LastMissionTurn=Snapshot.MissionTurn;
   LastEnemyHP=Snapshot.EnemyHP;
+  LastPlayerHP=Snapshot.PlayerHP;
  }
  else
  {
   LastMissionId.Empty();
   LastMissionTurn=-1;
   LastEnemyHP=0;
+  LastPlayerHP=0;
  }
 
  OnProgressReady.Broadcast(Snapshot);
@@ -778,6 +785,7 @@ void UStarfortOnlineSubsystem::AcceptProgressPayload(
   Battle.EnemyHP=Snapshot.EnemyHP;
   Battle.EnemyMaxHP=Snapshot.EnemyMaxHP;
   Battle.VerifiedDamageDealt=Damage;
+  Battle.VerifiedDamageReceived=DamageReceived;
   Battle.TeamHeroes=Snapshot.Team;
   Battle.SkillCooldownTurns=Snapshot.SkillCooldownTurns;
   Battle.EnemyIntent=Snapshot.EnemyIntent;

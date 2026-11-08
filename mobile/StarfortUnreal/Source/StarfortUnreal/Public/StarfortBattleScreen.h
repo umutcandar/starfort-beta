@@ -19,6 +19,8 @@ struct FStarfortVerifiedBattleTurn
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") int64 EnemyHP = 0;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") int64 EnemyMaxHP = 0;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") int64 VerifiedDamageDealt = 0;
+ /** Derived only from two consecutive authenticated server HP snapshots. */
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") int64 VerifiedDamageReceived = 0;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") TArray<FString> ServerAllowedActions;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") TArray<FString> TeamHeroes;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Battle") TMap<FString,int32> SkillCooldownTurns;

@@ -1,0 +1,42 @@
+name: STARFORT Original 3D Ash Arena GLB
+on:
+  push:
+    paths:
+      - 'mobile/StarfortUnreal/Tools/generate_original_ash_battlefield_v79.py'
+      - '.github/workflows/starfort-original-arena.yml'
+  workflow_dispatch:
+jobs:
+  build-original-arena:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned mesh and texture generators
+        run: python -m pip install numpy==2.3.5 scipy==1.17.0 trimesh==4.11.1 Pillow==12.3.0
+      - name: Generate genuine textured static 3D battlefield GLB
+        run: |
+          python mobile/StarfortUnreal/Tools/generate_original_ash_battlefield_v79.py --out StarfortAshBattlefield_v79.glb
+          test -s StarfortAshBattlefield_v79.glb
+          python - <<'PY'
+          import hashlib, pathlib, trimesh
+          path=pathlib.Path('StarfortAshBattlefield_v79.glb')
+          scene=trimesh.load(str(path),force='scene')
+          meshes=list(scene.geometry.values())
+          triangles=sum(len(m.faces) for m in meshes)
+          assert len(meshes)==95, len(meshes)
+          assert triangles==80000, triangles
+          assert all(m.visual.kind=='texture' for m in meshes)
+          digest=hashlib.sha256(path.read_bytes()).hexdigest()
+          print('STARFORT arena GLB',len(meshes),'meshes',triangles,'triangles',digest)
+          expected='f60553379ebc821eef57e9807a1bdb05dc6a771360f263854bc99214e0555d25'
+          if digest!=expected:
+              raise SystemExit('GLB SHA mismatch: export differs from validated v79 geometry')
+          PY
+      - name: Publish independently generated real GLB as QA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: starfort-original-ash-arena-v79-glb
+          path: StarfortAshBattlefield_v79.glb
+          retention-days: 30
