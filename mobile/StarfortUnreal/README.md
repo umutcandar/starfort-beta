@@ -1,5 +1,13 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## v74 — Four cinematic hero artworks wired into native UMG
+
+The mobile hero selector now has **Rovan, Aldren, Lyra and Vesper** buttons, authored 2D cinematic splash/card/portrait slots and four illustrated skill concepts per hero (16 icons). A selected hero's displayed level and training are taken only from the authenticated **correct** `FStarfortProgressSummary.HeroLevels` entry, never local mock stats. The low-quality old Rovan preview rig is hidden; no false 3D animation button. `Inspect` switches between real imported splash and card artwork.
+
+`Tools/import_cinematic_hero_ui.py` verifies a **separately supplied 28-PNG artwork package** (SHA-256, binary PNG, dimensions) and imports it as `UTexture2D` inside Unreal 5.8, without overwriting other artist assets. Dynamic sprite paths are explicitly cooked by `Config/DefaultGame.ini`. The 28 binary source images are delivered separately in `STARFORT_v74_Unreal_Gorsel_Entegrasyon.zip`; they are **not yet committed as Unreal .uasset files**. See `Docs/CinematicHeroes_v74_TR.md` for the exact extraction/import workflow.
+
+**This is functioning source-level native selection/2D UI integration, not four finished 3D character meshes or a compiled mobile app.** UE Editor compilation and on-phone tests still required.
+
 ## Seven redesigned cinematic 3D heroes — v71 source milestone
 
 The player-facing roster keeps the **same seven server IDs and all saved progress**: Aldren, Lyra, Rovan (the approved gold/blue Royal Gunner), Mira, Doran, Vesper and Eira. `ContentPipeline/hero_redesign_v2.json` defines seven independent cinematic PBR character designs and the exact source-package contract.
