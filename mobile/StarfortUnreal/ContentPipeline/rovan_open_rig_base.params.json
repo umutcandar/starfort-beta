@@ -1,0 +1,53 @@
+{
+  "name": "STARFORT_Rovan_OpenRig_Base_v1",
+  "seed": 117,
+  "gender": 1,
+  "age": 0.56,
+  "muscle": 0.81,
+  "weight": 0.48,
+  "height": 0.65,
+  "proportions": 0.82,
+  "african": 0.05,
+  "asian": 0.04,
+  "caucasian": 0.91,
+  "eyes": "lightblue",
+  "hair": "short04",
+  "hairTint": "#bf9a62",
+  "hairColor": "#b18a50",
+  "facialHair": "stubble",
+  "beardColor": "#4b3b29",
+  "outfit": "none",
+  "top": "fatigue_shirt",
+  "bottom": "fatigue_pants",
+  "shoes": "combat_boots",
+  "accessories": [
+    "tactical_vest",
+    "belt"
+  ],
+  "garmentStyles": {
+    "fatigue_shirt": {
+      "pattern": "solid",
+      "color": "#1d3550",
+      "color2": "#233247"
+    },
+    "fatigue_pants": {
+      "pattern": "solid",
+      "color": "#1b2c46",
+      "color2": "#263b58"
+    },
+    "tactical_vest": {
+      "pattern": "leather",
+      "color": "#ad8550",
+      "color2": "#d1a75d"
+    }
+  },
+  "weapon": "rifle",
+  "detail": "high",
+  "rig": "game",
+  "restPose": "A",
+  "faceBones": true,
+  "animations": true,
+  "faceShapes": true,
+  "speechShapes": false,
+  "expression": "determined"
+}
