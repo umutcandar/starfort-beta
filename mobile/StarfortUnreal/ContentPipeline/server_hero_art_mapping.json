@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "server_authoritative_roster": [
     "aldren",
     "lyra",
@@ -22,7 +22,7 @@
     "special"
   ],
   "design_standard": "Approved cinematic Royal Gunner portrait and high-detail mobile UE rig. Reference art is not a mesh.",
-  "asset_creation_status": "planned_only_no_unreal_assets_exist",
+  "asset_creation_status": "v2_redesign_specs_ready_actual_rigged_uassets_not_yet_produced",
   "heroes": [
     {
       "server_id": "aldren",
@@ -31,7 +31,11 @@
       "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Aldren",
       "rig_socket": "weapon_r",
       "weapon_fx_socket": "muzzle",
-      "artist_approved": false
+      "artist_approved": false,
+      "visual_generation": 2,
+      "import_staging_path": "/Game/Characters/Heroes/v2/aldren",
+      "legacy_web_portrait": "starfort/assets/aldren.webp",
+      "artifact_status": "not_generated"
     },
     {
       "server_id": "lyra",
@@ -40,7 +44,11 @@
       "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Lyra",
       "rig_socket": "weapon_r",
       "weapon_fx_socket": "muzzle",
-      "artist_approved": false
+      "artist_approved": false,
+      "visual_generation": 2,
+      "import_staging_path": "/Game/Characters/Heroes/v2/lyra",
+      "legacy_web_portrait": "starfort/assets/lyra.webp",
+      "artifact_status": "not_generated"
     },
     {
       "server_id": "rovan",
@@ -49,7 +57,11 @@
       "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Rovan",
       "rig_socket": "weapon_r",
       "weapon_fx_socket": "muzzle",
-      "artist_approved": false
+      "artist_approved": false,
+      "visual_generation": 2,
+      "import_staging_path": "/Game/Characters/Heroes/v2/rovan",
+      "legacy_web_portrait": "starfort/assets/rovan.webp",
+      "artifact_status": "not_generated"
     },
     {
       "server_id": "mira",
@@ -58,7 +70,11 @@
       "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Mira",
       "rig_socket": "weapon_r",
       "weapon_fx_socket": "muzzle",
-      "artist_approved": false
+      "artist_approved": false,
+      "visual_generation": 2,
+      "import_staging_path": "/Game/Characters/Heroes/v2/mira",
+      "legacy_web_portrait": "starfort/assets/mira.webp",
+      "artifact_status": "not_generated"
     },
     {
       "server_id": "doran",
@@ -67,7 +83,11 @@
       "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Doran",
       "rig_socket": "weapon_r",
       "weapon_fx_socket": "muzzle",
-      "artist_approved": false
+      "artist_approved": false,
+      "visual_generation": 2,
+      "import_staging_path": "/Game/Characters/Heroes/v2/doran",
+      "legacy_web_portrait": "starfort/assets/doran.webp",
+      "artifact_status": "not_generated"
     },
     {
       "server_id": "vesper",
@@ -76,7 +96,11 @@
       "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Vesper",
       "rig_socket": "weapon_r",
       "weapon_fx_socket": "muzzle",
-      "artist_approved": false
+      "artist_approved": false,
+      "visual_generation": 2,
+      "import_staging_path": "/Game/Characters/Heroes/v2/vesper",
+      "legacy_web_portrait": "starfort/assets/vesper.webp",
+      "artifact_status": "not_generated"
     },
     {
       "server_id": "eira",
@@ -85,7 +109,14 @@
       "planned_uasset_path": "/Game/Characters/Heroes/DA_Hero_Eira",
       "rig_socket": "weapon_r",
       "weapon_fx_socket": "muzzle",
-      "artist_approved": false
+      "artist_approved": false,
+      "visual_generation": 2,
+      "import_staging_path": "/Game/Characters/Heroes/v2/eira",
+      "legacy_web_portrait": "starfort/assets/eira.webp",
+      "artifact_status": "not_generated"
     }
-  ]
+  ],
+  "visual_generation": 2,
+  "legacy_web_portraits_used_as_native_3d": false,
+  "hero_design_source": "ContentPipeline/hero_redesign_v2.json"
 }
