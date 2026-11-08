@@ -454,7 +454,8 @@ bool FStarfortNativeWidgetFactory::BuildHero(UStarfortHeroScreen* Screen)
  }
  UHorizontalBox* Actions=NativeUI::Row(Tree,Right);
  NativeUI::ButtonRow(Tree,Actions,Screen->BtnInspect,TEXT("İNCELE"));
- NativeUI::ButtonRow(Tree,Actions,Screen->BtnFirePreview,TEXT("ÖNİZLE"));
+ NativeUI::ButtonRow(Tree,Actions,Screen->BtnFirePreview,TEXT("3D YAKINDA"));
+ if(Screen->BtnFirePreview) Screen->BtnFirePreview->SetIsEnabled(false);
  NativeUI::ButtonRow(Tree,Actions,Screen->BtnUpgrade,TEXT("EĞİT"));
  NativeUI::ButtonRow(Tree,Actions,Screen->BtnBack,TEXT("GERİ"));
 
