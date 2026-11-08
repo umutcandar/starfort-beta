@@ -1,5 +1,13 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## v77 — FREE AAA Fab character bases, REAL Unreal Editor 3D review scene
+
+We verified **four actual Epic/Fab free Unreal character asset listings** as high-quality 3D starting points: Wraith for Rovan (gunner base), Greystone for Aldren (knight/shield), The Fey for Lyra (caster), Countess for Vesper (dual-blade duelist). These are **NOT final STARFORT character designs**. They require original face/armor/weapon/FX work, artist approval and mobile performance testing.
+
+Once the developer accepts the individual Fab EULAs and adds all four packs **locally** to their Unreal 5.8 project, `Tools/fab_character_review.py --scan` discovers actual rigged `SkeletalMesh` assets under the imported Paragon namespaces and writes candidate paths. The artist verifies the four selected meshes in `Saved/QA/fab_hero_selection.json`; `--stage` then authors a **new isolated real `.umap` review level** using four actual SkeletalMeshActors, lights and a camera. It never marks art production ready, overwrites the gameplay worlds or changes players' progression.
+
+The GitHub repository intentionally contains **no third-party model packages**, since Fab standalone redistribution is not permitted. `Content/Paragon*/` and other licensed incoming content are gitignored; `Tools/audit_public_asset_hygiene.py` rejects accidental public uploads. Offline mocks test source selection, all four real skeletal mesh paths, editor level orchestration and failures. The tools cannot make real meshes appear until Fab packs have been imported in an actual UE Editor, which is not available in this session. Detailed setup: `Docs/FabAAA_RealHeroReview_v77_TR.md`.
+
 ## v76 — Server-verified cinematic battle director and individual hero VFX
 
 Battle effects now have **five bespoke Niagara slots per hero** (strike, guard, feint, rally, special), in addition to existing unique animation montages. `AStarfortBattleStage` attaches shield and rally aura systems to the character's actual skeletal rig instead of a weapon muzzle, while strike, feint, and special FX stay at the corresponding authored weapon socket. The animation/VFX/voice never fall back to the older shared toy animations.
