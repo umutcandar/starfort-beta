@@ -144,9 +144,33 @@ def validate_model(model, *, skinned, require_animations, min_joints=40):
             used_materials.add(primitive.get("material"))
     if tris<=0 or not used_materials:
         raise ValueError("no actual textured skinned triangles" if skinned else "no weapon geometry")
-    clips={str(c.get("name","")).strip().lower() for c in model.get("animations",[])}
+    clips=set()
+    for animation in model.get("animations",[]):
+        name=str(animation.get("name","")).strip().lower()
+        channels=animation.get("channels",[])
+        samplers=animation.get("samplers",[])
+        # Names alone are not motion. There must be actual animated joint
+        # channels backed by at least two keyframes in binary accessors.
+        if not name or not channels or not samplers:
+            continue
+        valid=False
+        for channel in channels:
+            target=channel.get("target",{})
+            if target.get("path") not in {"translation","rotation","scale"}:
+                continue
+            if skinned and target.get("node") not in {
+                    joint for skin in skins for joint in skin.get("joints",[])}:
+                continue
+            sampler=require_index(samplers,channel.get("sampler"),"animation sampler")
+            if accessor_count(model,sampler.get("input"))<2:
+                continue
+            if accessor_count(model,sampler.get("output"))<2:
+                continue
+            valid=True
+            break
+        if valid:clips.add(name)
     missing=set(require_animations)-clips
-    if missing:raise ValueError("missing distinct animations: "+", ".join(sorted(missing)))
+    if missing:raise ValueError("missing real keyed animations: "+", ".join(sorted(missing)))
     return tris,clips
 
 def audit_design(design,root=ROOT):
