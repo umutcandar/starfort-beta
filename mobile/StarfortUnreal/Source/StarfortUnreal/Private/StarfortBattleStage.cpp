@@ -331,6 +331,7 @@ void AStarfortBattleStage::ClearBattlePresentation()
 {
  if(GetWorld()) GetWorldTimerManager().ClearTimer(VerifiedImpactTimer);
  ResetCinematicDirector();
+ ResetVerifiedCombatMotion();
  ++TeamLoadGeneration;
  bTeamLoadPending=false;
  if (TeamLoadHandle.IsValid())
@@ -371,6 +372,7 @@ void AStarfortBattleStage::ClearBattlePresentation()
 void AStarfortBattleStage::BeginPlay()
 {
  Super::BeginPlay();
+ CaptureAuthoredFormation();
  SetAllVisible(false);
  if (!bArtApprovedForMobile)
   UE_LOG(LogTemp,Warning,
@@ -381,6 +383,110 @@ void AStarfortBattleStage::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
  ClearBattlePresentation();
  Super::EndPlay(EndPlayReason);
+}
+
+void AStarfortBattleStage::CaptureAuthoredFormation()
+{
+ // Blueprint designers may place each rig differently. Never hardcode a
+ // movement reset that destroys a licensed artist-authored formation.
+ USkeletalMeshComponent* Rigs[]={
+  HeroRig.Get(),HeroRig2.Get(),HeroRig3.Get()
+ };
+ for (int32 I=0;I<3;++I)
+  if (Rigs[I]) HeroFormation[I]=Rigs[I]->GetRelativeLocation();
+ if (EnemyRig) EnemyFormation=EnemyRig->GetRelativeLocation();
+ bFormationCaptured=true;
+}
+
+void AStarfortBattleStage::ResetVerifiedCombatMotion()
+{
+ HeroMotionElapsed=0.f;
+ HeroMotionDuration=0.f;
+ EnemyMotionElapsed=0.f;
+ EnemyMotionDuration=0.f;
+ for (FVector& Offset:HeroMotionOffsets) Offset=FVector::ZeroVector;
+ if (!bFormationCaptured) return;
+ USkeletalMeshComponent* Rigs[]={
+  HeroRig.Get(),HeroRig2.Get(),HeroRig3.Get()
+ };
+ for (int32 I=0;I<3;++I)
+  if (Rigs[I]) Rigs[I]->SetRelativeLocation(HeroFormation[I]);
+ if (EnemyRig) EnemyRig->SetRelativeLocation(EnemyFormation);
+}
+
+void AStarfortBattleStage::BeginVerifiedCombatMotion(
+ const FString& Action,const FString& SkilledHero)
+{
+ if (!HasApprovedStage() || !bFormationCaptured) return;
+ // Never apply additive offsets: repeated snapshots and reconnects must
+ // not make a hero drift across the 3D battlefield.
+ ResetVerifiedCombatMotion();
+ if (Action==TEXT("strike"))
+ {
+  HeroMotionDuration=0.90f;
+  HeroMotionOffsets[0]=FVector(82.f,-12.f,0.f);
+  HeroMotionOffsets[1]=FVector(110.f,0.f,0.f);
+  HeroMotionOffsets[2]=FVector(82.f,12.f,0.f);
+ }
+ else if (Action==TEXT("feint"))
+ {
+  HeroMotionDuration=0.72f;
+  HeroMotionOffsets[0]=FVector(92.f,46.f,0.f);
+  HeroMotionOffsets[1]=FVector(78.f,-38.f,0.f);
+  HeroMotionOffsets[2]=FVector(112.f,-48.f,0.f);
+ }
+ else if (Action==TEXT("guard"))
+ {
+  HeroMotionDuration=0.65f;
+  for (FVector& Offset:HeroMotionOffsets) Offset=FVector(-20.f,0.f,0.f);
+ }
+ else if (Action==TEXT("rally"))
+ {
+  HeroMotionDuration=0.85f;
+  for (FVector& Offset:HeroMotionOffsets) Offset=FVector(14.f,0.f,0.f);
+ }
+ else if (Action.StartsWith(TEXT("skill:")))
+ {
+  const int32 I=ActiveTeamIds.Find(SkilledHero);
+  if (I==INDEX_NONE || I>2) return;
+  HeroMotionDuration=1.04f;
+  // Melee champions step forward; the marksman holds their rifle position.
+  const float Step=SkilledHero==TEXT("vesper") ? 154.f :
+   SkilledHero==TEXT("doran") ? 110.f :
+   SkilledHero==TEXT("aldren") ? 82.f :
+   SkilledHero==TEXT("rovan") ? 18.f : 34.f;
+  HeroMotionOffsets[I]=FVector(Step,0.f,0.f);
+ }
+}
+
+void AStarfortBattleStage::TickVerifiedCombatMotion(float DeltaSeconds)
+{
+ if (!bFormationCaptured) return;
+ if (HeroMotionDuration>0.f)
+ {
+  HeroMotionElapsed=FMath::Min(HeroMotionElapsed+
+   FMath::Max(0.f,DeltaSeconds),HeroMotionDuration);
+  const float Phase=HeroMotionElapsed/HeroMotionDuration;
+  const float Wave=FMath::Sin(PI*Phase);
+  USkeletalMeshComponent* Rigs[]={
+   HeroRig.Get(),HeroRig2.Get(),HeroRig3.Get()
+  };
+  for (int32 I=0;I<3;++I)
+   if (Rigs[I])
+    Rigs[I]->SetRelativeLocation(HeroFormation[I]+HeroMotionOffsets[I]*Wave);
+  if (HeroMotionElapsed>=HeroMotionDuration)
+   HeroMotionDuration=0.f;
+ }
+ if (EnemyMotionDuration>0.f && EnemyRig)
+ {
+  EnemyMotionElapsed=FMath::Min(EnemyMotionElapsed+
+   FMath::Max(0.f,DeltaSeconds),EnemyMotionDuration);
+  const float Phase=EnemyMotionElapsed/EnemyMotionDuration;
+  EnemyRig->SetRelativeLocation(EnemyFormation+
+   FVector(36.f,0.f,0.f)*FMath::Sin(PI*Phase));
+  if (EnemyMotionElapsed>=EnemyMotionDuration)
+   EnemyMotionDuration=0.f;
+ }
 }
 
 void AStarfortBattleStage::ResetCinematicDirector()
@@ -395,6 +501,7 @@ void AStarfortBattleStage::ResetCinematicDirector()
 void AStarfortBattleStage::Tick(float DeltaTime)
 {
  Super::Tick(DeltaTime);
+ TickVerifiedCombatMotion(DeltaTime);
  if(CameraBeatSeconds>0.f)
  {
   CameraBeatSeconds=FMath::Max(0.f,CameraBeatSeconds-DeltaTime);
@@ -473,6 +580,13 @@ void AStarfortBattleStage::PlayDelayedVerifiedImpact(
   return;
  if(ImpactSystem && ConfirmedImpactFX)
   ConfirmedImpactFX->Activate(true);
+ // Enemy recoil, sound and hit montage are triggered by a strictly
+ // positive server-confirmed hit; no locally predicted enemy health.
+ EnemyMotionElapsed=0.f;
+ EnemyMotionDuration=0.44f;
+ if (ConfirmedEnemyImpactSound && EnemyRig)
+  UGameplayStatics::PlaySoundAtLocation(
+   this,ConfirmedEnemyImpactSound,EnemyRig->GetComponentLocation());
  if(EnemyHitMontage && EnemyRig)
   if(UAnimInstance* EnemyAnim=EnemyRig->GetAnimInstance())
    EnemyAnim->Montage_Play(EnemyHitMontage);
@@ -493,6 +607,7 @@ void AStarfortBattleStage::PlayVerifiedPartyAction(
  // the action rather than playing every hero's ultimate or invented damage.
  if(bSkill && !ActiveTeamIds.Contains(SkilledHero)) return;
  BeginCameraBeat(Action,SkilledHero);
+ BeginVerifiedCombatMotion(Action,SkilledHero);
 
  USkeletalMeshComponent* Rigs[]={HeroRig.Get(),HeroRig2.Get(),HeroRig3.Get()};
  UNiagaraComponent* WeaponFX[]={
