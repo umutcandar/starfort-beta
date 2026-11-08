@@ -636,7 +636,6 @@ class NativeSmoke(unittest.TestCase):
                 "import_asset_tasks(tasks)",
                 "source_kind","cinematic_2d_ui_only",
                 "actual_3d_meshes_created"]:
-   if check=="expected\"":28":continue
    self.assertIn(check,body)
   cfg=(R/"Config/DefaultGame.ini").read_text()
   self.assertIn('/Game/UI/HeroCinematicV1',cfg)
