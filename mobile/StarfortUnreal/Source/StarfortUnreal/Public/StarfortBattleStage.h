@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TimerManager.h"
 #include "UObject/SoftObjectPtr.h"
 #include "StarfortBattleStage.generated.h"
 
@@ -86,6 +87,14 @@ public:
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
  TObjectPtr<UNiagaraComponent> HeroSpecialFX3;
 
+ /** Shield / rally aura attaches to each hero rig, not to the weapon muzzle. */
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
+ TObjectPtr<UNiagaraComponent> HeroAuraFX1;
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
+ TObjectPtr<UNiagaraComponent> HeroAuraFX2;
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
+ TObjectPtr<UNiagaraComponent> HeroAuraFX3;
+
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
  TObjectPtr<UNiagaraComponent> ConfirmedImpactFX;
 
@@ -113,6 +122,10 @@ private:
  bool ConfigureTeam(const TArray<FString>& VerifiedTeam);
  void SetAllVisible(bool bVisible);
  void PlayVerifiedPartyAction(const FString& Action, int64 VerifiedDamage);
+ void BeginCameraBeat(const FString& Action, const FString& SkilledHero);
+ void PlayDelayedVerifiedImpact(uint64 PlaybackGeneration,
+  FString PlaybackRoom, int32 PlaybackTurn);
+ void ResetCinematicDirector();
  void BeginTeamAssetLoad(const FStarfortVerifiedBattleTurn& Snapshot);
  void OnTeamAssetsLoaded(uint64 Generation);
  bool GatherUniqueTeamArtPaths(const TArray<FString>& VerifiedTeam,
@@ -136,4 +149,12 @@ private:
  TArray<FString> PendingTeamIds;
  int32 PendingTurn = -1;
  int32 PendingWave = 0;
+
+ // Purely cosmetic cinematography. No predicted damage, wins or loot.
+ float DesiredArmLength = 1510.f;
+ float DesiredFOV = 43.f;
+ FVector DesiredFocus = FVector::ZeroVector;
+ FRotator DesiredLook = FRotator(-15.f,-10.f,0.f);
+ float CameraBeatSeconds = 0.f;
+ FTimerHandle VerifiedImpactTimer;
 };

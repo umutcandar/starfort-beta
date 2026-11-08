@@ -676,6 +676,43 @@ class NativeSmoke(unittest.TestCase):
   self.assertIn("Missing art files:",body)
   self.assertIn("Different existing artwork would be overwritten",body)
   self.assertIn("real_3d_models_created",body)
+ def test_sinematik_ue_battle_camera_and_verified_impact(self):
+  base=R/"Source/StarfortUnreal"
+  stage=(base/"Private/StarfortBattleStage.cpp").read_text()
+  header=(base/"Public/StarfortBattleStage.h").read_text()
+  combat_h=(base/"Public/StarfortHeroCombatAsset.h").read_text()
+  gate=(base/"Private/StarfortHeroCombatAsset.cpp").read_text()
+  for name in ["StrikeEffect","GuardEffect","FeintEffect","RallyEffect",
+               "SpecialEffect"]:
+   self.assertIn(name,combat_h)
+   self.assertIn(name,gate)
+   self.assertIn("Art->"+name,stage)
+  for field in ["HeroAuraFX1","HeroAuraFX2","HeroAuraFX3",
+                "DesiredArmLength","DesiredFocus","DesiredLook",
+                "DesiredFOV","VerifiedImpactTimer","CameraBeatSeconds"]:
+   self.assertIn(field,header)
+   self.assertIn(field,stage)
+  for marker in ["BeginCameraBeat(Action,SkilledHero)",
+                 "UAssetManager::GetStreamableManager().RequestAsyncLoad(",
+                 "FMath::VInterpTo(","FMath::RInterpTo(",
+                 "FMath::FInterpTo(","ClearTimer(VerifiedImpactTimer)",
+                 "PlaybackGeneration!=TeamLoadGeneration",
+                 "ActiveRoomId!=PlaybackRoom",
+                 "LastConfirmedTurn!=PlaybackTurn",
+                 "FTimerDelegate::CreateUObject(this",
+                 "VerifiedDamage>0","0.28f,false",
+                 "ConfirmedImpactFX->Activate(true)"]:
+   self.assertIn(marker,stage)
+  # The hit must be scheduled, not fired immediately on the input command.
+  start=stage.index("void AStarfortBattleStage::PlayVerifiedPartyAction(")
+  end=stage.index("void AStarfortBattleStage::PresentVerifiedTurn(",start)
+  action=stage[start:end]
+  self.assertNotIn("ConfirmedImpactFX->Activate(true)",action)
+  self.assertIn("SetTimer(",action)
+  self.assertIn("if(bSkill && !ActiveTeamIds.Contains(SkilledHero)) return;",action)
+  self.assertIn("if (bSkill && ActiveTeamIds[I]!=SkilledHero) continue;",action)
+  self.assertNotIn("VerifiedShotMontage",action)
+  self.assertNotIn("LoadSynchronous()",action)
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))

@@ -1,5 +1,13 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## v76 — Server-verified cinematic battle director and individual hero VFX
+
+Battle effects now have **five bespoke Niagara slots per hero** (strike, guard, feint, rally, special), in addition to existing unique animation montages. `AStarfortBattleStage` attaches shield and rally aura systems to the character's actual skeletal rig instead of a weapon muzzle, while strike, feint, and special FX stay at the corresponding authored weapon socket. The animation/VFX/voice never fall back to the older shared toy animations.
+
+The 3D scene camera smoothly interpolates **field of view, spring arm distance, focus point and angle** for guarded stances, three-hero rally framing and hero-specific ultimate shots (including Rovan, Aldren and Vesper). A **server-confirmed hit** produces enemy impact Niagara and montage after a 0.28s cosmetic beat, not immediately after a button press. Timers are cancelled on room/account/team changes and stale callbacks reject mismatched turn/room/generation; unknown action strings are ignored. The same authenticated server still controls damage and victory.
+
+**These are source-code improvements only:** no real 3D hero production meshes, Niagara UAssets, UE Editor builds, physical mobile tests or app delivery are represented as complete. The art-quality gate becomes stricter (five actual authored FX assets required) and cannot be faked with 2D hero PNGs. See `Docs/CinematicBattleDirector_v76_TR.md`.
+
 ## v75 — Safe one-command cinematic asset install and async UI textures
 
 The original v74 **28-PNG binary ZIP** has now been checked against its SHA-256 manifest and verified as genuine decodable PNG art. New `Tools/install_cinematic_hero_art.py` finds the ZIP in `~/Downloads`, validates every image's manifest identity, SHA-256, PNG CRC/IEND, size and safe paths, and copies the originals into `ContentPipeline/Incoming` **without overwriting an artist's existing different file**. Then use `python3 Tools/import_cinematic_hero_ui.py --check` and the actual Unreal Editor import.
