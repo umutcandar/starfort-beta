@@ -165,7 +165,8 @@ void AStarfortBattleStage::BeginTeamAssetLoad(
  TArray<FSoftObjectPath> ToLoad;
  if (!GatherUniqueTeamArtPaths(Snapshot.TeamHeroes, ToLoad))
  {
-  SetAllVisible(false);
+  // Never keep a previous player's team selected after a failed art lookup.
+  ClearBattlePresentation();
   UE_LOG(LogTemp, Warning,
    TEXT("STARFORT: awaiting licensed team rigs / enemy mesh and art approval"));
   return;
