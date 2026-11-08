@@ -64,6 +64,10 @@ void AStarfortMobilePlayerController::ShowHeroScreen()
   ActiveHeroScreen->OnHeroSelected.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleHeroSelection);
  }
  if(!ActiveHeroScreen->IsInViewport()) ActiveHeroScreen->AddToViewport();
+ // The old unapproved Rovan showroom model must not masquerade as the
+ // redesigned cinematic character while the UI uses 2D gallery artwork.
+ if(ARoyalGunnerPreviewPawn* OldGunner=Cast<ARoyalGunnerPreviewPawn>(GetPawn()))
+  OldGunner->SetActorHiddenInGame(true);
  SetInputMode(FInputModeGameAndUI());
  ActiveHeroScreen->SetWaitingForServer();
 }
@@ -75,15 +79,15 @@ void AStarfortMobilePlayerController::HideHeroScreen()
 }
 void AStarfortMobilePlayerController::HandleFirePreview()
 {
- if(ARoyalGunnerPreviewPawn* Gunner=Cast<ARoyalGunnerPreviewPawn>(GetPawn()))
-  if(ActiveHeroScreen && ActiveHeroScreen->GetSelectedHeroId()==TEXT("rovan"))
-   Gunner->FireEnergyCannon(); // Don't fake another character firing Rovan's rifle.
+ // No physically-real 3D rig has passed quality approval. Do not launch the
+ // previous low-fidelity Rovan muzzle FX for any redesigned hero.
+ if(ActiveHeroScreen && ActiveHeroScreen->TxtHeroArtStatus)
+  ActiveHeroScreen->TxtHeroArtStatus->SetText(FText::FromString(
+   TEXT("Sinematik 3D savaş animasyonları henüz hazırlanmadı")));
 }
 void AStarfortMobilePlayerController::HandleInspectPreview()
 {
- if(ARoyalGunnerPreviewPawn* Gunner=Cast<ARoyalGunnerPreviewPawn>(GetPawn()))
-  if(ActiveHeroScreen && ActiveHeroScreen->GetSelectedHeroId()==TEXT("rovan"))
-   Gunner->ResetCamera();
+ if(ActiveHeroScreen) ActiveHeroScreen->ToggleHeroArtDetail();
 }
 void AStarfortMobilePlayerController::HandleUpgradeRequested()
 {
