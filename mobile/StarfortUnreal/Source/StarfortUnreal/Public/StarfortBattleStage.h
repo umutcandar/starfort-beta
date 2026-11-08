@@ -98,6 +98,9 @@ public:
 
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
  TObjectPtr<UNiagaraComponent> ConfirmedImpactFX;
+ /** World-space FX for authenticated enemy attacks against the team. */
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
+ TObjectPtr<UNiagaraComponent> EnemyAttackFX;
 
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
  TObjectPtr<USpringArmComponent> CinemaArm;
@@ -123,12 +126,22 @@ public:
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage")
  TObjectPtr<USoundBase> ConfirmedEnemyImpactSound;
 
+ /** Authored opponent counterattack; never play for an unverified health change. */
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage")
+ TObjectPtr<UAnimMontage> EnemyAttackMontage;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage")
+ TObjectPtr<UNiagaraSystem> EnemyAttackSystem;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage")
+ TObjectPtr<USoundBase> EnemyAttackSound;
+
 private:
  bool ConfigureTeam(const TArray<FString>& VerifiedTeam);
  void SetAllVisible(bool bVisible);
  void PlayVerifiedPartyAction(const FString& Action, int64 VerifiedDamage);
  void BeginCameraBeat(const FString& Action, const FString& SkilledHero);
  void PlayDelayedVerifiedImpact(uint64 PlaybackGeneration,
+  FString PlaybackRoom, int32 PlaybackTurn);
+ void PlayDelayedVerifiedCounterattack(uint64 PlaybackGeneration,
   FString PlaybackRoom, int32 PlaybackTurn);
  void ResetCinematicDirector();
  void CaptureAuthoredFormation();
@@ -166,6 +179,7 @@ private:
  FRotator DesiredLook = FRotator(-15.f,-10.f,0.f);
  float CameraBeatSeconds = 0.f;
  FTimerHandle VerifiedImpactTimer;
+ FTimerHandle VerifiedCounterattackTimer;
 
  // These are authored local transforms, captured from the real placed BP stage.
  // Server turn verification precedes every movement. All motion is cosmetic.
@@ -176,5 +190,6 @@ private:
  float HeroMotionDuration = 0.f;
  float EnemyMotionElapsed = 0.f;
  float EnemyMotionDuration = 0.f;
+ FVector EnemyMotionOffset = FVector::ZeroVector;
  bool bFormationCaptured = false;
 };
