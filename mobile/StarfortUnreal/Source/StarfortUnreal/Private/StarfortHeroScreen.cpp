@@ -137,6 +137,7 @@ bool UStarfortHeroScreen::SelectHero(const FString& HeroId)
     HeroId!=TEXT("eira")) return false;
  if(SelectedHeroId==HeroId) return true;
  SelectedHeroId=HeroId;
+ bShowingHeroCard=false;
  SetWaitingForServer();
  RefreshCinematicArt();
  OnHeroSelected.Broadcast(HeroId);
@@ -153,16 +154,20 @@ void UStarfortHeroScreen::RefreshCinematicArt()
  // This MUST NOT be used as a mesh in the 3D battle scene.
  ActiveSplash=nullptr;
  ActivePortrait=nullptr;
+ ActiveCard=nullptr;
  if(ImgHeroSplash) ImgHeroSplash->SetBrushFromTexture(nullptr);
  if(ImgHeroPortrait) ImgHeroPortrait->SetBrushFromTexture(nullptr);
  const FString Base=TEXT("/Game/UI/HeroCinematicV1/");
  const FString Id=SelectedHeroId.Left(1).ToUpper()+SelectedHeroId.Mid(1);
  const FString SplashName=TEXT("T_")+Id+TEXT("_Splash");
  const FString PortraitName=TEXT("T_")+Id+TEXT("_Portrait");
+ const FString CardName=TEXT("T_")+Id+TEXT("_Card");
  const FSoftObjectPath SplashPath(Base+SplashName+TEXT(".")+SplashName);
  const FSoftObjectPath PortraitPath(Base+PortraitName+TEXT(".")+PortraitName);
  ActiveSplash=Cast<UTexture2D>(SplashPath.TryLoad());
  ActivePortrait=Cast<UTexture2D>(PortraitPath.TryLoad());
+ ActiveCard=Cast<UTexture2D>(
+  FSoftObjectPath(Base+CardName+TEXT(".")+CardName).TryLoad());
  if(ActiveSplash && ImgHeroSplash) ImgHeroSplash->SetBrushFromTexture(ActiveSplash,true);
  if(ActivePortrait && ImgHeroPortrait) ImgHeroPortrait->SetBrushFromTexture(ActivePortrait,true);
  UImage* Skills[]={ImgSkill1.Get(),ImgSkill2.Get(),ImgSkill3.Get(),ImgSkill4.Get()};
@@ -183,4 +188,16 @@ void UStarfortHeroScreen::RefreshCinematicArt()
   TxtHeroArtStatus->SetText(FText::FromString(
    ActiveSplash ? TEXT("Sinematik 2D kahraman görseli · 3D model değildir")
                 : TEXT("Sinematik görsel henüz Unreal'a import edilmedi")));
+}
+
+void UStarfortHeroScreen::ToggleHeroArtDetail()
+{
+ if(!ActiveSplash || !ActiveCard || !ImgHeroSplash) return;
+ bShowingHeroCard=!bShowingHeroCard;
+ ImgHeroSplash->SetBrushFromTexture(
+  bShowingHeroCard?ActiveCard.Get():ActiveSplash.Get(),true);
+ if(TxtHeroArtStatus)
+  TxtHeroArtStatus->SetText(FText::FromString(
+   bShowingHeroCard ? TEXT("Kahraman kartı · sinematik 2D konsept")
+                    : TEXT("Tam boy kahraman görseli · 3D model değil")));
 }
