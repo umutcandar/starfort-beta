@@ -26,6 +26,17 @@ class STARFORTUNREAL_API UStarfortHeroCombatAsset : public UPrimaryDataAsset
 public:
  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Identity")
  FName HeroId = NAME_None;
+ /** Only the redesigned cinematic line is accepted. Preserve HeroId for XP. */
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Identity")
+ int32 VisualGeneration = 0;
+
+ /** Legacy web silhouettes, sprite rigs and static GLBs are never native heroes. */
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Art Quality")
+ bool bLegacyPlaceholder = true;
+
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Art Quality")
+ FString VisualReviewId;
+
 
  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character|Mesh")
  TObjectPtr<USkeletalMesh> HeroMesh;
