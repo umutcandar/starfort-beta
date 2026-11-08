@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
 #include "Engine/GameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
 void AStarfortMobilePlayerController::BeginPlay()
 {
@@ -13,7 +14,11 @@ void AStarfortMobilePlayerController::BeginPlay()
  if(!IsLocalController()) return;
  if(UGameInstance* Instance=GetGameInstance())
   Online=Instance->GetSubsystem<UStarfortOnlineSubsystem>();
- if(!Online || !Online->IsSignedIn()) return; // no guest hero trial
+ if(!Online || !Online->IsSignedIn())
+ {
+  if(GetWorld()) UGameplayStatics::OpenLevel(GetWorld(),TEXT("/Engine/Maps/Entry"));
+  return; // no guest hero trial
+ }
  Online->OnProgressReady.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleProgress);
  Online->OnFailure.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleOnlineError);
  Online->OnSignedOut.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleSignedOut);
@@ -105,6 +110,7 @@ void AStarfortMobilePlayerController::HandleSignedOut()
 {
  if(ActiveHeroScreen) ActiveHeroScreen->SetWaitingForServer();
  HideHeroScreen();
+ if(GetWorld()) UGameplayStatics::OpenLevel(GetWorld(),TEXT("/Engine/Maps/Entry"));
 }
 void AStarfortMobilePlayerController::HandleCloseScreen()
 {
