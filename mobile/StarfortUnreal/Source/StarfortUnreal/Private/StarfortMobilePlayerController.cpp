@@ -21,6 +21,27 @@ void AStarfortMobilePlayerController::BeginPlay()
  Online->LoadProgress();
 }
 
+void AStarfortMobilePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+ if (Online)
+ {
+  Online->OnProgressReady.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleProgress);
+  Online->OnFailure.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleOnlineError);
+  Online->OnSignedOut.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleSignedOut);
+ }
+ if (ActiveHeroScreen)
+ {
+  ActiveHeroScreen->OnFirePreviewRequested.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleFirePreview);
+  ActiveHeroScreen->OnInspectRequested.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleInspectPreview);
+  ActiveHeroScreen->OnBackRequested.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleCloseScreen);
+  ActiveHeroScreen->OnUpgradeRequested.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleUpgradeRequested);
+  ActiveHeroScreen->RemoveFromParent();
+  ActiveHeroScreen=nullptr;
+ }
+ Online=nullptr;
+ Super::EndPlay(EndPlayReason);
+}
+
 void AStarfortMobilePlayerController::ShowHeroScreen()
 {
  if(!IsLocalController() || !Online || !Online->IsSignedIn()) return;
