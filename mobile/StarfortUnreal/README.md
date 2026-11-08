@@ -1,5 +1,12 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## Non-blocking three-hero 3D art and real editor QA — v69
+
+Three approved hero Data Assets now load through UE's asynchronous `UAssetManager`/`FStreamableManager` API, not blocking `LoadSynchronous()` on the battle render/game thread. Generation-scoped cancellation and account/room validation reject stale callbacks and suppress historical combat replays. `AStarfortBattleController` no longer duplicates a placed battle actor when a designer assigns a different BP stage subclass.
+
+The source tree now includes **actual Unreal Automation Framework C++ tests** under `STARFORT.Native` plus `Tools/run_editor_qa.py` to run the installed engine and verify its real JSON report. `Tools/editor_visual_preflight.py` runs *inside* the Unreal Editor and deliberately blocks visual release if authentic approved maps, widget assets, 7 licensed rigged hero Data Assets, 18 production art items or real device evidence are missing.
+
+These engine tests are **not executed in GitHub source-only CI** (Unreal Engine and SDKs are absent). The final compiled project, art, animation clips and TestFlight/Android APK remain pending. See `Docs/AsyncBattleArtAndEditorQA_v69_TR.md` for exact testing steps.
 ## Three individually rigged heroes and see-through battle stage — v68
 
 The native battle renderer now supports **three separate skinned heroes**, each bound to the authenticated server roster order and its own weapon mesh, action montages, special Niagara FX and sounds. A named skill plays only on the matching hero. The former full-screen opaque QA battle menu was replaced with a transparent-center HUD so the actual Unreal 3D stage is visible between the top indicators and bottom tactical controls.

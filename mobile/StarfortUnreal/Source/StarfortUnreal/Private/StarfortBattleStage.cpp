@@ -10,6 +10,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"
@@ -122,15 +124,100 @@ UStarfortHeroCombatAsset* AStarfortBattleStage::FindApprovedHero(
  }
  if (!Match || Match->Art.IsNull()) return nullptr;
 
- // Only load the hero named by the authenticated roster. The other four
- // large UE models remain soft references rather than eager map-load assets.
- // In the production UX, prefetch during the battle loading screen to
- // avoid first-use blocking on a low-memory phone.
- UStarfortHeroCombatAsset* Candidate=Match->Art.LoadSynchronous();
+ // Asset streaming has already completed off the game thread. Never invoke
+ // LoadSynchronous while drawing a battle on a mobile GPU.
+ UStarfortHeroCombatAsset* Candidate=Match->Art.Get();
  if (!Candidate || Candidate->HeroId.ToString()!=HeroId ||
      !Candidate->HasProductionReadyGeometryAndMotion())
   return nullptr;
  return Candidate;
+}
+
+bool AStarfortBattleStage::GatherUniqueTeamArtPaths(
+ const TArray<FString>& VerifiedTeam, TArray<FSoftObjectPath>& OutPaths) const
+{
+ OutPaths.Reset();
+ if (!bArtApprovedForMobile || VerifiedTeam.Num()!=3 ||
+     !EnemyRig || !EnemyRig->GetSkeletalMeshAsset() ||
+     EnemyRig->GetSkeletalMeshAsset()->GetRefSkeleton().GetNum()<24)
+  return false;
+ TSet<FString> UniqueHeroes;
+ for (const FString& Id : VerifiedTeam)
+ {
+  if (Id.IsEmpty() || UniqueHeroes.Contains(Id)) return false;
+  UniqueHeroes.Add(Id);
+  const FStarfortHeroArtEntry* Match=nullptr;
+  for (const FStarfortHeroArtEntry& Entry : HeroArtCatalog)
+  {
+   if (Entry.HeroId.ToString()!=Id) continue;
+   if (Match) return false; // Ambiguous duplicate ID is never rendered.
+   Match=&Entry;
+  }
+  if (!Match || Match->Art.IsNull()) return false;
+  OutPaths.AddUnique(Match->Art.ToSoftObjectPath());
+ }
+ return OutPaths.Num()==3;
+}
+
+void AStarfortBattleStage::BeginTeamAssetLoad(
+ const FStarfortVerifiedBattleTurn& Snapshot)
+{
+ TArray<FSoftObjectPath> ToLoad;
+ if (!GatherUniqueTeamArtPaths(Snapshot.TeamHeroes, ToLoad))
+ {
+  // Never keep a previous player's team selected after a failed art lookup.
+  ClearBattlePresentation();
+  UE_LOG(LogTemp, Warning,
+   TEXT("STARFORT: awaiting licensed team rigs / enemy mesh and art approval"));
+  return;
+ }
+ // Cancels any previous callback before announcing a different combat room.
+ ClearBattlePresentation();
+ PendingRoomId=Snapshot.RoomId;
+ PendingTeamIds=Snapshot.TeamHeroes;
+ PendingTurn=Snapshot.Turn;
+ PendingWave=Snapshot.Wave;
+ bTeamLoadPending=true;
+ const uint64 Generation=TeamLoadGeneration;
+ TeamLoadHandle=UAssetManager::GetStreamableManager().RequestAsyncLoad(
+  ToLoad,
+  FStreamableDelegate::CreateUObject(this,
+   &AStarfortBattleStage::OnTeamAssetsLoaded,Generation));
+ if (!TeamLoadHandle.IsValid() && bTeamLoadPending)
+ {
+  bTeamLoadPending=false;
+  UE_LOG(LogTemp, Error,TEXT("STARFORT: async hero asset request failed"));
+ }
+}
+
+void AStarfortBattleStage::OnTeamAssetsLoaded(uint64 Generation)
+{
+ // Network response, map transition or sign-out may have superseded this load.
+ if (Generation!=TeamLoadGeneration || !bTeamLoadPending ||
+     PendingRoomId.IsEmpty() || PendingTeamIds.Num()!=3) return;
+
+ const FString Room=PendingRoomId;
+ const TArray<FString> Team=PendingTeamIds;
+ const int32 Turn=PendingTurn;
+ const int32 Wave=PendingWave;
+ bTeamLoadPending=false;
+ if (!ConfigureTeam(Team))
+ {
+  ClearBattlePresentation();
+  UE_LOG(LogTemp,Warning,
+   TEXT("STARFORT: streaming completed but audited hero asset is incomplete"));
+  return;
+ }
+
+ ActiveRoomId=Room;
+ LastConfirmedTurn=Turn;
+ LastConfirmedWave=Wave;
+ PendingRoomId.Empty();
+ PendingTeamIds.Reset();
+ PendingTurn=-1;
+ PendingWave=0;
+ // An already completed turn must NOT replay its SFX after asynchronous load.
+ UE_LOG(LogTemp,Verbose,TEXT("STARFORT: verified three-hero art stream complete"));
 }
 
 bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
@@ -216,6 +303,17 @@ bool AStarfortBattleStage::HasApprovedStage() const
 
 void AStarfortBattleStage::ClearBattlePresentation()
 {
+ ++TeamLoadGeneration;
+ bTeamLoadPending=false;
+ if (TeamLoadHandle.IsValid())
+ {
+  TeamLoadHandle->CancelHandle();
+  TeamLoadHandle.Reset();
+ }
+ PendingRoomId.Empty();
+ PendingTeamIds.Reset();
+ PendingTurn=-1;
+ PendingWave=0;
  bThreeHeroTeamReady=false;
  ActiveRoomId.Empty();
  ActiveTeamIds.Reset();
@@ -248,6 +346,12 @@ void AStarfortBattleStage::BeginPlay()
  if (!bArtApprovedForMobile)
   UE_LOG(LogTemp,Warning,
    TEXT("STARFORT: three-hero cinematic scene has no approved production art yet."));
+}
+
+void AStarfortBattleStage::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+ ClearBattlePresentation();
+ Super::EndPlay(EndPlayReason);
 }
 
 void AStarfortBattleStage::Tick(float DeltaTime)
@@ -327,31 +431,30 @@ void AStarfortBattleStage::PresentVerifiedTurn(
      Snapshot.Waves<1 || Snapshot.Wave>Snapshot.Waves)
   return;
 
+ // Never play the current server turn while a large rig/texture is loading.
+ // Instead keep the latest snapshot index, so joining mid-fight cannot
+ // replay an old attack when streaming completes.
+ if (bTeamLoadPending)
+ {
+  if (PendingRoomId==Snapshot.RoomId && PendingTeamIds==Snapshot.TeamHeroes)
+  {
+   if (Snapshot.Turn>=PendingTurn)
+   {
+    PendingTurn=Snapshot.Turn;
+    PendingWave=Snapshot.Wave;
+   }
+   return;
+  }
+  BeginTeamAssetLoad(Snapshot); // New room/account invalidates old stream.
+  return;
+ }
+
  const bool bNewRoom=Snapshot.RoomId!=ActiveRoomId;
  const bool bRosterChanged=ActiveTeamIds!=Snapshot.TeamHeroes;
  if (bNewRoom || bRosterChanged || !bThreeHeroTeamReady)
  {
-  if (bNewRoom)
-  {
-   ActiveRoomId=Snapshot.RoomId;
-   LastConfirmedTurn=-1;
-   LastConfirmedWave=0;
-  }
-  if (!ConfigureTeam(Snapshot.TeamHeroes))
-  {
-   // Player can still read server combat HUD, but cinematic models are
-   // deliberately hidden until all three real assets are approved.
-   UE_LOG(LogTemp,Warning,
-    TEXT("STARFORT: three approved hero rigs or socket assets unavailable"));
-   return;
-  }
-  if (bNewRoom && Snapshot.Turn>0)
-  {
-   // Reconnecting mid-battle must not replay an old confirmed skill or hit.
-   LastConfirmedTurn=Snapshot.Turn;
-   LastConfirmedWave=Snapshot.Wave;
-   return;
-  }
+  BeginTeamAssetLoad(Snapshot);
+  return; // OnTeamAssetsLoaded only configures audited rigs. No replay.
  }
  if (!HasApprovedStage() || Snapshot.Turn<=LastConfirmedTurn) return;
 

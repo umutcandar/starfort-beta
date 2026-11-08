@@ -367,7 +367,7 @@ class NativeSmoke(unittest.TestCase):
                "HasConfiguredThreeHeroTeam","ConfigureTeam","FindApprovedHero"]:
    self.assertIn(name,h)
   for token in ["Snapshot.TeamHeroes","ActiveTeamIds!=Snapshot.TeamHeroes",
-                "ConfigureTeam(Snapshot.TeamHeroes)","VerifiedTeam.Num()!=3",
+                "ConfigureTeam(Team)","VerifiedTeam.Num()!=3",
                 "Unique.Contains(HeroId)","FindApprovedHero(HeroId)",
                 "HasProductionReadyGeometryAndMotion()",
                 "Rigs[I]->SetSkeletalMesh(Art->HeroMesh)",
@@ -375,7 +375,7 @@ class NativeSmoke(unittest.TestCase):
                 "DoesSocketExist(Art->WeaponSocket)","DoesSocketExist(Art->ImpactSocket)",
                 "Art->SpecialMontage","ActiveTeamIds[I]!=SkilledHero",
                 "VerifiedDamage>0","ConfirmedImpactFX->Activate(true)",
-                "LastConfirmedTurn=Snapshot.Turn","bNewRoom && Snapshot.Turn>0"]:
+                "LastConfirmedTurn=Snapshot.Turn","OnTeamAssetsLoaded(uint64 Generation)"]:
    self.assertIn(token,cpp)
   self.assertIn("SetAllVisible(false);",cpp)
   self.assertIn("LastConfirmedWave",cpp)
@@ -418,12 +418,93 @@ class NativeSmoke(unittest.TestCase):
                 "TArray<FStarfortHeroArtEntry> HeroArtCatalog",
                 "ClearBattlePresentation"]:
    self.assertIn(token,stage_h)
-  for token in ["Match->Art.IsNull()","Match->Art.LoadSynchronous()",
+  for token in ["Match->Art.IsNull()","Match->Art.Get()",
                 "SetAnimInstanceClass(Art->AnimInstanceClass.Get())",
                 "ClearBattlePresentation()","ActiveHeroArt.Reset()",
                 "SetSkeletalMesh(nullptr)","SetStaticMesh(nullptr)"]:
    self.assertIn(token,stage_cpp)
   self.assertGreaterEqual(controller.count("Stage->ClearBattlePresentation()"),3)
+ def test_mobile_art_loading_is_async_not_a_game_thread_freeze(self):
+  src=R/"Source/StarfortUnreal"
+  h=(src/"Public/StarfortBattleStage.h").read_text()
+  c=(src/"Private/StarfortBattleStage.cpp").read_text()
+  controller=(src/"Private/StarfortBattleController.cpp").read_text()
+  for marker in ["TeamLoadHandle","TeamLoadGeneration",
+                 "BeginTeamAssetLoad","OnTeamAssetsLoaded",
+                 "bTeamLoadPending","PendingTeamIds","PendingTurn",
+                 "EndPlay(const EEndPlayReason::Type EndPlayReason)"]:
+   self.assertIn(marker,h)
+  for marker in ["RequestAsyncLoad(","FStreamableDelegate::CreateUObject(",
+                 "UAssetManager::GetStreamableManager()",
+                 "Match->Art.Get()","CancelHandle()",
+                 "Generation!=TeamLoadGeneration","PendingTurn=Snapshot.Turn",
+                 "PendingWave=Snapshot.Wave","LastConfirmedTurn=Turn",
+                 "ClearBattlePresentation()","ConfigureTeam(Team)"]:
+   self.assertIn(marker,c)
+  self.assertNotIn("LoadSynchronous()",c)
+  self.assertIn("ExactPreferredStage ? ExactPreferredStage : FirstPlacedStage",controller)
+  self.assertIn("ExistingStages>1",controller)
+ def test_real_unreal_editor_automation_tests_exist(self):
+  src=R/"Source/StarfortUnreal/Private/Tests/StarfortNativeAutomationTests.cpp"
+  c=src.read_text()
+  for test in ["STARFORT.Native.Art.StrictHeroAssetGate",
+               "STARFORT.Native.Battle.ThreeSkeletalRigsAndCamera",
+               "STARFORT.Native.Battle.ServerOnlyDefaults"]:
+   self.assertIn(test,c)
+  for important in ["IMPLEMENT_SIMPLE_AUTOMATION_TEST(",
+                    "WITH_DEV_AUTOMATION_TESTS","HeroRig2","HeroRig3",
+                    "HasProductionReadyGeometryAndMotion",
+                    "HasApprovedStage","IsSignedIn()"]:
+   self.assertIn(important,c)
+  self.assertEqual(c.count("{"),c.count("}"))
+ def test_editor_automation_runner_checks_real_reports_not_fake_green(self):
+  import runpy
+  import subprocess
+  runner=R/"Tools/run_editor_qa.py"
+  compile(runner.read_text(encoding="utf-8"),str(runner),"exec")
+  namespace=runpy.run_path(str(runner))
+  required=namespace["REQUIRED"]
+  self.assertEqual(len(required),3)
+  check=namespace["report_result"]
+  good={
+   "succeeded":3,"succeededWithWarnings":0,
+   "failed":0,"notRun":0,"inProcess":0,
+   "tests":[{"fullTestPath":path,"state":"Success","errors":0}
+            for path in sorted(required)],
+  }
+  self.assertEqual(check(good),[])
+  bad=dict(good)
+  bad["tests"]=good["tests"][:-1]
+  self.assertTrue(check(bad),"Missing editor test must fail validation")
+  bad=dict(good)
+  bad["failed"]=1
+  self.assertTrue(check(bad),"Failed engine test must fail validation")
+  bad=dict(good)
+  bad["tests"]=[dict(item) for item in good["tests"]]
+  bad["tests"][0]["state"]="Fail"
+  self.assertTrue(check(bad),"Failed result must fail")
+  dry=subprocess.run(["python3",str(runner),"--dry-run"],
+                     capture_output=True,text=True,check=False)
+  self.assertEqual(dry.returncode,0,dry.stdout+dry.stderr)
+  plan=json.loads(dry.stdout)
+  self.assertFalse(plan["real_unreal_editor_verified"])
+  self.assertIn("Automation RunTest STARFORT.Native;Quit",
+                " ".join(plan["command"]))
+  self.assertIn("-ReportExportPath="," ".join(plan["command"]))
+ def test_unreal_editor_visual_audit_requires_18_real_assets(self):
+  script=R/"Tools/editor_visual_preflight.py"
+  c=script.read_text(encoding="utf-8")
+  compile(c,str(script),"exec")  # Test syntax without fabricating Unreal Editor.
+  for expected in ["import unreal","EditorAssetLibrary.does_asset_exist",
+                   "has_production_ready_geometry_and_motion()",
+                   "from validate_premium_art import validate",
+                   "validate(require_art=True)",
+                   "visual_release_approved","WBP_BattleHUD",
+                   "L_StarfortBattle","required_asset_count",
+                   "raise RuntimeError("]:
+   self.assertIn(expected,c)
+  self.assertIn("editor_content_audited",c)
+  self.assertIn("server_hero_art_mapping.json",c)
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))

@@ -13,6 +13,7 @@ class UNiagaraComponent;
 class UNiagaraSystem;
 class UAnimMontage;
 class UStarfortHeroCombatAsset;
+class FStreamableHandle;
 struct FStarfortVerifiedBattleTurn;
 
 /** Server ID -> softly referenced authored hero art.
@@ -43,6 +44,7 @@ public:
  AStarfortBattleStage();
  virtual void BeginPlay() override;
  virtual void Tick(float DeltaTime) override;
+ virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
  UFUNCTION(BlueprintCallable, Category="STARFORT|Combat")
  void PresentVerifiedTurn(const FStarfortVerifiedBattleTurn& Snapshot);
@@ -124,6 +126,10 @@ private:
  bool ConfigureTeam(const TArray<FString>& VerifiedTeam);
  void SetAllVisible(bool bVisible);
  void PlayVerifiedPartyAction(const FString& Action, int64 VerifiedDamage);
+ void BeginTeamAssetLoad(const FStarfortVerifiedBattleTurn& Snapshot);
+ void OnTeamAssetsLoaded(uint64 Generation);
+ bool GatherUniqueTeamArtPaths(const TArray<FString>& VerifiedTeam,
+  TArray<FSoftObjectPath>& OutPaths) const;
  UStarfortHeroCombatAsset* FindApprovedHero(const FString& HeroId) const;
 
  FString ActiveRoomId;
@@ -133,4 +139,14 @@ private:
  int32 LastConfirmedTurn = -1;
  int32 LastConfirmedWave = 0;
  bool bThreeHeroTeamReady = false;
+
+ // Actual mobile art is streamed in without stalling the game thread.
+ // Each generation rejects late callbacks after a different room/account.
+ TSharedPtr<FStreamableHandle> TeamLoadHandle;
+ uint64 TeamLoadGeneration = 0;
+ bool bTeamLoadPending = false;
+ FString PendingRoomId;
+ TArray<FString> PendingTeamIds;
+ int32 PendingTurn = -1;
+ int32 PendingWave = 0;
 };
