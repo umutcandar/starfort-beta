@@ -16,6 +16,9 @@ jobs:
       - name: Validate native Unreal mobile source constraints (not an Unreal compile)
         run: |
           python3 mobile/StarfortUnreal/Tools/test_native_mobile.py
+          python3 mobile/StarfortUnreal/Tools/test_fab_character_review.py
+          python3 mobile/StarfortUnreal/Tools/fab_character_review.py --contract
+          python3 mobile/StarfortUnreal/Tools/audit_public_asset_hygiene.py
           python3 mobile/StarfortUnreal/Tools/test_cinematic_hero_install.py
           python3 mobile/StarfortUnreal/Tools/test_hero_v2_models.py
           python3 mobile/StarfortUnreal/Tools/validate_hero_v2_models.py --contract-only
