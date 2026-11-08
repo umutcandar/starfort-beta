@@ -9,6 +9,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "UObject/UObjectGlobals.h"
+#include "Animation/AnimMontage.h"
+#include "NiagaraSystem.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
  FStarfortNativeAssetGateTest,
@@ -29,6 +31,34 @@ bool FStarfortNativeAssetGateTest::RunTest(const FString& Parameters)
  Art->HeroId=FName(TEXT("rovan"));
  Art->AuthoredMobileLODCount=3;
  TestFalse(TEXT("Manual flag and LOD claim alone cannot approve missing art"),
+  Art->HasProductionReadyGeometryAndMotion());
+
+ UAnimMontage* Motions[5] = {
+  NewObject<UAnimMontage>(Art),NewObject<UAnimMontage>(Art),
+  NewObject<UAnimMontage>(Art),NewObject<UAnimMontage>(Art),
+  NewObject<UAnimMontage>(Art)
+ };
+ UNiagaraSystem* Effects[5] = {
+  NewObject<UNiagaraSystem>(Art),NewObject<UNiagaraSystem>(Art),
+  NewObject<UNiagaraSystem>(Art),NewObject<UNiagaraSystem>(Art),
+  NewObject<UNiagaraSystem>(Art)
+ };
+ Art->StrikeMontage=Motions[0]; Art->GuardMontage=Motions[1];
+ Art->FeintMontage=Motions[2]; Art->RallyMontage=Motions[3];
+ Art->SpecialMontage=Motions[4];
+ Art->StrikeEffect=Effects[0]; Art->GuardEffect=Effects[1];
+ Art->FeintEffect=Effects[2]; Art->RallyEffect=Effects[3];
+ Art->SpecialEffect=Effects[4];
+ TestTrue(TEXT("Five original motions and effects satisfy uniqueness"),
+  Art->HasDistinctCombatChoreography());
+ Art->GuardMontage=Motions[0];
+ TestFalse(TEXT("Reused generic montage is rejected"),
+  Art->HasDistinctCombatChoreography());
+ Art->GuardMontage=Motions[1];
+ Art->SpecialEffect=Effects[0];
+ TestFalse(TEXT("Reused Niagara system is rejected"),
+  Art->HasDistinctCombatChoreography());
+ TestFalse(TEXT("No real mesh/LOD means no art approval, even with original FX"),
   Art->HasProductionReadyGeometryAndMotion());
  return true;
 }

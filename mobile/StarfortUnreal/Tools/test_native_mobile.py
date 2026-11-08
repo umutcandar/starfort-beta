@@ -339,8 +339,9 @@ class NativeSmoke(unittest.TestCase):
                "SpecialAttackSound","bArtApprovedForMobile","AuthoredMobileLODCount"]:
    self.assertIn(item,h)
   for guard in ["bArtApprovedForMobile","AuthoredMobileLODCount < 3",
-                "GetRefSkeleton().GetNum() < 40","StrikeMontage && GuardMontage",
-                "RallyMontage && SpecialMontage"]:
+                "GetRefSkeleton().GetNum() < 40","HasDistinctCombatChoreography()",
+                "UniqueMotions.Contains(Motion)","UniqueEffects.Contains(Effect)",
+                "HeroMesh->GetLODNum() < AuthoredMobileLODCount"]:
    self.assertIn(guard,cpp)
   manifest=json.loads((R/"ContentPipeline/required_premium_assets.json").read_text())
   hero_ids={"hero_aldren","hero_lyra","royal_gunner","hero_mira",
@@ -416,7 +417,7 @@ class NativeSmoke(unittest.TestCase):
   for token in ["TSubclassOf<UAnimInstance> AnimInstanceClass","SpecialEffect",
                 "BasicAttackSound","SpecialAttackSound"]:
    self.assertIn(token,asset_h)
-  for token in ["!AnimInstanceClass","SpecialEffect &&",
+  for token in ["!AnimInstanceClass","SpecialEffect.Get()",
                 "BasicAttackSound && SpecialAttackSound"]:
    self.assertIn(token,asset_cpp)
   for token in ["FStarfortHeroArtEntry","TSoftObjectPtr<UStarfortHeroCombatAsset>",

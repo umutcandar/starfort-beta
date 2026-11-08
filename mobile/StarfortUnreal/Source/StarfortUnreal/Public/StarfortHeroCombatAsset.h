@@ -96,6 +96,10 @@ public:
  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Art Quality")
  int32 AuthoredMobileLODCount = 0;
 
+ /** Each combat action must have its own authored montage and Niagara system. */
+ UFUNCTION(BlueprintPure, Category="STARFORT|Quality")
+ bool HasDistinctCombatChoreography() const;
+
  UFUNCTION(BlueprintPure, Category="STARFORT|Quality")
  bool HasProductionReadyGeometryAndMotion() const;
 };
