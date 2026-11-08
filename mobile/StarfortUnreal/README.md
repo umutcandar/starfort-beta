@@ -1,5 +1,13 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## Seven redesigned cinematic 3D heroes — v71 source milestone
+
+The player-facing roster keeps the **same seven server IDs and all saved progress**: Aldren, Lyra, Rovan (the approved gold/blue Royal Gunner), Mira, Doran, Vesper and Eira. `ContentPipeline/hero_redesign_v2.json` defines seven independent cinematic PBR character designs and the exact source-package contract.
+
+Native `UStarfortHeroCombatAsset` **refuses all legacy placeholder art**: it needs visual generation 2, independent real-art approval, a rig, five unique character montages, an AnimBP, weapon, Niagara, sound and mobile LODs. The old **shared generic montage fallback** is removed from `AStarfortBattleStage`. `Tools/validate_hero_v2_models.py` inspects actual GLB bytes for real skin weights, keyed animations, embedded PBR textures and 3 LODs; `Tools/stage_hero_v2_in_unreal.py` prepares importing actual, checked packages into isolated Unreal staging folders.
+
+**None of the new real skinned character files have been created yet.** Previous web portrait/sprite files are retained only to avoid breaking the running web client, but are forbidden as native replacement geometry. The connected generation library has no completed 3D assets and the prior external 3D generation was billing-blocked; this repo change does not imply Unreal compilation, art signoff or phone playtest. See `Docs/SevenHero3DReplacement_v71_TR.md`.
+
 ## Native session, navigation and network recovery — v70
 
 Map transitions now detach the Village, Battle and Hero PlayerController delegates from the persistent Supabase GameInstance subsystem, avoiding stale listeners and account-data mixups. Expired sessions in battle/hero worlds route back to the native login entry instead of a blank scene. Verified village resources remain visible **but explicitly stale/read-only** during temporary network failures. Battle UMG offers a `SUNUCUYU YENİLE` control that only fetches current progress (`get`), never repeats an uncertain attack. Pending progress requests now report a recoverable error rather than silently leaving UMG buttons locked. Hero Back can return to the native entry village when a full 3D map has not yet been authored.
