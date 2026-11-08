@@ -79,6 +79,10 @@ public:
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UImage> ImgHeroSplash;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UImage> ImgHeroPortrait;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtHeroArtStatus;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UImage> ImgSkill1;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UImage> ImgSkill2;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UImage> ImgSkill3;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UImage> ImgSkill4;
 
 protected:
  virtual void NativeOnInitialized() override;
@@ -96,6 +100,7 @@ private:
  UPROPERTY(Transient) FString SelectedHeroId=TEXT("rovan");
  UPROPERTY(Transient) TObjectPtr<UTexture2D> ActiveSplash;
  UPROPERTY(Transient) TObjectPtr<UTexture2D> ActivePortrait;
+ UPROPERTY(Transient) TArray<TObjectPtr<UTexture2D>> ActiveSkillIcons;
  UPROPERTY(Transient) bool bHasVerifiedHero = false;
  bool bUpgradePending=false;
 };
