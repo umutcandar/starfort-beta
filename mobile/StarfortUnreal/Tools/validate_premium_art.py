@@ -42,6 +42,13 @@ def validate(require_art=False):
             errors.append(f"{key}: not a proper PBR material")
         if not set(a.get("material_channels",[])).issubset(CHANNELS):
             errors.append(f"{key}: invalid channel")
+        if key in HERO_KEYS:
+            if a.get("visual_generation")!=2:
+                errors.append(f"{key}: old visual generation not allowed")
+            if a.get("legacy_sprite_or_portrait_allowed") is not False:
+                errors.append(f"{key}: legacy WebP/sprite character forbidden")
+            if require_art and not a.get("model_review_id"):
+                errors.append(f"{key}: independent 3D visual review ID missing")
         if kind=="rigged_character":
             if int(a.get("bones",0))<(40 if key in HERO_KEYS else 24):
                 errors.append(f"{key}: insufficient rig")
