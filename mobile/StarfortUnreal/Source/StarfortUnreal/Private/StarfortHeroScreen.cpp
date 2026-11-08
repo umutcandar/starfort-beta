@@ -222,7 +222,7 @@ void UStarfortHeroScreen::OnCinematicArtLoaded(
 {
  // Another account/character/level may have arrived during asset streaming.
  if(RequestGeneration!=CinematicArtLoadGeneration ||
-    RequestedHeroId!=SelectedHeroId || !IsInViewport())
+    RequestedHeroId!=SelectedHeroId)
   return;
  const FString Base=TEXT("/Game/UI/HeroCinematicV1/");
  const FString Id=SelectedHeroId.Left(1).ToUpper()+SelectedHeroId.Mid(1);
