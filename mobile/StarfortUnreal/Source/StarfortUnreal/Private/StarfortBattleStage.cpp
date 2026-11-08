@@ -288,6 +288,7 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
 bool AStarfortBattleStage::HasApprovedStage() const
 {
  if (!bArtApprovedForMobile || !bThreeHeroTeamReady ||
+     !ImpactSystem || !EnemyHitMontage ||
      ActiveTeamIds.Num()!=3 || ActiveHeroArt.Num()!=3 ||
      !EnemyRig || !EnemyRig->GetSkeletalMeshAsset() ||
      EnemyRig->GetSkeletalMeshAsset()->GetRefSkeleton().GetNum()<24)
@@ -447,7 +448,7 @@ void AStarfortBattleStage::BeginCameraBeat(
 }
 
 void AStarfortBattleStage::PlayDelayedVerifiedImpact(
- uint64 PlaybackGeneration,const FString& PlaybackRoom,int32 PlaybackTurn)
+ uint64 PlaybackGeneration,FString PlaybackRoom,int32 PlaybackTurn)
 {
  // A late hit may never leak into a new room/account or duplicate an old turn.
  if(PlaybackGeneration!=TeamLoadGeneration ||
