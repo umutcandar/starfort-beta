@@ -16,6 +16,7 @@ class STARFORTUNREAL_API AStarfortVillageController : public APlayerController
  GENERATED_BODY()
 public:
  virtual void BeginPlay() override;
+ virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
  virtual void OnPossess(APawn* InPawn) override;
 
  UFUNCTION(BlueprintCallable, Category="STARFORT|Village") void OpenVillageScreen();
