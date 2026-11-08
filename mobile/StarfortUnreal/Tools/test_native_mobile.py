@@ -457,6 +457,40 @@ class NativeSmoke(unittest.TestCase):
                     "HasApprovedStage","IsSignedIn()"]:
    self.assertIn(important,c)
   self.assertEqual(c.count("{"),c.count("}"))
+ def test_editor_automation_runner_checks_real_reports_not_fake_green(self):
+  import runpy
+  import subprocess
+  runner=R/"Tools/run_editor_qa.py"
+  compile(runner.read_text(encoding="utf-8"),str(runner),"exec")
+  namespace=runpy.run_path(str(runner))
+  required=namespace["REQUIRED"]
+  self.assertEqual(len(required),3)
+  check=namespace["report_result"]
+  good={
+   "succeeded":3,"succeededWithWarnings":0,
+   "failed":0,"notRun":0,"inProcess":0,
+   "tests":[{"fullTestPath":path,"state":"Success","errors":0}
+            for path in sorted(required)],
+  }
+  self.assertEqual(check(good),[])
+  bad=dict(good)
+  bad["tests"]=good["tests"][:-1]
+  self.assertTrue(check(bad),"Missing editor test must fail validation")
+  bad=dict(good)
+  bad["failed"]=1
+  self.assertTrue(check(bad),"Failed engine test must fail validation")
+  bad=dict(good)
+  bad["tests"]=[dict(item) for item in good["tests"]]
+  bad["tests"][0]["state"]="Fail"
+  self.assertTrue(check(bad),"Failed result must fail")
+  dry=subprocess.run(["python3",str(runner),"--dry-run"],
+                     capture_output=True,text=True,check=False)
+  self.assertEqual(dry.returncode,0,dry.stdout+dry.stderr)
+  plan=json.loads(dry.stdout)
+  self.assertFalse(plan["real_unreal_editor_verified"])
+  self.assertIn("Automation RunTest STARFORT.Native;Quit",
+                " ".join(plan["command"]))
+  self.assertIn("-ReportExportPath="," ".join(plan["command"]))
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))
