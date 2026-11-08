@@ -68,6 +68,19 @@ public:
  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character|Animations")
  TObjectPtr<UAnimMontage> SpecialMontage;
 
+ /** Authored, original Niagara VFX; combat does not fabricate character art. */
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character|Effects")
+ TObjectPtr<UNiagaraSystem> StrikeEffect;
+
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character|Effects")
+ TObjectPtr<UNiagaraSystem> GuardEffect;
+
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character|Effects")
+ TObjectPtr<UNiagaraSystem> FeintEffect;
+
+ UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character|Effects")
+ TObjectPtr<UNiagaraSystem> RallyEffect;
+
  UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character|Effects")
  TObjectPtr<UNiagaraSystem> SpecialEffect;
 
