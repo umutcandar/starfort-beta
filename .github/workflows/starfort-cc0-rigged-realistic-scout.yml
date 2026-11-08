@@ -1,0 +1,60 @@
+name: STARFORT Free Realistic CC0 Rigged Character Audit
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/starfort-cc0-rigged-realistic-scout.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-realistic-cc0-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download publicly listed free CC0 medieval guard GLB
+        shell: bash
+        run: |
+          mkdir -p 3d_scout
+          curl --retry 3 -fL --connect-timeout 15 --max-time 160 \
+            https://vibeassets.io/download/9h7odik5fl \
+            -o 3d_scout/medieval_guard_captain_CC0.glb
+          ls -lah 3d_scout
+          file 3d_scout/medieval_guard_captain_CC0.glb
+      - name: Inspect actual GLB bytes, skins and texture evidence
+        run: |
+          python3 - <<'PY'
+          import json,struct,pathlib
+          p=pathlib.Path('3d_scout/medieval_guard_captain_CC0.glb')
+          b=p.read_bytes()
+          assert b[:4]==b'glTF' and len(b)>100000,'Not real GLB'
+          version,n=struct.unpack_from('<II',b,4)
+          assert version==2 and n==len(b),'Invalid GLB byte count'
+          size,kind=struct.unpack_from('<II',b,12)
+          assert kind==0x4E4F534A
+          d=json.loads(b[20:20+size].decode().strip())
+          skins=d.get('skins',[])
+          bones=max((len(s.get('joints',[])) for s in skins),default=0)
+          mesh=d.get('meshes',[])
+          anim=d.get('animations',[])
+          mats=d.get('materials',[])
+          assert bones>=20 and mesh and anim, 'Not a rigged animated character'
+          print('3D FILE:',len(b),'meshCount',len(mesh),'bones',bones,'animations',len(anim))
+          pathlib.Path('3d_scout/audit.json').write_text(json.dumps({
+              'model':'medieval_guard_captain_CC0',
+              'source':'https://vibeassets.io/a/9h7odik5fl',
+              'license_as_advertised':'CC0',
+              'copyright_verification':'Confirm on source listing before redistribution',
+              'size_bytes':len(b),'bones':bones,'meshes':len(mesh),
+              'animation_clips':len(anim),'materials':len(mats),
+              'ready_for_starfort':False,
+              'why_not_ready':'Not Rovan original, animations do not include combat, not approved/retargeted',
+          },indent=2))
+          PY
+      - name: Share authentic CC0 mesh and structure audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: STARFORT_Medieval_Guard_Captain_CC0_Reference_Only
+          path: 3d_scout/
+          retention-days: 7
+          if-no-files-found: error
