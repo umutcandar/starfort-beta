@@ -19,7 +19,7 @@ void AStarfortBattleController::BeginPlay()
  {
   // Directly opened stages and expired sessions must never show an
   // empty world with no controls. Return to the native account-only entry.
-  if(GetWorld()) UGameplayStatics::OpenLevel(GetWorld(),TEXT("/Engine/Maps/Entry"));
+  if(GetWorld()) UGameplayStatics::OpenLevel(GetWorld(),FName(TEXT("/Engine/Maps/Entry")));
   return;
  }
  Online->OnProgressReady.AddUniqueDynamic(this,&AStarfortBattleController::ProgressReady);
