@@ -102,20 +102,7 @@ public:
  UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="STARFORT|Quality")
  bool bArtApprovedForMobile = false;
 
- /** Legacy director-level motion slots retained for existing stages; per-hero assets
-  * take priority, so named skills will never use another hero's animation.
-  */
- UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage")
- TObjectPtr<UAnimMontage> VerifiedShotMontage;
- UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage")
- TObjectPtr<UAnimMontage> GuardMontage;
- UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage")
- TObjectPtr<UAnimMontage> FeintMontage;
- UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage")
- TObjectPtr<UAnimMontage> RallyMontage;
- UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage")
- TObjectPtr<UAnimMontage> HeroSkillMontage;
-
+ /** No shared legacy combat montages: every hero uses its own motion set. */
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage")
  TObjectPtr<UAnimMontage> EnemyHitMontage;
 
