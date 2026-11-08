@@ -29,7 +29,23 @@ bool UStarfortSceneRouter::OpenIfInstalled(const FString& MapPath)
 }
 bool UStarfortSceneRouter::OpenVillage()
 {
- return OpenIfInstalled(TEXT("/Game/Maps/L_StarfortVillage"));
+ const FString VillageMap=TEXT("/Game/Maps/L_StarfortVillage");
+ if (FPackageName::DoesPackageExist(VillageMap))
+  return OpenIfInstalled(VillageMap);
+
+ // Functional mobile smoke builds use the built-in Entry level and a genuine
+ // native AStarfortVillageGameMode. When authored 3D village art is not yet
+ // cooked, returning from the hero hall must still work without a WebView.
+ const UStarfortOnlineSubsystem* Online=GetGameInstance()
+  ? GetGameInstance()->GetSubsystem<UStarfortOnlineSubsystem>() : nullptr;
+ if (!Online || !Online->IsSignedIn())
+ {
+  OnRouteUnavailable.Broadcast(TEXT("Köye dönmek için tekrar giriş yap."));
+  return false;
+ }
+ if (!GetWorld()) return false;
+ UGameplayStatics::OpenLevel(GetWorld(),FName(TEXT("/Engine/Maps/Entry")));
+ return true;
 }
 bool UStarfortSceneRouter::OpenHeroHall()
 {
