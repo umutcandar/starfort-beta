@@ -202,7 +202,7 @@ class NativeSmoke(unittest.TestCase):
   self.assertIn("ApplyVerifiedRosterLevel",hero)
   self.assertIn("SetWaitingForServer();",hero)
   self.assertIn("Level<1 || Level>20",hero)
-  self.assertIn('TEXT("rovan")',controller)
+  self.assertIn('ActiveHeroScreen->GetSelectedHeroId()',controller)
   self.assertIn('Online->TrainHero(ActiveHeroScreen->GetSelectedHeroId())',controller)
   self.assertIn("bHasVerifiedProgress",controller)
   self.assertIn("CachedHeroLevels",controller)
