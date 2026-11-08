@@ -26,7 +26,7 @@ bool FStarfortNativeAssetGateTest::RunTest(const FString& Parameters)
   Art->HasProductionReadyGeometryAndMotion());
 
  Art->bArtApprovedForMobile=true;
- Art->HeroId=TEXT("rovan");
+ Art->HeroId=FName(TEXT("rovan"));
  Art->AuthoredMobileLODCount=3;
  TestFalse(TEXT("Manual flag and LOD claim alone cannot approve missing art"),
   Art->HasProductionReadyGeometryAndMotion());
@@ -73,11 +73,11 @@ bool FStarfortServerSafetyDefaultsTest::RunTest(const FString& Parameters)
   static_cast<int64>(0));
  TestEqual(TEXT("No unsanctioned skills"),Turn.TeamHeroes.Num(),0);
 
- UStarfortOnlineSubsystem* Online=NewObject<UStarfortOnlineSubsystem>(
-  GetTransientPackage());
- TestNotNull(TEXT("Native online module can construct"),Online);
+ const UStarfortOnlineSubsystem* Online=
+  GetDefault<UStarfortOnlineSubsystem>();
+ TestNotNull(TEXT("Native online default class is registered"),Online);
  if (Online)
-  TestFalse(TEXT("Fresh subsystem has no guest account or access token"),
+  TestFalse(TEXT("Default online session has no guest account or access token"),
    Online->IsSignedIn());
  return true;
 }
