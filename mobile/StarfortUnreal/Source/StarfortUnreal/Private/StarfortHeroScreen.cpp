@@ -165,6 +165,20 @@ void UStarfortHeroScreen::RefreshCinematicArt()
  ActivePortrait=Cast<UTexture2D>(PortraitPath.TryLoad());
  if(ActiveSplash && ImgHeroSplash) ImgHeroSplash->SetBrushFromTexture(ActiveSplash,true);
  if(ActivePortrait && ImgHeroPortrait) ImgHeroPortrait->SetBrushFromTexture(ActivePortrait,true);
+ UImage* Skills[]={ImgSkill1.Get(),ImgSkill2.Get(),ImgSkill3.Get(),ImgSkill4.Get()};
+ ActiveSkillIcons.Reset();
+ for(int32 I=0;I<4;++I)
+ {
+  if(Skills[I]) Skills[I]->SetBrushFromTexture(nullptr);
+  const FString SkillName=FString::Printf(TEXT("T_%s_Skill_%02d"),*Id,I+1);
+  UTexture2D* Texture=Cast<UTexture2D>(
+   FSoftObjectPath(Base+SkillName+TEXT(".")+SkillName).TryLoad());
+  if(Texture)
+  {
+   ActiveSkillIcons.Add(Texture);
+   if(Skills[I]) Skills[I]->SetBrushFromTexture(Texture,true);
+  }
+ }
  if(TxtHeroArtStatus)
   TxtHeroArtStatus->SetText(FText::FromString(
    ActiveSplash ? TEXT("Sinematik 2D kahraman görseli · 3D model değildir")
