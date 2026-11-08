@@ -15,6 +15,7 @@ class STARFORTUNREAL_API AStarfortBattleController : public APlayerController
  GENERATED_BODY()
 public:
  virtual void BeginPlay() override;
+ virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
  UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="STARFORT|Screens")
  TSubclassOf<UStarfortBattleScreen> BattleScreenClass;
  UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category="STARFORT|Screens")
