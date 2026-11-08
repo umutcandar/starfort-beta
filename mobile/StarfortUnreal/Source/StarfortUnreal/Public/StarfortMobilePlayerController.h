@@ -18,6 +18,7 @@ class STARFORTUNREAL_API AStarfortMobilePlayerController : public APlayerControl
 
 public:
  virtual void BeginPlay() override;
+ virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
  UFUNCTION(BlueprintCallable, Category="STARFORT|Hero") void ShowHeroScreen();
  UFUNCTION(BlueprintCallable, Category="STARFORT|Hero") void HideHeroScreen();
  UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="STARFORT|UI")
