@@ -133,7 +133,7 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(png_dimensions_and_integrity(data),(160,180))
         with self.assertRaisesRegex(ValueError,"signature"):
             png_dimensions_and_integrity(b"RIFF0000WEBP"+data[12:])
-        with self.assertRaisesRegex(ValueError,"IEND"):
+        with self.assertRaisesRegex(ValueError,"missing"):
             png_dimensions_and_integrity(data[:-12])
 
 if __name__=="__main__":
