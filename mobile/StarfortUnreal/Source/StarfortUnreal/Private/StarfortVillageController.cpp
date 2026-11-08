@@ -151,10 +151,11 @@ void AStarfortVillageController::HandleVillageSnapshot(const FStarfortVerifiedVi
 }
 void AStarfortVillageController::HandleOnlineFailure(FString SafeReason)
 {
- // A failed upgrade must never optimistically level the building or deduct
- // currency. Force a fresh GET before allowing another mutation.
- if (ActiveVillageScreen) ActiveVillageScreen->SetWaitingForServer();
- UE_LOG(LogTemp, Warning, TEXT("STARFORT native request rejected; awaiting explicit refresh"));
+ // The generic service failure can originate from *hero progression* too.
+ // Do not wipe a valid village whenever some unrelated RPC fails. Keep
+ // the last server values visible but disable stale balance mutations.
+ if (ActiveVillageScreen) ActiveVillageScreen->MarkReadOnlyUntilRefresh(SafeReason);
+ UE_LOG(LogTemp, Warning, TEXT("STARFORT: village put in read-only mode; manual refresh available"));
 }
 void AStarfortVillageController::HandleBuildingTapped(FName BuildingId)
 {
