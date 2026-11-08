@@ -7,7 +7,8 @@ bool UStarfortHeroCombatAsset::HasProductionReadyGeometryAndMotion() const
 {
  // This structural gate complements HUMAN art/lighting/LOD and licence review.
  // A toy mannequin with 40 joints must not pass just because it has a rig.
- if (!bArtApprovedForMobile || HeroId.IsNone() || !HeroMesh || !WeaponMesh ||
+ if (!bArtApprovedForMobile || VisualGeneration!=2 || bLegacyPlaceholder ||
+     VisualReviewId.IsEmpty() || HeroId.IsNone() || !HeroMesh || !WeaponMesh ||
      WeaponSocket.IsNone() || ImpactSocket.IsNone() || !AnimInstanceClass ||
      AuthoredMobileLODCount < 3 ||
      HeroMesh->GetRefSkeleton().GetNum() < 40)
