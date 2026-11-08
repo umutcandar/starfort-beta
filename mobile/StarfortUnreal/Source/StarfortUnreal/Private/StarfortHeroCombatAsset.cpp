@@ -16,6 +16,8 @@ bool UStarfortHeroCombatAsset::HasProductionReadyGeometryAndMotion() const
 
  // The server's five distinct combat actions cannot all use a generic swing.
  return StrikeMontage && GuardMontage && FeintMontage &&
-        RallyMontage && SpecialMontage && SpecialEffect &&
+        RallyMontage && SpecialMontage &&
+        StrikeEffect && GuardEffect && FeintEffect &&
+        RallyEffect && SpecialEffect &&
         BasicAttackSound && SpecialAttackSound;
 }
