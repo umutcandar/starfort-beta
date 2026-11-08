@@ -7,3 +7,9 @@ Saved/
 *.xcodeproj/
 .DS_Store
 __pycache__/
+
+# User-acquired Epic/Fab source assets. Never redistribute in the public repo.
+Content/Paragon*/
+Content/Fab*/
+Content/Marketplace*/
+ContentPipeline/Incoming/
