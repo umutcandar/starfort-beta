@@ -505,6 +505,78 @@ class NativeSmoke(unittest.TestCase):
    self.assertIn(expected,c)
   self.assertIn("editor_content_audited",c)
   self.assertIn("server_hero_art_mapping.json",c)
+ def test_map_transitions_detach_gameinstance_event_delegates(self):
+  root=R/"Source/StarfortUnreal"
+  controllers={
+   "Village":("StarfortVillageController","OnVillageReady","OnSignedIn","OnFailure"),
+   "Battle":("StarfortBattleController","OnBattleReady","OnProgressReady","OnSignedOut"),
+   "Hero":("StarfortMobilePlayerController","OnProgressReady","OnFailure","OnSignedOut"),
+  }
+  for role,(name,*events) in controllers.items():
+   h=(root/"Public"/(name+".h")).read_text()
+   c=(root/"Private"/(name+".cpp")).read_text()
+   self.assertIn("EndPlay(const EEndPlayReason::Type EndPlayReason) override",h,role)
+   self.assertIn("::EndPlay(const EEndPlayReason::Type EndPlayReason)",c,role)
+   self.assertIn("Super::EndPlay(EndPlayReason)",c,role)
+   for event in events:
+    self.assertIn(event+".RemoveDynamic(this,",c,role+" "+event)
+   self.assertIn("RemoveFromParent();",c,role)
+  village=(root/"Private/StarfortVillageController.cpp").read_text()
+  self.assertIn("OnRouteUnavailable.RemoveDynamic",village)
+  self.assertIn("OnBuildingSelected.RemoveDynamic",village)
+  battle=(root/"Private/StarfortBattleController.cpp").read_text()
+  self.assertIn("Stage->ClearBattlePresentation()",battle)
+  hero=(root/"Private/StarfortMobilePlayerController.cpp").read_text()
+  self.assertIn("OnFirePreviewRequested.RemoveDynamic",hero)
+ def test_network_failure_keeps_verified_village_read_only(self):
+  root=R/"Source/StarfortUnreal"
+  h=(root/"Public/StarfortVillageScreen.h").read_text()
+  screen=(root/"Private/StarfortVillageScreen.cpp").read_text()
+  controller=(root/"Private/StarfortVillageController.cpp").read_text()
+  self.assertIn("MarkReadOnlyUntilRefresh",h)
+  start=screen.index("void UStarfortVillageScreen::MarkReadOnlyUntilRefresh(")
+  end=screen.index("void UStarfortVillageScreen::ApplyVerifiedVillage(",start)
+  stale=screen[start:end]
+  self.assertIn("bHasVerifiedVillage=false;",stale)
+  self.assertIn("BtnUpgrade->SetIsEnabled(false)",stale)
+  self.assertIn("güncel olmayabilir",stale)
+  self.assertNotIn("VerifiedSnapshot =",stale)
+  self.assertNotIn("TxtGold->SetText(",stale)
+  self.assertNotIn("TxtWood->SetText(",stale)
+  self.assertIn("MarkReadOnlyUntilRefresh(SafeReason)",controller)
+ def test_manual_combat_retry_only_issues_server_read(self):
+  root=R/"Source/StarfortUnreal"
+  screen_h=(root/"Public/StarfortBattleScreen.h").read_text()
+  screen=(root/"Private/StarfortBattleScreen.cpp").read_text()
+  controller=(root/"Private/StarfortBattleController.cpp").read_text()
+  factory=(root/"Private/StarfortNativeWidgetFactory.cpp").read_text()
+  for symbol in ["OnRetryRequested","BtnRetry","RetryClicked"]:
+   self.assertIn(symbol,screen_h)
+  self.assertIn("OnRetryRequested.Broadcast()",screen)
+  self.assertIn("BtnRetry->OnClicked.AddUniqueDynamic",screen)
+  self.assertIn("OnRetryRequested.AddUniqueDynamic(this,&AStarfortBattleController::RefreshBattle)",controller)
+  self.assertIn("OnRetryRequested.RemoveDynamic(this,&AStarfortBattleController::RefreshBattle)",controller)
+  self.assertIn("Screen->BtnRetry",factory)
+  self.assertIn("SUNUCUYU YENİLE",factory)
+  beginning=controller.index("void AStarfortBattleController::RefreshBattle()")
+  ending=controller.index("void AStarfortBattleController::StageRequested(",beginning)
+  block=controller[beginning:ending]
+  self.assertIn("Online->LoadProgress()",block)
+  self.assertNotIn("SubmitBattleAction",block)
+ def test_expired_account_returns_native_login_and_village_smoke_fallback(self):
+  root=R/"Source/StarfortUnreal"
+  router=(root/"Private/StarfortSceneRouter.cpp").read_text()
+  hero=(root/"Private/StarfortMobilePlayerController.cpp").read_text()
+  battle=(root/"Private/StarfortBattleController.cpp").read_text()
+  entry='FName(TEXT("/Engine/Maps/Entry"))'
+  self.assertIn(entry,router)
+  self.assertIn(entry,hero)
+  self.assertIn(entry,battle)
+  self.assertIn("FPackageName::DoesPackageExist(VillageMap)",router)
+  self.assertIn("OnRouteUnavailable.Broadcast",router)
+  online=(root/"Private/StarfortOnlineSubsystem.cpp").read_text()
+  self.assertIn("Önceki hesap işlemi devam ediyor",online)
+  self.assertIn("Fail(TEXT(",online)
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))
