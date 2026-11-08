@@ -18,6 +18,7 @@ from pathlib import Path
 import struct
 import sys
 import tempfile
+import zlib
 from zipfile import ZipFile, BadZipFile
 
 DEFAULT_ROOT=Path(__file__).resolve().parents[1]
@@ -40,6 +41,44 @@ def expected_name(hero,kind):
     suffix=("Skill_"+kind.split("_",1)[1]
             if kind.startswith("skill_") else kind.capitalize())
     return "T_"+hero.capitalize()+"_"+suffix+".png"
+
+def png_dimensions_and_integrity(data):
+    """Reject fake/truncated PNGs; verify every chunk's CRC before import."""
+    if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise ValueError("missing PNG signature")
+    i=8
+    ihdr=None
+    has_idat=False
+    has_iend=False
+    while i<len(data):
+        if i+12>len(data):
+            raise ValueError("truncated PNG chunk")
+        size=struct.unpack_from(">I",data,i)[0]
+        typ=data[i+4:i+8]
+        stop=i+12+size
+        if size>MAX_FILE or stop>len(data):
+            raise ValueError("invalid PNG chunk length")
+        block=data[i+4:stop-4]
+        claimed=struct.unpack_from(">I",data,stop-4)[0]
+        if zlib.crc32(block)&0xffffffff != claimed:
+            raise ValueError("PNG chunk CRC mismatch")
+        if i==8:
+            if typ!=b"IHDR" or size!=13:
+                raise ValueError("PNG lacks valid IHDR")
+            ihdr=data[i+8:i+8+13]
+        if typ==b"IDAT":has_idat=True
+        if typ==b"IEND":
+            if size!=0 or stop!=len(data):
+                raise ValueError("PNG IEND invalid or trailing bytes")
+            has_iend=True
+            break
+        i=stop
+    if not (has_idat and has_iend and ihdr):
+        raise ValueError("PNG image data/end missing")
+    width,height=struct.unpack_from(">II",ihdr)
+    if width<=0 or height<=0 or width*height>16000000:
+        raise ValueError("PNG has invalid/oversized dimensions")
+    return width,height
 
 def preflight(zip_path,root):
     archive=Path(zip_path)
@@ -98,11 +137,11 @@ def preflight(zip_path,root):
                     errors.append("Manifest filename does not match hero identity")
                     continue
                 data=z.read(filename)
-                if len(data)<1000 or not data.startswith(b"\x89PNG\r\n\x1a\n") or (
-                    len(data)<24 or data[12:16]!=b"IHDR"):
-                    errors.append("Invalid real PNG: "+Path(filename).name)
+                try:
+                    w,h=png_dimensions_and_integrity(data)
+                except ValueError as exc:
+                    errors.append("Invalid real PNG "+Path(filename).name+": "+str(exc))
                     continue
-                w,h=struct.unpack(">II",data[16:24])
                 min_side=128 if key[1] in {"splash","portrait","card"} else 48
                 if w<min_side or h<min_side:
                     errors.append("Insufficient artwork size: "+Path(filename).name)
