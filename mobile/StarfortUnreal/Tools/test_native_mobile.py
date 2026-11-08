@@ -491,6 +491,20 @@ class NativeSmoke(unittest.TestCase):
   self.assertIn("Automation RunTest STARFORT.Native;Quit",
                 " ".join(plan["command"]))
   self.assertIn("-ReportExportPath="," ".join(plan["command"]))
+ def test_unreal_editor_visual_audit_requires_18_real_assets(self):
+  script=R/"Tools/editor_visual_preflight.py"
+  c=script.read_text(encoding="utf-8")
+  compile(c,str(script),"exec")  # Test syntax without fabricating Unreal Editor.
+  for expected in ["import unreal","EditorAssetLibrary.does_asset_exist",
+                   "has_production_ready_geometry_and_motion()",
+                   "from validate_premium_art import validate",
+                   "validate(require_art=True)",
+                   "visual_release_approved","WBP_BattleHUD",
+                   "L_StarfortBattle","required_asset_count",
+                   "raise RuntimeError("]:
+   self.assertIn(expected,c)
+  self.assertIn("editor_content_audited",c)
+  self.assertIn("server_hero_art_mapping.json",c)
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))
