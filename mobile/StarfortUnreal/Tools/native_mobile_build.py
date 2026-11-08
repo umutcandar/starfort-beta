@@ -94,11 +94,15 @@ def build_command(engine_dir, platform_name, profile):
     cmd = [str(run_uat), "BuildCookRun",
            "-project=" + str(PROJECT), "-noP4",
            "-platform=" + ("IOS" if platform_name == "ios" else "Android"),
-           "-clientconfig=Development",
+           "-clientconfig=" + ("Shipping" if profile == "release" else "Development"),
            "-target=StarfortUnreal",
            "-build", "-cook", "-stage", "-package", "-archive",
            "-archivedirectory=" + str(ROOT / "Saved/MobilePackages" / platform_name),
            "-map=" + maps, "-unattended", "-utf8output"]
+    if profile == "release":
+        # Actual store builds must use Shipping and distribution signing.
+        # Art/Editor/device verification remains mandatory independently.
+        cmd.append("-distribution")
     return cmd, run_uat
 
 
