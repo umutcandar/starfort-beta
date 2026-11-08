@@ -14,4 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate native Unreal mobile source constraints (not an Unreal compile)
-        run: python3 mobile/StarfortUnreal/Tools/test_native_mobile.py
+        run: |
+          python3 mobile/StarfortUnreal/Tools/test_native_mobile.py
+          python3 mobile/StarfortUnreal/Tools/test_hero_v2_models.py
+          python3 mobile/StarfortUnreal/Tools/validate_hero_v2_models.py --contract-only
+          python3 mobile/StarfortUnreal/Tools/validate_premium_art.py --schema-only
