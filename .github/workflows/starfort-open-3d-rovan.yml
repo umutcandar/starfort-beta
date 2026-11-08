@@ -1,0 +1,71 @@
+name: STARFORT Real Rigged Rovan 3D Prototype (CC0 MakeHuman)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/starfort-open-3d-rovan.yml'
+      - 'mobile/StarfortUnreal/ContentPipeline/rovan_open_rig_base.params.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  generate-rovan-rig:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - name: Checkout STARFORT (no persistent credentials)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Clone pinned public MIT Ara 3D Gen, WITHOUT any repository credentials
+        run: |
+          git clone -q --filter=blob:none https://github.com/olatunde85/3d-gen.git ara-3d-gen
+          git -C ara-3d-gen checkout --detach de8a4a0c36229fb7235a04d001ff928318ac43ea
+      - name: Install isolated open-source generator and CC0 human assets
+        working-directory: ara-3d-gen
+        run: |
+          npm ci --no-audit --no-fund
+          npm run setup-assets
+      - name: Export actual skinned GLB (not a picture, not AAA final)
+        working-directory: ara-3d-gen
+        run: |
+          mkdir -p ../output3d
+          npm run export -- --params ../mobile/StarfortUnreal/ContentPipeline/rovan_open_rig_base.params.json --detail high --formats glb --out ../output3d
+          ls -lh ../output3d
+      - name: Inspect actual GLB JSON for skinned mesh and animation tracks
+        run: |
+          python3 - <<'PY'
+          import json, struct, pathlib
+          files=list(pathlib.Path('output3d').glob('*.glb'))
+          assert len(files)==1, f'Expected real GLB, got {files}'
+          b=files[0].read_bytes()
+          assert len(b)>40000 and b[:4]==b'glTF'
+          assert struct.unpack_from('<I',b,8)[0]==len(b), 'Broken GLB byte count'
+          size,typ=struct.unpack_from('<II',b,12)
+          assert typ==0x4e4f534a
+          j=json.loads(b[20:20+size].rstrip(b' \\x00'))
+          skins=j.get('skins',[])
+          anims=j.get('animations',[])
+          mesh=j.get('meshes',[])
+          joints=max((len(x.get('joints',[])) for x in skins),default=0)
+          assert joints>=40, f'No full skinned humanoid rig: {joints} joints'
+          assert mesh and any('JOINTS_0' in p.get('attributes',{}) and 'WEIGHTS_0' in p.get('attributes',{})
+            for m in mesh for p in m.get('primitives',[])), 'Skinned vertex data missing'
+          assert len(anims)>5, f'Expected keyed animations, got {len(anims)}'
+          report={'source':'Ara 3D Gen / CC0 MakeHuman', 'is_real_glb':True, 'skins':len(skins),
+                  'bones':joints,'clips':len(anims),'meshes':len(mesh),'bytes':len(b),
+                  'art_approved':False,'unreal_compiled':False,'on_device_tested':False,
+                  'warning':'This is a baseline rigged human, NOT final Royal Gunner gold armor or game build'}
+          pathlib.Path('output3d/rovan_3d_audit.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
+      - name: Upload real rigged source prototype for artist review
+        uses: actions/upload-artifact@v4
+        with:
+          name: STARFORT_Rovan_Real3D_AnimatedBase_NotFinal
+          path: output3d/
+          retention-days: 14
+          if-no-files-found: error
