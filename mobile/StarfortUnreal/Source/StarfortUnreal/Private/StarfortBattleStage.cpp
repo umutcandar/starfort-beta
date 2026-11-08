@@ -247,6 +247,8 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
   HeroSpecialFX1.Get(),HeroSpecialFX2.Get(),HeroSpecialFX3.Get()
  };
  TSet<FString> Unique;
+ TSet<const USkeletalMesh*> UniqueBodyMeshes;
+ TSet<const UStaticMesh*> UniqueWeaponMeshes;
  for (int32 I=0;I<3;++I)
  {
   const FString& HeroId=VerifiedTeam[I];
@@ -255,6 +257,12 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
 
   UStarfortHeroCombatAsset* Art=FindApprovedHero(HeroId);
   if (!Art || !Rigs[I] || !Weapons[I] || !SpecialFX[I]) return false;
+  // Two roster IDs must never hide a duplicated generic character model or weapon.
+  if (UniqueBodyMeshes.Contains(Art->HeroMesh.Get()) ||
+      UniqueWeaponMeshes.Contains(Art->WeaponMesh.Get()))
+   return false;
+  UniqueBodyMeshes.Add(Art->HeroMesh.Get());
+  UniqueWeaponMeshes.Add(Art->WeaponMesh.Get());
 
   // Actual rig and weapon are authored Unreal assets; nothing generated from
   // primitive cubes, UI images or browser screenshots in this path.
@@ -299,6 +307,8 @@ bool AStarfortBattleStage::HasApprovedStage() const
  const UStaticMeshComponent* Weapons[]={
   HeroWeapon.Get(),HeroWeapon2.Get(),HeroWeapon3.Get()
  };
+ TSet<const USkeletalMesh*> SeenBodies;
+ TSet<const UStaticMesh*> SeenWeapons;
  for (int32 I=0;I<3;++I)
  {
   if (!ActiveHeroArt[I] ||
@@ -307,6 +317,12 @@ bool AStarfortBattleStage::HasApprovedStage() const
       Rigs[I]->GetSkeletalMeshAsset()->GetRefSkeleton().GetNum()<40 ||
       !Weapons[I] || !Weapons[I]->GetStaticMesh())
    return false;
+  const USkeletalMesh* Body=Rigs[I]->GetSkeletalMeshAsset();
+  const UStaticMesh* Weapon=Weapons[I]->GetStaticMesh();
+  if (SeenBodies.Contains(Body) || SeenWeapons.Contains(Weapon))
+   return false;
+  SeenBodies.Add(Body);
+  SeenWeapons.Add(Weapon);
  }
  return true;
 }
