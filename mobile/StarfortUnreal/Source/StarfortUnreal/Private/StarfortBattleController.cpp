@@ -40,17 +40,28 @@ void AStarfortBattleController::BeginPlay()
  {
   UClass* Desired=BattleStageClass
    ? BattleStageClass.Get() : AStarfortBattleStage::StaticClass();
+  AStarfortBattleStage* FirstPlacedStage=nullptr;
+  AStarfortBattleStage* ExactPreferredStage=nullptr;
+  int32 ExistingStages=0;
   for (TActorIterator<AStarfortBattleStage> It(GetWorld());It;++It)
   {
-   if (It->IsA(Desired))
-   {
-    Stage=*It;
-    break;
-   }
+   ++ExistingStages;
+   if (!FirstPlacedStage) FirstPlacedStage=*It;
+   if (It->IsA(Desired)) ExactPreferredStage=*It;
   }
+  // A generated .umap can contain the bare C++ stage while a designer
+  // subsequently assigns a BP subclass. Never spawn a second renderer
+  // over that existing scene: the duplicate camera/FX is a real mobile bug.
+  Stage=ExactPreferredStage ? ExactPreferredStage : FirstPlacedStage;
   if (!Stage)
    Stage=GetWorld()->SpawnActor<AStarfortBattleStage>(Desired,
     FVector::ZeroVector,FRotator::ZeroRotator);
+  else if (BattleStageClass && !ExactPreferredStage)
+   UE_LOG(LogTemp,Warning,
+    TEXT("STARFORT: authored stage exists but is not the selected BP class; replace the placed stage instead of duplicating it."));
+  if (ExistingStages>1)
+   UE_LOG(LogTemp,Error,
+    TEXT("STARFORT: multiple battle stage actors found in map; keep only one."));
   if (Stage) SetViewTarget(Stage);
  }
  SetInputMode(FInputModeGameAndUI());
