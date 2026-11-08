@@ -214,6 +214,26 @@ class FabStaging(unittest.TestCase):
             finally:
                 mod.SELECTION=old
 
+    def test_public_repo_guards_raw_fab_asset_paths(self):
+        from audit_public_asset_hygiene import audit_tracked
+        protected=[
+            "mobile/StarfortUnreal/Content/ParagonWraith/Characters/Heroes/Wraith/SK_Wraith.uasset",
+            "mobile/StarfortUnreal/Content/Fab/Heroes/paid_character.uasset",
+            "mobile/StarfortUnreal/Content/Marketplace/AnotherHero.uasset",
+            "mobile/StarfortUnreal/ContentPipeline/Incoming/HeroCinematicV1/T_Rovan_Splash.png",
+        ]
+        self.assertEqual(audit_tracked(protected),protected)
+        safe=[
+            "mobile/StarfortUnreal/ContentPipeline/fab_hero_reference_v1.json",
+            "mobile/StarfortUnreal/Tools/fab_character_review.py",
+            "mobile/StarfortUnreal/Content/Characters/Heroes/OriginalSTARFORT.uasset",
+        ]
+        self.assertEqual(audit_tracked(safe),[])
+        source=(mod.ROOT/".gitignore").read_text()
+        for rule in ("Content/Paragon*/","Content/Fab*/","Content/Marketplace*/",
+                     "ContentPipeline/Incoming/"):
+            self.assertIn(rule,source)
+
     def test_refuse_wrong_pack_or_unsafe_asset_path(self):
         with tempfile.TemporaryDirectory() as td:
             path=Path(td)/"selection.json"
