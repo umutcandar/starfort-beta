@@ -33,6 +33,7 @@ struct FStarfortVerifiedBattleTurn
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStarfortBattleActionIntent, FString, ActionId);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStarfortBattleRetryIntent);
 
 /**
  * Cinematic native battle HUD: UMG overlays a genuine Unreal 3D battle scene.
@@ -55,6 +56,8 @@ public:
 
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Battle")
  FStarfortBattleActionIntent OnActionRequested;
+ UPROPERTY(BlueprintAssignable, Category="STARFORT|Battle")
+ FStarfortBattleRetryIntent OnRetryRequested;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtTurn;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtHeroHP;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtEnemyHP;
@@ -76,6 +79,7 @@ public:
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnSkill1;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnSkill2;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnSkill3;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnRetry;
 
 protected:
  virtual void NativeOnInitialized() override;
@@ -89,6 +93,7 @@ private:
  UFUNCTION() void Skill1Clicked();
  UFUNCTION() void Skill2Clicked();
  UFUNCTION() void Skill3Clicked();
+ UFUNCTION() void RetryClicked();
  bool IsReadyForCommand(const FString& ActionId) const;
  bool IsLocalThrottleElapsed() const;
  FString SkillActionAt(int32 Slot) const;
