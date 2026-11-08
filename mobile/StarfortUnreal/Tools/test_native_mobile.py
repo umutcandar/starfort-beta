@@ -598,7 +598,7 @@ class NativeSmoke(unittest.TestCase):
                  "ActiveCard","ToggleHeroArtDetail","GetSelectedHeroId"]:
    self.assertIn(symbol,h)
   for marker in ["RefreshCinematicArt()","T_Rovan","T_",
-                 "TryLoad()","Sinematik 2D","SetBrushFromTexture",
+                 "RequestAsyncLoad(","Sinematik 2D","SetBrushFromTexture",
                  "OnHeroSelected.Broadcast(HeroId)","bShowingHeroCard"]:
    self.assertIn(marker if marker!="T_Rovan" else "T_",c)
   for marker in ["CachedHeroLevels=Progress.HeroLevels",
@@ -640,6 +640,42 @@ class NativeSmoke(unittest.TestCase):
   cfg=(R/"Config/DefaultGame.ini").read_text()
   self.assertIn('/Game/UI/HeroCinematicV1',cfg)
   self.assertIn('DirectoriesToAlwaysCook',cfg)
+ def test_mobile_cinematic_gallery_does_not_block_on_texture_load(self):
+  src=R/"Source/StarfortUnreal"
+  h=(src/"Public/StarfortHeroScreen.h").read_text()
+  c=(src/"Private/StarfortHeroScreen.cpp").read_text()
+  for marker in ["NativeConstruct() override","NativeDestruct() override",
+                 "CinematicArtLoadHandle","CinematicArtLoadGeneration",
+                 "OnCinematicArtLoaded","CancelCinematicArtLoad"]:
+   self.assertIn(marker,h)
+  for marker in ["UAssetManager::GetStreamableManager().RequestAsyncLoad(",
+                 "FStreamableDelegate::CreateUObject(",
+                 "Generation!=CinematicArtLoadGeneration",
+                 "RequestedHeroId!=SelectedHeroId",
+                 "CinematicArtLoadHandle->CancelHandle()",
+                 "ActiveSkillIcons.Reset()","ResolveObject()",
+                 "bShowingHeroCard&&ActiveCard","LoadedIcons==4"]:
+   self.assertIn(marker,c)
+  self.assertNotIn(".TryLoad()",c)
+  self.assertNotIn("LoadSynchronous()",c)
+  self.assertIn("Sinematik 2D",c)
+ def test_cinematic_installer_rejects_fake_corrupt_or_overwrite(self):
+  import runpy
+  source=R/"Tools/install_cinematic_hero_art.py"
+  body=source.read_text(encoding="utf-8")
+  compile(body,str(source),"exec")
+  module=runpy.run_path(str(source))
+  self.assertEqual(len(module["CANONICAL"]),4)
+  self.assertEqual(len(module["KINDS"]),7)
+  self.assertEqual(module["expected_name"]("rovan","skill_03"),
+   "T_Rovan_Skill_03.png")
+  self.assertEqual(module["expected_name"]("vesper","card"),
+   "T_Vesper_Card.png")
+  self.assertIn("hashlib.sha256(data)",body)
+  self.assertIn("os.replace(name,out)",body)
+  self.assertIn("Missing art files:",body)
+  self.assertIn("Different existing artwork would be overwritten",body)
+  self.assertIn("real_3d_models_created",body)
  def test_no_browser_runtime(self):
   self.assertFalse(any(R.rglob("*.html")))
   self.assertFalse(any(R.rglob("*.js")))

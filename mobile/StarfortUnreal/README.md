@@ -1,5 +1,13 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## v75 — Safe one-command cinematic asset install and async UI textures
+
+The original v74 **28-PNG binary ZIP** has now been checked against its SHA-256 manifest and verified as genuine decodable PNG art. New `Tools/install_cinematic_hero_art.py` finds the ZIP in `~/Downloads`, validates every image's manifest identity, SHA-256, PNG CRC/IEND, size and safe paths, and copies the originals into `ContentPipeline/Incoming` **without overwriting an artist's existing different file**. Then use `python3 Tools/import_cinematic_hero_ui.py --check` and the actual Unreal Editor import.
+
+The native hero UI now calls `UAssetManager::GetStreamableManager().RequestAsyncLoad` for **only the selected character's seven textures**. Hero change or viewport teardown cancels stale loading callbacks; a pending Rovan request can't replace Lyra's portrait. Previously synchronous `TryLoad` is removed to reduce iPhone/Android game-thread stalls.
+
+Additional CI `Tools/test_cinematic_hero_install.py` exercises all 28 installs, SHA and CRC corruption rejection, ZIP path traversal, file clobber prevention and missing art detection; source tests assert runtime async behavior. **No new Unreal `.uasset`, high-fidelity 3D hero rig or compiled APK/IPA is produced here.** See `Docs/CinematicHeroes_v75_InstallAndStreaming_TR.md`.
+
 ## v74 — Four cinematic hero artworks wired into native UMG
 
 The mobile hero selector now has **Rovan, Aldren, Lyra and Vesper** buttons, authored 2D cinematic splash/card/portrait slots and four illustrated skill concepts per hero (16 icons). A selected hero's displayed level and training are taken only from the authenticated **correct** `FStarfortProgressSummary.HeroLevels` entry, never local mock stats. The low-quality old Rovan preview rig is hidden; no false 3D animation button. `Inspect` switches between real imported splash and card artwork.

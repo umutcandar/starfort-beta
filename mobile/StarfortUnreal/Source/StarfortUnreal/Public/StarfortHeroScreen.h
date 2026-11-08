@@ -8,6 +8,7 @@ class UTextBlock;
 class UProgressBar;
 class UImage;
 class UTexture2D;
+class FStreamableHandle;
 
 /**
  * Read-only display snapshot from the authenticated STARFORT backend.
@@ -87,6 +88,8 @@ public:
 
 protected:
  virtual void NativeOnInitialized() override;
+ virtual void NativeConstruct() override;
+ virtual void NativeDestruct() override;
 
 private:
  UFUNCTION() void InspectClicked();
@@ -98,12 +101,16 @@ private:
  UFUNCTION() void LyraClicked();
  UFUNCTION() void VesperClicked();
  void RefreshCinematicArt();
+ void OnCinematicArtLoaded(uint64 RequestGeneration, FString RequestedHeroId);
+ void CancelCinematicArtLoad();
  UPROPERTY(Transient) FString SelectedHeroId=TEXT("rovan");
  UPROPERTY(Transient) TObjectPtr<UTexture2D> ActiveSplash;
  UPROPERTY(Transient) TObjectPtr<UTexture2D> ActivePortrait;
  UPROPERTY(Transient) TObjectPtr<UTexture2D> ActiveCard;
  bool bShowingHeroCard=false;
  UPROPERTY(Transient) TArray<TObjectPtr<UTexture2D>> ActiveSkillIcons;
+ TSharedPtr<FStreamableHandle> CinematicArtLoadHandle;
+ uint64 CinematicArtLoadGeneration=0;
  UPROPERTY(Transient) bool bHasVerifiedHero = false;
  bool bUpgradePending=false;
 };
