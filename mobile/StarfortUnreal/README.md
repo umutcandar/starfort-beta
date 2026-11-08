@@ -1,5 +1,10 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## Native session, navigation and network recovery — v70
+
+Map transitions now detach the Village, Battle and Hero PlayerController delegates from the persistent Supabase GameInstance subsystem, avoiding stale listeners and account-data mixups. Expired sessions in battle/hero worlds route back to the native login entry instead of a blank scene. Verified village resources remain visible **but explicitly stale/read-only** during temporary network failures. Battle UMG offers a `SUNUCUYU YENİLE` control that only fetches current progress (`get`), never repeats an uncertain attack. Pending progress requests now report a recoverable error rather than silently leaving UMG buttons locked. Hero Back can return to the native entry village when a full 3D map has not yet been authored.
+
+Documentation and on-device regression scenarios: `Docs/NativeNavigationAndRecovery_v70_TR.md`. This is native Unreal source only—UE Editor compilation, production art and physical iOS/Android tests remain pending.
 ## Non-blocking three-hero 3D art and real editor QA — v69
 
 Three approved hero Data Assets now load through UE's asynchronous `UAssetManager`/`FStreamableManager` API, not blocking `LoadSynchronous()` on the battle render/game thread. Generation-scoped cancellation and account/room validation reject stale callbacks and suppress historical combat replays. `AStarfortBattleController` no longer duplicates a placed battle actor when a designer assigns a different BP stage subclass.
