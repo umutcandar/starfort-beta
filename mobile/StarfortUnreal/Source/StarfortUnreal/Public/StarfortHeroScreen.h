@@ -51,6 +51,7 @@ public:
  UFUNCTION(BlueprintPure, Category="STARFORT|Hero") bool HasVerifiedHero() const { return bHasVerifiedHero; }
  UFUNCTION(BlueprintPure, Category="STARFORT|Hero") FString GetSelectedHeroId() const { return SelectedHeroId; }
  UFUNCTION(BlueprintCallable, Category="STARFORT|Hero") bool SelectHero(const FString& HeroId);
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Hero") void ToggleHeroArtDetail();
 
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Hero") FStarfortHeroScreenEvent OnInspectRequested;
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Hero") FStarfortHeroScreenEvent OnFirePreviewRequested;
@@ -100,6 +101,8 @@ private:
  UPROPERTY(Transient) FString SelectedHeroId=TEXT("rovan");
  UPROPERTY(Transient) TObjectPtr<UTexture2D> ActiveSplash;
  UPROPERTY(Transient) TObjectPtr<UTexture2D> ActivePortrait;
+ UPROPERTY(Transient) TObjectPtr<UTexture2D> ActiveCard;
+ bool bShowingHeroCard=false;
  UPROPERTY(Transient) TArray<TObjectPtr<UTexture2D>> ActiveSkillIcons;
  UPROPERTY(Transient) bool bHasVerifiedHero = false;
  bool bUpgradePending=false;
