@@ -118,17 +118,17 @@ static UButton* MakeButton(UWidgetTree* Tree,const FString& Label)
  return Btn;
 }
 static void ButtonRow(UWidgetTree* Tree,UHorizontalBox* Row,
- UButton*& OutButton,const FString& Label)
+ TObjectPtr<UButton>& OutButton,const FString& Label)
 {
  OutButton=MakeButton(Tree,Label);
- UHorizontalBoxSlot* Slot=Row->AddChildToHorizontalBox(OutButton);
+ UHorizontalBoxSlot* Slot=Row->AddChildToHorizontalBox(OutButton.Get());
  Slot->SetPadding(FMargin(4.f,4.f));
 }
 static void ButtonColumn(UWidgetTree* Tree,UVerticalBox* Parent,
  UButton*& OutButton,const FString& Label)
 {
  OutButton=MakeButton(Tree,Label);
- Parent->AddChildToVerticalBox(OutButton)->SetPadding(FMargin(2.f,8.f));
+ Parent->AddChildToVerticalBox(OutButton.Get())->SetPadding(FMargin(2.f,8.f));
 }
 static UProgressBar* Bar(UWidgetTree* Tree,UVerticalBox* Parent,
  FLinearColor Color)
