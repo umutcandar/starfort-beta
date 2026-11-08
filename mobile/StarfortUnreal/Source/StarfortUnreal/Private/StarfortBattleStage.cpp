@@ -386,16 +386,8 @@ void AStarfortBattleStage::PlayVerifiedPartyAction(
   else if (Action==TEXT("rally")) Montage=Art->RallyMontage;
   else if (bSkill) Montage=Art->SpecialMontage;
 
-  // Retain legacy director override slots for authored older battle scenes.
-  // Per-hero montage takes priority: no generic animation if a hero is missing.
-  if (!Montage && I==0)
-  {
-   if (Action==TEXT("strike")) Montage=VerifiedShotMontage;
-   else if (Action==TEXT("guard")) Montage=GuardMontage;
-   else if (Action==TEXT("feint")) Montage=FeintMontage;
-   else if (Action==TEXT("rally")) Montage=RallyMontage;
-   else if (bSkill) Montage=HeroSkillMontage;
-  }
+  // The user's redesigned heroes must never silently fall back to an old
+  // generic shot/swing montage: missing authored hero motion means no animation.
 
   if (Montage)
    if (UAnimInstance* Anim=Rigs[I]->GetAnimInstance())
