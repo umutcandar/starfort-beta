@@ -61,7 +61,7 @@ class ServerVerifiedCinematicTests(unittest.TestCase):
     def test_editor_automation_defaults_are_server_only(self):
         tests = self.read("Private/Tests/StarfortNativeAutomationTests.cpp")
         self.assertIn("Turn.VerifiedDamageReceived", tests)
-        self.assertIn("zero unverified incoming damage", tests.lower().replace("no fabricated received damage","zero unverified incoming damage"))
+        self.assertIn('TestEqual(TEXT("No fabricated received damage"),Turn.VerifiedDamageReceived', tests)
         self.assertIn("Enemy attack Niagara component", tests)
 
 
