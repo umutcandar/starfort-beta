@@ -16,7 +16,7 @@ void AStarfortMobilePlayerController::BeginPlay()
   Online=Instance->GetSubsystem<UStarfortOnlineSubsystem>();
  if(!Online || !Online->IsSignedIn())
  {
-  if(GetWorld()) UGameplayStatics::OpenLevel(GetWorld(),TEXT("/Engine/Maps/Entry"));
+  if(GetWorld()) UGameplayStatics::OpenLevel(GetWorld(),FName(TEXT("/Engine/Maps/Entry")));
   return; // no guest hero trial
  }
  Online->OnProgressReady.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleProgress);
