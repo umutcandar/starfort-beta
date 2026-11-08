@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "engine": "Unreal Engine 5.8",
+  "purpose": "license-gated AAA skeletal character reference stage; NOT final STARFORT character art",
+  "never_redistribute_fab_sources": true,
+  "never_mark_production_approved": true,
+  "requires_fab_user_eula_acceptance": true,
+  "does_not_change_backend_roster": true,
+  "review_level": "/Game/Maps/L_StarfortFabCharacterReview",
+  "heroes": [
+    {
+      "hero_id": "rovan",
+      "source_asset": "Epic Games Paragon: Wraith",
+      "source_url": "https://www.fab.com/listings/17e0840f-8651-4933-bd6d-211a34b1dd17",
+      "expected_root": "/Game/ParagonWraith",
+      "source_hero_name": "Wraith",
+      "hero_design_gap": "Wraith is a sci-fi masked sniper, NOT the approved blonde royal gunner; requires new face, gold/blue engraved armor, red cape and original rifle",
+      "art_status": "unacquired_no_unreal_assets",
+      "final_approval": false
+    },
+    {
+      "hero_id": "aldren",
+      "source_asset": "Epic Games Paragon: Greystone",
+      "source_url": "https://www.fab.com/listings/122fd7bf-6f12-4304-a930-cccbbacdaebc",
+      "expected_root": "/Game/ParagonGreystone",
+      "source_hero_name": "Greystone",
+      "hero_design_gap": "Gold/silver knight and shield are closer, but still must be customized to original Ash Warden face, shield silhouette, red cloth and its own effects",
+      "art_status": "unacquired_no_unreal_assets",
+      "final_approval": false
+    },
+    {
+      "hero_id": "lyra",
+      "source_asset": "Epic Games Paragon: The Fey",
+      "source_url": "https://www.fab.com/listings/9afbcde6-4a14-4018-95c3-2f3a2e1da858",
+      "expected_root": "/Game/ParagonTheFey",
+      "source_hero_name": "The Fey",
+      "hero_design_gap": "Forest-green caster animation base only; must be remade as silver-haired celestial sorceress with blue/gold ritual costume and crystal staff",
+      "art_status": "unacquired_no_unreal_assets",
+      "final_approval": false
+    },
+    {
+      "hero_id": "vesper",
+      "source_asset": "Epic Games Paragon: Countess",
+      "source_url": "https://www.fab.com/listings/0bf014eb-f2ed-4029-adda-81a855eb5220",
+      "expected_root": "/Game/ParagonCountess",
+      "source_hero_name": "Countess",
+      "hero_design_gap": "Dual-weapon gothic woman offers high-fidelity starting rig; replace face, costume and dagger identity for original purple-shadow duelist",
+      "art_status": "unacquired_no_unreal_assets",
+      "final_approval": false
+    }
+  ],
+  "scene_purpose": "Unreal Editor-only human visual review, not a fight level, not in packaged mobile build",
+  "licensing": "Fab terms: may use/modify within projects; do not upload raw Epic Paragon assets into public STARFORT repo or redistribute standalone. Check the product EULA at time of acquisition and never use PARAGON trademark to advertise STARFORT.",
+  "next_steps": [
+    "In Epic Fab signed-in account select Add to My Library for four packs",
+    "Use Fab Unreal plugin/Add to Project in a local Unreal Editor 5.8 STARFORT project",
+    "Run Tools/fab_character_review.py --scan inside Unreal Editor to discover real mesh paths",
+    "Review mesh paths in Saved/QA/fab_character_candidates.json, choose one per hero in Saved/QA/fab_hero_selection.json",
+    "Run Tools/fab_character_review.py --stage inside Unreal Editor to author an isolated real-3D preview level",
+    "Replace temporary licensed reference identities with STARFORT-original premium characters, weapons, montages, Niagara and mobile LODs and audit device performance"
+  ]
+}
