@@ -124,7 +124,7 @@ private:
  void PlayVerifiedPartyAction(const FString& Action, int64 VerifiedDamage);
  void BeginCameraBeat(const FString& Action, const FString& SkilledHero);
  void PlayDelayedVerifiedImpact(uint64 PlaybackGeneration,
-  const FString& PlaybackRoom, int32 PlaybackTurn);
+  FString PlaybackRoom, int32 PlaybackTurn);
  void ResetCinematicDirector();
  void BeginTeamAssetLoad(const FStarfortVerifiedBattleTurn& Snapshot);
  void OnTeamAssetsLoaded(uint64 Generation);
