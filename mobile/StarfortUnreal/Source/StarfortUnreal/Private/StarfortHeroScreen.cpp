@@ -5,6 +5,8 @@
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Engine/Texture2D.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 #include "UObject/SoftObjectPath.h"
 #include "Math/UnrealMathUtility.h"
 
@@ -20,8 +22,23 @@ void UStarfortHeroScreen::NativeOnInitialized()
  if (BtnSelectAldren) BtnSelectAldren->OnClicked.AddUniqueDynamic(this,&UStarfortHeroScreen::AldrenClicked);
  if (BtnSelectLyra) BtnSelectLyra->OnClicked.AddUniqueDynamic(this,&UStarfortHeroScreen::LyraClicked);
  if (BtnSelectVesper) BtnSelectVesper->OnClicked.AddUniqueDynamic(this,&UStarfortHeroScreen::VesperClicked);
- RefreshCinematicArt();
  SetWaitingForServer();
+}
+
+void UStarfortHeroScreen::NativeConstruct()
+{
+ Super::NativeConstruct();
+ RefreshCinematicArt();
+}
+
+void UStarfortHeroScreen::NativeDestruct()
+{
+ CancelCinematicArtLoad();
+ ActiveSplash=nullptr;
+ ActivePortrait=nullptr;
+ ActiveCard=nullptr;
+ ActiveSkillIcons.Reset();
+ Super::NativeDestruct();
 }
 
 void UStarfortHeroScreen::SetWaitingForServer()
@@ -148,46 +165,98 @@ void UStarfortHeroScreen::AldrenClicked() { SelectHero(TEXT("aldren")); }
 void UStarfortHeroScreen::LyraClicked() { SelectHero(TEXT("lyra")); }
 void UStarfortHeroScreen::VesperClicked() { SelectHero(TEXT("vesper")); }
 
+void UStarfortHeroScreen::CancelCinematicArtLoad()
+{
+ ++CinematicArtLoadGeneration;
+ if(CinematicArtLoadHandle.IsValid())
+ {
+  CinematicArtLoadHandle->CancelHandle();
+  CinematicArtLoadHandle.Reset();
+ }
+}
+
 void UStarfortHeroScreen::RefreshCinematicArt()
 {
- // These are 2D concept/splash textures for the hero gallery only.
- // This MUST NOT be used as a mesh in the 3D battle scene.
+ // The cinematic PNGs are 2D gallery art, not 3D skeletal meshes.
+ // Loading seven high-resolution textures synchronously when switching
+ // characters could stall the main game thread on low-memory phones.
+ CancelCinematicArtLoad();
  ActiveSplash=nullptr;
  ActivePortrait=nullptr;
  ActiveCard=nullptr;
+ ActiveSkillIcons.Reset();
  if(ImgHeroSplash) ImgHeroSplash->SetBrushFromTexture(nullptr);
  if(ImgHeroPortrait) ImgHeroPortrait->SetBrushFromTexture(nullptr);
+ for(UImage* Image:{ImgSkill1.Get(),ImgSkill2.Get(),ImgSkill3.Get(),ImgSkill4.Get()})
+  if(Image) Image->SetBrushFromTexture(nullptr);
+ if(TxtHeroArtStatus)
+  TxtHeroArtStatus->SetText(FText::FromString(
+   TEXT("Kahraman görselleri yükleniyor · 2D konsept")));
+
  const FString Base=TEXT("/Game/UI/HeroCinematicV1/");
  const FString Id=SelectedHeroId.Left(1).ToUpper()+SelectedHeroId.Mid(1);
- const FString SplashName=TEXT("T_")+Id+TEXT("_Splash");
- const FString PortraitName=TEXT("T_")+Id+TEXT("_Portrait");
- const FString CardName=TEXT("T_")+Id+TEXT("_Card");
- const FSoftObjectPath SplashPath(Base+SplashName+TEXT(".")+SplashName);
- const FSoftObjectPath PortraitPath(Base+PortraitName+TEXT(".")+PortraitName);
- ActiveSplash=Cast<UTexture2D>(SplashPath.TryLoad());
- ActivePortrait=Cast<UTexture2D>(PortraitPath.TryLoad());
- ActiveCard=Cast<UTexture2D>(
-  FSoftObjectPath(Base+CardName+TEXT(".")+CardName).TryLoad());
- if(ActiveSplash && ImgHeroSplash) ImgHeroSplash->SetBrushFromTexture(ActiveSplash,true);
- if(ActivePortrait && ImgHeroPortrait) ImgHeroPortrait->SetBrushFromTexture(ActivePortrait,true);
- UImage* Skills[]={ImgSkill1.Get(),ImgSkill2.Get(),ImgSkill3.Get(),ImgSkill4.Get()};
+ const FString Prefix=TEXT("T_")+Id;
+ TArray<FSoftObjectPath> RequestedAssets;
+ auto MakePath=[&Base](const FString& AssetName)
+ {
+  return FSoftObjectPath(Base+AssetName+TEXT(".")+AssetName);
+ };
+ RequestedAssets.Add(MakePath(Prefix+TEXT("_Splash")));
+ RequestedAssets.Add(MakePath(Prefix+TEXT("_Portrait")));
+ RequestedAssets.Add(MakePath(Prefix+TEXT("_Card")));
+ for(int32 I=1;I<=4;++I)
+  RequestedAssets.Add(MakePath(
+   FString::Printf(TEXT("%s_Skill_%02d"),*Prefix,I)));
+ const uint64 Generation=CinematicArtLoadGeneration;
+ const FString HeroId=SelectedHeroId;
+ CinematicArtLoadHandle=UAssetManager::GetStreamableManager().RequestAsyncLoad(
+  RequestedAssets,FStreamableDelegate::CreateUObject(this,
+   &UStarfortHeroScreen::OnCinematicArtLoaded,Generation,HeroId));
+ if(!CinematicArtLoadHandle.IsValid() && TxtHeroArtStatus)
+  TxtHeroArtStatus->SetText(FText::FromString(
+   TEXT("Unreal görsel yüklemesi başlatılamadı")));
+}
+
+void UStarfortHeroScreen::OnCinematicArtLoaded(
+ uint64 RequestGeneration,FString RequestedHeroId)
+{
+ // Another account/character/level may have arrived during asset streaming.
+ if(RequestGeneration!=CinematicArtLoadGeneration ||
+    RequestedHeroId!=SelectedHeroId || !IsInViewport())
+  return;
+ const FString Base=TEXT("/Game/UI/HeroCinematicV1/");
+ const FString Id=SelectedHeroId.Left(1).ToUpper()+SelectedHeroId.Mid(1);
+ const FString Prefix=TEXT("T_")+Id;
+ auto Resolve=[&Base](const FString& Name)
+ {
+  return Cast<UTexture2D>(
+   FSoftObjectPath(Base+Name+TEXT(".")+Name).ResolveObject());
+ };
+ ActiveSplash=Resolve(Prefix+TEXT("_Splash"));
+ ActivePortrait=Resolve(Prefix+TEXT("_Portrait"));
+ ActiveCard=Resolve(Prefix+TEXT("_Card"));
+ if(ImgHeroSplash) ImgHeroSplash->SetBrushFromTexture(
+  bShowingHeroCard&&ActiveCard?ActiveCard.Get():ActiveSplash.Get(),true);
+ if(ImgHeroPortrait) ImgHeroPortrait->SetBrushFromTexture(ActivePortrait,true);
+ UImage* Images[]={ImgSkill1.Get(),ImgSkill2.Get(),ImgSkill3.Get(),ImgSkill4.Get()};
  ActiveSkillIcons.Reset();
+ int32 LoadedIcons=0;
  for(int32 I=0;I<4;++I)
  {
-  if(Skills[I]) Skills[I]->SetBrushFromTexture(nullptr);
-  const FString SkillName=FString::Printf(TEXT("T_%s_Skill_%02d"),*Id,I+1);
-  UTexture2D* Texture=Cast<UTexture2D>(
-   FSoftObjectPath(Base+SkillName+TEXT(".")+SkillName).TryLoad());
+  UTexture2D* Texture=Resolve(
+   FString::Printf(TEXT("%s_Skill_%02d"),*Prefix,I+1));
   if(Texture)
   {
    ActiveSkillIcons.Add(Texture);
-   if(Skills[I]) Skills[I]->SetBrushFromTexture(Texture,true);
+   ++LoadedIcons;
   }
+  if(Images[I]) Images[I]->SetBrushFromTexture(Texture,true);
  }
  if(TxtHeroArtStatus)
   TxtHeroArtStatus->SetText(FText::FromString(
-   ActiveSplash ? TEXT("Sinematik 2D kahraman görseli · 3D model değildir")
-                : TEXT("Sinematik görsel henüz Unreal'a import edilmedi")));
+   ActiveSplash && ActivePortrait && ActiveCard && LoadedIcons==4
+   ? TEXT("Sinematik 2D sanat yüklendi · 3D model değildir")
+   : TEXT("Kahraman görselleri eksik · 28 PNG Unreal'a import edilmeli")));
 }
 
 void UStarfortHeroScreen::ToggleHeroArtDetail()
