@@ -69,6 +69,38 @@ void AStarfortBattleController::BeginPlay()
  OpenCampaign();
  RefreshBattle();
 }
+void AStarfortBattleController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+ // A persistent GameInstance must never keep notifying an old level actor.
+ if (Online)
+ {
+  Online->OnProgressReady.RemoveDynamic(this,&AStarfortBattleController::ProgressReady);
+  Online->OnBattleReady.RemoveDynamic(this,&AStarfortBattleController::TurnReady);
+  Online->OnMissionResult.RemoveDynamic(this,&AStarfortBattleController::MissionFinished);
+  Online->OnFailure.RemoveDynamic(this,&AStarfortBattleController::OnlineFailed);
+  Online->OnSignedOut.RemoveDynamic(this,&AStarfortBattleController::SignedOut);
+ }
+ if (BattleScreen)
+ {
+  BattleScreen->OnActionRequested.RemoveDynamic(this,&AStarfortBattleController::ActionRequested);
+  BattleScreen->RemoveFromParent();
+  BattleScreen=nullptr;
+ }
+ if (CampaignScreen)
+ {
+  CampaignScreen->OnStageRequested.RemoveDynamic(this,&AStarfortBattleController::StageRequested);
+  CampaignScreen->RemoveFromParent();
+  CampaignScreen=nullptr;
+ }
+ if (Stage)
+ {
+  Stage->ClearBattlePresentation();
+  Stage=nullptr;
+ }
+ Online=nullptr;
+ Super::EndPlay(EndPlayReason);
+}
+
 void AStarfortBattleController::OpenCampaign()
 {
  if(BattleScreen && BattleScreen->IsInViewport()) BattleScreen->RemoveFromParent();
