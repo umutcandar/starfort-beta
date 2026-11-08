@@ -46,6 +46,9 @@ public:
  void ApplyVerifiedVillage(const FStarfortVerifiedVillage& NewSnapshot);
  UFUNCTION(BlueprintCallable, Category="STARFORT|Village")
  void SetWaitingForServer();
+ /** Keep last verified values visible but read-only on network failure. */
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Village")
+ void MarkReadOnlyUntilRefresh(const FString& SafeReason);
  UFUNCTION(BlueprintCallable, Category="STARFORT|Village")
  bool FocusBuilding(FName BuildingId);
  UFUNCTION(BlueprintCallable, Category="STARFORT|Village")
