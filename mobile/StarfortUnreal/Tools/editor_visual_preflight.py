@@ -7,6 +7,7 @@ content browser and planned 18-asset manifest, writes a machine-readable
 report, and FAILS until the mobile art and levels truly exist.
 """
 import json
+import sys
 from pathlib import Path
 import unreal
 
@@ -60,6 +61,7 @@ def audit():
 
     # Source-level licence proofs and real physical phone acceptance remain
     # separate requirements; the Editor content database alone is insufficient.
+    sys.path.insert(0,str(ROOT/"Tools"))
     from validate_premium_art import validate
     source_issues,_=validate(require_art=True)
     issues.extend(source_issues)
