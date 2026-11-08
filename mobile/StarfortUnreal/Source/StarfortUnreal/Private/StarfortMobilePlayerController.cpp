@@ -40,6 +40,7 @@ void AStarfortMobilePlayerController::EndPlay(const EEndPlayReason::Type EndPlay
   ActiveHeroScreen->OnInspectRequested.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleInspectPreview);
   ActiveHeroScreen->OnBackRequested.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleCloseScreen);
   ActiveHeroScreen->OnUpgradeRequested.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleUpgradeRequested);
+  ActiveHeroScreen->OnHeroSelected.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleHeroSelection);
   ActiveHeroScreen->RemoveFromParent();
   ActiveHeroScreen=nullptr;
  }
@@ -60,8 +61,13 @@ void AStarfortMobilePlayerController::ShowHeroScreen()
   ActiveHeroScreen->OnInspectRequested.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleInspectPreview);
   ActiveHeroScreen->OnBackRequested.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleCloseScreen);
   ActiveHeroScreen->OnUpgradeRequested.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleUpgradeRequested);
+  ActiveHeroScreen->OnHeroSelected.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleHeroSelection);
  }
  if(!ActiveHeroScreen->IsInViewport()) ActiveHeroScreen->AddToViewport();
+ // The old unapproved Rovan showroom model must not masquerade as the
+ // redesigned cinematic character while the UI uses 2D gallery artwork.
+ if(ARoyalGunnerPreviewPawn* OldGunner=Cast<ARoyalGunnerPreviewPawn>(GetPawn()))
+  OldGunner->SetActorHiddenInGame(true);
  SetInputMode(FInputModeGameAndUI());
  ActiveHeroScreen->SetWaitingForServer();
 }
@@ -73,29 +79,52 @@ void AStarfortMobilePlayerController::HideHeroScreen()
 }
 void AStarfortMobilePlayerController::HandleFirePreview()
 {
- if(ARoyalGunnerPreviewPawn* Gunner=Cast<ARoyalGunnerPreviewPawn>(GetPawn()))
-  Gunner->FireEnergyCannon(); // showroom only; NEVER applies remote damage
+ // No physically-real 3D rig has passed quality approval. Do not launch the
+ // previous low-fidelity Rovan muzzle FX for any redesigned hero.
+ if(ActiveHeroScreen && ActiveHeroScreen->TxtHeroArtStatus)
+  ActiveHeroScreen->TxtHeroArtStatus->SetText(FText::FromString(
+   TEXT("Sinematik 3D savaş animasyonları henüz hazırlanmadı")));
 }
 void AStarfortMobilePlayerController::HandleInspectPreview()
 {
- if(ARoyalGunnerPreviewPawn* Gunner=Cast<ARoyalGunnerPreviewPawn>(GetPawn()))
-  Gunner->ResetCamera();
+ if(ActiveHeroScreen) ActiveHeroScreen->ToggleHeroArtDetail();
 }
 void AStarfortMobilePlayerController::HandleUpgradeRequested()
 {
- if(Online&&Online->IsSignedIn()) Online->TrainHero(TEXT("rovan"));
+ if(Online && Online->IsSignedIn() && ActiveHeroScreen &&
+    ActiveHeroScreen->HasVerifiedHero())
+  Online->TrainHero(ActiveHeroScreen->GetSelectedHeroId());
 }
-void AStarfortMobilePlayerController::HandleProgress(const FStarfortProgressSummary& Progress)
+void AStarfortMobilePlayerController::HandleProgress(
+ const FStarfortProgressSummary& Progress)
 {
  if(!ActiveHeroScreen) return;
- const int32* Level=Progress.HeroLevels.Find(TEXT("rovan"));
- if(!Progress.bServerVerified || !Level)
+ bHasVerifiedProgress=Progress.bServerVerified;
+ if(!bHasVerifiedProgress)
  {
+  CachedHeroLevels.Empty();
   ActiveHeroScreen->SetWaitingForServer();
   return;
  }
- // Do not manufacture attack, defence, shard or rarity values from level.
- ActiveHeroScreen->ApplyVerifiedRosterLevel(TEXT("rovan"),*Level);
+ CachedHeroLevels=Progress.HeroLevels;
+ HandleHeroSelection(ActiveHeroScreen->GetSelectedHeroId());
+}
+
+void AStarfortMobilePlayerController::HandleHeroSelection(FString HeroId)
+{
+ if(!ActiveHeroScreen) return;
+ const int32* Level=bHasVerifiedProgress ? CachedHeroLevels.Find(HeroId) : nullptr;
+ if(!Online || !Online->IsSignedIn() || !Level)
+ {
+  ActiveHeroScreen->SetWaitingForServer();
+  if(ActiveHeroScreen->TxtConnectionStatus)
+   ActiveHeroScreen->TxtConnectionStatus->SetText(FText::FromString(
+    TEXT("Bu kahraman için doğrulanmış seviye kaydı yok")));
+  return;
+ }
+ // Selection NEVER unlocks a hero, creates local levels, grants items or
+ // changes purchases. Backend RPC is authoritative for any training.
+ ActiveHeroScreen->ApplyVerifiedRosterLevel(HeroId,*Level);
 }
 void AStarfortMobilePlayerController::HandleOnlineError(FString SafeReason)
 {
@@ -108,6 +137,8 @@ void AStarfortMobilePlayerController::HandleOnlineError(FString SafeReason)
 }
 void AStarfortMobilePlayerController::HandleSignedOut()
 {
+ bHasVerifiedProgress=false;
+ CachedHeroLevels.Empty();
  if(ActiveHeroScreen) ActiveHeroScreen->SetWaitingForServer();
  HideHeroScreen();
  if(GetWorld()) UGameplayStatics::OpenLevel(GetWorld(),TEXT("/Engine/Maps/Entry"));

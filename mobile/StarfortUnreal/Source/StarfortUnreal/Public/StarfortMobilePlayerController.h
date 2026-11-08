@@ -27,12 +27,15 @@ public:
 protected:
  UPROPERTY(Transient, BlueprintReadOnly, Category="STARFORT|UI")
  TObjectPtr<UStarfortHeroScreen> ActiveHeroScreen;
+ TMap<FString,int32> CachedHeroLevels;
+ bool bHasVerifiedProgress=false;
  UPROPERTY(Transient) TObjectPtr<UStarfortOnlineSubsystem> Online;
 
  UFUNCTION() void HandleFirePreview();
  UFUNCTION() void HandleInspectPreview();
  UFUNCTION() void HandleCloseScreen();
  UFUNCTION() void HandleUpgradeRequested();
+ UFUNCTION() void HandleHeroSelection(FString HeroId);
  UFUNCTION() void HandleProgress(const FStarfortProgressSummary& Progress);
  UFUNCTION() void HandleOnlineError(FString SafeReason);
  UFUNCTION() void HandleSignedOut();

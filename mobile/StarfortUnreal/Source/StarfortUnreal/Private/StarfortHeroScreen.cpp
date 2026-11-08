@@ -3,6 +3,9 @@
 #include "Components/Button.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"
+#include "Engine/Texture2D.h"
+#include "UObject/SoftObjectPath.h"
 #include "Math/UnrealMathUtility.h"
 
 void UStarfortHeroScreen::NativeOnInitialized()
@@ -12,7 +15,12 @@ void UStarfortHeroScreen::NativeOnInitialized()
  if (BtnInspect) BtnInspect->OnClicked.AddDynamic(this, &UStarfortHeroScreen::InspectClicked);
  if (BtnFirePreview) BtnFirePreview->OnClicked.AddDynamic(this, &UStarfortHeroScreen::FireClicked);
  if (BtnBack) BtnBack->OnClicked.AddDynamic(this, &UStarfortHeroScreen::BackClicked);
- if (BtnUpgrade) BtnUpgrade->OnClicked.AddDynamic(this, &UStarfortHeroScreen::UpgradeClicked);
+ if (BtnUpgrade) BtnUpgrade->OnClicked.AddUniqueDynamic(this, &UStarfortHeroScreen::UpgradeClicked);
+ if (BtnSelectRovan) BtnSelectRovan->OnClicked.AddUniqueDynamic(this,&UStarfortHeroScreen::RovanClicked);
+ if (BtnSelectAldren) BtnSelectAldren->OnClicked.AddUniqueDynamic(this,&UStarfortHeroScreen::AldrenClicked);
+ if (BtnSelectLyra) BtnSelectLyra->OnClicked.AddUniqueDynamic(this,&UStarfortHeroScreen::LyraClicked);
+ if (BtnSelectVesper) BtnSelectVesper->OnClicked.AddUniqueDynamic(this,&UStarfortHeroScreen::VesperClicked);
+ RefreshCinematicArt();
  SetWaitingForServer();
 }
 
@@ -39,13 +47,24 @@ void UStarfortHeroScreen::ApplyVerifiedRosterLevel(const FString& HeroId,int32 L
 {
  // The current authenticated progress RPC supplies hero level, NOT attack,
  // defense, rarity, shard count or detailed stats. Never invent those.
- if(HeroId!=TEXT("rovan") || Level<1 || Level>20)
+ if(HeroId!=SelectedHeroId || Level<1 || Level>20)
  {
   SetWaitingForServer();return;
  }
  SetWaitingForServer();
  bHasVerifiedHero=true;
- if(TxtHeroName) TxtHeroName->SetText(FText::FromString(TEXT("Rovan · Kraliyet Nişancısı")));
+ const TMap<FString,FString> Names={
+  {TEXT("rovan"),TEXT("Rovan · Kraliyet Nişancısı")},
+  {TEXT("aldren"),TEXT("Aldren · Kül Muhafızı")},
+  {TEXT("lyra"),TEXT("Lyra · Yıldız Dokuyucu")},
+  {TEXT("vesper"),TEXT("Vesper · Gölge Düellocusu")},
+  {TEXT("mira"),TEXT("Mira")},
+  {TEXT("doran"),TEXT("Doran")},
+  {TEXT("eira"),TEXT("Eira")}
+ };
+ const FString* Name=Names.Find(HeroId);
+ if(!Name) {SetWaitingForServer();return;}
+ if(TxtHeroName) TxtHeroName->SetText(FText::FromString(*Name));
  if(TxtLevel)
   TxtLevel->SetText(FText::Format(FText::FromString(TEXT("Seviye {0} / 20")),
    FText::AsNumber(Level)));
@@ -106,4 +125,79 @@ void UStarfortHeroScreen::UpgradeClicked()
   if(BtnUpgrade) BtnUpgrade->SetIsEnabled(false);
   OnUpgradeRequested.Broadcast();
  }
+}
+
+bool UStarfortHeroScreen::SelectHero(const FString& HeroId)
+{
+ // Cosmetic selection is local, but level/train is always server-owned.
+ // Never invent access to an unowned character.
+ if(HeroId!=TEXT("rovan") && HeroId!=TEXT("aldren") &&
+    HeroId!=TEXT("lyra") && HeroId!=TEXT("vesper") &&
+    HeroId!=TEXT("mira") && HeroId!=TEXT("doran") &&
+    HeroId!=TEXT("eira")) return false;
+ if(SelectedHeroId==HeroId) return true;
+ SelectedHeroId=HeroId;
+ bShowingHeroCard=false;
+ SetWaitingForServer();
+ RefreshCinematicArt();
+ OnHeroSelected.Broadcast(HeroId);
+ return true;
+}
+void UStarfortHeroScreen::RovanClicked() { SelectHero(TEXT("rovan")); }
+void UStarfortHeroScreen::AldrenClicked() { SelectHero(TEXT("aldren")); }
+void UStarfortHeroScreen::LyraClicked() { SelectHero(TEXT("lyra")); }
+void UStarfortHeroScreen::VesperClicked() { SelectHero(TEXT("vesper")); }
+
+void UStarfortHeroScreen::RefreshCinematicArt()
+{
+ // These are 2D concept/splash textures for the hero gallery only.
+ // This MUST NOT be used as a mesh in the 3D battle scene.
+ ActiveSplash=nullptr;
+ ActivePortrait=nullptr;
+ ActiveCard=nullptr;
+ if(ImgHeroSplash) ImgHeroSplash->SetBrushFromTexture(nullptr);
+ if(ImgHeroPortrait) ImgHeroPortrait->SetBrushFromTexture(nullptr);
+ const FString Base=TEXT("/Game/UI/HeroCinematicV1/");
+ const FString Id=SelectedHeroId.Left(1).ToUpper()+SelectedHeroId.Mid(1);
+ const FString SplashName=TEXT("T_")+Id+TEXT("_Splash");
+ const FString PortraitName=TEXT("T_")+Id+TEXT("_Portrait");
+ const FString CardName=TEXT("T_")+Id+TEXT("_Card");
+ const FSoftObjectPath SplashPath(Base+SplashName+TEXT(".")+SplashName);
+ const FSoftObjectPath PortraitPath(Base+PortraitName+TEXT(".")+PortraitName);
+ ActiveSplash=Cast<UTexture2D>(SplashPath.TryLoad());
+ ActivePortrait=Cast<UTexture2D>(PortraitPath.TryLoad());
+ ActiveCard=Cast<UTexture2D>(
+  FSoftObjectPath(Base+CardName+TEXT(".")+CardName).TryLoad());
+ if(ActiveSplash && ImgHeroSplash) ImgHeroSplash->SetBrushFromTexture(ActiveSplash,true);
+ if(ActivePortrait && ImgHeroPortrait) ImgHeroPortrait->SetBrushFromTexture(ActivePortrait,true);
+ UImage* Skills[]={ImgSkill1.Get(),ImgSkill2.Get(),ImgSkill3.Get(),ImgSkill4.Get()};
+ ActiveSkillIcons.Reset();
+ for(int32 I=0;I<4;++I)
+ {
+  if(Skills[I]) Skills[I]->SetBrushFromTexture(nullptr);
+  const FString SkillName=FString::Printf(TEXT("T_%s_Skill_%02d"),*Id,I+1);
+  UTexture2D* Texture=Cast<UTexture2D>(
+   FSoftObjectPath(Base+SkillName+TEXT(".")+SkillName).TryLoad());
+  if(Texture)
+  {
+   ActiveSkillIcons.Add(Texture);
+   if(Skills[I]) Skills[I]->SetBrushFromTexture(Texture,true);
+  }
+ }
+ if(TxtHeroArtStatus)
+  TxtHeroArtStatus->SetText(FText::FromString(
+   ActiveSplash ? TEXT("Sinematik 2D kahraman görseli · 3D model değildir")
+                : TEXT("Sinematik görsel henüz Unreal'a import edilmedi")));
+}
+
+void UStarfortHeroScreen::ToggleHeroArtDetail()
+{
+ if(!ActiveSplash || !ActiveCard || !ImgHeroSplash) return;
+ bShowingHeroCard=!bShowingHeroCard;
+ ImgHeroSplash->SetBrushFromTexture(
+  bShowingHeroCard?ActiveCard.Get():ActiveSplash.Get(),true);
+ if(TxtHeroArtStatus)
+  TxtHeroArtStatus->SetText(FText::FromString(
+   bShowingHeroCard ? TEXT("Kahraman kartı · sinematik 2D konsept")
+                    : TEXT("Tam boy kahraman görseli · 3D model değil")));
 }
