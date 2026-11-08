@@ -30,6 +30,45 @@ void AStarfortVillageController::BeginPlay()
  if (Online->IsSignedIn()) HandleSignedIn(Online->GetUserId());
  else OpenLoginScreen();
 }
+void AStarfortVillageController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+ // Online is a GameInstance subsystem and survives OpenLevel. Detaching
+ // callbacks here prevents destroyed village screens from receiving combat
+ // events or a future signed-in player's village data.
+ if (Online)
+ {
+  Online->OnSignedIn.RemoveDynamic(this,&AStarfortVillageController::HandleSignedIn);
+  Online->OnSignedOut.RemoveDynamic(this,&AStarfortVillageController::HandleSignedOut);
+  Online->OnVillageReady.RemoveDynamic(this,&AStarfortVillageController::HandleVillageSnapshot);
+  Online->OnFailure.RemoveDynamic(this,&AStarfortVillageController::HandleOnlineFailure);
+ }
+ if (UGameInstance* Instance=GetGameInstance())
+ {
+  if (UStarfortSceneRouter* Router=Instance->GetSubsystem<UStarfortSceneRouter>())
+   Router->OnRouteUnavailable.RemoveDynamic(this,&AStarfortVillageController::HandleRouteUnavailable);
+ }
+ if (AStarfortVillageCameraPawn* Pawn=Cast<AStarfortVillageCameraPawn>(GetPawn()))
+  Pawn->OnBuildingSelected.RemoveDynamic(this,&AStarfortVillageController::HandleBuildingTapped);
+ if (ActiveVillageScreen)
+ {
+  ActiveVillageScreen->OnUpgradeRequested.RemoveDynamic(this,&AStarfortVillageController::HandleUpgradeRequested);
+  ActiveVillageScreen->OnHeroesRequested.RemoveDynamic(this,&AStarfortVillageController::HandleHeroesRequested);
+  ActiveVillageScreen->OnBattlesRequested.RemoveDynamic(this,&AStarfortVillageController::HandleBattlesRequested);
+  ActiveVillageScreen->OnAllianceRequested.RemoveDynamic(this,&AStarfortVillageController::HandleAllianceRequested);
+  ActiveVillageScreen->OnRefreshRequested.RemoveDynamic(this,&AStarfortVillageController::RefreshVillage);
+  ActiveVillageScreen->OnSignOutRequested.RemoveDynamic(this,&AStarfortVillageController::HandleLogoutRequested);
+  ActiveVillageScreen->RemoveFromParent();
+  ActiveVillageScreen=nullptr;
+ }
+ if (ActiveLoginScreen)
+ {
+  ActiveLoginScreen->RemoveFromParent();
+  ActiveLoginScreen=nullptr;
+ }
+ Online=nullptr;
+ Super::EndPlay(EndPlayReason);
+}
+
 void AStarfortVillageController::OnPossess(APawn* InPawn)
 {
  Super::OnPossess(InPawn);
