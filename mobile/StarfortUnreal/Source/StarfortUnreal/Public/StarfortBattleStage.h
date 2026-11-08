@@ -13,6 +13,7 @@ class UCameraComponent;
 class UNiagaraComponent;
 class UNiagaraSystem;
 class UAnimMontage;
+class USoundBase;
 class UStarfortHeroCombatAsset;
 class FStreamableHandle;
 struct FStarfortVerifiedBattleTurn;
@@ -118,6 +119,10 @@ public:
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage")
  TObjectPtr<UNiagaraSystem> ImpactSystem;
 
+ /** Only plays when the server confirmed positive enemy damage. */
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Stage")
+ TObjectPtr<USoundBase> ConfirmedEnemyImpactSound;
+
 private:
  bool ConfigureTeam(const TArray<FString>& VerifiedTeam);
  void SetAllVisible(bool bVisible);
@@ -126,6 +131,10 @@ private:
  void PlayDelayedVerifiedImpact(uint64 PlaybackGeneration,
   FString PlaybackRoom, int32 PlaybackTurn);
  void ResetCinematicDirector();
+ void CaptureAuthoredFormation();
+ void BeginVerifiedCombatMotion(const FString& Action,const FString& SkilledHero);
+ void TickVerifiedCombatMotion(float DeltaSeconds);
+ void ResetVerifiedCombatMotion();
  void BeginTeamAssetLoad(const FStarfortVerifiedBattleTurn& Snapshot);
  void OnTeamAssetsLoaded(uint64 Generation);
  bool GatherUniqueTeamArtPaths(const TArray<FString>& VerifiedTeam,
@@ -157,4 +166,15 @@ private:
  FRotator DesiredLook = FRotator(-15.f,-10.f,0.f);
  float CameraBeatSeconds = 0.f;
  FTimerHandle VerifiedImpactTimer;
+
+ // These are authored local transforms, captured from the real placed BP stage.
+ // Server turn verification precedes every movement. All motion is cosmetic.
+ FVector HeroFormation[3] = { FVector::ZeroVector,FVector::ZeroVector,FVector::ZeroVector };
+ FVector HeroMotionOffsets[3] = { FVector::ZeroVector,FVector::ZeroVector,FVector::ZeroVector };
+ FVector EnemyFormation = FVector::ZeroVector;
+ float HeroMotionElapsed = 0.f;
+ float HeroMotionDuration = 0.f;
+ float EnemyMotionElapsed = 0.f;
+ float EnemyMotionDuration = 0.f;
+ bool bFormationCaptured = false;
 };
