@@ -47,6 +47,12 @@ void AStarfortFabPreviewController::BeginPlay()
   return;
  }
  CaptureLocalPreviewActors();
+ bWideBattleCamera=bBattleMode; // Compare all real rigs, not just a portrait.
+ if (bBattleMode)
+ {
+  PrivateBattleStatus=FString::Printf(TEXT("Özel 3D test: %d dost, %d rakip. Hasar/ödül yok."),
+    GetRealBattleAllyCount(),GetRealBattleOpponentCount());
+ }
  SetInputMode(FInputModeGameAndUI());
  if (Camera.IsValid()) SetViewTarget(Camera.Get());
  if (Heroes.Num()>0)
@@ -84,6 +90,7 @@ void AStarfortFabPreviewController::CaptureLocalPreviewActors()
   }
   FStarfortPrivatePreviewActor Slot;
   Slot.HeroId=Id;
+  Slot.SourceSide=TagValue(Actor,TEXT("SFPREVIEW_SIDE="));
   Slot.Actor=Actor;
   Slot.IdleSequencePath=TagValue(Actor,TEXT("SFPREVIEW_IDLE="));
   Slot.AttackSequencePath=TagValue(Actor,TEXT("SFPREVIEW_ATTACK="));
@@ -121,6 +128,25 @@ FString AStarfortFabPreviewController::GetFocusedHero() const
   Heroes[FocusedIndex].HeroId.ToUpper() : TEXT("YÜKLENMİŞ KAHRAMAN YOK");
 }
 
+int32 AStarfortFabPreviewController::GetRealBattleAllyCount() const
+{
+ return Heroes.FilterByPredicate([](const FStarfortPrivatePreviewActor& Entry){
+  return Entry.SourceSide==TEXT("ALLY") && Entry.Actor.IsValid();
+ }).Num();
+}
+
+int32 AStarfortFabPreviewController::GetRealBattleOpponentCount() const
+{
+ return Heroes.FilterByPredicate([](const FStarfortPrivatePreviewActor& Entry){
+  return Entry.SourceSide==TEXT("OPPONENT") && Entry.Actor.IsValid();
+ }).Num();
+}
+
+FString AStarfortFabPreviewController::GetPrivateBattleStatus() const
+{
+ return bBattleMode ? PrivateBattleStatus : FString();
+}
+
 bool AStarfortFabPreviewController::FocusedHeroHasActualAttack() const
 {
  return Heroes.IsValidIndex(FocusedIndex) &&
@@ -142,7 +168,9 @@ void AStarfortFabPreviewController::FocusHeroByIndex(int32 Index)
   Notice=TargetId.ToUpper()+TEXT(" henüz yerel Fab paketinden içe aktarılmadı.");
   return;
  }
+ if (bPrivateSequenceActive) StopPrivateBattleSequence();
  FocusedIndex=Found;
+ if (bBattleMode) bWideBattleCamera=false;
  bAttackMode=false;
  SetRealAnimation(FocusedIndex,false);
  Notice=GetFocusedHero()+
@@ -212,6 +240,7 @@ void AStarfortFabPreviewController::ZoomOut()
 void AStarfortFabPreviewController::TogglePrivateScene()
 {
  if (!bPrivatePreview || !GetWorld()) return;
+ StopPrivateBattleSequence();
  // Both levels are non-production .umaps. Never open the account/village,
  // start an RPC, or switch to the real online battle.
  const TCHAR* NewMap=bBattleMode ?
@@ -229,11 +258,27 @@ void AStarfortFabPreviewController::UpdateCamera(float DeltaSeconds)
  if (GetViewTarget()!=Camera.Get()) SetViewTarget(Camera.Get());
  ASkeletalMeshActor* Focus=Heroes[FocusedIndex].Actor.Get();
  if (!Focus) return;
- const FVector LookAt=Focus->GetActorLocation()+FVector(0.f,0.f,138.f);
+ FVector LookAt=Focus->GetActorLocation()+FVector(0.f,0.f,138.f);
+ if (bBattleMode && bWideBattleCamera)
+ {
+  FVector Accum=FVector::ZeroVector;
+  int32 Count=0;
+  for (const FStarfortPrivatePreviewActor& Entry:Heroes)
+  {
+   if (!Entry.Actor.IsValid() ||
+       (Entry.SourceSide!=TEXT("ALLY") && Entry.SourceSide!=TEXT("OPPONENT")))
+    continue;
+   Accum+=Entry.Actor->GetActorLocation();
+   ++Count;
+  }
+  if (Count>=2) LookAt=Accum/static_cast<float>(Count)+FVector(0.f,0.f,140.f);
+ }
  const float Rad=FMath::DegreesToRadians(OrbitDegrees);
+ const float Distance=(bBattleMode && bWideBattleCamera)
+  ? FMath::Max(CameraDistance,1600.f) : CameraDistance;
  const FVector Offset(
-  CameraDistance*FMath::Cos(Rad),CameraDistance*FMath::Sin(Rad),
-  CameraDistance*0.16f);
+  Distance*FMath::Cos(Rad),Distance*FMath::Sin(Rad),
+  Distance*(bBattleMode && bWideBattleCamera ? 0.23f : 0.16f));
  const FVector Goal=LookAt+Offset;
  const FVector Smooth=FMath::VInterpTo(
   Camera->GetActorLocation(),Goal,FMath::Max(0.f,DeltaSeconds),6.f);
@@ -244,6 +289,7 @@ void AStarfortFabPreviewController::UpdateCamera(float DeltaSeconds)
 void AStarfortFabPreviewController::Tick(float DeltaSeconds)
 {
  Super::Tick(DeltaSeconds);
+ TickPrivateBattleSequence(DeltaSeconds);
  UpdateCamera(DeltaSeconds);
 }
 
@@ -272,6 +318,19 @@ void AStarfortFabPreviewController::OnPreviewClick()
   const int32 Slot=FMath::FloorToInt((MouseX-20.f)/SlotW);
   if (MouseX>=20.f && Slot>=0 && Slot<7)
    FocusHeroByIndex(Slot);
+  return;
+ }
+ if (bBattleMode && MouseY>=Height-174.f && MouseY<=Height-134.f)
+ {
+  // Private tactical buttons are deliberately isolated from paid gameplay.
+  const float WidthPerAction=FMath::Max(35.f,(Width-40.f)/3.f);
+  const int32 Action=FMath::FloorToInt((MouseX-20.f)/WidthPerAction);
+  if (MouseX>=20.f && Action>=0 && Action<3)
+  {
+   if (Action==0) QueueThreeHeroAttackPreview();
+   else if (Action==1) PlayOpponentAnimationPreview();
+   else ToggleWideBattleCamera();
+  }
   return;
  }
  if (MouseY<Height-76.f || MouseY>Height-20.f) return;
@@ -308,6 +367,12 @@ void AStarfortFabPreviewController::SetupInputComponent()
   this,&AStarfortFabPreviewController::ZoomOut);
  InputComponent->BindKey(EKeys::Tab,IE_Pressed,
   this,&AStarfortFabPreviewController::TogglePrivateScene);
+ InputComponent->BindKey(EKeys::Q,IE_Pressed,
+  this,&AStarfortFabPreviewController::QueueThreeHeroAttackPreview);
+ InputComponent->BindKey(EKeys::E,IE_Pressed,
+  this,&AStarfortFabPreviewController::PlayOpponentAnimationPreview);
+ InputComponent->BindKey(EKeys::B,IE_Pressed,
+  this,&AStarfortFabPreviewController::ToggleWideBattleCamera);
  InputComponent->BindKey(EKeys::LeftMouseButton,IE_Pressed,
   this,&AStarfortFabPreviewController::OnPreviewClick);
 }
