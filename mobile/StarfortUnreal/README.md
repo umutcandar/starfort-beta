@@ -1,5 +1,13 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## v84 — Real authenticated server turns on genuine free Fab 3D rigs (Development-only)
+
+`AStarfortFabVerifiedBattleBridge` is an opt-in non-shipping visual renderer attached to the **real native** `L_StarfortBattle` map. It binds four distinct user-owned Epic/Fab Paragon SkeletalMesh assets and their hard-referenced same-skeleton idle/attack sequences. `AStarfortBattleController` forwards only the existing online subsystem's `FStarfortVerifiedBattleTurn` to this optional renderer. A first snapshot only shows authentic rigs at idle; only a **new confirmed server turn** can trigger a matching real hero strike/special. Real lost HP is required for the enemy counter animation. Mission end, log-out and level teardown clear the assets and camera. Server-owned HP, mission outcome, rewards, skills, cooldowns and existing battle UMG remain untouched.
+
+A local real Unreal Editor tool `Tools/STARFORT_CANLI_FAB_3D_KUR.py` stages selected, license-accepted real Fab source assets into a backed-up development copy of `L_StarfortBattle`; it refuses missing assets, same-skeleton clip failures, existing review actors and a production-approved art stage. No Paragon binaries are added to the GitHub repo. Only the local UE 5.8 editor, device signing and a real server login can demonstrate the full effect. A local development-art audit report additionally **blocks a Shipping build until the temporary demo actors are removed and the level reviewed**, and the actor's rendering is permanently disabled at compile time in Shipping.
+
+Read `Docs/VerifiedLiveServerFab3DReview_v84_TR.md` for the full Turkish setup steps and the important distinction between actual server battle and temporary third-party visual art. Source-only GitHub QA does **not** prove UE5.8 compilation or phone testing.
+
 ## v83 — Native touchscreen + private Fab mobile 3D development build gates
 
 Real Unreal `BindTouch(IE_Pressed)` is now wired to the **same landscape hit rectangles as the Canvas HUD and desktop mouse** for the seven hero selection buttons, authentic 3v1 animation preview and camera controls. On physical touch devices, synthetic duplicate mouse events are ignored; landscape/notch margin and compact touch buttons replace the prior screen-filling overlay. Standalone source CI actually compiles and exercises the shared pure C++ hit-test logic on two landscape resolutions.

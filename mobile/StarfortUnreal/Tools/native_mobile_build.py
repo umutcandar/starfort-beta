@@ -136,6 +136,17 @@ def validate(platform_name, profile, require_toolchain=True):
             if not (ROOT / rel).is_file():
                 errors.append("Native private 3D touch preview source missing: " + rel)
     elif profile == "release":
+        # Hard stop: a local 3+1 Paragon art bridge was staged into the REAL
+        # mission map for Development visual QA. Those hard UAsset pointers
+        # must be removed in UE Editor before a store/Shipping cook.
+        # The existence of a previously authored Developer art report is
+        # authoritative evidence the scene needs a manual cleanup audit.
+        if (ROOT / "Saved/QA/verified_fab_server_art_review_v84.json").is_file():
+            errors.append(
+                "Release blocked: local Developer-only Fab server battle "
+                "bridge may still be staged. Remove imported reference "
+                "actors in Unreal Editor and re-run release art review"
+            )
         for stem in MAPS:
             if not (ROOT / "Content/Maps" / (stem + ".umap")).is_file():
                 errors.append("Real Unreal map missing: " + stem)

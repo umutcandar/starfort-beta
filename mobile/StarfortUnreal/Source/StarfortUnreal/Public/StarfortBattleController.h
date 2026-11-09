@@ -7,6 +7,7 @@
 class UStarfortBattleScreen;
 class UStarfortCampaignScreen;
 class AStarfortBattleStage;
+class AStarfortFabVerifiedBattleBridge;
 
 /** Real native battle/campaign flow. No local reward simulation. */
 UCLASS(Blueprintable)
@@ -32,6 +33,9 @@ private:
  UPROPERTY(Transient) TObjectPtr<UStarfortBattleScreen> BattleScreen;
  UPROPERTY(Transient) TObjectPtr<UStarfortCampaignScreen> CampaignScreen;
  UPROPERTY(Transient) TObjectPtr<AStarfortBattleStage> Stage;
+ /** Only discovered if level artist deliberately places/opts-in an actual
+     four-Paragon-rig, development-only bridge. Never instantiated in release. */
+ UPROPERTY(Transient) TObjectPtr<AStarfortFabVerifiedBattleBridge> DevFabBridge;
  UFUNCTION() void StageRequested(int32 StageId);
  UFUNCTION() void ActionRequested(FString ActionId);
  UFUNCTION() void ProgressReady(const FStarfortProgressSummary& Progress);
