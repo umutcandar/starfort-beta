@@ -1,5 +1,12 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## v80 — Local seven-hero Epic/Fab private 3D preview (no credits)
+
+The free Paragon Wraith, Greystone, The Fey, Serath, Khaimera, Countess and Aurora asset listings are now mapped to STARFORT's seven stable server hero IDs for a **private visual review only**. After the user accepts the EULAs and adds the real packs to the local UE5.8 project, `Tools/STARFORT_7_KAHRAMAN_TARA.py` finds actual compatible SkeletalMeshes and native animation clips. Once the user confirms the local selection and license flag, `Tools/STARFORT_7_KAHRAMAN_KUR.py` creates TWO isolated `.umap` maps: a full-body hero gallery and a **3-v-1 animated cinematic lineup**. The original STARFORT v79 authored PBR arena is included automatically **if** its SHA-verified local GLB is available. Real Fab textures and models are never pushed to GitHub.
+
+These are real 3D characters when user-imported, but only their initial Paragon appearances, not original STARFORT royal armor. **No Epic packs are already installed in this GitHub source tree, no server battle is simulated, and no playable APK/IPA is produced by source-only CI**. Private maps are neither production maps nor included in mobile cook lists. Release art gates stay intact. Turkish install steps: `Docs/PrivateParagonSevenHeroPlaytest_v80_TR.md`.
+
+
 ## v77 — FREE AAA Fab character bases, REAL Unreal Editor 3D review scene
 
 We verified **four actual Epic/Fab free Unreal character asset listings** as high-quality 3D starting points: Wraith for Rovan (gunner base), Greystone for Aldren (knight/shield), The Fey for Lyra (caster), Countess for Vesper (dual-blade duelist). These are **NOT final STARFORT character designs**. They require original face/armor/weapon/FX work, artist approval and mobile performance testing.
