@@ -10,6 +10,7 @@ void UStarfortVillageScreen::NativeOnInitialized()
  FStarfortNativeWidgetFactory::BuildVillage(this);
  if (BtnUpgrade) BtnUpgrade->OnClicked.AddDynamic(this,&UStarfortVillageScreen::UpgradeClicked);
  if (BtnHeroes) BtnHeroes->OnClicked.AddDynamic(this,&UStarfortVillageScreen::HeroesClicked);
+ if (BtnBag) BtnBag->OnClicked.AddUniqueDynamic(this,&UStarfortVillageScreen::BagClicked);
  if (BtnBattles) BtnBattles->OnClicked.AddDynamic(this,&UStarfortVillageScreen::BattlesClicked);
  if (BtnAlliance) BtnAlliance->OnClicked.AddDynamic(this,&UStarfortVillageScreen::AllianceClicked);
  if (BtnRefresh) BtnRefresh->OnClicked.AddUniqueDynamic(this,&UStarfortVillageScreen::RefreshClicked);
@@ -136,6 +137,7 @@ void UStarfortVillageScreen::UpgradeClicked()
  }
 }
 void UStarfortVillageScreen::HeroesClicked() { OnHeroesRequested.Broadcast(); }
+void UStarfortVillageScreen::BagClicked() { OnBagRequested.Broadcast(); }
 void UStarfortVillageScreen::BattlesClicked() { OnBattlesRequested.Broadcast(); }
 void UStarfortVillageScreen::AllianceClicked() { OnAllianceRequested.Broadcast(); }
 
