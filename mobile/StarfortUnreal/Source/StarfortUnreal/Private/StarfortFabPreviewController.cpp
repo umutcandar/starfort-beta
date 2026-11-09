@@ -460,6 +460,7 @@ void AStarfortFabPreviewController::PlayOpponentAnimationPreview()
   return;
  }
  PendingPrivateAttackIndices.Reset();
+ CompletedPrivateAttackCount=0;
  PendingPrivateAttackIndices.Add(Opponent);
  bPrivateSequenceActive=true;
  StartNextPrivateAttack();
