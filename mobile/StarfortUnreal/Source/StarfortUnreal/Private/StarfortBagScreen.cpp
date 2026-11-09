@@ -520,7 +520,7 @@ void UStarfortBagScreen::Refresh()
    Verified.Stone>=NextCost.Stone &&
    Verified.StarEssence>=NextCost.Essence;
   UStarfortBagTile* Upgrade=MakeTile(TEXT("enhance:")+ItemId,
-   FString::Printf(TEXT("Ustalık +%d"),FMath::Min(5,Mastery+1)),
+   FString::Printf(TEXT("Geliştir · Ustalık +%d"),FMath::Min(5,Mastery+1)),
    NextCost.bAvailable?NextCost.ToTurkishLabel():
     TEXT("Ustalık +5 tamamlandı"),
    Gold(),bCanMutate && Mastery<5 && bMasteryAfford);
