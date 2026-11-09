@@ -1,5 +1,13 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## v83 — Native touchscreen + private Fab mobile 3D development build gates
+
+Real Unreal `BindTouch(IE_Pressed)` is now wired to the **same landscape hit rectangles as the Canvas HUD and desktop mouse** for the seven hero selection buttons, authentic 3v1 animation preview and camera controls. On physical touch devices, synthetic duplicate mouse events are ignored; landscape/notch margin and compact touch buttons replace the prior screen-filling overlay. Standalone source CI actually compiles and exercises the shared pure C++ hit-test logic on two landscape resolutions.
+
+A strictly opt-in `Tools/native_mobile_build.py --profile private-preview` profile can **locally attempt** a Development-only iOS/Android package of the two real user-imported Fab `.umap` previews. It refuses missing Fab license acknowledgement, missing actual Editor asset audit, absent UE-created maps, toolchain SDKs or an existing `UECommandLine.txt`. It temporarily sets Unreal's documented mobile command-line map URL and removes it even on normal BuildCookRun failure; regular smoke/retail releases neither cook nor route to private Fab worlds. Mac launcher: `STARFORT_OZEL_3D_MOBIL_KONTROL.command`.
+
+The original 23m PBR ash GLB arena importer now audits real Unreal StaticMesh bounds to choose `1x` if Interchange already converts meters to centimeters, otherwise `100x`, failing closed for unknown bounds rather than planting a 100x mismatched arena. Tests are runnable without UE, but **nothing here means that the UE5.8 C++ Editor compiled, Epic/Fab packs were acquired, a phone was tested or an APK/IPA already exists**. Turkish guide: `Docs/PrivateMobileFabDevicePreview_v83_TR.md`.
+
 ## v82 — Real user-imported 3-v-1 private combat animation director
 
 The free Paragon editor-only battle review now waits in real imported **idle** poses and plays **three individually rigged ally attack clips in sequence** when Q is pressed. E tests only the actual opponent's keyed native attack, B switches between 3+1 battlefield and hero cinema cameras, and actors return precisely to their original positions after a bounded authored-motion step. HUD reports imported 3+1 count and actual demonstrated clips; there is **no fake damage, invented attack clip, HP, loot, progression or online RPC**. A real editor-only QA script validates exactly 3 ally rigs + 1 opponent, one camera, original scene GameMode and matching imported skeleton/animation paths.
