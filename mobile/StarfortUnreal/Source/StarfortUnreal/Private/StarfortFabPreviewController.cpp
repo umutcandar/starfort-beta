@@ -63,6 +63,7 @@ void AStarfortFabPreviewController::BeginPlay()
    if (Heroes[0].HeroId==StarfortFabPrivate::OrderedIds[I])
    {
     FocusHeroByIndex(I);
+    if (bBattleMode) bWideBattleCamera=true;
     break;
    }
  }
@@ -345,6 +346,164 @@ void AStarfortFabPreviewController::OnPreviewClick()
   case 3: ZoomIn();break;
   case 4: ZoomOut();break;
   case 5: TogglePrivateScene();break;
+ }
+}
+
+void AStarfortFabPreviewController::StopPrivateBattleSequence()
+{
+ if (Heroes.IsValidIndex(ActivePreviewAttackIndex))
+ {
+  if (ASkeletalMeshActor* Actor=Heroes[ActivePreviewAttackIndex].Actor.Get())
+   Actor->SetActorLocation(ActiveAttackStartPosition);
+  // A missing idle is honestly left missing; never inject a mannequin.
+  SetRealAnimation(ActivePreviewAttackIndex,false);
+ }
+ PendingPrivateAttackIndices.Reset();
+ ActivePreviewAttackIndex=INDEX_NONE;
+ ActiveAttackElapsed=0.f;
+ ActiveAttackDuration=0.f;
+ bPrivateSequenceActive=false;
+ if (bBattleMode) bWideBattleCamera=true;
+}
+
+void AStarfortFabPreviewController::StartNextPrivateAttack()
+{
+ ActivePreviewAttackIndex=INDEX_NONE;
+ while (PendingPrivateAttackIndices.Num()>0)
+ {
+  const int32 Next=PendingPrivateAttackIndices[0];
+  PendingPrivateAttackIndices.RemoveAt(0);
+  if (!Heroes.IsValidIndex(Next) || !Heroes[Next].Actor.IsValid() ||
+      !SetRealAnimation(Next,true))
+  {
+   UE_LOG(LogTemp,Warning,TEXT("STARFORT private 3v1: missing/invalid genuine attack clip"));
+   continue;
+  }
+  ActivePreviewAttackIndex=Next;
+  FocusedIndex=Next;
+  bWideBattleCamera=false;
+  bAttackMode=false; // This is a choreographed test, not the solo UI toggle.
+  ActiveAttackStartPosition=Heroes[Next].Actor->GetActorLocation();
+  UAnimSequence* Clip=Cast<UAnimSequence>(
+   FSoftObjectPath(Heroes[Next].AttackSequencePath).TryLoad());
+  ActiveAttackDuration=FMath::Clamp(
+   Clip ? Clip->GetPlayLength() : 1.f,0.5f,3.4f);
+  ActiveAttackElapsed=0.f;
+  PrivateBattleStatus=Heroes[Next].HeroId.ToUpper()+
+   TEXT(": gerçek Fab saldırı klibi oynatılıyor (hasar yok).");
+  return;
+ }
+ bPrivateSequenceActive=false;
+ bWideBattleCamera=true;
+ PrivateBattleStatus=TEXT("Gerçek klip gösterimi bitti. HP/ödül değişmedi.");
+}
+
+void AStarfortFabPreviewController::QueueThreeHeroAttackPreview()
+{
+ if (!bPrivatePreview || !bBattleMode) return;
+ if (bPrivateSequenceActive)
+ {
+  PrivateBattleStatus=TEXT("Önce mevcut gerçek animasyon dizisi tamamlanmalı.");
+  return;
+ }
+ if (GetRealBattleAllyCount()!=3 || GetRealBattleOpponentCount()!=1)
+ {
+  PrivateBattleStatus=TEXT("3 ayrı gerçek dost ve 1 gerçek rakip modeli gerekli.");
+  return;
+ }
+ PendingPrivateAttackIndices.Reset();
+ // The authored formation, not the full gallery roster, determines allies.
+ for (int32 I=0;I<Heroes.Num();++I)
+  if (Heroes[I].SourceSide==TEXT("ALLY") && Heroes[I].Actor.IsValid() &&
+      !Heroes[I].AttackSequencePath.IsEmpty())
+   PendingPrivateAttackIndices.Add(I);
+ if (PendingPrivateAttackIndices.Num()==0)
+ {
+  PrivateBattleStatus=TEXT("Üç dostta da gerçek uyumlu saldırı AnimSequence yok.");
+  return;
+ }
+ const int32 Attacks=PendingPrivateAttackIndices.Num();
+ bPrivateSequenceActive=true;
+ StartNextPrivateAttack();
+ if (bPrivateSequenceActive && Attacks<3)
+  Notice=FString::Printf(
+   TEXT("Yalnızca %d/3 dostun gerçek saldırı klibi var; diğerleri atlanıyor."),
+   Attacks);
+}
+
+void AStarfortFabPreviewController::PlayOpponentAnimationPreview()
+{
+ if (!bPrivatePreview || !bBattleMode) return;
+ if (bPrivateSequenceActive)
+ {
+  PrivateBattleStatus=TEXT("Önce mevcut gerçek animasyon dizisi tamamlanmalı.");
+  return;
+ }
+ int32 Opponent=INDEX_NONE;
+ for (int32 I=0;I<Heroes.Num();++I)
+  if (Heroes[I].SourceSide==TEXT("OPPONENT") && Heroes[I].Actor.IsValid())
+  {
+   if (Opponent!=INDEX_NONE)
+   {
+    PrivateBattleStatus=TEXT("Birden fazla rakip var: önizleme durduruldu.");
+    return;
+   }
+   Opponent=I;
+  }
+ if (Opponent==INDEX_NONE || Heroes[Opponent].AttackSequencePath.IsEmpty())
+ {
+  PrivateBattleStatus=TEXT("Rakibin gerçek saldırı klibi mevcut değil.");
+  return;
+ }
+ PendingPrivateAttackIndices.Reset();
+ PendingPrivateAttackIndices.Add(Opponent);
+ bPrivateSequenceActive=true;
+ StartNextPrivateAttack();
+}
+
+void AStarfortFabPreviewController::ToggleWideBattleCamera()
+{
+ if (!bPrivatePreview || !bBattleMode || bPrivateSequenceActive) return;
+ bWideBattleCamera=!bWideBattleCamera;
+ PrivateBattleStatus=bWideBattleCamera ?
+  TEXT("Geniş kamera: 3 dost + 1 rakip, yalnızca görsel test.") :
+  TEXT("Yakın kamera: seçili gerçek model.");
+}
+
+void AStarfortFabPreviewController::TickPrivateBattleSequence(float DeltaSeconds)
+{
+ if (!bPrivatePreview || !bBattleMode || !bPrivateSequenceActive ||
+     !Heroes.IsValidIndex(ActivePreviewAttackIndex)) return;
+ ASkeletalMeshActor* Attacker=Heroes[ActivePreviewAttackIndex].Actor.Get();
+ if (!Attacker)
+ {
+  StopPrivateBattleSequence();
+  PrivateBattleStatus=TEXT("Gerçek saldırı aktörü sahneden kayboldu.");
+  return;
+ }
+ ActiveAttackElapsed+=FMath::Clamp(DeltaSeconds,0.f,0.10f);
+ const float Progress=FMath::Clamp(
+  ActiveAttackElapsed/FMath::Max(ActiveAttackDuration,0.5f),0.f,1.f);
+ FVector Target=ActiveAttackStartPosition+Attacker->GetActorForwardVector()*250.f;
+ for (const FStarfortPrivatePreviewActor& Enemy:Heroes)
+  if (Enemy.SourceSide==
+       (Heroes[ActivePreviewAttackIndex].SourceSide==TEXT("ALLY")
+        ? TEXT("OPPONENT") : TEXT("ALLY")) && Enemy.Actor.IsValid())
+  {
+   Target=Enemy.Actor->GetActorLocation();
+   break;
+  }
+ // Bounded positional anticipation: authentic skeletal attack animation
+ // remains the only striking motion, with no fabricated hit or recoil VFX.
+ const FVector Forward=(Target-ActiveAttackStartPosition).GetSafeNormal2D();
+ const float Step=FMath::Sin(PI*Progress)*FMath::Min(68.f,
+  FVector::Dist2D(ActiveAttackStartPosition,Target)*0.08f);
+ Attacker->SetActorLocation(ActiveAttackStartPosition+Forward*Step);
+ if (Progress>=1.f)
+ {
+  Attacker->SetActorLocation(ActiveAttackStartPosition);
+  SetRealAnimation(ActivePreviewAttackIndex,false);
+  StartNextPrivateAttack();
  }
 }
 
