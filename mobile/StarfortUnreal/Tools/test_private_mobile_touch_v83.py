@@ -233,6 +233,20 @@ int main() {
                 errors=build.validate_private_preview()
                 self.assertTrue(any("Stale/failed Editor QA" in e for e in errors))
 
+    def test_online_routes_are_explicitly_whitelisted_away_from_private_maps(self):
+        router=(NATIVE/"Private/StarfortSceneRouter.cpp").read_text()
+        self.assertIn("bIsRealGameplayMap",router)
+        for path in (
+            "/Game/Maps/L_StarfortVillage",
+            "/Game/Maps/L_RoyalGunnerStudio",
+            "/Game/Maps/L_StarfortBattle",
+            "/Game/Maps/L_StarfortAlliance",
+        ):
+            self.assertIn(path,router)
+        self.assertIn("if (!bIsRealGameplayMap",router)
+        self.assertNotIn("L_StarfortPrivateFabBattle_v80",router)
+        self.assertNotIn("L_StarfortPrivateFabPlaytest_v80",router)
+
     def test_private_mobile_preview_cannot_bypass_release_gate(self):
         src=(TOOLS/"native_mobile_build.py").read_text()
         self.assertIn('profile == "release"',src)
