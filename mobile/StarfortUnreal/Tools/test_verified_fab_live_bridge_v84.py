@@ -147,6 +147,25 @@ class TestVerifiedFabLiveBridgeV84(unittest.TestCase):
             self.assertNotIn(prohibited,bridge)
         self.assertEqual(bridge.count("{"),bridge.count("}"))
 
+    def test_actual_release_profile_fails_after_development_art_staging(self):
+        import native_mobile_build as build
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            (root/"StarfortUnreal.uproject").write_text(
+                json.dumps({"EngineAssociation":"5.8"}))
+            report=root/"Saved/QA/verified_fab_server_art_review_v84.json"
+            report.parent.mkdir(parents=True)
+            report.write_text(json.dumps({"development_only":True,
+                "real_unreal_editor_completed":True}))
+            with patch.object(build,"ROOT",root), patch.object(
+                build,"PROJECT",root/"StarfortUnreal.uproject"), patch.object(
+                build,"PRIVATE_COMMAND_LINE",root/"UECommandLine.txt"):
+                errors,_=build.validate("android","release",require_toolchain=False)
+                self.assertTrue(any("Release blocked" in err for err in errors))
+                command,_=build.build_command(root/"Unreal","android","release")
+                self.assertIn("-distribution",command)
+                self.assertNotIn("private-fab-preview"," ".join(command))
+
     def test_staging_is_non_destructive_and_never_bypasses_release_art(self):
         script=(TOOLS/"stage_verified_fab_online_battle_v84.py").read_text()
         premium=(NATIVE/"Private/StarfortHeroCombatAsset.cpp").read_text()
