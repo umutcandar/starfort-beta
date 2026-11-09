@@ -1,4 +1,5 @@
 #include "StarfortFabPreviewController.h"
+#include "StarfortFabPreviewLayout.h"
 
 #include "Animation/AnimSequence.h"
 #include "Camera/CameraActor.h"
@@ -311,46 +312,71 @@ void AStarfortFabPreviewController::OnNumberPressed(FKey Key)
 
 void AStarfortFabPreviewController::OnPreviewClick()
 {
- if (!bPrivatePreview) return;
- int32 Width=0,Height=0;
  float MouseX=0.f,MouseY=0.f;
+ if (!bPrivatePreview || !GetMousePosition(MouseX,MouseY)) return;
+ HandlePreviewPointer(MouseX,MouseY);
+}
+
+void AStarfortFabPreviewController::OnPreviewTouchPressed(
+ ETouchIndex::Type FingerIndex,FVector TouchLocation)
+{
+ if (!bPrivatePreview || FingerIndex!=ETouchIndex::Touch1) return;
+ // Native Unreal touch input, not emulated web/tap events. Prefer confirmed
+ // screen coordinates from PlayerController to avoid platform touch offsets.
+ float X=TouchLocation.X,Y=TouchLocation.Y;
+ bool bPressed=false;
+ GetInputTouchState(FingerIndex,X,Y,bPressed);
+ if (!bPressed)
+ {
+  X=TouchLocation.X;
+  Y=TouchLocation.Y;
+ }
+ HandlePreviewPointer(X,Y);
+}
+
+void AStarfortFabPreviewController::HandlePreviewPointer(
+ float ScreenX,float ScreenY)
+{
+ if (!bPrivatePreview || !GetWorld()) return;
+ int32 Width=0,Height=0;
  GetViewportSize(Width,Height);
- if (Width<=0 || Height<=0 || !GetMousePosition(MouseX,MouseY)) return;
- // Same units/positions used by AStarfortFabPreviewHUD. No hitboxes for
- // actual gameplay currency or progression, only art/animation review.
- const float SlotW=FMath::Max(35.f,(Width-40.f)/7.f);
- if (MouseY>=88.f && MouseY<=132.f)
+ // Mobile platforms may generate both a Touch1 and a synthetic mouse click.
+ // Ignore duplicate events within a short window to prevent double actions.
+ const float Now=GetWorld()->GetRealTimeSeconds();
+ if (Now-LastPreviewPointerAt<0.12f) return;
+ const EStarfortFabPreviewHit Hit=FStarfortFabPreviewLayout::HitTest(
+  ScreenX,ScreenY,Width,Height,bBattleMode);
+ if (Hit==EStarfortFabPreviewHit::None) return;
+ LastPreviewPointerAt=Now;
+ const int32 HeroFirst=static_cast<int32>(EStarfortFabPreviewHit::Hero1);
+ const int32 HeroLast=static_cast<int32>(EStarfortFabPreviewHit::Hero7);
+ const int32 Selected=static_cast<int32>(Hit);
+ if (Selected>=HeroFirst && Selected<=HeroLast)
  {
-  const int32 Slot=FMath::FloorToInt((MouseX-20.f)/SlotW);
-  if (MouseX>=20.f && Slot>=0 && Slot<7)
-   FocusHeroByIndex(Slot);
+  FocusHeroByIndex(Selected-HeroFirst);
   return;
  }
- if (bBattleMode && MouseY>=Height-174.f && MouseY<=Height-134.f)
+ switch(Hit)
  {
-  // Private tactical buttons are deliberately isolated from paid gameplay.
-  const float WidthPerAction=FMath::Max(35.f,(Width-40.f)/3.f);
-  const int32 Action=FMath::FloorToInt((MouseX-20.f)/WidthPerAction);
-  if (MouseX>=20.f && Action>=0 && Action<3)
-  {
-   if (Action==0) QueueThreeHeroAttackPreview();
-   else if (Action==1) PlayOpponentAnimationPreview();
-   else ToggleWideBattleCamera();
-  }
-  return;
- }
- if (MouseY<Height-76.f || MouseY>Height-20.f) return;
- const float ButtonW=FMath::Max(35.f,(Width-32.f)/6.f);
- const int32 Button=FMath::FloorToInt((MouseX-16.f)/ButtonW);
- if (MouseX<16.f || Button<0 || Button>=6) return;
- switch(Button)
- {
-  case 0: ToggleActualAnimation();break;
-  case 1: OrbitLeft();break;
-  case 2: OrbitRight();break;
-  case 3: ZoomIn();break;
-  case 4: ZoomOut();break;
-  case 5: TogglePrivateScene();break;
+  case EStarfortFabPreviewHit::TeamAttack:
+   QueueThreeHeroAttackPreview();break;
+  case EStarfortFabPreviewHit::EnemyAttack:
+   PlayOpponentAnimationPreview();break;
+  case EStarfortFabPreviewHit::WideCamera:
+   ToggleWideBattleCamera();break;
+  case EStarfortFabPreviewHit::SoloAttack:
+   ToggleActualAnimation();break;
+  case EStarfortFabPreviewHit::OrbitLeft:
+   OrbitLeft();break;
+  case EStarfortFabPreviewHit::OrbitRight:
+   OrbitRight();break;
+  case EStarfortFabPreviewHit::ZoomIn:
+   ZoomIn();break;
+  case EStarfortFabPreviewHit::ZoomOut:
+   ZoomOut();break;
+  case EStarfortFabPreviewHit::OtherScene:
+   TogglePrivateScene();break;
+  default:break;
  }
 }
 
@@ -545,4 +571,6 @@ void AStarfortFabPreviewController::SetupInputComponent()
   this,&AStarfortFabPreviewController::ToggleWideBattleCamera);
  InputComponent->BindKey(EKeys::LeftMouseButton,IE_Pressed,
   this,&AStarfortFabPreviewController::OnPreviewClick);
+ InputComponent->BindTouch(IE_Pressed,this,
+  &AStarfortFabPreviewController::OnPreviewTouchPressed);
 }
