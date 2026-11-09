@@ -206,6 +206,11 @@ bool AStarfortFabPreviewController::SetRealAnimation(int32 Index,bool bAttack)
 void AStarfortFabPreviewController::ToggleActualAnimation()
 {
  if (!bPrivatePreview || !Heroes.IsValidIndex(FocusedIndex)) return;
+ if (bPrivateSequenceActive)
+ {
+  Notice=TEXT("Sıralı saldırı sürerken tekli animasyon değiştirilemez.");
+  return;
+ }
  const bool WantAttack=!bAttackMode;
  if (!SetRealAnimation(FocusedIndex,WantAttack))
  {
