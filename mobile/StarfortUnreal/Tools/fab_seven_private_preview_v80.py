@@ -296,15 +296,16 @@ def new_private_map(unreal,doc,loaded,battle,arena):
     scene_path=BATTLE if battle else SHOWCASE
     if unreal.EditorAssetLibrary.does_asset_exist(scene_path):
         raise RuntimeError("Existing artist preview map preserved: "+scene_path)
-    if not level or not actors or not level.new_level(scene_path,False):
-        raise RuntimeError("Cannot create real UE .umap for private preview "+scene_path)
-    # Standalone spectator GameMode: no Supabase actions, purchases, staged XP
-    # or user-account progress are sent from these review-only worlds.
-    world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+    # Validate native PreviewGameMode BEFORE writing the .umap, so an
+    # uncompiled C++ project cannot leave an apparently working scene.
     mode=unreal.load_class(None,
         "/Script/StarfortUnreal.StarfortFabPreviewGameMode")
     if not mode:
         raise RuntimeError("Compile native C++ StarfortFabPreviewGameMode before creating private maps")
+    if not level or not actors or not level.new_level(scene_path,False):
+        raise RuntimeError("Cannot create real UE .umap for private preview "+scene_path)
+    # Dedicated offline preview GameMode, never online STARFORT.
+    world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     if not world:
         raise RuntimeError("Unreal Editor world not available for private map")
     world.get_world_settings().set_editor_property("default_game_mode",mode)
