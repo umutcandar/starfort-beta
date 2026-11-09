@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "InputCoreTypes.h"
 #include "StarfortFabPreviewController.generated.h"
 
 class ASkeletalMeshActor;
@@ -62,6 +63,8 @@ public:
 private:
  void OnNumberPressed(FKey Key);
  void OnPreviewClick();
+ void OnPreviewTouchPressed(ETouchIndex::Type FingerIndex, FVector TouchLocation);
+ void HandlePreviewPointer(float ScreenX,float ScreenY);
  void CaptureLocalPreviewActors();
  FString TagValue(const AActor* Actor, const FString& Prefix) const;
  bool SetRealAnimation(int32 Index, bool bAttack);
@@ -85,6 +88,7 @@ private:
  int32 FocusedIndex = 0;
  float OrbitDegrees = 0.f;
  float CameraDistance = 850.f;
+ float LastPreviewPointerAt = -1000.f;
  FString Notice = TEXT("Yalnızca yerel Unreal görsel testidir.");
  TArray<FStarfortPrivatePreviewActor> Heroes;
  TWeakObjectPtr<ACameraActor> Camera;
