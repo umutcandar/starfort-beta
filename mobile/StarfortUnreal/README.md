@@ -1,5 +1,11 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## v81 — Interactive 7-slot real Fab hero + 3v1 camera/animation preview
+
+The user-only Unreal Editor preview now has a dedicated offline native `StarfortFabPreviewGameMode`, `StarfortFabPreviewController`, and a cinematic `StarfortFabPreviewHUD` with **seven canonical hero selectors**, mouse + keyboard input, camera orbit/zoom, and *real imported same-skeleton* Paragon idle/attack animation switching. The actual saved SkeletalMeshActor tags connect the Editor's audited native AnimSequences to the PIE runtime inspector. An absent attack animation stays missing instead of being fabricated.
+
+The two v80 private maps remain separated from actual STARFORT battle maps and shipping cook lists; the inspector has **no Supabase, health, loot, mission, or economy calls**. No Fab license acceptance/download, UE 5.8 compilation, actual .umap imports, phone testing or Android/iOS package creation can be assumed from source CI. See `Docs/InteractiveSevenHeroFabPreview_v81_TR.md`.
+
 ## v80 — Local seven-hero Epic/Fab private 3D preview (no credits)
 
 The free Paragon Wraith, Greystone, The Fey, Serath, Khaimera, Countess and Aurora asset listings are now mapped to STARFORT's seven stable server hero IDs for a **private visual review only**. After the user accepts the EULAs and adds the real packs to the local UE5.8 project, `Tools/STARFORT_7_KAHRAMAN_TARA.py` finds actual compatible SkeletalMeshes and native animation clips. Once the user confirms the local selection and license flag, `Tools/STARFORT_7_KAHRAMAN_KUR.py` creates TWO isolated `.umap` maps: a full-body hero gallery and a **3-v-1 animated cinematic lineup**. The original STARFORT v79 authored PBR arena is included automatically **if** its SHA-verified local GLB is available. Real Fab textures and models are never pushed to GitHub.
