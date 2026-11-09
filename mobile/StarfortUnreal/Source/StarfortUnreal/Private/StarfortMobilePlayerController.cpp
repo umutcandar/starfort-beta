@@ -24,9 +24,16 @@ void AStarfortMobilePlayerController::BeginPlay()
  Online->OnFailure.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleOnlineError);
  Online->OnSignedOut.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleSignedOut);
  ShowHeroScreen();
+ bool bOpenedBag=false;
  if(UStarfortSceneRouter* Router=GetGameInstance()->GetSubsystem<UStarfortSceneRouter>())
-  if(Router->ConsumeBagRoute()) ShowBagScreen();
- Online->LoadProgress();
+ {
+  if(Router->ConsumeBagRoute())
+  {
+   ShowBagScreen(); // Bag issues ONE authenticated GET itself.
+   bOpenedBag=true;
+  }
+ }
+ if(!bOpenedBag)Online->LoadProgress();
 }
 
 void AStarfortMobilePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
