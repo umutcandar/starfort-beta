@@ -265,12 +265,17 @@ def available_original_arena(unreal):
 
 
 def attach_arena(unreal,actors,arena):
+    from ash_arena_scale_review_v83 import imported_arena_uniform_scale
+    # Authentic geometry must be sized to the independently imported
+    # Unreal skeletal fighters. Prevent tiny 23cm arena / 2300m arena bugs.
+    scale=imported_arena_uniform_scale(arena)
     count=0
     for i,mesh in enumerate(arena):
         actor=actors.spawn_actor_from_class(unreal.StaticMeshActor,
             unreal.Vector(0,0,0),unreal.Rotator(0,0,0))
         if not actor:raise RuntimeError("Could not place actual imported original arena")
         actor.static_mesh_component.set_static_mesh(mesh)
+        actor.set_actor_scale3d(unreal.Vector(scale,scale,scale))
         actor.set_actor_label("STARFORT_PRIVATE_ORIGINAL_ASH_ARENA_"+str(i).zfill(3))
         count+=1
     return count
