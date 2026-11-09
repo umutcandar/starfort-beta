@@ -160,13 +160,18 @@ def accepted_meshes(unreal, doc, selected):
     return imported
 
 
-def find_idle(unreal, source_root, skeleton):
+def find_native_clip(unreal, source_root, skeleton, battle=False):
     lib=unreal.EditorAssetLibrary
     paths=lib.list_assets(source_root,recursive=True,include_folder=False)
-    # Only plausible idle animation assets; avoid loading unrelated huge assets.
-    ranked=sorted((str(p) for p in paths if "idle" in str(p).rsplit("/",1)[-1].lower()),
-                  key=lambda p:(0 if p.rsplit("/",1)[-1].lower().startswith(("idle","a_idle","as_idle")) else 1,len(p)))
-    for path in ranked[:35]:
+    # Loop a real imported attack/cast clip in the private 3v1 preview if one
+    # is compatible. Fallback to a real idle, never to a procedural mannequin.
+    desired=("attack","shoot","fire","slash","cast","ability") if battle else ("idle",)
+    ranked=sorted((str(p) for p in paths
+                   if any(term in str(p).rsplit("/",1)[-1].lower() for term in desired)),
+                  key=lambda p:(0 if "attack" in p.rsplit("/",1)[-1].lower() else 1,len(p)))
+    if battle and not ranked:
+        return find_native_clip(unreal,source_root,skeleton,battle=False)
+    for path in ranked[:60]:
         try:
             obj=lib.load_asset(path)
             if obj and obj.get_class().get_name() in ("AnimSequence","AnimSequenceBase") and (
@@ -174,10 +179,12 @@ def find_idle(unreal, source_root, skeleton):
                 return obj,path
         except (RuntimeError,AttributeError,ValueError,TypeError):
             continue
+    if battle:
+        return find_native_clip(unreal,source_root,skeleton,battle=False)
     return None,None
 
 
-def make_actor(unreal,actors,hero,mesh,root,location,rotation,tag):
+def make_actor(unreal,actors,hero,mesh,root,location,rotation,tag,battle=False):
     actor=actors.spawn_actor_from_class(unreal.SkeletalMeshActor,
         unreal.Vector(*location),unreal.Rotator(*rotation))
     if not actor:raise RuntimeError("Could not spawn genuine hero actor: "+hero)
@@ -185,14 +192,15 @@ def make_actor(unreal,actors,hero,mesh,root,location,rotation,tag):
     if not component:raise RuntimeError("SkeletalMeshActor has no skinned mesh component")
     component.set_skeletal_mesh_asset(mesh)
     component.set_editor_property("cast_shadow",True)
-    idle,idle_path=find_idle(unreal,root,mesh.get_editor_property("skeleton"))
-    if idle:
-        # A real imported keyed idle clip, preserved in map serialization.
-        component.override_animation_data(idle,is_looping=True,is_playing=True)
+    clip,clip_path=find_native_clip(unreal,root,mesh.get_editor_property("skeleton"),battle=battle)
+    if clip:
+        # UE5.8 serialized real AnimationSequence; NOT a fabricated damage/event.
+        component.override_animation_data(clip,is_looping=True,is_playing=True)
     actor.set_actor_label("STARFORT_PRIVATE_TEST_"+tag+"_"+hero.upper()+"_REFERENCE_ONLY")
     return {"hero_id":hero,"actor":actor.get_actor_label(),
             "full_body_skeletal_mesh":str(mesh.get_path_name()),
-            "verified_idle_animation":idle_path}
+            "verified_native_clip":clip_path,
+            "battle_animation_demonstration_only":bool(battle)}
 
 
 def light_camera(unreal,actors,battle):
@@ -231,10 +239,10 @@ def new_private_map(unreal,doc,loaded,battle):
         for i,hid in enumerate(frontline):
             mesh,path=loaded[hid]
             placed.append(make_actor(unreal,actors,hid,mesh,doc["roots"][hid],
-                (-390,(i-1)*280,0),(0,12,0),"ALLY"))
+                (-390,(i-1)*280,0),(0,12,0),"ALLY",battle=True))
         enemy_mesh,path=loaded[enemy]
         placed.append(make_actor(unreal,actors,enemy,enemy_mesh,doc["roots"][enemy],
-            (490,0,0),(0,190,0),"OPPONENT"))
+            (490,0,0),(0,190,0),"OPPONENT",battle=True))
     else:
         for i,hero in enumerate(doc["heroes"]):
             hid=hero["hero_id"]
