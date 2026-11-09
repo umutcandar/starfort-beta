@@ -205,10 +205,12 @@ def make_actor(unreal,actors,hero,mesh,root,location,rotation,tag,battle=False):
     if attack_path and not any(token in attack_path.rsplit("/",1)[-1].lower()
                 for token in ("attack","shoot","fire","slash","cast","ability")):
         attack_path=None
-    clip=attack if battle and attack_path else idle
-    clip_path=attack_path if battle and attack_path else idle_path
+    # v82 interaction: all four actors begin in their REAL idle clips.
+    # The three-hero and opponent attacks are played ONLY on Q/E command;
+    # never loop four attack animations simultaneously at PIE startup.
+    clip=idle
+    clip_path=idle_path
     if clip:
-        # UE5.8 serialized real AnimationSequence; NOT a fabricated damage/event.
         component.override_animation_data(clip,is_looping=True,is_playing=True)
 
     # Persistent actor tags, not GetActorLabel(): labels are editor-only.

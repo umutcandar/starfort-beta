@@ -1,5 +1,11 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## v82 — Real user-imported 3-v-1 private combat animation director
+
+The free Paragon editor-only battle review now waits in real imported **idle** poses and plays **three individually rigged ally attack clips in sequence** when Q is pressed. E tests only the actual opponent's keyed native attack, B switches between 3+1 battlefield and hero cinema cameras, and actors return precisely to their original positions after a bounded authored-motion step. HUD reports imported 3+1 count and actual demonstrated clips; there is **no fake damage, invented attack clip, HP, loot, progression or online RPC**. A real editor-only QA script validates exactly 3 ally rigs + 1 opponent, one camera, original scene GameMode and matching imported skeleton/animation paths.
+
+Source and contract tests are wired into Native Mobile Source QA. The real Epic/Fab content is **not** downloaded into GitHub; the user's UE5.8 Editor, accepted EULAs, installed Paragon files and actual editor playtest are required. No UE compile or Android/iOS package is claimed. Turkish walkthrough: `Docs/ThreeHeroFabPrivateCombatDirector_v82_TR.md`.
+
 ## v81 — Interactive 7-slot real Fab hero + 3v1 camera/animation preview
 
 The user-only Unreal Editor preview now has a dedicated offline native `StarfortFabPreviewGameMode`, `StarfortFabPreviewController`, and a cinematic `StarfortFabPreviewHUD` with **seven canonical hero selectors**, mouse + keyboard input, camera orbit/zoom, and *real imported same-skeleton* Paragon idle/attack animation switching. The actual saved SkeletalMeshActor tags connect the Editor's audited native AnimSequences to the PIE runtime inspector. An absent attack animation stays missing instead of being fabricated.

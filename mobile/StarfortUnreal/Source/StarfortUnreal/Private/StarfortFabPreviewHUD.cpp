@@ -41,7 +41,31 @@ void AStarfortFabPreviewHUD::DrawHUD()
  }
 
  const float FooterY=FMath::Max(Height-76.f,160.f);
- DrawRect(Navy,8.f,FooterY-38.f,FMath::Max(Width-16.f,0.f),105.f);
+ DrawRect(Navy,8.f,Preview->IsBattlePreview()?FooterY-169.f:FooterY-38.f,
+  FMath::Max(Width-16.f,0.f),Preview->IsBattlePreview()?236.f:105.f);
+ if (Preview->IsBattlePreview())
+ {
+  const FString Formation=FString::Printf(
+   TEXT("SAHNE: %d gerçek dost / %d gerçek rakip | SUNUCU HP ve ödül yok"),
+   Preview->GetRealBattleAllyCount(),Preview->GetRealBattleOpponentCount());
+  DrawText(Formation,Muted,20.f,FooterY-154.f,
+   GEngine->GetSmallFont(),0.91f,false);
+  DrawText(Preview->GetPrivateBattleStatus(),Gold,20.f,FooterY-132.f,
+   GEngine->GetSmallFont(),0.94f,false);
+  const TCHAR* BattleControls[]={
+   TEXT("Q  3 KAHRAMAN"),TEXT("E  RAKİP ANİMASYONU"),
+   TEXT("B  GENİŞ/YAKIN KAMERA")
+  };
+  const float BattleButtonWidth=FMath::Max(35.f,(Width-40.f)/3.f);
+  for (int32 I=0;I<3;++I)
+  {
+   const float X=20.f+I*BattleButtonWidth;
+   DrawRect(Active,X,FooterY-98.f,
+    FMath::Max(BattleButtonWidth-5.f,30.f),40.f);
+   DrawText(BattleControls[I],FLinearColor::White,X+8.f,
+    FooterY-85.f,GEngine->GetSmallFont(),0.90f,false);
+  }
+ }
  DrawText(Preview->GetPreviewNotice(),Gold,20.f,FooterY-30.f,
   GEngine->GetSmallFont(),0.93f,false);
  const TCHAR* Controls[]={
@@ -59,6 +83,6 @@ void AStarfortFabPreviewHUD::DrawHUD()
  if (!Preview->FocusedHeroHasActualAttack())
   DrawText(TEXT("SEÇİLİ KARAKTER İÇİN GERÇEK SALDIRI KLİBİ YOK"),
    FLinearColor(1.f,.49f,.42f,1.f),
-   20.f,FMath::Max(FooterY-58.f,158.f),
+   20.f,FMath::Max(Preview->IsBattlePreview()?FooterY-187.f:FooterY-58.f,158.f),
    GEngine->GetSmallFont(),0.85f,false);
 }
