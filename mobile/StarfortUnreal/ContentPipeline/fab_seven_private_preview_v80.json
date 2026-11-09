@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "purpose": "PRIVATE_UNREAL_EDITOR_3D_REVIEW_ONLY",
+  "engine": "Unreal Engine 5.8",
+  "level": "/Game/Maps/L_StarfortPrivateFabPlaytest_v80",
+  "battle_level": "/Game/Maps/L_StarfortPrivateFabBattle_v80",
+  "independent_of_server_accounts": true,
+  "no_fabricated_real_player_progress": true,
+  "source_assets_must_be_acquired_by_user": true,
+  "never_redistribute_fab_sources": true,
+  "never_mark_production_approved": true,
+  "non_shipping": true,
+  "heroes": [
+    {
+      "hero_id": "rovan",
+      "source_hero_name": "Wraith",
+      "expected_root": "/Game/ParagonWraith",
+      "source_url": "https://www.fab.com/listings/17e0840f-8651-4933-bd6d-211a34b1dd17",
+      "visual_reference_only": "Royal Gunner / fantasy-gunner reference only",
+      "final_approval": false
+    },
+    {
+      "hero_id": "aldren",
+      "source_hero_name": "Greystone",
+      "expected_root": "/Game/ParagonGreystone",
+      "source_url": "https://www.fab.com/listings/122fd7bf-6f12-4304-a930-cccbbacdaebc",
+      "visual_reference_only": "Heavy guardian",
+      "final_approval": false
+    },
+    {
+      "hero_id": "lyra",
+      "source_hero_name": "The Fey",
+      "expected_root": "/Game/ParagonTheFey",
+      "source_url": "https://www.fab.com/listings/9afbcde6-4a14-4018-95c3-2f3a2e1da858",
+      "visual_reference_only": "Caster",
+      "final_approval": false
+    },
+    {
+      "hero_id": "mira",
+      "source_hero_name": "Serath",
+      "expected_root": "/Game/ParagonSerath",
+      "source_url": "https://www.fab.com/listings/522b6160-15ab-492b-a2b0-c09f9bb5f6e6",
+      "visual_reference_only": "Temporary female base, NOT a healer visual",
+      "final_approval": false
+    },
+    {
+      "hero_id": "doran",
+      "source_hero_name": "Khaimera",
+      "expected_root": "/Game/ParagonKhaimera",
+      "source_url": "https://www.fab.com/listings/e7c665c1-8c13-42f0-9152-0753008853d7",
+      "visual_reference_only": "Temporary fighter base, NOT human axe warrior",
+      "final_approval": false
+    },
+    {
+      "hero_id": "vesper",
+      "source_hero_name": "Countess",
+      "expected_root": "/Game/ParagonCountess",
+      "source_url": "https://www.fab.com/listings/0bf014eb-f2ed-4029-adda-81a855eb5220",
+      "visual_reference_only": "Gothic assassin reference",
+      "final_approval": false
+    },
+    {
+      "hero_id": "eira",
+      "source_hero_name": "Aurora",
+      "expected_root": "/Game/ParagonAurora",
+      "source_url": "https://www.fab.com/listings/918456eb-4c36-4346-9be2-8986e25c9a0b",
+      "visual_reference_only": "Frost caster reference",
+      "final_approval": false
+    }
+  ]
+}

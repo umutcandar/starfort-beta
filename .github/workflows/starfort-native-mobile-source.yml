@@ -20,6 +20,8 @@ jobs:
           python3 mobile/StarfortUnreal/Tools/test_verified_battle_motion_v79.py
           python3 mobile/StarfortUnreal/Tools/test_original_battlefield_v79.py
           python3 mobile/StarfortUnreal/Tools/test_fab_character_review.py
+          python3 mobile/StarfortUnreal/Tools/test_fab_seven_private_preview_v80.py
+          python3 mobile/StarfortUnreal/Tools/fab_seven_private_preview_v80.py --contract
           python3 mobile/StarfortUnreal/Tools/fab_character_review.py --contract
           python3 mobile/StarfortUnreal/Tools/audit_public_asset_hygiene.py
           python3 mobile/StarfortUnreal/Tools/test_cinematic_hero_install.py
