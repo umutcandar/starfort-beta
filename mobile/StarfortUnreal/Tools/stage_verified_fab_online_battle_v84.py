@@ -23,6 +23,9 @@ CANONICAL={
  "aldren":"ParagonGreystone",
  "lyra":"ParagonTheFey",
  "doran":"ParagonKhaimera",
+ "mira":"ParagonSerath",
+ "vesper":"ParagonCountess",
+ "eira":"ParagonAurora",
 }
 
 
@@ -37,15 +40,24 @@ def load_selection():
     mapping=doc.get("selected_skeletal_meshes")
     if not isinstance(mapping,dict):
         raise ValueError("No real Fab SkeletalMesh selection")
+    selected={}
+    # A minimum quartet can run first; additional free Fab packs are opt-in.
+    # A seven-hero import makes ANY actual server-selected trio previewable,
+    # choosing one unused distinct rig as temporary enemy visual.
     for hid,namespace in CANONICAL.items():
         path=mapping.get(hid,"")
+        if not path:
+            if hid in (*ALLIES,OPPONENT):
+                raise ValueError("Missing / wrong real licensed Paragon source mesh for "+hid)
+            continue
         if (not isinstance(path,str) or
             not path.lower().startswith(("/Game/"+namespace+"/").lower()) or
             ".." in path or "\\" in path or ":" in path):
             raise ValueError("Missing / wrong real licensed Paragon source mesh for "+hid)
-    if len({mapping[h] for h in CANONICAL})!=4:
-        raise ValueError("Four different real Fab source meshes required")
-    return {h:mapping[h] for h in CANONICAL}
+        selected[hid]=path
+    if len(selected)<4 or len(selected)>7 or len(set(selected.values()))!=len(selected):
+        raise ValueError("Four to seven different real Fab source meshes required")
+    return selected
 
 
 def property_any(obj,keys,value):
@@ -63,7 +75,8 @@ def property_any(obj,keys,value):
 def inspect_source_assets(unreal,selected):
     from fab_seven_private_preview_v80 import find_native_clip
     rows=[]
-    for hid in (*ALLIES,OPPONENT):
+    for hid in (*ALLIES,OPPONENT,
+                *(h for h in ("mira","vesper","eira") if h in selected)):
         path=selected[hid]
         library=unreal.EditorAssetLibrary
         if not library.does_asset_exist(path):
@@ -88,7 +101,7 @@ def inspect_source_assets(unreal,selected):
         rows.append({"id":hid,"body":mesh,"idle":idle,"attack":attack,
                      "mesh_path":path,"idle_path":idle_path,
                      "attack_path":attack_path,"opponent":hid==OPPONENT})
-    if len({r["mesh_path"] for r in rows})!=4:
+    if len({r["mesh_path"] for r in rows})!=len(rows):
         raise RuntimeError("Unique actual actor rig meshes required")
     return rows
 
@@ -132,6 +145,8 @@ def stage_in_editor(unreal,selected):
     bindings=[]
     for i,row in enumerate(rows):
         hid=row["id"]
+        # v85 repositions actual server-selected heroes each verified room.
+        # Extra seven-roster refs are hidden until chosen by the real server.
         x,y=(-370.0,(-1.0+i)*320.0) if not row["opponent"] else (480.0,0.0)
         actor=actors.spawn_actor_from_class(unreal.SkeletalMeshActor,
             unreal.Vector(x,y,0),unreal.Rotator(0.0,180.0 if row["opponent"] else 0.0,0.0))
@@ -169,7 +184,9 @@ def stage_in_editor(unreal,selected):
         "visual_reference_only":True,
         "development_only":True,
         "production_art_approved":False,
-        "actual_licensed_paragon_bodies":4,
+        "actual_licensed_paragon_bodies":len(rows),
+        "server_selected_roster_preview_supported":len(rows)>=4,
+        "full_seven_hero_review_available":len(rows)==7,
         "server_battle_map":MAP,
         "online_gameplay_compiled_on_device":False,
         "real_device_tested":False,
@@ -192,7 +209,8 @@ def main(argv=None):
     args=parser.parse_args(argv)
     if args.contract:
         print(json.dumps({"stage":MAP,"initial_team":ALLIES,
-            "opponent":OPPONENT,"actual_imports":False,
+            "opponent":OPPONENT,"additional_optional_heroes":("mira","vesper","eira"),
+            "actual_imports":False,
             "requires_real_user_licensed_fab":True,"development_only":True}))
         return 0
     if not args.stage:parser.error("Use --contract or --stage")
