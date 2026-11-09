@@ -213,11 +213,11 @@ def light_camera(unreal,actors,battle):
 def new_private_map(unreal,doc,loaded,battle):
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    path=BATTLE if battle else SHOWCASE
-    if unreal.EditorAssetLibrary.does_asset_exist(path):
-        raise RuntimeError("Existing artist preview map preserved: "+path)
-    if not level or not actors or not level.new_level(path,False):
-        raise RuntimeError("Cannot create real UE .umap for private preview "+path)
+    scene_path=BATTLE if battle else SHOWCASE
+    if unreal.EditorAssetLibrary.does_asset_exist(scene_path):
+        raise RuntimeError("Existing artist preview map preserved: "+scene_path)
+    if not level or not actors or not level.new_level(scene_path,False):
+        raise RuntimeError("Cannot create real UE .umap for private preview "+scene_path)
     # Standalone spectator GameMode: no Supabase actions, purchases, staged XP
     # or user-account progress are sent from these review-only worlds.
     world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
@@ -244,7 +244,7 @@ def new_private_map(unreal,doc,loaded,battle):
                 (0,(i-3)*230,0),(0,0,0),"GALLERY"))
     light_camera(unreal,actors,battle)
     if not level.save_current_level():raise RuntimeError("Real Unreal .umap save failed")
-    return {"path":path,"actual_skinned_character_actors":placed}
+    return {"path":scene_path,"actual_skinned_character_actors":placed}
 
 
 def stage(unreal,doc):
