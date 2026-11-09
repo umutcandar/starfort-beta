@@ -67,6 +67,17 @@ def validate_private_preview():
     else:
         try:
             proof = json.loads(PRIVATE_AUDIT.read_text(encoding="utf-8"))
+            # If either private UE map was re-authored after the local Editor
+            # audit, the saved JSON is stale. Re-run UE Editor QA rather than
+            # trusting a once-passing report for changed live character art.
+            existing_maps = [
+                ROOT / "Content/Maps" / (stem + ".umap")
+                for stem in PRIVATE_MAPS
+            ]
+            if all(p.is_file() for p in existing_maps):
+                newest_map = max(p.stat().st_mtime for p in existing_maps)
+                if PRIVATE_AUDIT.stat().st_mtime < newest_map:
+                    errors.append("Private Unreal maps changed after Editor QA; re-audit real 3v1")
             if not (
                 proof.get("audit_type") == "REAL_UNREAL_EDITOR_LOCAL_PRIVATE_3V1_ONLY"
                 and proof.get("interactively_reviewable_in_editor") is True
