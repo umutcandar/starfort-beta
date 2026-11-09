@@ -51,8 +51,14 @@ void AStarfortFabPreviewController::BeginPlay()
  if (Camera.IsValid()) SetViewTarget(Camera.Get());
  if (Heroes.Num()>0)
  {
-  FocusHeroByIndex(0);
-  Notice=TEXT("1-7 kahraman, SPACE gerçek animasyon, A/D açı, W/S zoom, TAB diğer test.");
+  // Rovan might not be installed yet. Start with the first REAL imported
+  // hero instead of displaying a missing character as the selected model.
+  for (int32 I=0;I<7;++I)
+   if (Heroes[0].HeroId==StarfortFabPrivate::OrderedIds[I])
+   {
+    FocusHeroByIndex(I);
+    break;
+   }
  }
  else Notice=TEXT("Önce gerçek Fab SkeletalMesh paketlerini içe aktar.");
 }
