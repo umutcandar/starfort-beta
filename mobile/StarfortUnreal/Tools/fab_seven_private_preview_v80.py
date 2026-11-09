@@ -196,14 +196,36 @@ def make_actor(unreal,actors,hero,mesh,root,location,rotation,tag,battle=False):
     if not component:raise RuntimeError("SkeletalMeshActor has no skinned mesh component")
     component.set_skeletal_mesh_asset(mesh)
     component.set_editor_property("cast_shadow",True)
-    clip,clip_path=find_native_clip(unreal,root,mesh.get_editor_property("skeleton"),battle=battle)
+    skeleton=mesh.get_editor_property("skeleton")
+    idle,idle_path=find_native_clip(unreal,root,skeleton,battle=False)
+    attack,attack_candidate=find_native_clip(unreal,root,skeleton,battle=True)
+    # V80 battle clip discovery may legitimately fall back to idle.
+    # Do not tag an idle pose as a genuine attack: the private UI will disable it.
+    attack_path=(attack_candidate if attack_candidate!=idle_path else None)
+    if attack_path and not any(token in attack_path.rsplit("/",1)[-1].lower()
+                for token in ("attack","shoot","fire","slash","cast","ability")):
+        attack_path=None
+    clip=attack if battle and attack_path else idle
+    clip_path=attack_path if battle and attack_path else idle_path
     if clip:
         # UE5.8 serialized real AnimationSequence; NOT a fabricated damage/event.
         component.override_animation_data(clip,is_looping=True,is_playing=True)
+
+    # Persistent actor tags, not GetActorLabel(): labels are editor-only.
+    # Runtime private camera/selector can discover exactly the imported
+    # skeletal rigs and their original same-skeleton animation assets.
+    actor.set_editor_property("tags",[
+        unreal.Name("SFPREVIEW_HERO="+hero),
+        unreal.Name("SFPREVIEW_SIDE="+tag),
+        unreal.Name("SFPREVIEW_IDLE="+(idle_path or "")),
+        unreal.Name("SFPREVIEW_ATTACK="+(attack_path or "")),
+    ])
     actor.set_actor_label("STARFORT_PRIVATE_TEST_"+tag+"_"+hero.upper()+"_REFERENCE_ONLY")
     return {"hero_id":hero,"actor":actor.get_actor_label(),
             "full_body_skeletal_mesh":str(mesh.get_path_name()),
             "verified_native_clip":clip_path,
+            "verified_native_idle_clip":idle_path,
+            "verified_native_attack_clip":attack_path,
             "battle_animation_demonstration_only":bool(battle)}
 
 
@@ -261,6 +283,7 @@ def light_camera(unreal,actors,battle):
         if not actor:raise RuntimeError("Could not author preview camera/lighting")
         actor.set_actor_label(label+("_BATTLE" if battle else "_GALLERY"))
         if klass is unreal.CameraActor:
+            actor.set_editor_property("tags",[unreal.Name("SFPREVIEW_CAMERA")])
             try:
                 actor.set_editor_property("auto_activate_for_player",unreal.AutoReceiveInput.PLAYER_0)
             except (AttributeError,RuntimeError):
@@ -278,9 +301,13 @@ def new_private_map(unreal,doc,loaded,battle,arena):
     # Standalone spectator GameMode: no Supabase actions, purchases, staged XP
     # or user-account progress are sent from these review-only worlds.
     world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
-    if world:
-        mode=unreal.GameModeBase.static_class()
-        world.get_world_settings().set_editor_property("default_game_mode",mode)
+    mode=unreal.load_class(None,
+        "/Script/StarfortUnreal.StarfortFabPreviewGameMode")
+    if not mode:
+        raise RuntimeError("Compile native C++ StarfortFabPreviewGameMode before creating private maps")
+    if not world:
+        raise RuntimeError("Unreal Editor world not available for private map")
+    world.get_world_settings().set_editor_property("default_game_mode",mode)
     placed=[]
     if battle:
         frontline=[hid for hid in ("aldren","rovan","lyra","vesper","mira","eira") if hid in loaded][:3]
@@ -337,6 +364,8 @@ def stage(unreal,doc):
         "real_ue_mobile_apk_created":False,
         "production_quality_approved":False,
         "only_for_private_editor_test":True,
+        "interactive_hero_selection_and_camera":True,
+        "real_attack_animation_only_if_imported":True,
     }
     REPORT.write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     return report
