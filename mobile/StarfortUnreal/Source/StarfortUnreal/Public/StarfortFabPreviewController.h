@@ -80,6 +80,7 @@ private:
  FVector ActiveAttackStartPosition = FVector::ZeroVector;
  float ActiveAttackElapsed = 0.f;
  float ActiveAttackDuration = 0.f;
+ int32 CompletedPrivateAttackCount = 0;
  FString PrivateBattleStatus = TEXT("3 kahraman - 1 rakip; yalnızca animasyon gösterimi.");
  int32 FocusedIndex = 0;
  float OrbitDegrees = 0.f;
