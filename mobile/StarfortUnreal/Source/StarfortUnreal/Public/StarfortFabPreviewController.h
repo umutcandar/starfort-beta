@@ -12,6 +12,7 @@ class UAnimSequence;
 struct FStarfortPrivatePreviewActor
 {
  FString HeroId;
+ FString SourceSide; // ALLY / OPPONENT / GALLERY; editor-authored tag, not player team data.
  TWeakObjectPtr<ASkeletalMeshActor> Actor;
  FString IdleSequencePath;
  FString AttackSequencePath;
@@ -38,6 +39,11 @@ public:
  FString GetFocusedHero() const;
  bool FocusedHeroHasActualAttack() const;
  FString GetPreviewNotice() const { return Notice; }
+ FString GetPrivateBattleStatus() const;
+ bool IsPrivateBattleSequenceActive() const { return bPrivateSequenceActive; }
+ bool IsWideBattleCamera() const { return bWideBattleCamera; }
+ int32 GetRealBattleAllyCount() const;
+ int32 GetRealBattleOpponentCount() const;
 
  // Native HUD click targets and keyboard shortcuts share the same actions.
  void FocusHeroByIndex(int32 Index);
@@ -47,6 +53,11 @@ public:
  void ZoomIn();
  void ZoomOut();
  void TogglePrivateScene();
+ /** Private battle actions use ONLY imported same-skeleton Fab clips.
+     No damage, HP, drops, currency, or server actions are performed. */
+ void QueueThreeHeroAttackPreview();
+ void PlayOpponentAnimationPreview();
+ void ToggleWideBattleCamera();
 
 private:
  void OnNumberPressed(FKey Key);
@@ -55,10 +66,21 @@ private:
  FString TagValue(const AActor* Actor, const FString& Prefix) const;
  bool SetRealAnimation(int32 Index, bool bAttack);
  void UpdateCamera(float DeltaSeconds);
+ void TickPrivateBattleSequence(float DeltaSeconds);
+ void StartNextPrivateAttack();
+ void StopPrivateBattleSequence();
 
  bool bPrivatePreview = false;
  bool bBattleMode = false;
  bool bAttackMode = false;
+ bool bWideBattleCamera = false;
+ bool bPrivateSequenceActive = false;
+ TArray<int32> PendingPrivateAttackIndices;
+ int32 ActivePreviewAttackIndex = INDEX_NONE;
+ FVector ActiveAttackStartPosition = FVector::ZeroVector;
+ float ActiveAttackElapsed = 0.f;
+ float ActiveAttackDuration = 0.f;
+ FString PrivateBattleStatus = TEXT("3 kahraman - 1 rakip; yalnızca animasyon gösterimi.");
  int32 FocusedIndex = 0;
  float OrbitDegrees = 0.f;
  float CameraDistance = 850.f;
