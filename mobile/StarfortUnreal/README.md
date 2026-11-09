@@ -1,5 +1,11 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## v85 — Server-selected three of seven REAL user-imported free Fab rigs
+
+The v84 Development-only bridge now accepts **4–7 distinct original Fab source SkeletalMeshes** instead of only one hard-coded team. It validates seven canonical roster IDs, each source namespace, unique genuine rig and matching original idle/attack clips; selects the **exact authenticated three heroes** and one **different unused real mesh as a temporary opponent stand-in**, hides all unused gallery actors and restores actor transforms on room change/log-out. Enemy source art is never represented as the final STARFORT enemy. The actual imported attack length governs cinematic timing; there is no local damage, result, XP or purchase simulation.
+
+The pure native C++ unused-rig selection helper is standalone compiled and exercised for **all 35 unordered 3-of-7 combinations**, including when the server selects Doran/Khaimera as a player hero. User-owned real Epic/Fab files and UE5.8 compilation/physical mobile device QA remain prerequisites; static GitHub QA is NOT proof of a mobile playtest. Shipping hero art gates stay unchanged. Turkish install/troubleshooting: `Docs/DynamicSevenHeroFabServerBattle_v85_TR.md`.
+
 ## v84 — Real authenticated server turns on genuine free Fab 3D rigs (Development-only)
 
 `AStarfortFabVerifiedBattleBridge` is an opt-in non-shipping visual renderer attached to the **real native** `L_StarfortBattle` map. It binds four distinct user-owned Epic/Fab Paragon SkeletalMesh assets and their hard-referenced same-skeleton idle/attack sequences. `AStarfortBattleController` forwards only the existing online subsystem's `FStarfortVerifiedBattleTurn` to this optional renderer. A first snapshot only shows authentic rigs at idle; only a **new confirmed server turn** can trigger a matching real hero strike/special. Real lost HP is required for the enemy counter animation. Mission end, log-out and level teardown clear the assets and camera. Server-owned HP, mission outcome, rewards, skills, cooldowns and existing battle UMG remain untouched.
