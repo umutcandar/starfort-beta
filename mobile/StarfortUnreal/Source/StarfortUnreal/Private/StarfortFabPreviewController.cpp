@@ -395,7 +395,10 @@ void AStarfortFabPreviewController::StartNextPrivateAttack()
  }
  bPrivateSequenceActive=false;
  bWideBattleCamera=true;
- PrivateBattleStatus=TEXT("Gerçek klip gösterimi bitti. HP/ödül değişmedi.");
+ PrivateBattleStatus=CompletedPrivateAttackCount>0
+  ? FString::Printf(TEXT("%d gerçek saldırı klibi gösterildi. HP/ödül değişmedi."),
+      CompletedPrivateAttackCount)
+  : TEXT("Gerçek uyumlu saldırı animasyonu yüklenemedi.");
 }
 
 void AStarfortFabPreviewController::QueueThreeHeroAttackPreview()
