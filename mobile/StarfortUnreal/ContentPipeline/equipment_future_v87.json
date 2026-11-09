@@ -1,0 +1,452 @@
+{
+  "schema_version": 1,
+  "package": "STARFORT equipment horizon v87",
+  "status": "design-only material/item proposal; no live database migration or unlock",
+  "existing_live": {
+    "items": 19,
+    "slots": [
+      "weapon",
+      "armor",
+      "relic"
+    ],
+    "max_rank": 5,
+    "mastery_per_item_type": true,
+    "item_copy_cap": 20,
+    "ascension_item_ids": [
+      "ember_guard",
+      "star_spear",
+      "guardian_seal",
+      "starbreaker"
+    ],
+    "ascension_max_rank": 4,
+    "existing_set_ids": [
+      "moon",
+      "ember",
+      "dawn"
+    ],
+    "full_active_team_copies": 9,
+    "all_seven_heroes_full_equipment_copies": 21
+  },
+  "upgrade_policy": {
+    "preserve_rank_1_to_5_costs": true,
+    "formula": "tierMultiplier * {gold:120*nextRank^2,stone:40*nextRank,aether:8*nextRank^2}",
+    "tier_multipliers": {
+      "common": 1,
+      "epic": 2,
+      "legendary": 3
+    },
+    "mastery_totals": {
+      "common": {
+        "gold": 6600,
+        "stone": 600,
+        "aether": 440
+      },
+      "epic": {
+        "gold": 13200,
+        "stone": 1200,
+        "aether": 880
+      },
+      "legendary": {
+        "gold": 19800,
+        "stone": 1800,
+        "aether": 1320
+      }
+    },
+    "consume_equipment_copies": false,
+    "random_failure_probability": 0,
+    "proposed_second_phase": "Add fragment expenses only to star ascension after economy tuning, not retroactively to +1..+5",
+    "ascension_recipes_future_optional": [
+      {
+        "rank": 1,
+        "boss_unique_weeks": 2,
+        "legacy_gold": 1400,
+        "legacy_stone": 420,
+        "legacy_aether": 100,
+        "class_fragments": 6,
+        "star_glass": 2,
+        "stellar_core": 1,
+        "guardian_stamp": 0,
+        "constellation_chart": 0
+      },
+      {
+        "rank": 2,
+        "boss_unique_weeks": 5,
+        "legacy_gold": 5600,
+        "legacy_stone": 840,
+        "legacy_aether": 400,
+        "class_fragments": 12,
+        "star_glass": 4,
+        "stellar_core": 1,
+        "guardian_stamp": 1,
+        "constellation_chart": 0
+      },
+      {
+        "rank": 3,
+        "boss_unique_weeks": 9,
+        "legacy_gold": 12600,
+        "legacy_stone": 1260,
+        "legacy_aether": 900,
+        "class_fragments": 20,
+        "star_glass": 8,
+        "stellar_core": 2,
+        "guardian_stamp": 2,
+        "constellation_chart": 0
+      },
+      {
+        "rank": 4,
+        "boss_unique_weeks": 14,
+        "legacy_gold": 22400,
+        "legacy_stone": 1680,
+        "legacy_aether": 1600,
+        "class_fragments": 32,
+        "star_glass": 12,
+        "stellar_core": 4,
+        "guardian_stamp": 3,
+        "constellation_chart": 1
+      }
+    ],
+    "ascension_fragments_total_for_rank_4": {
+      "class_fragments": 70,
+      "star_glass": 26,
+      "stellar_core": 8,
+      "guardian_stamp": 6,
+      "constellation_chart": 1
+    }
+  },
+  "farming_policy_proposed": {
+    "first_three_verified_story_wins_per_day": "Each awards 3 role-chosen common fragments; all subsequent wins give existing server currencies only",
+    "chapter_5_8_first_daily_win": "One guaranteed star glass if 3★; no RNG gate",
+    "weekly_boss": "Exactly one weekly stamp and existing 4-item rotation on verified first victory; no purchases skip unique weeks",
+    "weekly_labyrinth_contract": "One guaranteed stellar core on completion; separate new repeatable contract must be implemented first",
+    "weekly_constellation_chart": "Alliance weekly contribution OR equally achievable solo weekly contract",
+    "do_not_affect_existing_story_first_clear_rewards": true,
+    "server_authority": "All awards use authenticated idempotent transaction with unique completion key; prevent double claiming from restarts or replay"
+  },
+  "new_items": [
+    {
+      "id": "storm_bow",
+      "name": "Gökyarığı Yayı",
+      "slot": "weapon",
+      "rarity": "epic",
+      "set": "storm",
+      "proposed_stats": {
+        "attack": 15
+      },
+      "role_fit": "rovan,lyra",
+      "proposed_forge_level": 4,
+      "visual_silhouette": "İki asimetrik kobalt yay kolu; ortada boş sekiz köşeli yıldız bağlantısı; gerilen ip astral dokuma",
+      "proposed_unlock_source": "Demirhane 4 veya yeni Fırtına Avı sözleşmesinin garantili şeması",
+      "gameplay_state": "design_only_not_obtainable",
+      "slot_model": true
+    },
+    {
+      "id": "ember_maul",
+      "name": "Ocağın Son Sözü",
+      "slot": "weapon",
+      "rarity": "epic",
+      "set": "ember",
+      "proposed_stats": {
+        "attack": 13
+      },
+      "role_fit": "doran,aldren",
+      "proposed_forge_level": 4,
+      "visual_silhouette": "Çatlamış volkan camı baş; altın perçinli gövde, merkezde ısı bacaları; her darbede kısa yoğun köz salınımı",
+      "proposed_unlock_source": "Demirhane 4 veya Kor Ocağı veteran bölümü",
+      "gameplay_state": "design_only_not_obtainable",
+      "slot_model": true
+    },
+    {
+      "id": "rift_needle",
+      "name": "Boşluk İğnesi",
+      "slot": "weapon",
+      "rarity": "legendary",
+      "set": "rift",
+      "proposed_stats": {
+        "attack": 22
+      },
+      "role_fit": "vesper",
+      "proposed_forge_level": 6,
+      "visual_silhouette": "Çift uçlu ince hilal hançer; ışık yutmayan mat siyah yüzey, ucunda soluk menekşe yarık izi",
+      "proposed_unlock_source": "Derin Yarık boss seferi + demirhane 6",
+      "gameplay_state": "design_only_not_obtainable",
+      "slot_model": true
+    },
+    {
+      "id": "verdant_staff",
+      "name": "Kökışığı Asası",
+      "slot": "weapon",
+      "rarity": "legendary",
+      "set": "verdant",
+      "proposed_stats": {
+        "attack": 12,
+        "healing": 16
+      },
+      "role_fit": "mira,eira",
+      "proposed_forge_level": 6,
+      "visual_silhouette": "Üç adet kök halkası saydam çekirdek etrafında sarılır; içte yavaş atan yeşil-beyaz ışık; organik asimetri",
+      "proposed_unlock_source": "Ay Bahçesi son safha ve şema + demirhane 6",
+      "gameplay_state": "design_only_not_obtainable",
+      "slot_model": true
+    },
+    {
+      "id": "ash_weave",
+      "name": "Köz Dokuması",
+      "slot": "armor",
+      "rarity": "epic",
+      "set": "ember",
+      "proposed_stats": {
+        "hp": 80,
+        "armor": 8
+      },
+      "role_fit": "doran,aldren",
+      "proposed_forge_level": 4,
+      "visual_silhouette": "Kömür-gri deri üzerine çapraz bakır tokalar; kol boyunca yalın turuncu yanık izleri; gerçek kumaş katları",
+      "proposed_unlock_source": "Veteran Bölüm 4 ve Demirhane 4",
+      "gameplay_state": "design_only_not_obtainable",
+      "slot_model": true
+    },
+    {
+      "id": "rift_veil",
+      "name": "Gece Dokusu",
+      "slot": "armor",
+      "rarity": "epic",
+      "set": "rift",
+      "proposed_stats": {
+        "hp": 70,
+        "armor": 5
+      },
+      "role_fit": "vesper,rovan",
+      "proposed_forge_level": 5,
+      "visual_silhouette": "Karanlık metal örgü ve yırtık kenarlı gece mavisi manto; düşük parıltılı üçgen nişanlar",
+      "proposed_unlock_source": "Yarık Gözcüsü ilk tamamlanma ödülü ve Demirhane 5",
+      "gameplay_state": "design_only_not_obtainable",
+      "slot_model": true
+    },
+    {
+      "id": "tempest_shell",
+      "name": "Gök Nöbetçisi",
+      "slot": "armor",
+      "rarity": "legendary",
+      "set": "storm",
+      "proposed_stats": {
+        "hp": 120,
+        "armor": 10
+      },
+      "role_fit": "aldren,eira",
+      "proposed_forge_level": 6,
+      "visual_silhouette": "Farklı açılı bulut-kesit omuz plakaları; mavi çelik ve iki ince yıldırım hattı; büyük ama okunur siluet",
+      "proposed_unlock_source": "Fırtına Kalesi boss şeması ve Demirhane 6",
+      "gameplay_state": "design_only_not_obtainable",
+      "slot_model": true
+    },
+    {
+      "id": "moon_harness",
+      "name": "Ay İzli Göğüslük",
+      "slot": "armor",
+      "rarity": "legendary",
+      "set": "moon",
+      "proposed_stats": {
+        "hp": 100,
+        "armor": 9
+      },
+      "role_fit": "lyra,mira",
+      "proposed_forge_level": 6,
+      "visual_silhouette": "Sedef kaplı göğüste dikey ay yarığı, kemerden asılan ince gümüş levhalar; elbise ile rig'e oturur",
+      "proposed_unlock_source": "Ay Labirenti 12. kat sözleşmesi ve Demirhane 6",
+      "gameplay_state": "design_only_not_obtainable",
+      "slot_model": true
+    },
+    {
+      "id": "storm_prism",
+      "name": "Fırtına Prizması",
+      "slot": "relic",
+      "rarity": "legendary",
+      "set": "storm",
+      "proposed_stats": {
+        "attack": 12,
+        "hp": 20
+      },
+      "role_fit": "rovan,lyra,eira",
+      "proposed_forge_level": 6,
+      "visual_silhouette": "Arasında boşluk bulunan üç altın halka; merkezde elektrik yüklü damla biçimli cam; aksesuar, kılıç gibi görünmez",
+      "proposed_unlock_source": "Fırtına Kalesi patron sandığı ve Demirhane 6",
+      "gameplay_state": "design_only_not_obtainable",
+      "slot_model": true
+    },
+    {
+      "id": "rift_compass",
+      "name": "Hiçlik Pusulası",
+      "slot": "relic",
+      "rarity": "epic",
+      "set": "rift",
+      "proposed_stats": {
+        "attack": 8,
+        "healing": 10
+      },
+      "role_fit": "vesper,lyra",
+      "proposed_forge_level": 5,
+      "visual_silhouette": "Dış halkası eksik pusula; işaretçi kuzeyi değil yarık merkezini gösterir; siyah safir lens",
+      "proposed_unlock_source": "Labirent Gözcüleri günlük ilk tamamlanma ve Demirhane 5",
+      "gameplay_state": "design_only_not_obtainable",
+      "slot_model": true
+    },
+    {
+      "id": "verdant_seed",
+      "name": "Can Yurdu Tohumu",
+      "slot": "relic",
+      "rarity": "legendary",
+      "set": "verdant",
+      "proposed_stats": {
+        "hp": 60,
+        "healing": 18
+      },
+      "role_fit": "mira,eira",
+      "proposed_forge_level": 6,
+      "visual_silhouette": "İkiye ayrılmış tohum kabuğu, içinde ince astral ağaç filizi; küçük camdan korunma kafesi",
+      "proposed_unlock_source": "Ay Bahçesi boss'un ilk zaferi ve Demirhane 6",
+      "gameplay_state": "design_only_not_obtainable",
+      "slot_model": true
+    },
+    {
+      "id": "dawn_gyre",
+      "name": "Şafak Çarkı",
+      "slot": "relic",
+      "rarity": "legendary",
+      "set": "dawn",
+      "proposed_stats": {
+        "attack": 14,
+        "hp": 25
+      },
+      "role_fit": "aldren,doran",
+      "proposed_forge_level": 6,
+      "visual_silhouette": "Birbirini kesmeyen beş minik altın yörünge halkası, ortada beyaz yıldız iğnesi; ince döner mekanizma",
+      "proposed_unlock_source": "Şafak Ayini sezon şeması veya solo haftalık hedef",
+      "gameplay_state": "design_only_not_obtainable",
+      "slot_model": true
+    }
+  ],
+  "new_materials": [
+    {
+      "id": "edge_sliver",
+      "name": "Yıldız Kesiti",
+      "slot": "weapon",
+      "rarity": "common",
+      "silhouette": "Beşgen kesilmiş kırık metal keski; mavi damar yüzey boyunca akar",
+      "source": "Günlük ilk üç hikâye galibiyetinde seçili silah malzemesi",
+      "first_daily_guarantee": 3,
+      "gameplay_state": "planned_not_live"
+    },
+    {
+      "id": "ward_rivet",
+      "name": "Hisar Perçini",
+      "slot": "armor",
+      "rarity": "common",
+      "silhouette": "İki farklı metalden kaynaşmış altıgen perçin ve kırık kale mührü",
+      "source": "Günlük ilk üç hikâye galibiyetinde seçili zırh malzemesi",
+      "first_daily_guarantee": 3,
+      "gameplay_state": "planned_not_live"
+    },
+    {
+      "id": "astral_fiber",
+      "name": "Astral Lif",
+      "slot": "relic",
+      "rarity": "common",
+      "silhouette": "Birbirine değmeyen üç ince şerit, ortada cam yıldız damlası",
+      "source": "Günlük ilk üç hikâye galibiyetinde seçili tılsım malzemesi",
+      "first_daily_guarantee": 3,
+      "gameplay_state": "planned_not_live"
+    },
+    {
+      "id": "star_glass",
+      "name": "Yıldız Camı",
+      "slot": "all",
+      "rarity": "rare",
+      "silhouette": "Koyu mavi kuvars prizması; içte altı ışınlı altın kırılma",
+      "source": "Bölüm 5–8 günlük ilk galibiyet ve 3★ görev bonusu",
+      "first_daily_guarantee": 1,
+      "gameplay_state": "planned_not_live"
+    },
+    {
+      "id": "stellar_core",
+      "name": "Yörünge Çekirdeği",
+      "slot": "all",
+      "rarity": "epic",
+      "silhouette": "Kırık küre etrafında askıda duran üç eşmerkezli halka; merkezde tek soğuk ışık",
+      "source": "Tekrarlanabilir labirent sözleşmesi haftalık hedefi ve patron",
+      "weekly_guarantee": 1,
+      "gameplay_state": "planned_not_live"
+    },
+    {
+      "id": "guardian_stamp",
+      "name": "Muhafız Damgası",
+      "slot": "all",
+      "rarity": "legendary",
+      "silhouette": "Kare madenî para gibi ama kenarları yedi eşit olmayan kalkan köşesi; damgalı yıldız",
+      "source": "Dünya patronunda haftalık ilk doğrulanmış zafer",
+      "weekly_guarantee": 1,
+      "gameplay_state": "planned_not_live"
+    },
+    {
+      "id": "constellation_chart",
+      "name": "Takımyıldız Levhası",
+      "slot": "set",
+      "rarity": "legendary",
+      "silhouette": "Kırık bronz diskte akrep değil STARFORT yedi kule yıldız dizisi; tamamlarken çizgiler bağlanır",
+      "source": "İttifak haftalık katkı veya solo ustalık zinciri (eşdeğer yol)",
+      "weekly_guarantee": 1,
+      "gameplay_state": "planned_not_live"
+    }
+  ],
+  "new_sets_proposed": {
+    "storm": {
+      "two": "Saldırı +4, Can +15 (öneri)"
+    },
+    "rift": {
+      "two": "Saldırı +6, Zırh +1 (öneri)"
+    },
+    "verdant": {
+      "two": "Can +35, Şifa +4 (öneri)"
+    }
+  },
+  "art_direction": {
+    "visual_identity": "Yedi kale kulesi, kırık yörüngeler ve gözlemlenebilir takımyıldızlar; geçmiş oyunlara, Paragon desenlerine veya birebir referans siluetlere öykünme",
+    "materials": "Koyu mavi çelik, ateşte kırılmış bronz, sedef, koyu safir cam, gerçek pürüzlü deri ve astral lif; fiziğe dayalı PBR",
+    "icon_source_size": 1024,
+    "icon_mobile_size": 256,
+    "pbr_maps": [
+      "base_color",
+      "normal",
+      "ORM",
+      "emissive_mask"
+    ],
+    "item_mesh_lod_triangle_budgets": {
+      "weapon": [
+        7000,
+        3500,
+        1200
+      ],
+      "armor": [
+        14000,
+        6500,
+        2200
+      ],
+      "relic": [
+        4000,
+        1900,
+        600
+      ]
+    },
+    "mobile_constraints": "ASTC texture sets, 3 LODs; optimize for iPhone/Android; no per-item dynamic lights; Niagara small accents; measure real frame times",
+    "animation_rules": "Weapon draw/sheath and armor cloth fix for each actual skeleton; visual upgrade changes only approved materials and emissive accents, NEVER grants invisible gameplay bonuses"
+  },
+  "production_gates": [
+    "concept turnaround front side rear",
+    "unique geometry and anti-plagiarism art review",
+    "same-skeleton attachment tests for seven hero rigs",
+    "PBR normal/ORM, correct UV atlas and LODs",
+    "authored icon atlas, colour-blind rarity border and accessible labels",
+    "iPhone/Android 30/60 FPS budget, VRAM and overheating tests",
+    "server SQL mutation and deterministic daily/weekly loot tests",
+    "No real ownership/progression until implemented in live backend"
+  ]
+}

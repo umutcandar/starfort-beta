@@ -626,6 +626,33 @@ bool UStarfortOnlineSubsystem::ParseProgress(const TSharedPtr<FJsonObject>& Root
    Out.Loadouts.Add(HeroPair.Key,Set);
   }
   Out.bInventoryVerified=true;
+  // The current official RPC returns these real late-game fields.
+  // Optional for old backends; never fabricate rank or weekly boss wins.
+  if(Root->HasField(TEXT("relicAscensions")) ||
+     Root->HasField(TEXT("bossSeals")))
+  {
+   if(!Root->HasTypedField<EJson::Object>(TEXT("relicAscensions")))
+    return false;
+   const TSharedPtr<FJsonObject> Asc=Root->GetObjectField(TEXT("relicAscensions"));
+   int64 BossWeeks=0;
+   if(!Asc.IsValid() || Asc->Values.Num()>4 ||
+      !IsIntegerField(Root,TEXT("bossSeals"),0,5000,BossWeeks))
+    return false;
+   for(const auto& Pair:Asc->Values)
+   {
+    int64 Rank=0;
+    if((Pair.Key!=TEXT("ember_guard") &&
+        Pair.Key!=TEXT("star_spear") &&
+        Pair.Key!=TEXT("guardian_seal") &&
+        Pair.Key!=TEXT("starbreaker")) ||
+       !IsIntegerField(Asc,*Pair.Key,0,4,Rank) ||
+       !Out.Inventory.Contains(Pair.Key) ||
+       Out.ItemUpgrades.FindRef(Pair.Key)<5) return false;
+    Out.RelicAscensions.Add(Pair.Key,static_cast<int32>(Rank));
+   }
+   Out.BossSeals=static_cast<int32>(BossWeeks);
+   Out.bAscensionVerified=true;
+  }
  }
  Out.bServerVerified=true;
  return true;
@@ -786,6 +813,15 @@ void UStarfortOnlineSubsystem::EnhanceGear(const FString& ItemId)
  if(!IsSignedIn() || !FStarfortBagCatalog::Find(ItemId)) return;
  SubmitProgressAction(TEXT("enhance"),ItemId,TEXT(""));
 }
+void UStarfortOnlineSubsystem::AscendGear(const FString& ItemId)
+{
+ if(!IsSignedIn() ||
+    (ItemId!=TEXT("ember_guard") &&
+     ItemId!=TEXT("star_spear") &&
+     ItemId!=TEXT("guardian_seal") &&
+     ItemId!=TEXT("starbreaker"))) return;
+ SubmitProgressAction(TEXT("ascend"),ItemId,TEXT(""));
+}
 void UStarfortOnlineSubsystem::SubmitProgressAction(const FString& Action,
  const FString& Target,const FString& Aux)
 {
@@ -800,7 +836,7 @@ void UStarfortOnlineSubsystem::SubmitProgressAction(const FString& Action,
      Action!=TEXT("mission_turn") && Action!=TEXT("mission_abandon") &&
      Action!=TEXT("hero") && Action!=TEXT("equip") &&
      Action!=TEXT("unequip") && Action!=TEXT("forge") &&
-     Action!=TEXT("enhance")) return;
+     Action!=TEXT("enhance") && Action!=TEXT("ascend")) return;
  bProgressPending=true;
  const TWeakObjectPtr<UStarfortOnlineSubsystem> WeakThis(this);
  WithFreshSession([WeakThis,Action,Target,Aux](bool Ready)

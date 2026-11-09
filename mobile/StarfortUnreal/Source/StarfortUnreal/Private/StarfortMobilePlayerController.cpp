@@ -153,6 +153,7 @@ void AStarfortMobilePlayerController::HandleBagMutation(
  else if(Action==TEXT("unequip"))Online->UnequipGear(Target,Aux);
  else if(Action==TEXT("forge"))Online->ForgeGear(Target);
  else if(Action==TEXT("enhance"))Online->EnhanceGear(Target);
+ else if(Action==TEXT("ascend"))Online->AscendGear(Target);
 }
 void AStarfortMobilePlayerController::HandleFirePreview()
 {

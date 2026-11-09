@@ -1,5 +1,6 @@
 #include "StarfortBagScreen.h"
 #include "StarfortBagCatalog.h"
+#include "StarfortGearEconomy.h"
 #include "StarfortBagTile.h"
 #include "StarfortVisualTheme.h"
 #include "Blueprint/WidgetTree.h"
@@ -202,9 +203,13 @@ void UStarfortBagScreen::BuildNativeLayout()
  // 4/4: selected gear details and server-backed actions.
  UVerticalBox* Details=StarfortBagUI::Panel(T,Main,305.f);
  AddTitle(Details,TEXT("Seçili Eşya"),21);
- DetailColumn=T->ConstructWidget<UVerticalBox>();
- Details->AddChildToVerticalBox(DetailColumn)->SetSize(
+ // Scroll real recipes, set summaries and endgame star-upgrade costs
+ // inside the available landscape panel, never clip buttons on small phones.
+ UScrollBox* DetailsScroll=T->ConstructWidget<UScrollBox>();
+ Details->AddChildToVerticalBox(DetailsScroll)->SetSize(
   FSlateChildSize(ESlateSizeRule::Fill));
+ DetailColumn=T->ConstructWidget<UVerticalBox>();
+ DetailsScroll->AddChild(DetailColumn);
 
  TxtStatus=StarfortBagUI::Text(T,
   TEXT("Sunucu eşya bilgisi bekleniyor"),14,StarfortBagUI::Gold());
@@ -471,6 +476,10 @@ void UStarfortBagScreen::Refresh()
  AddTitle(DetailColumn,
   FString::Printf(TEXT("Çantada: %d · Boşta: %d\nUstalık: +%d / 5"),
    Qty,FMath::Max(0,Qty-UsedCopies(ItemId)),Mastery),14,Ink());
+ // Only game-verified acquisition paths and actual current live prices.
+ AddTitle(DetailColumn,
+  TEXT("Elde Edilme: ")+FStarfortGearEconomy::CurrentAcquisition(ItemId),
+  14,Ink());
  const bool bCanMutate=bHasVerifiedInventory && !Verified.bInMission &&
   Verified.HeroLevels.Contains(SelectedHeroId) && !bMutationPending;
  const bool bWorn=CurrentlyWorn(Info->Slot)==ItemId;
@@ -485,24 +494,58 @@ void UStarfortBagScreen::Refresh()
   ->SetPadding(FMargin(3.f,7.f));
  if(Info->ForgeLevel>0)
  {
+  const FStarfortGearResourceCost Recipe=
+   FStarfortGearEconomy::CurrentForgeCost(ItemId);
+  const bool bCanAfford=Recipe.bAvailable &&
+   Verified.Gold>=Recipe.Gold &&
+   Verified.Wood>=Recipe.Wood &&
+   Verified.Stone>=Recipe.Stone &&
+   Verified.StarEssence>=Recipe.Essence;
   const bool bCanForge=bCanMutate && Verified.ForgeLevel>=Info->ForgeLevel
-   && Qty<20;
+   && Qty<20 && bCanAfford;
   UStarfortBagTile* Forge=MakeTile(TEXT("forge:")+ItemId,
    TEXT("Üret"),
-   FString::Printf(TEXT("Demirhane %d gerekli · maliyeti sunucu kontrol eder"),
-    Info->ForgeLevel),
+   FString::Printf(TEXT("Demirhane %d · "),Info->ForgeLevel)+
+    Recipe.ToTurkishLabel(),
    Gold(),bCanForge);
   if(Forge)DetailColumn->AddChildToVerticalBox(Forge)
    ->SetPadding(FMargin(3.f,6.f));
  }
  if(Qty>0)
  {
+  const FStarfortGearResourceCost NextCost=
+   FStarfortGearEconomy::NextMasteryCost(ItemId,Mastery);
+  const bool bMasteryAfford=NextCost.bAvailable &&
+   Verified.Gold>=NextCost.Gold &&
+   Verified.Stone>=NextCost.Stone &&
+   Verified.StarEssence>=NextCost.Essence;
   UStarfortBagTile* Upgrade=MakeTile(TEXT("enhance:")+ItemId,
-   TEXT("Geliştir"),
-   TEXT("Ustalık +1 · maliyeti sunucu kontrol eder"),
-   Gold(),bCanMutate && Mastery<5);
+   FString::Printf(TEXT("Geliştir · Ustalık +%d"),FMath::Min(5,Mastery+1)),
+   NextCost.bAvailable?NextCost.ToTurkishLabel():
+    TEXT("Ustalık +5 tamamlandı"),
+   Gold(),bCanMutate && Mastery<5 && bMasteryAfford);
   if(Upgrade)DetailColumn->AddChildToVerticalBox(Upgrade)
    ->SetPadding(FMargin(3.f,6.f));
+ }
+ int32 WeeksRequired=0;
+ FStarfortGearResourceCost StarCost;
+ const int32 StarRank=Verified.RelicAscensions.FindRef(ItemId);
+ if(FStarfortGearEconomy::CurrentAscension(
+     ItemId,StarRank+1,WeeksRequired,StarCost))
+ {
+  const bool bCanAscend=bCanMutate && Mastery>=5 &&
+   Verified.bAscensionVerified &&
+   Verified.BossSeals>=WeeksRequired &&
+   Verified.Gold>=StarCost.Gold &&
+   Verified.Stone>=StarCost.Stone &&
+   Verified.StarEssence>=StarCost.Essence;
+  UStarfortBagTile* Star=MakeTile(TEXT("ascend:")+ItemId,
+   FString::Printf(TEXT("Yıldız İşleme %d/4"),StarRank+1),
+   FString::Printf(TEXT("%d farklı hafta patronu · "),WeeksRequired)+
+    StarCost.ToTurkishLabel(),
+   Gold(),bCanAscend);
+  if(Star)DetailColumn->AddChildToVerticalBox(Star)
+   ->SetPadding(FMargin(3.f,7.f));
  }
  if(Verified.bInMission)
   AddTitle(DetailColumn,TEXT("Savaş sürerken ekipman değişmez."),
@@ -579,10 +622,28 @@ void UStarfortBagScreen::HandleTile(const FString& Token)
  else if(Token.StartsWith(TEXT("enhance:")))
  {
   const FString Id=Token.RightChop(8);
-  if(!FStarfortBagCatalog::Find(Id) ||
-     Verified.Inventory.FindRef(Id)<=0 ||
-     Verified.ItemUpgrades.FindRef(Id)>=5) return;
+  const FStarfortGearResourceCost Cost=
+   FStarfortGearEconomy::NextMasteryCost(
+    Id,Verified.ItemUpgrades.FindRef(Id));
+  if(!Cost.bAvailable || Verified.Inventory.FindRef(Id)<=0 ||
+     Verified.Gold<Cost.Gold || Verified.Stone<Cost.Stone ||
+     Verified.StarEssence<Cost.Essence) return;
   Action=TEXT("enhance");Target=Id;
+ }
+ else if(Token.StartsWith(TEXT("ascend:")))
+ {
+  const FString Id=Token.RightChop(7);
+  const int32 Rank=Verified.RelicAscensions.FindRef(Id)+1;
+  int32 Weeks=0;
+  FStarfortGearResourceCost Cost;
+  if(!Verified.bAscensionVerified ||
+     !FStarfortGearEconomy::CurrentAscension(Id,Rank,Weeks,Cost) ||
+     Verified.Inventory.FindRef(Id)<=0 ||
+     Verified.ItemUpgrades.FindRef(Id)<5 ||
+     Verified.BossSeals<Weeks ||
+     Verified.Gold<Cost.Gold || Verified.Stone<Cost.Stone ||
+     Verified.StarEssence<Cost.Essence) return;
+  Action=TEXT("ascend");Target=Id;
  }
  else return;
  bMutationPending=true; // NEVER optimistically equip/spend resources.

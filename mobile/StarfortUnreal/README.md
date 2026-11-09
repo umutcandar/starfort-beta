@@ -1,5 +1,13 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## v87 — Real Bag item recipes, 14-week boss progress and original item future design
+
+The **real native Unreal Bag** now displays source-verified deterministic acquisition ("Nereden gelir?"), the **exact current forge resource amounts** for 12 supported items, the **exact +1..+5 rarity-weighted mastery costs**, and the existing **4 permitted +1..+4 star-ascension ranks** with authenticated distinct weekly boss gate counts (2, 5, 9, 14), current costs, and a real `sfb_starfort_progress(p_action='ascend')` call. Unknown/old backend ascension metadata disables this action rather than inventing boss wins. The right panel scrolls to fit all recipes on landscape phones. All real purchases/gear/ranks remain server-owned; local UI simply describes and requests. v86's literal “Geliştir” action label stays visible and passes its regression.
+
+**Future-only design** (`ContentPipeline/equipment_future_v87.json`, **not yet live**): 12 new original item archetypes (4 weapons, 4 armour, 4 talismans), 7 unique collectable forge/ascension material silhouettes, optional progressive recipe quantities, 31 total proposed item TYPES and all 7 heroes / 21 wearable physical copies, solo/alliances equivalent weekly sourcing, guaranteed/idempotent loot and zero upgrade failure. Not a SQL migration and no new gear is magically owned. Complete Turkish item-by-item and real-vs-planned 3D art specification: `Docs/OriginalEquipmentCraftingAndArt_v87_TR.md`.
+
+Native source QA compiles the actual C++ economy via a standalone stub and validates it against the current checked-in `starfort-v255-first-minute-combat.sql`; this is **not** an Unreal Editor compile or mobile gameplay test.
+
 ## v86 — Actual cinematic native Çanta ve Donanım (not another image)
 
 An **interactive, built-in Unreal UMG** full-landscape Bag now follows the user's navy/gold reference: top server gold/wood/stone/essence, seven selectable unlocked heroes, optional actual imported hero concept art, three real equipped slots, 19 server-compatible gear tiles and category filters, rarity/details/set panel and clickable equip/unequip/forge/enhance buttons. Village and Hero Hall both have an actual ÇANTA route, and the bottom navigation requests real native scenes. The store button is visibly disabled, not falsely actionable.
