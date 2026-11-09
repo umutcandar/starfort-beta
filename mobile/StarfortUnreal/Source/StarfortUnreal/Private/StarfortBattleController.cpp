@@ -2,6 +2,8 @@
 #include "StarfortBattleScreen.h"
 #include "StarfortCampaignScreen.h"
 #include "StarfortBattleStage.h"
+#include "StarfortFabVerifiedBattleBridge.h"
+#include "Camera/CameraActor.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
 #include "Engine/GameInstance.h"
@@ -73,6 +75,20 @@ void AStarfortBattleController::BeginPlay()
    UE_LOG(LogTemp,Error,
     TEXT("STARFORT: multiple battle stage actors found in map; keep only one."));
   if (Stage) SetViewTarget(Stage);
+#if !UE_BUILD_SHIPPING
+  // No live preview rig is ever spawned in production. A developer must
+  // place exactly one opt-in actor holding four user-licensed real meshes.
+  int32 ReviewBridges=0;
+  for (TActorIterator<AStarfortFabVerifiedBattleBridge> It(GetWorld());It;++It)
+  {
+   ++ReviewBridges;
+   if (It->bEnableDevelopmentReview) DevFabBridge=*It;
+  }
+  if (ReviewBridges!=1) DevFabBridge=nullptr;
+  if (ReviewBridges>1)
+   UE_LOG(LogTemp,Error,
+    TEXT("STARFORT: multiple optional Fab bridge actors; development art preview disabled"));
+#endif
  }
  SetInputMode(FInputModeGameAndUI());
  bShowMouseCursor=true;
@@ -102,6 +118,11 @@ void AStarfortBattleController::EndPlay(const EEndPlayReason::Type EndPlayReason
   CampaignScreen->OnStageRequested.RemoveDynamic(this,&AStarfortBattleController::StageRequested);
   CampaignScreen->RemoveFromParent();
   CampaignScreen=nullptr;
+ }
+ if (DevFabBridge)
+ {
+  DevFabBridge->ClearReview();
+  DevFabBridge=nullptr;
  }
  if (Stage)
  {
@@ -146,6 +167,8 @@ void AStarfortBattleController::ProgressReady(const FStarfortProgressSummary& Pr
  else
  {
   if(Stage) Stage->ClearBattlePresentation();
+  if(DevFabBridge) DevFabBridge->ClearReview();
+  if(Stage) SetViewTarget(Stage);
   OpenCampaign();
  }
 }
@@ -153,10 +176,24 @@ void AStarfortBattleController::TurnReady(const FStarfortVerifiedBattleTurn& Tur
 {
  if(BattleScreen) BattleScreen->ApplyVerifiedTurn(Turn);
  if(Stage) Stage->PresentVerifiedTurn(Turn);
+#if !UE_BUILD_SHIPPING
+ // Real server turns are already parsed/validated by OnlineSubsystem.
+ // This is a *visual-only* development alternative while the production
+ // art gate remains closed. No fabricated HP, loot or battle RPCs.
+ if (DevFabBridge && (!Stage || !Stage->bArtApprovedForMobile))
+ {
+  DevFabBridge->PresentVerifiedServerTurn(Turn);
+  if (Turn.bServerVerified && DevFabBridge->IsReadyForTeam(Turn.TeamHeroes) &&
+      DevFabBridge->GetReviewCamera())
+   SetViewTarget(DevFabBridge->GetReviewCamera());
+ }
+#endif
 }
 void AStarfortBattleController::MissionFinished(bool bWon,int32 Stars)
 {
+ if(DevFabBridge) DevFabBridge->ClearReview();
  if(Stage) Stage->ClearBattlePresentation();
+ if(Stage) SetViewTarget(Stage);
  OpenCampaign();
  if(CampaignScreen) CampaignScreen->ShowResult(bWon,Stars);
  // Reconcile XP, next-stage unlock and rewards by a read-only fetch.
@@ -175,6 +212,7 @@ void AStarfortBattleController::OnlineFailed(FString SafeReason)
 }
 void AStarfortBattleController::SignedOut()
 {
+ if(DevFabBridge) DevFabBridge->ClearReview();
  if(Stage) Stage->ClearBattlePresentation();
  if(BattleScreen) {BattleScreen->SetWaitingForServer();BattleScreen->RemoveFromParent();}
  if(CampaignScreen) {CampaignScreen->SetWaitingForServer();CampaignScreen->RemoveFromParent();}
