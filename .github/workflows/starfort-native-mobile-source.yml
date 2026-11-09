@@ -23,6 +23,8 @@ jobs:
           python3 mobile/StarfortUnreal/Tools/test_fab_seven_private_preview_v80.py
           python3 mobile/StarfortUnreal/Tools/test_fab_interactive_preview_v81.py
           python3 mobile/StarfortUnreal/Tools/test_private_3v1_battle_v82.py
+          python3 mobile/StarfortUnreal/Tools/test_private_mobile_touch_v83.py
+          python3 mobile/StarfortUnreal/Tools/test_ash_arena_import_scale_v83.py
           python3 mobile/StarfortUnreal/Tools/verify_private_fab_battle_v82.py --contract
           python3 mobile/StarfortUnreal/Tools/fab_seven_private_preview_v80.py --contract
           python3 mobile/StarfortUnreal/Tools/fab_character_review.py --contract

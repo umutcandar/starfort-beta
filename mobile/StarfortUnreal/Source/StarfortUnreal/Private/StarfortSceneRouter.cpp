@@ -17,7 +17,15 @@ bool UStarfortSceneRouter::OpenIfInstalled(const FString& MapPath)
   OnRouteUnavailable.Broadcast(TEXT("Önce hesap girişi yap."));
   return false;
  }
- if (!MapPath.StartsWith(TEXT("/Game/Maps/L_")) ||
+ // Strict route allowlist: an offline Fab visual test level must never
+ // become reachable from a signed-in player session, even if some developer
+ // accidentally cooks that local .umap into a normal package.
+ const bool bIsRealGameplayMap =
+  MapPath==TEXT("/Game/Maps/L_StarfortVillage") ||
+  MapPath==TEXT("/Game/Maps/L_RoyalGunnerStudio") ||
+  MapPath==TEXT("/Game/Maps/L_StarfortBattle") ||
+  MapPath==TEXT("/Game/Maps/L_StarfortAlliance");
+ if (!bIsRealGameplayMap ||
      MapPath.Len()>100 || !FPackageName::DoesPackageExist(MapPath))
  {
   OnRouteUnavailable.Broadcast(TEXT("Bu mobil sahne henüz yüklenemiyor."));

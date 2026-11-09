@@ -13,3 +13,6 @@ Content/Paragon*/
 Content/Fab*/
 Content/Marketplace*/
 ContentPipeline/Incoming/
+
+# Temporary local iOS/Android private preview startup URL, never publish.
+UECommandLine.txt

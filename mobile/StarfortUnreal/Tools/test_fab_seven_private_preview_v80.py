@@ -178,12 +178,18 @@ class TestSevenFabPrivatePreview(unittest.TestCase):
         self.assertNotIn("UGameplayStatics::OpenLevel",source)
         self.assertNotIn("https://api.fab.com",source)
 
-    def test_private_maps_not_sneaked_into_mobile_shipping_cooking(self):
-        build=(HERE/"native_mobile_build.py").read_text(encoding="utf-8")
+    def test_private_maps_not_sneaked_into_regular_shipping_cooking(self):
+        import native_mobile_build as builds
         project=(preview.ROOT/"Config/DefaultEngine.ini").read_text(encoding="utf-8")
-        for asset in ("L_StarfortPrivateFabBattle_v80","L_StarfortPrivateFabPlaytest_v80"):
-            self.assertNotIn(asset,build)
-            self.assertNotIn(asset,project)
+        for profile in ("smoke","release"):
+            cmd,_=builds.build_command(Path("/UE"),"android",profile)
+            cooked=next(x for x in cmd if x.startswith("-map="))
+            for asset in ("L_StarfortPrivateFabBattle_v80","L_StarfortPrivateFabPlaytest_v80"):
+                self.assertNotIn(asset,cooked)
+                self.assertNotIn(asset,project)
+        cmd,_=builds.build_command(Path("/UE"),"android","private-preview")
+        self.assertIn("private-fab-preview"," ".join(cmd))
+        self.assertNotIn("-distribution",cmd)
 
 
 if __name__=="__main__":

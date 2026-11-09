@@ -196,9 +196,15 @@ class PrivateBattleV82(unittest.TestCase):
         self.assertEqual(source.count("{"),source.count("}"))
 
     def test_not_cooked_into_mobile_distribution(self):
-        build=(ROOT/"Tools/native_mobile_build.py").read_text()
-        self.assertNotIn(qa.EXPECTED,build)
-        self.assertNotIn("L_StarfortPrivateFabBattle_v80",build)
+        import native_mobile_build as builds
+        for profile in ("smoke","release"):
+            cmd,_=builds.build_command(Path("/UE"),"android",profile)
+            cooked=next(arg for arg in cmd if arg.startswith("-map="))
+            self.assertNotIn(qa.EXPECTED,cooked)
+            self.assertNotIn("L_StarfortPrivateFabBattle_v80",cooked)
+        private_cmd,_=builds.build_command(Path("/UE"),"android","private-preview")
+        self.assertIn("L_StarfortPrivateFabBattle_v80"," ".join(private_cmd))
+        self.assertNotIn("-distribution",private_cmd)
         self.assertIn("non_shipping",str(stage.MANIFEST.read_text()))
 
 

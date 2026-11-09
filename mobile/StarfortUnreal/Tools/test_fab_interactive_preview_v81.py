@@ -146,12 +146,15 @@ class TestInteractiveFabPreview(unittest.TestCase):
         self.assertIs(spawn.actor.rig.anim,idle[0])
 
     def test_private_maps_cannot_accidentally_enter_shipping_maps(self):
-        source=(TOOLS/"native_mobile_build.py").read_text()
+        import native_mobile_build as build
         config=(ROOT/"Config/DefaultEngine.ini").read_text()
-        for private in ("L_StarfortPrivateFabBattle_v80",
-                        "L_StarfortPrivateFabPlaytest_v80"):
-            self.assertNotIn(private,source)
-            self.assertNotIn(private,config)
+        for profile in ("smoke","release"):
+            command,_=build.build_command(Path("/UE"),"android",profile)
+            cooked=next(arg for arg in command if arg.startswith("-map="))
+            for private in ("L_StarfortPrivateFabBattle_v80",
+                            "L_StarfortPrivateFabPlaytest_v80"):
+                self.assertNotIn(private,cooked)
+                self.assertNotIn(private,config)
         original=ROOT/"ContentPipeline/fab_seven_private_preview_v80.json"
         doc=json.loads(original.read_text())
         self.assertTrue(doc["non_shipping"])
