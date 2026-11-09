@@ -25,6 +25,7 @@ jobs:
           python3 mobile/StarfortUnreal/Tools/test_private_3v1_battle_v82.py
           python3 mobile/StarfortUnreal/Tools/test_private_mobile_touch_v83.py
           python3 mobile/StarfortUnreal/Tools/test_verified_fab_live_bridge_v84.py
+          python3 mobile/StarfortUnreal/Tools/test_dynamic_fab_roster_v85.py
           python3 mobile/StarfortUnreal/Tools/stage_verified_fab_online_battle_v84.py --contract
           python3 mobile/StarfortUnreal/Tools/test_ash_arena_import_scale_v83.py
           python3 mobile/StarfortUnreal/Tools/verify_private_fab_battle_v82.py --contract
