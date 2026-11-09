@@ -140,12 +140,13 @@ class TestSevenFabPrivatePreview(unittest.TestCase):
                 preview.QA=Path(td);preview.SELECTION=Path(td)/"selected.json";preview.REPORT=Path(td)/"report.json"
                 preview.SELECTION.write_text(json.dumps(selected),encoding="utf-8")
                 created=[]
-                def create(ue,doc,chosen,battle):
+                def create(ue,doc,chosen,battle,arena):
                     created.append(battle)
                     return {"path":preview.BATTLE if battle else preview.SHOWCASE,
                             "actual_skinned_character_actors":[{"hero_id":"rovan"}]}
-                with patch.object(preview,"new_private_map",side_effect=create):
-                    report=preview.stage(unreal,self.doc)
+                with patch.object(preview,"available_original_arena",return_value=[]):
+                    with patch.object(preview,"new_private_map",side_effect=create):
+                        report=preview.stage(unreal,self.doc)
                 self.assertEqual(created,[False,True])
                 self.assertEqual(report["native_editor_maps_created"],2)
                 self.assertEqual(report["real_fab_skeletal_heroes"],7)
@@ -154,9 +155,10 @@ class TestSevenFabPrivatePreview(unittest.TestCase):
                 self.assertFalse(report["production_quality_approved"])
                 unreal.EditorAssetLibrary.preexisting=True
                 created.clear()
-                with patch.object(preview,"new_private_map",side_effect=create):
-                    with self.assertRaisesRegex(RuntimeError,"Refuse to overwrite"):
-                        preview.stage(unreal,self.doc)
+                with patch.object(preview,"available_original_arena",return_value=[]):
+                    with patch.object(preview,"new_private_map",side_effect=create):
+                        with self.assertRaisesRegex(RuntimeError,"Refuse to overwrite"):
+                            preview.stage(unreal,self.doc)
                 self.assertEqual(created,[])
             finally:
                 preview.QA,preview.SELECTION,preview.REPORT=saved
