@@ -36,6 +36,9 @@ struct FStarfortProgressSummary
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") TMap<FString,int32> Inventory;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") TMap<FString,FStarfortBagLoadout> Loadouts;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") TMap<FString,int32> ItemUpgrades;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") TMap<FString,int32> RelicAscensions;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") int32 BossSeals = 0;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") bool bAscensionVerified = false;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") int64 Gold = 0;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") int64 Wood = 0;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") int64 Stone = 0;
@@ -116,6 +119,10 @@ public:
  void ForgeGear(const FString& ItemId);
  UFUNCTION(BlueprintCallable, Category="STARFORT|Bag")
  void EnhanceGear(const FString& ItemId);
+ /** The existing live server checks +5, 2/5/9/14 distinct weekly boss
+  * victories, actual owned gear and all real resource costs. */
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Bag")
+ void AscendGear(const FString& ItemId);
  UFUNCTION(BlueprintPure, Category="STARFORT|Online")
  bool IsSignedIn() const { return !AccessToken.IsEmpty() && !UserId.IsEmpty(); }
  UFUNCTION(BlueprintPure, Category="STARFORT|Online")
