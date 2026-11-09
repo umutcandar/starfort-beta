@@ -42,7 +42,7 @@ class TestVerifiedFabLiveBridgeV84(unittest.TestCase):
         self.assertEqual(installer.ALLIES,("rovan","aldren","lyra"))
         self.assertEqual(installer.OPPONENT,"doran")
         self.assertEqual(installer.MAP,"/Game/Maps/L_StarfortBattle")
-        self.assertEqual(len(set(installer.CANONICAL.values())),4)
+        self.assertEqual(len(set(installer.CANONICAL.values())),7)
 
     def test_user_license_and_each_correct_real_fab_source_are_hard_requirements(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -95,9 +95,9 @@ class TestVerifiedFabLiveBridgeV84(unittest.TestCase):
             return UnrealObject("AnimSequence",path,skeleton),path
         with patch.object(source,"find_native_clip",side_effect=real_clip):
             rows=installer.inspect_source_assets(fake_unreal,paths)
-        self.assertEqual(len(rows),4)
+        self.assertEqual(len(rows),7)
         self.assertEqual(sum(row["opponent"] for row in rows),1)
-        self.assertEqual(len(set(r["mesh_path"] for r in rows)),4)
+        self.assertEqual(len(set(r["mesh_path"] for r in rows)),7)
         self.assertTrue(all(r["idle_path"]!=r["attack_path"] for r in rows))
         def fake_attack(unreal,root,skeleton,battle=False):
             return real_clip(unreal,root,skeleton,False)
@@ -117,7 +117,7 @@ class TestVerifiedFabLiveBridgeV84(unittest.TestCase):
             'Turn.LastAction.StartsWith(TEXT("skill:"))',
             "Turn.TeamHeroes.Contains(SkillHero)",
             "Entry.Attack->GetSkeleton()!=Body->GetSkeleton()",
-            "UniqueBodies.Contains(Body)", 'TEXT("/Game/Paragon")',
+            "UniqueBodies.Contains(Body)", 'TEXT("/Game/ParagonWraith/")',
             "PlayNativeClip(Attacker,true)", "ClearReview()",
             "RestoreIdle()", "LastVerifiedTurn=Turn.Turn;",
             "if (bNewRoom)", "return;",

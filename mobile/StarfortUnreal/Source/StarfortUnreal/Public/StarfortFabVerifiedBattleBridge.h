@@ -38,7 +38,7 @@ struct FStarfortFabVerifiedArtBinding
 
 /**
  * Opt-in, Development-only bridge from authenticated server snapshots to
- * FOUR genuine user-imported Paragon rigs in the actual Unreal battle map.
+ * FOUR TO SEVEN genuine user-imported Paragon rigs in the actual Unreal battle map.
  *
  * It NEVER sends combat commands, computes HP, grants rewards or bypasses
  * AStarfortBattleStage::HasApprovedStage() production cinematic quality.
@@ -58,7 +58,9 @@ public:
  UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="STARFORT|Dev Art")
  bool bEnableDevelopmentReview = false;
 
- /** Four DIFFERENT genuine human-approved Epic/Fab Paragon source assets. */
+ /** Four to seven DIFFERENT genuine, user-licensed Epic/Fab reference rigs.
+     Server-selected three are allies; a fourth UNUSED hero rig is the
+     temporary enemy visual reference, never an actual enemy identity. */
  UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="STARFORT|Dev Art")
  TArray<FStarfortFabVerifiedArtBinding> RealFabRigs;
 
@@ -81,6 +83,9 @@ protected:
 
 private:
  int32 FindTeamSlot(const FString& HeroId) const;
+ int32 ChooseUnusedEnemyRig(const TArray<FString>& Team) const;
+ void PositionCurrentFormation();
+ void RestoreOriginalFormation();
  void PlayNativeClip(int32 Slot, bool bAttack);
  void RestoreIdle();
  void PlayVerifiedEnemyCounter();
@@ -91,6 +96,7 @@ private:
  TArray<FString> ActiveServerTeam;
  int32 LastVerifiedTurn = -1;
  int32 OpponentIndex = INDEX_NONE;
+ TArray<FTransform> OriginalActorTransforms;
  FTimerHandle ReturnToIdleTimer;
  FTimerHandle VerifiedEnemyCounterTimer;
 };
