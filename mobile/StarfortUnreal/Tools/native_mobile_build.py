@@ -26,7 +26,7 @@ PROJECT = ROOT / "StarfortUnreal.uproject"
 MAPS = ["L_StarfortVillage", "L_RoyalGunnerStudio",
         "L_StarfortBattle", "L_StarfortAlliance"]
 WIDGETS = ["WBP_StarfortLogin", "WBP_VillageHUD",
-           "WBP_HeroScreen", "WBP_CampaignHUD", "WBP_BattleHUD"]
+           "WBP_HeroScreen", "WBP_BagScreen", "WBP_CampaignHUD", "WBP_BattleHUD"]
 
 PRIVATE_MAPS = [
     "L_StarfortPrivateFabBattle_v80",
