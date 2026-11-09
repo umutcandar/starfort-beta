@@ -507,6 +507,7 @@ void AStarfortFabPreviewController::TickPrivateBattleSequence(float DeltaSeconds
  if (Progress>=1.f)
  {
   Attacker->SetActorLocation(ActiveAttackStartPosition);
+  ++CompletedPrivateAttackCount;
   SetRealAnimation(ActivePreviewAttackIndex,false);
   StartNextPrivateAttack();
  }
