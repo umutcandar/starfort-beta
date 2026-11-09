@@ -151,7 +151,8 @@ class NativeBagInventoryV86(unittest.TestCase):
         self.assertIn("OnActivated.Broadcast(ActionToken)",tile)
         self.assertNotIn("<img",screen)
         self.assertNotIn("<canvas",screen)
-        self.assertNotIn("WebView",screen.split("All panels")[1])
+        self.assertNotIn("UWebBrowser",screen)
+        self.assertNotIn("LoadURL(",screen)
         self.assertNotIn("284.700",screen)
         self.assertNotIn("47.960",screen)
 
