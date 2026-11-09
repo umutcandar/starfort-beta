@@ -224,6 +224,9 @@ void AStarfortFabPreviewController::UpdateCamera(float DeltaSeconds)
 {
  if (!bPrivatePreview || !Camera.IsValid() ||
      !Heroes.IsValidIndex(FocusedIndex)) return;
+ // The spectator pawn may possess after BeginPlay and reset the view target.
+ // Keep the real authored preview CameraActor active in PIE, never main game.
+ if (GetViewTarget()!=Camera.Get()) SetViewTarget(Camera.Get());
  ASkeletalMeshActor* Focus=Heroes[FocusedIndex].Actor.Get();
  if (!Focus) return;
  const FVector LookAt=Focus->GetActorLocation()+FVector(0.f,0.f,138.f);
