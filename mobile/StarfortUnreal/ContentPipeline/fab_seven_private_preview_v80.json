@@ -3,6 +3,7 @@
   "purpose": "PRIVATE_UNREAL_EDITOR_3D_REVIEW_ONLY",
   "engine": "Unreal Engine 5.8",
   "level": "/Game/Maps/L_StarfortPrivateFabPlaytest_v80",
+  "battle_level": "/Game/Maps/L_StarfortPrivateFabBattle_v80",
   "independent_of_server_accounts": true,
   "no_fabricated_real_player_progress": true,
   "source_assets_must_be_acquired_by_user": true,
