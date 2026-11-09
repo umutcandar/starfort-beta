@@ -1,5 +1,13 @@
 # STARFORT Mobile — Unreal Engine 5.8
 
+## v86 — Actual cinematic native Çanta ve Donanım (not another image)
+
+An **interactive, built-in Unreal UMG** full-landscape Bag now follows the user's navy/gold reference: top server gold/wood/stone/essence, seven selectable unlocked heroes, optional actual imported hero concept art, three real equipped slots, 19 server-compatible gear tiles and category filters, rarity/details/set panel and clickable equip/unequip/forge/enhance buttons. Village and Hero Hall both have an actual ÇANTA route, and the bottom navigation requests real native scenes. The store button is visibly disabled, not falsely actionable.
+
+The existing Supabase `sfb_starfort_progress` already returns account inventory, loadouts, resources and item mastery and authorizes `equip`, `unequip`, `forge` and `enhance`. v86 reads and strictly validates those fields and uses authenticated idempotent actions; **nothing is gifted, spent or equipped locally before a server response**. Production account/economy remains authoritative. Item names include the user's example Starbreaker Sword, Ash Armor and Guardian Seal, using only existing catalog IDs. No screenshot overlays, HTML/WebView or fake example gold/power values.
+
+The shipped source defines panels and real touch events now; **matching final ornamental item icons, cinematic textures, 3D hero actors and actual UE5.8 rendering/device QA require the user's local Unreal 5.8 asset import**. Source CI != UE compilation != an installed mobile app. Details: `Docs/NativeCinematicBagEquipment_v86_TR.md`.
+
 ## v85 — Server-selected three of seven REAL user-imported free Fab rigs
 
 The v84 Development-only bridge now accepts **4–7 distinct original Fab source SkeletalMeshes** instead of only one hard-coded team. It validates seven canonical roster IDs, each source namespace, unique genuine rig and matching original idle/attack clips; selects the **exact authenticated three heroes** and one **different unused real mesh as a temporary opponent stand-in**, hides all unused gallery actors and restores actor transforms on room change/log-out. Enemy source art is never represented as the final STARFORT enemy. The actual imported attack length governs cinematic timing; there is no local damage, result, XP or purchase simulation.
