@@ -115,11 +115,19 @@ def stage_in_editor(unreal,selected):
             a.get_class().get_name()=="StarfortFabVerifiedBattleBridge"):
             raise RuntimeError("Preserve existing private bridge & real models; refuse re-stage")
         if a.get_class().get_name()=="StarfortBattleStage":
-            try:
-                if a.get_editor_property("art_approved_for_mobile"):
-                    raise RuntimeError("Production-approved stage must not get Paragon test art")
-            except (AttributeError,ValueError):
-                pass
+            review_flag=None
+            for property_name in ("art_approved_for_mobile",
+                                  "b_art_approved_for_mobile",
+                                  "bArtApprovedForMobile"):
+                try:
+                    review_flag=a.get_editor_property(property_name)
+                    break
+                except (AttributeError,ValueError,RuntimeError):
+                    continue
+            if review_flag is None:
+                raise RuntimeError("Cannot read native production art approval; refuse staging")
+            if review_flag:
+                raise RuntimeError("Production-approved stage must not get Paragon test art")
     created=[]
     bindings=[]
     for i,row in enumerate(rows):
