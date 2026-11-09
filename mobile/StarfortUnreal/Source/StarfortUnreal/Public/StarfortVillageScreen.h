@@ -63,6 +63,8 @@ public:
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Village")
  FStarfortVillageNavigation OnHeroesRequested;
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Village")
+ FStarfortVillageNavigation OnBagRequested;
+ UPROPERTY(BlueprintAssignable, Category="STARFORT|Village")
  FStarfortVillageNavigation OnBattlesRequested;
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Village")
  FStarfortVillageNavigation OnAllianceRequested;
@@ -81,6 +83,7 @@ public:
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UTextBlock> TxtConnectionStatus;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnUpgrade;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnHeroes;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnBag;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnBattles;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnAlliance;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnRefresh;
@@ -91,6 +94,7 @@ protected:
 private:
  UFUNCTION() void UpgradeClicked();
  UFUNCTION() void HeroesClicked();
+ UFUNCTION() void BagClicked();
  UFUNCTION() void BattlesClicked();
  UFUNCTION() void AllianceClicked();
  UFUNCTION() void RefreshClicked();
