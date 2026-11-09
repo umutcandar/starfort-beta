@@ -164,7 +164,7 @@ class TestSevenFabPrivatePreview(unittest.TestCase):
     def test_idle_animation_serialized_and_pie_camera_not_a_production_map(self):
         source=(HERE/"fab_seven_private_preview_v80.py").read_text(encoding="utf-8")
         for text in (
-            "component.override_animation_data(idle,is_looping=True,is_playing=True)",
+            "component.override_animation_data(clip,is_looping=True,is_playing=True)",
             "unreal.SkeletalMeshActor", "unreal.CameraActor",
             "unreal.GameModeBase.static_class()", "user_confirmed_fab_license",
             "L_StarfortPrivateFabPlaytest_v80",
