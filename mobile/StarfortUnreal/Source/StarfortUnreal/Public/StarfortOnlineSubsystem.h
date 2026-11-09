@@ -5,6 +5,24 @@
 #include "StarfortBattleScreen.h"
 #include "StarfortOnlineSubsystem.generated.h"
 
+/** Server-owned equipment slots. No optimistic mutation or unverified inventory. */
+USTRUCT(BlueprintType)
+struct FStarfortBagLoadout
+{
+ GENERATED_BODY()
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") FString Weapon;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") FString Armor;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") FString Relic;
+
+ FString ForSlot(const FString& Slot) const
+ {
+  if (Slot==TEXT("weapon")) return Weapon;
+  if (Slot==TEXT("armor")) return Armor;
+  if (Slot==TEXT("relic")) return Relic;
+  return FString();
+ }
+};
+
 /** A minimal read-only account projection of sfb_starfort_progress.
  * The backend does not provide all hero stats in that RPC, so NO invented
  * attack/defense or equipment scores are filled in here.
@@ -15,6 +33,15 @@ struct FStarfortProgressSummary
  GENERATED_BODY()
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") TMap<FString,int32> HeroLevels;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") TArray<FString> Team;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") TMap<FString,int32> Inventory;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") TMap<FString,FStarfortBagLoadout> Loadouts;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") TMap<FString,int32> ItemUpgrades;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") int64 Gold = 0;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") int64 Wood = 0;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") int64 Stone = 0;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") int64 StarEssence = 0;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") int32 ForgeLevel = 0;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Bag") bool bInventoryVerified = false;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") TArray<int32> ClearedStages;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") TMap<int32,int32> StoryStars;
  UPROPERTY(BlueprintReadOnly, Category="STARFORT|Account") bool bInMission = false;
@@ -79,6 +106,16 @@ public:
  UFUNCTION(BlueprintCallable, Category="STARFORT|Battle") void AbandonMission();
  /** Uses existing account server's hero upgrade action. */
  UFUNCTION(BlueprintCallable, Category="STARFORT|Heroes") void TrainHero(const FString& HeroId);
+ /** Actual authenticated sfb_starfort_progress actions. The backend alone
+  * checks ownership, spending, active missions, inventory and mutation IDs. */
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Bag")
+ void EquipGear(const FString& HeroId,const FString& ItemId);
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Bag")
+ void UnequipGear(const FString& HeroId,const FString& Slot);
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Bag")
+ void ForgeGear(const FString& ItemId);
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Bag")
+ void EnhanceGear(const FString& ItemId);
  UFUNCTION(BlueprintPure, Category="STARFORT|Online")
  bool IsSignedIn() const { return !AccessToken.IsEmpty() && !UserId.IsEmpty(); }
  UFUNCTION(BlueprintPure, Category="STARFORT|Online")
