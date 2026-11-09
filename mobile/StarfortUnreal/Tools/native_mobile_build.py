@@ -161,10 +161,18 @@ def validate(platform_name, profile, require_toolchain=True):
 
 
 def build_command(engine_dir, platform_name, profile):
-    run_uat = engine_dir / "Engine/Build/BatchFiles" / (
-        "RunUAT.command" if platform.system() == "Darwin" else
-        "RunUAT.bat" if platform.system() == "Windows" else "RunUAT.sh"
-    )
+    scripts = engine_dir / "Engine/Build/BatchFiles"
+    if platform.system() == "Windows":
+        run_uat = scripts / "RunUAT.bat"
+    elif platform.system() == "Darwin":
+        # Stock UE releases vary between RunUAT.sh and RunUAT.command.
+        # Prefer an actually present launcher on a user's Mac; don't assume
+        # .command exists because source CI never installs the engine.
+        command = scripts / "RunUAT.command"
+        shell = scripts / "RunUAT.sh"
+        run_uat = command if command.is_file() else shell
+    else:
+        run_uat = scripts / "RunUAT.sh"
     if profile == "private-preview":
         # Explicit ONLY privately user-acquired Fab gallery + 3v1 UE maps.
         # The default login/village/live battle maps are NOT cooked here.
