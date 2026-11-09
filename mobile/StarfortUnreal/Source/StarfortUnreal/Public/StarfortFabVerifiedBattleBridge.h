@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TimerManager.h"
 #include "StarfortFabVerifiedBattleBridge.generated.h"
 
 class ACameraActor;
