@@ -13,6 +13,7 @@ import json
 import struct
 from pathlib import Path
 import unreal
+from ash_arena_scale_review_v83 import imported_arena_uniform_scale
 
 ROOT=Path(__file__).resolve().parents[1]
 SOURCE=ROOT/"ContentPipeline/Incoming/Environment/Battle/StarfortAshBattlefield_v79.glb"
@@ -60,6 +61,9 @@ def stage():
         raise RuntimeError(
             "Expected many actual imported rock/terrain StaticMeshes; "
             "Unreal Interchange import must be inspected before level placement")
+    # Real imported mesh bounds determine whether glTF meters were converted
+    # into Unreal centimeters by this machine's Interchange configuration.
+    scale=imported_arena_uniform_scale(meshes)
     if not editor.load_level(LEVEL):
         raise RuntimeError("Unreal battle level cannot be opened")
     for actor in actors.get_all_level_actors():
@@ -73,6 +77,7 @@ def stage():
         if not actor:
             raise RuntimeError("Failed to spawn an imported 3D terrain component")
         actor.static_mesh_component.set_static_mesh(mesh)
+        actor.set_actor_scale3d(unreal.Vector(scale,scale,scale))
         actor.set_actor_label("STARFORT_AshArena_v79_"+str(i).zfill(3))
     if not editor.save_current_level():
         raise RuntimeError("Unable to save staged 3D battle map")
@@ -80,6 +85,8 @@ def stage():
         "source_sha256":digest,
         "scene_map":LEVEL,
         "real_static_mesh_parts":len(meshes),
+        "unreal_actor_uniform_scale":scale,
+        "scale_verified_from_real_mesh_bounds":True,
         "new_real_3d_battlefield":True,
         "heroes_rigged_and_bound":False,
         "premium_mobile_art_approved":False,
