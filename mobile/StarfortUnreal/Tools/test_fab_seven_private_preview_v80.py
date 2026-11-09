@@ -168,7 +168,7 @@ class TestSevenFabPrivatePreview(unittest.TestCase):
         for text in (
             "component.override_animation_data(clip,is_looping=True,is_playing=True)",
             "unreal.SkeletalMeshActor", "unreal.CameraActor",
-            "unreal.GameModeBase.static_class()", "user_confirmed_fab_license",
+            '"/Script/StarfortUnreal.StarfortFabPreviewGameMode"', "user_confirmed_fab_license",
             "L_StarfortPrivateFabPlaytest_v80",
             "L_StarfortPrivateFabBattle_v80",
         ):
