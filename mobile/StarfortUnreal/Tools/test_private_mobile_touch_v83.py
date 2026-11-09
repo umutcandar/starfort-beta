@@ -232,6 +232,15 @@ int main() {
                 qa.write_text(json.dumps(proof))
                 errors=build.validate_private_preview()
                 self.assertTrue(any("Stale/failed Editor QA" in e for e in errors))
+                proof["blocking_issues"]=[]
+                qa.write_text(json.dumps(proof))
+                # A changed Unreal preview level invalidates older art acceptance.
+                import os
+                edited=root/"Content/Maps/L_StarfortPrivateFabBattle_v80.umap"
+                newer=qa.stat().st_mtime+20
+                os.utime(edited,(newer,newer))
+                errors=build.validate_private_preview()
+                self.assertTrue(any("changed after Editor QA" in e for e in errors))
 
     def test_online_routes_are_explicitly_whitelisted_away_from_private_maps(self):
         router=(NATIVE/"Private/StarfortSceneRouter.cpp").read_text()
