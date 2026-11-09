@@ -184,9 +184,16 @@ void AStarfortFabVerifiedBattleBridge::PresentVerifiedServerTurn(
   ActiveServerTeam!=Turn.TeamHeroes;
  if (bNewRoom)
  {
+  // Opening a running mission at turn 4 is NOT permission to replay
+  // turn 4 as a new strike. First authenticated snapshot only configures
+  // the genuine 3+1 rigs and their idle poses.
   ClearReview();
   ActiveRoomId=Turn.RoomId;
   ActiveServerTeam=Turn.TeamHeroes;
+  LastVerifiedTurn=Turn.Turn;
+  HideRigs(false);
+  RestoreIdle();
+  return;
  }
  // Reject duplicate/delayed turns and never replay old combat animation.
  if (Turn.Turn<=LastVerifiedTurn) return;
@@ -195,7 +202,7 @@ void AStarfortFabVerifiedBattleBridge::PresentVerifiedServerTurn(
  ClearTimers();
  HideRigs(false);
  RestoreIdle();
- if (Turn.Turn==0) return; // First snapshot: preview the real four rigs.
+ if (Turn.Turn==0) return; // No locally fabricated battle action.
 
  int32 Attacker=INDEX_NONE;
  // The verified action is used only for cosmetic selection:
