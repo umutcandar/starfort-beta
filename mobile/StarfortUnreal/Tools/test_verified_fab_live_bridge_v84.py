@@ -67,7 +67,7 @@ class TestVerifiedFabLiveBridgeV84(unittest.TestCase):
                 fake.write_text(json.dumps(base))
                 with self.assertRaisesRegex(ValueError,"lyra"):
                     installer.load_selection()
-                base["selected_skeletal_meshes"]["lyra"]=mapping["lyra"]
+                base["selected_skeletal_meshes"]["lyra"]="/Game/ParagonTheFey/Characters/Skins/SK_lyra"
                 base["selected_skeletal_meshes"]["doran"]=mapping["rovan"]
                 fake.write_text(json.dumps(base))
                 with self.assertRaisesRegex(ValueError,"doran"):
