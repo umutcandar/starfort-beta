@@ -415,6 +415,7 @@ void AStarfortFabPreviewController::QueueThreeHeroAttackPreview()
   return;
  }
  PendingPrivateAttackIndices.Reset();
+ CompletedPrivateAttackCount=0;
  // The authored formation, not the full gallery roster, determines allies.
  for (int32 I=0;I<Heroes.Num();++I)
   if (Heroes[I].SourceSide==TEXT("ALLY") && Heroes[I].Actor.IsValid() &&
