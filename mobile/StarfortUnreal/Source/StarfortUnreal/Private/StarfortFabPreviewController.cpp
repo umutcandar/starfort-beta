@@ -387,7 +387,7 @@ void AStarfortFabPreviewController::StartNextPrivateAttack()
   UAnimSequence* Clip=Cast<UAnimSequence>(
    FSoftObjectPath(Heroes[Next].AttackSequencePath).TryLoad());
   ActiveAttackDuration=FMath::Clamp(
-   Clip ? Clip->GetPlayLength() : 1.f,0.5f,3.4f);
+   Clip ? Clip->GetPlayLength() : 1.f,0.5f,10.0f);
   ActiveAttackElapsed=0.f;
   PrivateBattleStatus=Heroes[Next].HeroId.ToUpper()+
    TEXT(": gerçek Fab saldırı klibi oynatılıyor (hasar yok).");
