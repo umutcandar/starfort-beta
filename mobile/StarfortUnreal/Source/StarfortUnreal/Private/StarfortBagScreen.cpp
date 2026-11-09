@@ -203,9 +203,13 @@ void UStarfortBagScreen::BuildNativeLayout()
  // 4/4: selected gear details and server-backed actions.
  UVerticalBox* Details=StarfortBagUI::Panel(T,Main,305.f);
  AddTitle(Details,TEXT("Seçili Eşya"),21);
- DetailColumn=T->ConstructWidget<UVerticalBox>();
- Details->AddChildToVerticalBox(DetailColumn)->SetSize(
+ // Scroll real recipes, set summaries and endgame star-upgrade costs
+ // inside the available landscape panel, never clip buttons on small phones.
+ UScrollBox* DetailsScroll=T->ConstructWidget<UScrollBox>();
+ Details->AddChildToVerticalBox(DetailsScroll)->SetSize(
   FSlateChildSize(ESlateSizeRule::Fill));
+ DetailColumn=T->ConstructWidget<UVerticalBox>();
+ DetailsScroll->AddChild(DetailColumn);
 
  TxtStatus=StarfortBagUI::Text(T,
   TEXT("Sunucu eşya bilgisi bekleniyor"),14,StarfortBagUI::Gold());
