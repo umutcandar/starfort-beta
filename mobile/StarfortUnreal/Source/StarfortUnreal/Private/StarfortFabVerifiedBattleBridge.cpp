@@ -1,4 +1,5 @@
 #include "StarfortFabVerifiedBattleBridge.h"
+#include "StarfortFabDevRosterRules.h"
 #include "StarfortBattleScreen.h"
 
 #include "Animation/AnimSequence.h"
@@ -111,17 +112,18 @@ int32 AStarfortFabVerifiedBattleBridge::FindTeamSlot(
 int32 AStarfortFabVerifiedBattleBridge::ChooseUnusedEnemyRig(
  const TArray<FString>& Team) const
 {
- // bOpponent is a visual preference, NOT an immutable combat faction.
- // If the server actually selects Doran/Khaimera as a player hero,
- // choose a different imported unused model instead of duplicating Doran.
- int32 FirstUnused=INDEX_NONE;
- for (int32 I=0;I<RealFabRigs.Num();++I)
+ // Actor identities stay stable across joins and mobile respawns.
+ // Doran (or any other source rig) can be a REAL server ally; one unused
+ // imported actor is then repurposed only as a temporary enemy appearance.
+ TArray<FName> Ids;
+ TArray<bool> PreferAsEnemy;
+ for (const FStarfortFabVerifiedArtBinding& Entry:RealFabRigs)
  {
-  if (Team.Contains(RealFabRigs[I].HeroId.ToString())) continue;
-  if (FirstUnused==INDEX_NONE) FirstUnused=I;
-  if (RealFabRigs[I].bOpponent) return I;
+  Ids.Add(Entry.HeroId);
+  PreferAsEnemy.Add(Entry.bOpponent);
  }
- return FirstUnused;
+ return FStarfortFabDevRosterRules::ChooseUnused(
+  Ids,PreferAsEnemy,Team);
 }
 
 bool AStarfortFabVerifiedBattleBridge::IsReadyForTeam(
