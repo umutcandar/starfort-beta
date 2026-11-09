@@ -7,6 +7,7 @@ no production quality/retail release bypass. The editor maps are deliberately
 not included in any app cooking list.
 """
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -21,6 +22,9 @@ SHOWCASE = "/Game/Maps/L_StarfortPrivateFabPlaytest_v80"
 BATTLE = "/Game/Maps/L_StarfortPrivateFabBattle_v80"
 IDS = ("rovan", "aldren", "lyra", "mira", "doran", "vesper", "eira")
 GAME_MAPS = {"L_StarfortVillage", "L_StarfortBattle", "L_StarfortAlliance", "L_RoyalGunnerStudio"}
+ARENA_SRC = ROOT / "ContentPipeline/Incoming/Environment/Battle/StarfortAshBattlefield_v79.glb"
+ARENA_DEST = "/Game/Environment/StarfortAshBattlefield_v79"
+ARENA_SHA256 = "f60553379ebc821eef57e9807a1bdb05dc6a771360f263854bc99214e0555d25"
 
 
 def validate_contract(doc):
@@ -203,6 +207,51 @@ def make_actor(unreal,actors,hero,mesh,root,location,rotation,tag,battle=False):
             "battle_animation_demonstration_only":bool(battle)}
 
 
+def available_original_arena(unreal):
+    """Optional original STARFORT terrain, not a Fab/third-party asset.
+
+    A missing arena leaves a REAL Fab character gallery, not a faked terrain.
+    The v79 GLB SHA must match before an Editor import can begin.
+    """
+    lib=unreal.EditorAssetLibrary
+    if ARENA_SRC.is_file():
+        contents=ARENA_SRC.read_bytes()
+        if hashlib.sha256(contents).hexdigest()!=ARENA_SHA256 or contents[:4]!=b"glTF":
+            raise RuntimeError("Original STARFORT GLB failed SHA-256 audit")
+    if not lib.does_directory_exist(ARENA_DEST):
+        if not ARENA_SRC.is_file():
+            return []
+        task=unreal.AssetImportTask()
+        task.set_editor_property("filename",str(ARENA_SRC))
+        task.set_editor_property("destination_path",ARENA_DEST)
+        task.set_editor_property("automated",True)
+        task.set_editor_property("replace_existing",False)
+        task.set_editor_property("save",True)
+        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+    if not lib.does_directory_exist(ARENA_DEST):
+        raise RuntimeError("Original arena GLB imported no asset directory")
+    found=[]
+    for path in lib.list_assets(ARENA_DEST,recursive=True,include_folder=False):
+        item=lib.load_asset(str(path))
+        if item and item.get_class().get_name()=="StaticMesh":
+            found.append(item)
+    if not found:
+        raise RuntimeError("Original arena GLB did not create any actual StaticMesh")
+    return found
+
+
+def attach_arena(unreal,actors,arena):
+    count=0
+    for i,mesh in enumerate(arena):
+        actor=actors.spawn_actor_from_class(unreal.StaticMeshActor,
+            unreal.Vector(0,0,0),unreal.Rotator(0,0,0))
+        if not actor:raise RuntimeError("Could not place actual imported original arena")
+        actor.static_mesh_component.set_static_mesh(mesh)
+        actor.set_actor_label("STARFORT_PRIVATE_ORIGINAL_ASH_ARENA_"+str(i).zfill(3))
+        count+=1
+    return count
+
+
 def light_camera(unreal,actors,battle):
     for klass,pos,rot,label in (
         (unreal.DirectionalLight,(100,-300,1100),(-40,-30,0),"STFT_PRIVATE_SUN"),
@@ -218,7 +267,7 @@ def light_camera(unreal,actors,battle):
                 unreal.log_warning("Select and pilot the scene CameraActor manually in PIE")
 
 
-def new_private_map(unreal,doc,loaded,battle):
+def new_private_map(unreal,doc,loaded,battle,arena):
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     scene_path=BATTLE if battle else SHOWCASE
@@ -250,9 +299,11 @@ def new_private_map(unreal,doc,loaded,battle):
             mesh,path=loaded[hid]
             placed.append(make_actor(unreal,actors,hid,mesh,hero["expected_root"],
                 (0,(i-3)*230,0),(0,0,0),"GALLERY"))
+    arena_count=attach_arena(unreal,actors,arena) if arena else 0
     light_camera(unreal,actors,battle)
     if not level.save_current_level():raise RuntimeError("Real Unreal .umap save failed")
-    return {"path":scene_path,"actual_skinned_character_actors":placed}
+    return {"path":scene_path,"actual_skinned_character_actors":placed,
+            "original_starfort_arena_meshes":arena_count}
 
 
 def stage(unreal,doc):
@@ -265,16 +316,20 @@ def stage(unreal,doc):
     for path in (SHOWCASE,BATTLE):
         if unreal.EditorAssetLibrary.does_asset_exist(path):
             raise RuntimeError("Refuse to overwrite existing private preview scene: "+path)
+    # Optional public-source-friendly original environment: no Epic asset bytes.
+    # Validate it BEFORE creating either preview level.
+    arena=available_original_arena(unreal)
     runtime_doc=dict(doc)
     runtime_doc["roots"]={h["hero_id"]:h["expected_root"] for h in doc["heroes"]}
     scenes=[
-        new_private_map(unreal,runtime_doc,chosen,False),
-        new_private_map(unreal,runtime_doc,chosen,True),
+        new_private_map(unreal,runtime_doc,chosen,False,arena),
+        new_private_map(unreal,runtime_doc,chosen,True,arena),
     ]
     report={
         "run_inside_real_unreal_editor":True,
         "native_editor_maps_created":len(scenes),
         "real_fab_skeletal_heroes":len(chosen),
+        "original_3d_ash_arena_available":bool(arena),
         "missing_reference_ids":[hid for hid in IDS if hid not in chosen],
         "scenes":scenes,
         "real_online_battle_played":False,
