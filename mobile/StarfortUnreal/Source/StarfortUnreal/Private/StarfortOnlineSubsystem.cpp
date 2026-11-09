@@ -1,5 +1,6 @@
 #include "StarfortOnlineSubsystem.h"
 #include "StarfortOnlineSettings.h"
+#include "StarfortBagCatalog.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "Serialization/JsonReader.h"
@@ -553,6 +554,79 @@ bool UStarfortOnlineSubsystem::ParseProgress(const TSharedPtr<FJsonObject>& Root
  }
  else if (!Root->HasTypedField<EJson::Null>(TEXT("lastReport"))) return false;
 
+ // Only an authenticated progress projection can populate the bag.
+ // The real existing RPC returns inventory/loadouts/itemUpgrades/res/buildings.
+ // Old versions lacking these fields still work, but their Bag stays locked.
+ const bool bBagPresent=Root->HasField(TEXT("inventory")) ||
+  Root->HasField(TEXT("loadouts")) || Root->HasField(TEXT("itemUpgrades"));
+ if(bBagPresent)
+ {
+  if(!Root->HasTypedField<EJson::Object>(TEXT("inventory")) ||
+     !Root->HasTypedField<EJson::Object>(TEXT("loadouts")) ||
+     !Root->HasTypedField<EJson::Object>(TEXT("itemUpgrades")) ||
+     !Root->HasTypedField<EJson::Object>(TEXT("res")) ||
+     !Root->HasTypedField<EJson::Object>(TEXT("buildings"))) return false;
+  const TSharedPtr<FJsonObject> Inv=Root->GetObjectField(TEXT("inventory"));
+  const TSharedPtr<FJsonObject> Wear=Root->GetObjectField(TEXT("loadouts"));
+  const TSharedPtr<FJsonObject> Upgrades=Root->GetObjectField(TEXT("itemUpgrades"));
+  const TSharedPtr<FJsonObject> Res=Root->GetObjectField(TEXT("res"));
+  const TSharedPtr<FJsonObject> Buildings=Root->GetObjectField(TEXT("buildings"));
+  if(!Inv.IsValid() || !Wear.IsValid() || !Upgrades.IsValid() ||
+     !Res.IsValid() || !Buildings.IsValid() ||
+     Inv->Values.Num()>FStarfortBagCatalog::All().Num() ||
+     Wear->Values.Num()>UE_ARRAY_COUNT(HeroIds) ||
+     Upgrades->Values.Num()>FStarfortBagCatalog::All().Num()) return false;
+  int64 G=0,W=0,S=0,E=0,Forge=0;
+  if(!IsIntegerField(Res,TEXT("gold"),0,MaxResources,G) ||
+     !IsIntegerField(Res,TEXT("wood"),0,MaxResources,W) ||
+     !IsIntegerField(Res,TEXT("stone"),0,MaxResources,S) ||
+     !IsIntegerField(Res,TEXT("aether"),0,MaxResources,E) ||
+     !IsIntegerField(Buildings,TEXT("forge"),0,30,Forge)) return false;
+  Out.Gold=G;Out.Wood=W;Out.Stone=S;Out.StarEssence=E;
+  Out.ForgeLevel=static_cast<int32>(Forge);
+  for(const auto& Pair:Inv->Values)
+  {
+   int64 Count=0;
+   if(!FStarfortBagCatalog::Find(Pair.Key) ||
+      !IsIntegerField(Inv,*Pair.Key,1,20,Count)) return false;
+   Out.Inventory.Add(Pair.Key,static_cast<int32>(Count));
+  }
+  for(const auto& Pair:Upgrades->Values)
+  {
+   int64 Level=0;
+   if(!FStarfortBagCatalog::Find(Pair.Key) ||
+      !IsIntegerField(Upgrades,*Pair.Key,0,5,Level)) return false;
+   Out.ItemUpgrades.Add(Pair.Key,static_cast<int32>(Level));
+  }
+  TMap<FString,int32> InUse;
+  for(const auto& HeroPair:Wear->Values)
+  {
+   if(!Out.HeroLevels.Contains(HeroPair.Key) ||
+      !HeroPair.Value.IsValid() ||
+      HeroPair.Value->Type!=EJson::Object) return false;
+   const TSharedPtr<FJsonObject> Slots=HeroPair.Value->AsObject();
+   if(!Slots.IsValid() || Slots->Values.Num()>3) return false;
+   FStarfortBagLoadout Set;
+   for(const auto& SlotPair:Slots->Values)
+   {
+    FString ItemId;
+    if(!FStarfortBagCatalog::IsSlot(SlotPair.Key) ||
+       !SlotPair.Value.IsValid() ||
+       !SlotPair.Value->TryGetString(ItemId)) return false;
+    const FStarfortBagItemInfo* Entry=FStarfortBagCatalog::Find(ItemId);
+    if(!Entry || SlotPair.Key!=Entry->Slot ||
+       !Out.Inventory.Contains(ItemId)) return false;
+    if(SlotPair.Key==TEXT("weapon"))Set.Weapon=ItemId;
+    else if(SlotPair.Key==TEXT("armor"))Set.Armor=ItemId;
+    else Set.Relic=ItemId;
+    const int32 NewCount=InUse.FindRef(ItemId)+1;
+    if(NewCount>Out.Inventory.FindRef(ItemId)) return false;
+    InUse.Add(ItemId,NewCount);
+   }
+   Out.Loadouts.Add(HeroPair.Key,Set);
+  }
+  Out.bInventoryVerified=true;
+ }
  Out.bServerVerified=true;
  return true;
 }
@@ -687,6 +761,31 @@ void UStarfortOnlineSubsystem::TrainHero(const FString& HeroId)
  }
  SubmitProgressAction(TEXT("hero"),HeroId,TEXT(""));
 }
+void UStarfortOnlineSubsystem::EquipGear(
+ const FString& HeroId,const FString& ItemId)
+{
+ if(!IsSignedIn() || !IsAllowedHero(HeroId) ||
+    !FStarfortBagCatalog::Find(ItemId)) return;
+ SubmitProgressAction(TEXT("equip"),HeroId,ItemId);
+}
+void UStarfortOnlineSubsystem::UnequipGear(
+ const FString& HeroId,const FString& Slot)
+{
+ if(!IsSignedIn() || !IsAllowedHero(HeroId) ||
+    !FStarfortBagCatalog::IsSlot(Slot)) return;
+ SubmitProgressAction(TEXT("unequip"),HeroId,Slot);
+}
+void UStarfortOnlineSubsystem::ForgeGear(const FString& ItemId)
+{
+ const FStarfortBagItemInfo* Info=FStarfortBagCatalog::Find(ItemId);
+ if(!IsSignedIn() || !Info || Info->ForgeLevel<=0) return;
+ SubmitProgressAction(TEXT("forge"),ItemId,TEXT(""));
+}
+void UStarfortOnlineSubsystem::EnhanceGear(const FString& ItemId)
+{
+ if(!IsSignedIn() || !FStarfortBagCatalog::Find(ItemId)) return;
+ SubmitProgressAction(TEXT("enhance"),ItemId,TEXT(""));
+}
 void UStarfortOnlineSubsystem::SubmitProgressAction(const FString& Action,
  const FString& Target,const FString& Aux)
 {
@@ -699,7 +798,9 @@ void UStarfortOnlineSubsystem::SubmitProgressAction(const FString& Action,
  }
  if (Action!=TEXT("get") && Action!=TEXT("mission_start") &&
      Action!=TEXT("mission_turn") && Action!=TEXT("mission_abandon") &&
-     Action!=TEXT("hero")) return;
+     Action!=TEXT("hero") && Action!=TEXT("equip") &&
+     Action!=TEXT("unequip") && Action!=TEXT("forge") &&
+     Action!=TEXT("enhance")) return;
  bProgressPending=true;
  const TWeakObjectPtr<UStarfortOnlineSubsystem> WeakThis(this);
  WithFreshSession([WeakThis,Action,Target,Aux](bool Ready)

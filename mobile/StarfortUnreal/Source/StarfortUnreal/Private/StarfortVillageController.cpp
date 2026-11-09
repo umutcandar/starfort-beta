@@ -53,6 +53,7 @@ void AStarfortVillageController::EndPlay(const EEndPlayReason::Type EndPlayReaso
  {
   ActiveVillageScreen->OnUpgradeRequested.RemoveDynamic(this,&AStarfortVillageController::HandleUpgradeRequested);
   ActiveVillageScreen->OnHeroesRequested.RemoveDynamic(this,&AStarfortVillageController::HandleHeroesRequested);
+  ActiveVillageScreen->OnBagRequested.RemoveDynamic(this,&AStarfortVillageController::HandleBagRequested);
   ActiveVillageScreen->OnBattlesRequested.RemoveDynamic(this,&AStarfortVillageController::HandleBattlesRequested);
   ActiveVillageScreen->OnAllianceRequested.RemoveDynamic(this,&AStarfortVillageController::HandleAllianceRequested);
   ActiveVillageScreen->OnRefreshRequested.RemoveDynamic(this,&AStarfortVillageController::RefreshVillage);
@@ -106,6 +107,7 @@ void AStarfortVillageController::OpenVillageScreen()
   ActiveVillageScreen->OnUpgradeRequested.AddUniqueDynamic(
    this,&AStarfortVillageController::HandleUpgradeRequested);
   ActiveVillageScreen->OnHeroesRequested.AddUniqueDynamic(this,&AStarfortVillageController::HandleHeroesRequested);
+  ActiveVillageScreen->OnBagRequested.AddUniqueDynamic(this,&AStarfortVillageController::HandleBagRequested);
   ActiveVillageScreen->OnBattlesRequested.AddUniqueDynamic(this,&AStarfortVillageController::HandleBattlesRequested);
   ActiveVillageScreen->OnAllianceRequested.AddUniqueDynamic(this,&AStarfortVillageController::HandleAllianceRequested);
   ActiveVillageScreen->OnRefreshRequested.AddUniqueDynamic(this,&AStarfortVillageController::RefreshVillage);
@@ -173,6 +175,11 @@ void AStarfortVillageController::HandleHeroesRequested()
 {
  if (UStarfortSceneRouter* Router=GetGameInstance()->GetSubsystem<UStarfortSceneRouter>())
   Router->OpenHeroHall();
+}
+void AStarfortVillageController::HandleBagRequested()
+{
+ if (UStarfortSceneRouter* Router=GetGameInstance()->GetSubsystem<UStarfortSceneRouter>())
+  Router->OpenBag();
 }
 void AStarfortVillageController::HandleBattlesRequested()
 {

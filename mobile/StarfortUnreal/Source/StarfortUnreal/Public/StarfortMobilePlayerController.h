@@ -4,6 +4,7 @@
 #include "StarfortMobilePlayerController.generated.h"
 
 class UStarfortHeroScreen;
+class UStarfortBagScreen;
 class UStarfortOnlineSubsystem;
 struct FStarfortProgressSummary;
 
@@ -21,16 +22,26 @@ public:
  virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
  UFUNCTION(BlueprintCallable, Category="STARFORT|Hero") void ShowHeroScreen();
  UFUNCTION(BlueprintCallable, Category="STARFORT|Hero") void HideHeroScreen();
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Bag") void ShowBagScreen();
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Bag") void HideBagScreen();
+ UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="STARFORT|UI")
+ TSubclassOf<UStarfortBagScreen> BagScreenClass;
  UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="STARFORT|UI")
  TSubclassOf<UStarfortHeroScreen> HeroScreenClass;
 
 protected:
  UPROPERTY(Transient, BlueprintReadOnly, Category="STARFORT|UI")
  TObjectPtr<UStarfortHeroScreen> ActiveHeroScreen;
+ UPROPERTY(Transient, BlueprintReadOnly, Category="STARFORT|UI")
+ TObjectPtr<UStarfortBagScreen> ActiveBagScreen;
  TMap<FString,int32> CachedHeroLevels;
  bool bHasVerifiedProgress=false;
  UPROPERTY(Transient) TObjectPtr<UStarfortOnlineSubsystem> Online;
 
+ UFUNCTION() void HandleBagRequested();
+ UFUNCTION() void HandleBagBack();
+ UFUNCTION() void HandleBagNavigation(FString Destination);
+ UFUNCTION() void HandleBagMutation(FString Action,FString Target,FString Aux);
  UFUNCTION() void HandleFirePreview();
  UFUNCTION() void HandleInspectPreview();
  UFUNCTION() void HandleCloseScreen();

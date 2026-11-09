@@ -59,6 +59,22 @@ bool UStarfortSceneRouter::OpenHeroHall()
 {
  return OpenIfInstalled(TEXT("/Game/Maps/L_RoyalGunnerStudio"));
 }
+bool UStarfortSceneRouter::OpenBag()
+{
+ bBagRouteRequested=true;
+ if(!OpenHeroHall())
+ {
+  bBagRouteRequested=false;
+  return false;
+ }
+ return true;
+}
+bool UStarfortSceneRouter::ConsumeBagRoute()
+{
+ const bool bOpen=bBagRouteRequested;
+ bBagRouteRequested=false;
+ return bOpen;
+}
 bool UStarfortSceneRouter::OpenBattle()
 {
  return OpenIfInstalled(TEXT("/Game/Maps/L_StarfortBattle"));

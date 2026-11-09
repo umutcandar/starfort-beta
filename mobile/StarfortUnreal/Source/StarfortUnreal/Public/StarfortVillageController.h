@@ -43,6 +43,7 @@ private:
  UFUNCTION() void HandleUpgradeRequested(FName BuildingId);
  UFUNCTION() void HandleOnlineFailure(FString SafeReason);
  UFUNCTION() void HandleHeroesRequested();
+ UFUNCTION() void HandleBagRequested();
  UFUNCTION() void HandleBattlesRequested();
  UFUNCTION() void HandleAllianceRequested();
  UFUNCTION() void HandleRouteUnavailable(FString SafeReason);

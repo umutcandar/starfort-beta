@@ -17,6 +17,7 @@ void UStarfortHeroScreen::NativeOnInitialized()
  if (BtnInspect) BtnInspect->OnClicked.AddDynamic(this, &UStarfortHeroScreen::InspectClicked);
  if (BtnFirePreview) BtnFirePreview->OnClicked.AddDynamic(this, &UStarfortHeroScreen::FireClicked);
  if (BtnBack) BtnBack->OnClicked.AddDynamic(this, &UStarfortHeroScreen::BackClicked);
+ if (BtnBag) BtnBag->OnClicked.AddUniqueDynamic(this,&UStarfortHeroScreen::BagClicked);
  if (BtnUpgrade) BtnUpgrade->OnClicked.AddUniqueDynamic(this, &UStarfortHeroScreen::UpgradeClicked);
  if (BtnSelectRovan) BtnSelectRovan->OnClicked.AddUniqueDynamic(this,&UStarfortHeroScreen::RovanClicked);
  if (BtnSelectAldren) BtnSelectAldren->OnClicked.AddUniqueDynamic(this,&UStarfortHeroScreen::AldrenClicked);
@@ -133,6 +134,7 @@ void UStarfortHeroScreen::ApplyVerifiedHero(const FStarfortHeroSnapshot& NewSnap
 void UStarfortHeroScreen::InspectClicked() { OnInspectRequested.Broadcast(); }
 void UStarfortHeroScreen::FireClicked() { OnFirePreviewRequested.Broadcast(); }
 void UStarfortHeroScreen::BackClicked() { OnBackRequested.Broadcast(); }
+void UStarfortHeroScreen::BagClicked() { OnBagRequested.Broadcast(); }
 void UStarfortHeroScreen::UpgradeClicked()
 {
  // Caller must perform an authenticated server request; no local level change.

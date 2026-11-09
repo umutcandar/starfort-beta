@@ -57,6 +57,7 @@ public:
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Hero") FStarfortHeroScreenEvent OnInspectRequested;
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Hero") FStarfortHeroScreenEvent OnFirePreviewRequested;
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Hero") FStarfortHeroScreenEvent OnBackRequested;
+ UPROPERTY(BlueprintAssignable, Category="STARFORT|Hero") FStarfortHeroScreenEvent OnBagRequested;
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Hero") FStarfortHeroScreenEvent OnUpgradeRequested;
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Hero") FStarfortHeroSelectedEvent OnHeroSelected;
 
@@ -73,6 +74,7 @@ public:
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnInspect;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnFirePreview;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnBack;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnBag;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnUpgrade;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnSelectRovan;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly) TObjectPtr<UButton> BtnSelectAldren;
@@ -95,6 +97,7 @@ private:
  UFUNCTION() void InspectClicked();
  UFUNCTION() void FireClicked();
  UFUNCTION() void BackClicked();
+ UFUNCTION() void BagClicked();
  UFUNCTION() void UpgradeClicked();
  UFUNCTION() void RovanClicked();
  UFUNCTION() void AldrenClicked();
