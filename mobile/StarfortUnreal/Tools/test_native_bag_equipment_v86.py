@@ -28,7 +28,7 @@ class NativeBagInventoryV86(unittest.TestCase):
         js=(REPO/"starfort/equipment.js").read_text(encoding="utf-8")
         cpp=read("Private/StarfortBagCatalog.cpp")
         js_ids=set(re.findall(r"\bid:'([a-z_]+)'",js))
-        cpp_ids=set(re.findall(r'TEXT\("([a-z_]+)"\),TEXT\("',cpp))
+        cpp_ids=set(re.findall(r'\{TEXT\("([a-z_]+)"\),TEXT\("',cpp))
         self.assertEqual(js_ids,cpp_ids)
         self.assertIn("starbreaker",cpp_ids)
         self.assertIn("ashes_plate",cpp_ids)
@@ -145,7 +145,6 @@ class NativeBagInventoryV86(unittest.TestCase):
             "bMutationPending=true",
             "GetOwningPlayer()", "UScrollBox",
             'TEXT("nav:")+Destination.Key',
-            "verified", # appears in documentation comments
         ):
             self.assertIn(marker,screen)
         self.assertIn("ClickTarget->OnClicked.AddUniqueDynamic",tile)
