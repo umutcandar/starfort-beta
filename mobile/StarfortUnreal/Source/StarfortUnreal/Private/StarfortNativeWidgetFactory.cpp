@@ -252,6 +252,7 @@ bool FStarfortNativeWidgetFactory::BuildVillage(UStarfortVillageScreen* Screen)
  NativeUI::ButtonRow(Tree,Upgrades,Screen->BtnUpgrade,TEXT("BİNAYI GELİŞTİR"));
  UHorizontalBox* Nav=NativeUI::Row(Tree,Column);
  NativeUI::ButtonRow(Tree,Nav,Screen->BtnHeroes,TEXT("KAHRAMANLAR"));
+ NativeUI::ButtonRow(Tree,Nav,Screen->BtnBag,TEXT("ÇANTA"));
  NativeUI::ButtonRow(Tree,Nav,Screen->BtnBattles,TEXT("SEFERLER"));
  NativeUI::ButtonRow(Tree,Nav,Screen->BtnAlliance,TEXT("İTTİFAK"));
  UHorizontalBox* AccountActions=NativeUI::Row(Tree,Column);
@@ -457,6 +458,7 @@ bool FStarfortNativeWidgetFactory::BuildHero(UStarfortHeroScreen* Screen)
  NativeUI::ButtonRow(Tree,Actions,Screen->BtnFirePreview,TEXT("3D YAKINDA"));
  if(Screen->BtnFirePreview) Screen->BtnFirePreview->SetIsEnabled(false);
  NativeUI::ButtonRow(Tree,Actions,Screen->BtnUpgrade,TEXT("EĞİT"));
+ NativeUI::ButtonRow(Tree,Actions,Screen->BtnBag,TEXT("ÇANTA VE DONANIM"));
  NativeUI::ButtonRow(Tree,Actions,Screen->BtnBack,TEXT("GERİ"));
 
  Screen->TxtConnectionStatus=Tree->ConstructWidget<UTextBlock>();
