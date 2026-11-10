@@ -1,6 +1,7 @@
 #include "StarfortOnlineSubsystem.h"
 #include "StarfortOnlineSettings.h"
 #include "StarfortBagCatalog.h"
+#include "StarfortCraftingMaterials.h"
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"
 #include "Serialization/JsonReader.h"
@@ -162,6 +163,7 @@ void UStarfortOnlineSubsystem::SignOut()
  bRefreshPending=false;
  bVillagePending=false;
  bProgressPending=false;
+ bMaterialsPending=false;
  bLastProgressValid=false;
  LastMissionId.Empty(); LastMissionTurn=-1; LastEnemyHP=0; LastPlayerHP=0;
  RefreshWaiters.Reset();
@@ -740,6 +742,90 @@ void UStarfortOnlineSubsystem::RequestVillageUpgrade(FName BuildingId)
    });
  });
 }
+bool UStarfortOnlineSubsystem::ParseMaterials(
+ const TSharedPtr<FJsonObject>& Root,FStarfortMaterialSnapshot& Out)
+{
+ if(!StarfortOnline::IsServer(Root) ||
+    !Root->HasTypedField<EJson::Object>(TEXT("materials")))return false;
+ FString Focus;
+ if(!Root->TryGetStringField(TEXT("focus"),Focus) ||
+    !FStarfortCraftingMaterialCatalog::IsFocus(Focus))return false;
+ const TSharedPtr<FJsonObject> Items=Root->GetObjectField(TEXT("materials"));
+ if(!Items.IsValid() ||
+    Items->Values.Num()!=FStarfortCraftingMaterialCatalog::All().Num())
+  return false;
+ for(const auto& Entry:FStarfortCraftingMaterialCatalog::All())
+ {
+  int64 Count=0;
+  if(!StarfortOnline::IsIntegerField(Items,Entry.Id,0,100000,Count))
+   return false;
+  Out.Counts.Add(Entry.Id,static_cast<int32>(Count));
+ }
+ for(const auto& Item:Items->Values)
+  if(!FStarfortCraftingMaterialCatalog::Find(Item.Key))return false;
+ Out.FocusSlot=Focus;
+ Out.bServerVerified=true;
+ return true;
+}
+void UStarfortOnlineSubsystem::LoadCraftingMaterials()
+{
+ RequestMaterials(FString());
+}
+void UStarfortOnlineSubsystem::SetCraftingFocus(const FString& Slot)
+{
+ if(!FStarfortCraftingMaterialCatalog::IsFocus(Slot))return;
+ RequestMaterials(Slot);
+}
+void UStarfortOnlineSubsystem::RequestMaterials(const FString& Focus)
+{
+ if(!IsSignedIn() || bMaterialsPending)return;
+ bMaterialsPending=true;
+ const TWeakObjectPtr<UStarfortOnlineSubsystem> WeakThis(this);
+ WithFreshSession([WeakThis,Focus](bool bReady)
+ {
+  if(!WeakThis.IsValid())return;
+  if(!bReady)
+  {
+   WeakThis->bMaterialsPending=false;
+   WeakThis->OnMaterialsUnavailable.Broadcast(
+    TEXT("Malzeme çantası için tekrar giriş yap"));
+   return;
+  }
+  const TSharedPtr<FJsonObject> Body=MakeShared<FJsonObject>();
+  Body->SetStringField(TEXT("p_action"),
+   Focus.IsEmpty()?TEXT("get"):TEXT("focus"));
+  if(Focus.IsEmpty())
+  {
+   Body->SetField(TEXT("p_focus"),MakeShared<FJsonValueNull>());
+   Body->SetField(TEXT("p_request_id"),MakeShared<FJsonValueNull>());
+  }
+  else
+  {
+   Body->SetStringField(TEXT("p_focus"),Focus);
+   Body->SetStringField(TEXT("p_request_id"),
+    FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphens));
+  }
+  WeakThis->RequestJson(TEXT("/rest/v1/rpc/sfb_crafting_materials"),
+   TEXT("POST"),StarfortOnline::ToJson(Body),WeakThis->AccessToken,
+   [WeakThis,Focus](bool bOk,const TSharedPtr<FJsonObject>& Root)
+   {
+    if(!WeakThis.IsValid())return;
+    WeakThis->bMaterialsPending=false;
+    FStarfortMaterialSnapshot Data;
+    if(!bOk || !ParseMaterials(Root,Data))
+    {
+     // This RPC is optional until the v256 SQL migration is deployed.
+     // No fabricated materials. Do not invalidate the verified existing
+     // equipment projection or attempt to replay an unknown focus request.
+     WeakThis->OnMaterialsUnavailable.Broadcast(
+      TEXT("Malzeme sunucusu henüz aktif değil veya yanıt doğrulanamadı"));
+     return;
+    }
+    WeakThis->OnMaterialsReady.Broadcast(Data);
+   });
+ });
+}
+
 void UStarfortOnlineSubsystem::LoadProgress()
 {
  SubmitProgressAction(TEXT("get"),TEXT(""),TEXT(""));
