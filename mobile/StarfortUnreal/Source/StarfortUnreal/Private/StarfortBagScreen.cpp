@@ -471,6 +471,55 @@ void UStarfortBagScreen::Refresh()
   }
  }
  ItemGrid->ClearChildren();
+ if(ActiveFilter==TEXT("materials"))
+ {
+  int32 MatIdx=0;
+  for(const auto& Entry:FStarfortCraftingMaterialCatalog::All())
+  {
+   const FString Id(Entry.Id);
+   const FString CountLabel=bMaterialsVerified?
+    FString::Printf(TEXT("×%d · sunucu"),RealMaterials.Counts.FindRef(Id)):
+    TEXT("Henüz aktifleştirilmedi");
+   UStarfortBagTile* Tile=MakeTile(TEXT("material:")+Id,Entry.Name,
+    CountLabel,FStarfortBagCatalog::RarityColor(Entry.Rarity),true,
+    SelectedMaterialId==Id);
+   if(Tile)ItemGrid->AddChildToUniformGrid(Tile,MatIdx/3,MatIdx%3)
+     ->SetPadding(FMargin(3.f,5.f));
+   ++MatIdx;
+  }
+  DetailColumn->ClearChildren();
+  const FStarfortCraftingMaterialInfo* Selected=
+   FStarfortCraftingMaterialCatalog::Find(SelectedMaterialId);
+  if(Selected)
+  {
+   AddTitle(DetailColumn,Selected->Name,21,Gold());
+   AddTitle(DetailColumn,FString(TEXT("Şekli: "))+Selected->Shape,
+    14,Ink());
+   AddTitle(DetailColumn,FString(TEXT("Kazanım: "))+Selected->Source,
+    14,Ink());
+   AddTitle(DetailColumn,bMaterialsVerified?
+     FString::Printf(TEXT("Gerçek çanta: ×%d"),
+      RealMaterials.Counts.FindRef(SelectedMaterialId)):
+     TEXT("Sunucudan doğrulanmış parça adedi yok"),16,Gold());
+  }
+  AddTitle(DetailColumn,MaterialsStatus,13,Ink());
+  AddTitle(DetailColumn,TEXT("Günlük parça hedefi"),17,Gold());
+  for(const TCHAR* FocusId:{TEXT("weapon"),TEXT("armor"),TEXT("relic")})
+  {
+   const FString Id(FocusId);
+   const FString Label=Id==TEXT("weapon")?TEXT("Silah · Yıldız Kesiti"):
+    Id==TEXT("armor")?TEXT("Zırh · Hisar Perçini"):
+     TEXT("Tılsım · Astral Lif");
+   UStarfortBagTile* Tile=MakeTile(TEXT("focus:")+Id,Label,
+    Id==RealMaterials.FocusSlot?TEXT("Seçili günlük hedef"):
+     TEXT("Sonraki doğrulanmış hikâye galibiyeti"),
+    Gold(),bMaterialsVerified && !bMaterialFocusPending,
+    bMaterialsVerified && Id==RealMaterials.FocusSlot);
+   if(Tile)DetailColumn->AddChildToVerticalBox(Tile)
+    ->SetPadding(FMargin(2.f,4.f));
+  }
+  return; // Material fragments cannot be equipped or sold as owned gear.
+ }
  int32 VisibleIndex=0;
  for(const FStarfortBagItemInfo& Entry:FStarfortBagCatalog::All())
  {
@@ -616,6 +665,29 @@ void UStarfortBagScreen::HandleTile(const FString& Token)
      F==TEXT("relic")||F==TEXT("set")||F==TEXT("owned")||
      F==TEXT("materials"))
   {ActiveFilter=F;Refresh();}
+  return;
+ }
+ if(Token.StartsWith(TEXT("material:")))
+ {
+  const FString Id=Token.RightChop(9);
+  if(FStarfortCraftingMaterialCatalog::Find(Id))
+  {
+   SelectedMaterialId=Id;
+   ActiveFilter=TEXT("materials");
+   Refresh();
+  }
+  return;
+ }
+ if(Token.StartsWith(TEXT("focus:")))
+ {
+  const FString Id=Token.RightChop(6);
+  if(!bMaterialsVerified || bMaterialFocusPending ||
+     !FStarfortCraftingMaterialCatalog::IsFocus(Id))return;
+  if(Id==RealMaterials.FocusSlot)return;
+  bMaterialFocusPending=true;
+  MaterialsStatus=TEXT("Hedef sunucu tarafından kaydediliyor…");
+  Refresh();
+  OnMaterialFocusRequested.Broadcast(Id);
   return;
  }
  if(Token.StartsWith(TEXT("hero:")))
