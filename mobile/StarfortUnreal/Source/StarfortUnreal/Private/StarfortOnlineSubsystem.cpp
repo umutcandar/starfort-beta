@@ -807,7 +807,7 @@ void UStarfortOnlineSubsystem::RequestMaterials(const FString& Focus)
   }
   WeakThis->RequestJson(TEXT("/rest/v1/rpc/sfb_crafting_materials"),
    TEXT("POST"),StarfortOnline::ToJson(Body),WeakThis->AccessToken,
-   [WeakThis,Focus](bool bOk,const TSharedPtr<FJsonObject>& Root)
+   [WeakThis](bool bOk,const TSharedPtr<FJsonObject>& Root)
    {
     if(!WeakThis.IsValid())return;
     WeakThis->bMaterialsPending=false;
