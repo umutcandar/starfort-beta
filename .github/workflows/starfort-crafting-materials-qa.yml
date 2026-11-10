@@ -1,0 +1,44 @@
+name: STARFORT Original Crafting Material PostgreSQL QA
+on:
+  push:
+    paths:
+      - 'starfort/sql/starfort-v256-original-crafting-materials.sql'
+      - 'starfort/sql/qa/v256-test-bootstrap.sql'
+      - 'starfort/sql/qa/test-v256-crafting-materials.sql'
+      - '.github/workflows/starfort-crafting-materials-qa.yml'
+  pull_request:
+    paths:
+      - 'starfort/sql/starfort-v256-original-crafting-materials.sql'
+      - 'starfort/sql/qa/v256-test-bootstrap.sql'
+      - 'starfort/sql/qa/test-v256-crafting-materials.sql'
+      - '.github/workflows/starfort-crafting-materials-qa.yml'
+
+jobs:
+  verify-secure-drops:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: starfort_ci
+          POSTGRES_USER: starfort_ci
+          POSTGRES_PASSWORD: ci_local_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U starfort_ci -d starfort_ci"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile original material SQL and simulate verified battle completion
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Use ephemeral Postgres inside the GitHub hosted runner only.
+          # NEVER connect to the user's real Supabase database here.
+          PG=$(docker ps --filter ancestor=postgres:16 --format '{{.ID}}' | head -1)
+          test -n "$PG"
+          docker exec -i "$PG" psql -v ON_ERROR_STOP=1 -U starfort_ci -d starfort_ci < starfort/sql/qa/v256-test-bootstrap.sql
+          docker exec -i "$PG" psql -v ON_ERROR_STOP=1 -U starfort_ci -d starfort_ci < starfort/sql/starfort-v256-original-crafting-materials.sql
+          docker exec -i "$PG" psql -v ON_ERROR_STOP=1 -U starfort_ci -d starfort_ci < starfort/sql/qa/test-v256-crafting-materials.sql

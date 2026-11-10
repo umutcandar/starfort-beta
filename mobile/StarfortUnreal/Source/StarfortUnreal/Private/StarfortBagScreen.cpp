@@ -1,5 +1,6 @@
 #include "StarfortBagScreen.h"
 #include "StarfortBagCatalog.h"
+#include "StarfortCraftingMaterials.h"
 #include "StarfortGearEconomy.h"
 #include "StarfortBagTile.h"
 #include "StarfortVisualTheme.h"
@@ -78,6 +79,9 @@ void UStarfortBagScreen::NativeOnInitialized()
 void UStarfortBagScreen::NativeDestruct()
 {
  Verified=FStarfortProgressSummary();
+ RealMaterials=FStarfortMaterialSnapshot();
+ bMaterialsVerified=false;
+ bMaterialFocusPending=false;
  bHasVerifiedInventory=false;
  bMutationPending=false;
  Super::NativeDestruct();
@@ -298,6 +302,48 @@ void UStarfortBagScreen::ShowHeroArt()
    TEXT("3D kahraman/portre Unreal'a aktarılınca burada görünecek")));
 }
 
+void UStarfortBagScreen::SetMaterialsWaiting()
+{
+ RealMaterials=FStarfortMaterialSnapshot();
+ bMaterialsVerified=false;
+ bMaterialFocusPending=false;
+ MaterialsStatus=TEXT("Malzemeler için sunucu yanıtı bekleniyor");
+ Refresh();
+}
+void UStarfortBagScreen::ApplyVerifiedMaterials(
+ const FStarfortMaterialSnapshot& Snapshot)
+{
+ if(!Snapshot.bServerVerified ||
+    !FStarfortCraftingMaterialCatalog::IsFocus(Snapshot.FocusSlot) ||
+    Snapshot.Counts.Num()!=FStarfortCraftingMaterialCatalog::All().Num())
+ {
+  ShowMaterialsUnavailable(TEXT("Malzeme yanıtı doğrulanamadı"));
+  return;
+ }
+ for(const auto& Entry:FStarfortCraftingMaterialCatalog::All())
+ {
+  const int32* Count=Snapshot.Counts.Find(Entry.Id);
+  if(!Count || *Count<0 || *Count>100000)
+  {
+   ShowMaterialsUnavailable(TEXT("Malzeme adedi doğrulanamadı"));
+   return;
+  }
+ }
+ RealMaterials=Snapshot;
+ bMaterialsVerified=true;
+ bMaterialFocusPending=false;
+ MaterialsStatus=TEXT("Parça adetleri ve hedef türü gerçek hesap sunucusundan geldi");
+ Refresh();
+}
+void UStarfortBagScreen::ShowMaterialsUnavailable(const FString& SafeReason)
+{
+ // Missing optional migration must not break existing verified equipment.
+ RealMaterials=FStarfortMaterialSnapshot();
+ bMaterialsVerified=false;
+ bMaterialFocusPending=false;
+ MaterialsStatus=SafeReason;
+ Refresh();
+}
 void UStarfortBagScreen::SetWaitingForServer()
 {
  Verified=FStarfortProgressSummary();
@@ -411,7 +457,8 @@ void UStarfortBagScreen::Refresh()
  const TPair<FString,FString> Filters[]={
   {TEXT("all"),TEXT("Tümü")},{TEXT("weapon"),TEXT("Silah")},
   {TEXT("armor"),TEXT("Zırh")},{TEXT("relic"),TEXT("Tılsım")},
-  {TEXT("set"),TEXT("Set")},{TEXT("owned"),TEXT("Sahip")}};
+  {TEXT("set"),TEXT("Set")},{TEXT("owned"),TEXT("Sahip")},
+   {TEXT("materials"),TEXT("Malzemeler")}};
  for(const auto& Filter:Filters)
  {
   UStarfortBagTile* Tile=MakeTile(TEXT("filter:")+Filter.Key,
@@ -424,6 +471,55 @@ void UStarfortBagScreen::Refresh()
   }
  }
  ItemGrid->ClearChildren();
+ if(ActiveFilter==TEXT("materials"))
+ {
+  int32 MatIdx=0;
+  for(const auto& Entry:FStarfortCraftingMaterialCatalog::All())
+  {
+   const FString Id(Entry.Id);
+   const FString CountLabel=bMaterialsVerified?
+    FString::Printf(TEXT("×%d · sunucu"),RealMaterials.Counts.FindRef(Id)):
+    TEXT("Henüz aktifleştirilmedi");
+   UStarfortBagTile* Tile=MakeTile(TEXT("material:")+Id,Entry.Name,
+    CountLabel,FStarfortBagCatalog::RarityColor(Entry.Rarity),true,
+    SelectedMaterialId==Id);
+   if(Tile)ItemGrid->AddChildToUniformGrid(Tile,MatIdx/3,MatIdx%3)
+     ->SetPadding(FMargin(3.f,5.f));
+   ++MatIdx;
+  }
+  DetailColumn->ClearChildren();
+  const FStarfortCraftingMaterialInfo* Selected=
+   FStarfortCraftingMaterialCatalog::Find(SelectedMaterialId);
+  if(Selected)
+  {
+   AddTitle(DetailColumn,Selected->Name,21,Gold());
+   AddTitle(DetailColumn,FString(TEXT("Şekli: "))+Selected->Shape,
+    14,Ink());
+   AddTitle(DetailColumn,FString(TEXT("Kazanım: "))+Selected->Source,
+    14,Ink());
+   AddTitle(DetailColumn,bMaterialsVerified?
+     FString::Printf(TEXT("Gerçek çanta: ×%d"),
+      RealMaterials.Counts.FindRef(SelectedMaterialId)):
+     TEXT("Sunucudan doğrulanmış parça adedi yok"),16,Gold());
+  }
+  AddTitle(DetailColumn,MaterialsStatus,13,Ink());
+  AddTitle(DetailColumn,TEXT("Günlük parça hedefi"),17,Gold());
+  for(const TCHAR* FocusId:{TEXT("weapon"),TEXT("armor"),TEXT("relic")})
+  {
+   const FString Id(FocusId);
+   const FString Label=Id==TEXT("weapon")?TEXT("Silah · Yıldız Kesiti"):
+    Id==TEXT("armor")?TEXT("Zırh · Hisar Perçini"):
+     TEXT("Tılsım · Astral Lif");
+   UStarfortBagTile* Tile=MakeTile(TEXT("focus:")+Id,Label,
+    Id==RealMaterials.FocusSlot?TEXT("Seçili günlük hedef"):
+     TEXT("Sonraki doğrulanmış hikâye galibiyeti"),
+    Gold(),bMaterialsVerified && !bMaterialFocusPending,
+    bMaterialsVerified && Id==RealMaterials.FocusSlot);
+   if(Tile)DetailColumn->AddChildToVerticalBox(Tile)
+    ->SetPadding(FMargin(2.f,4.f));
+  }
+  return; // Material fragments cannot be equipped or sold as owned gear.
+ }
  int32 VisibleIndex=0;
  for(const FStarfortBagItemInfo& Entry:FStarfortBagCatalog::All())
  {
@@ -566,8 +662,32 @@ void UStarfortBagScreen::HandleTile(const FString& Token)
  {
   const FString F=Token.RightChop(7);
   if(F==TEXT("all")||F==TEXT("weapon")||F==TEXT("armor")||
-     F==TEXT("relic")||F==TEXT("set")||F==TEXT("owned"))
+     F==TEXT("relic")||F==TEXT("set")||F==TEXT("owned")||
+     F==TEXT("materials"))
   {ActiveFilter=F;Refresh();}
+  return;
+ }
+ if(Token.StartsWith(TEXT("material:")))
+ {
+  const FString Id=Token.RightChop(9);
+  if(FStarfortCraftingMaterialCatalog::Find(Id))
+  {
+   SelectedMaterialId=Id;
+   ActiveFilter=TEXT("materials");
+   Refresh();
+  }
+  return;
+ }
+ if(Token.StartsWith(TEXT("focus:")))
+ {
+  const FString Id=Token.RightChop(6);
+  if(!bMaterialsVerified || bMaterialFocusPending ||
+     !FStarfortCraftingMaterialCatalog::IsFocus(Id))return;
+  if(Id==RealMaterials.FocusSlot)return;
+  bMaterialFocusPending=true;
+  MaterialsStatus=TEXT("Hedef sunucu tarafından kaydediliyor…");
+  Refresh();
+  OnMaterialFocusRequested.Broadcast(Id);
   return;
  }
  if(Token.StartsWith(TEXT("hero:")))

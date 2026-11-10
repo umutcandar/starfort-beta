@@ -16,6 +16,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStarfortBagGoBack);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStarfortBagNavigate,FString,Destination);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(
  FStarfortBagMutation,FString,Action,FString,HeroOrItemId,FString,ItemOrSlot);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
+ FStarfortMaterialFocusRequested,FString,FocusSlot);
 
 /** Fully interactive landscape Unreal UMG inventory; uses genuine server
  * inventory, hero loadouts, resources and idempotent RPCs, never image text
@@ -30,10 +32,18 @@ public:
  UPROPERTY(BlueprintAssignable,Category="STARFORT|Bag") FStarfortBagGoBack OnBackRequested;
  UPROPERTY(BlueprintAssignable,Category="STARFORT|Bag") FStarfortBagNavigate OnNavigationRequested;
  UPROPERTY(BlueprintAssignable,Category="STARFORT|Bag") FStarfortBagMutation OnMutationRequested;
+ UPROPERTY(BlueprintAssignable,Category="STARFORT|Materials")
+ FStarfortMaterialFocusRequested OnMaterialFocusRequested;
 
  UFUNCTION(BlueprintCallable,Category="STARFORT|Bag") void ApplyVerifiedAccount(
   const FStarfortProgressSummary& Snapshot);
  UFUNCTION(BlueprintCallable,Category="STARFORT|Bag") void SetWaitingForServer();
+ UFUNCTION(BlueprintCallable,Category="STARFORT|Materials")
+ void ApplyVerifiedMaterials(const FStarfortMaterialSnapshot& Snapshot);
+ UFUNCTION(BlueprintCallable,Category="STARFORT|Materials")
+ void SetMaterialsWaiting();
+ UFUNCTION(BlueprintCallable,Category="STARFORT|Materials")
+ void ShowMaterialsUnavailable(const FString& SafeReason);
  UFUNCTION(BlueprintCallable,Category="STARFORT|Bag") void ShowServerFailure(const FString& Reason);
  UFUNCTION(BlueprintPure,Category="STARFORT|Bag") bool HasRealInventory() const {
   return bHasVerifiedInventory;
@@ -75,6 +85,11 @@ private:
  UPROPERTY(Transient) TObjectPtr<UVerticalBox> DetailColumn;
 
  FStarfortProgressSummary Verified;
+ FStarfortMaterialSnapshot RealMaterials;
+ FString MaterialsStatus=TEXT("Malzemeler sunucuda doğrulanmadı");
+ FString SelectedMaterialId=TEXT("edge_sliver");
+ bool bMaterialsVerified=false;
+ bool bMaterialFocusPending=false;
  FString SelectedHeroId=TEXT("aldren");
  FString SelectedItemId=TEXT("starbreaker");
  FString ActiveFilter=TEXT("all");

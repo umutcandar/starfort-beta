@@ -21,6 +21,8 @@ void AStarfortMobilePlayerController::BeginPlay()
   return; // no guest hero trial
  }
  Online->OnProgressReady.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleProgress);
+ Online->OnMaterialsReady.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleMaterialsReady);
+ Online->OnMaterialsUnavailable.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleMaterialsUnavailable);
  Online->OnFailure.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleOnlineError);
  Online->OnSignedOut.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleSignedOut);
  ShowHeroScreen();
@@ -41,6 +43,8 @@ void AStarfortMobilePlayerController::EndPlay(const EEndPlayReason::Type EndPlay
  if (Online)
  {
   Online->OnProgressReady.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleProgress);
+  Online->OnMaterialsReady.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleMaterialsReady);
+  Online->OnMaterialsUnavailable.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleMaterialsUnavailable);
   Online->OnFailure.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleOnlineError);
   Online->OnSignedOut.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleSignedOut);
  }
@@ -60,6 +64,7 @@ void AStarfortMobilePlayerController::EndPlay(const EEndPlayReason::Type EndPlay
   ActiveBagScreen->OnBackRequested.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleBagBack);
   ActiveBagScreen->OnNavigationRequested.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleBagNavigation);
   ActiveBagScreen->OnMutationRequested.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleBagMutation);
+  ActiveBagScreen->OnMaterialFocusRequested.RemoveDynamic(this,&AStarfortMobilePlayerController::HandleMaterialFocusRequested);
   ActiveBagScreen->RemoveFromParent();
   ActiveBagScreen=nullptr;
  }
@@ -109,15 +114,21 @@ void AStarfortMobilePlayerController::ShowBagScreen()
   ActiveBagScreen->OnBackRequested.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleBagBack);
   ActiveBagScreen->OnNavigationRequested.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleBagNavigation);
   ActiveBagScreen->OnMutationRequested.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleBagMutation);
+   ActiveBagScreen->OnMaterialFocusRequested.AddUniqueDynamic(this,&AStarfortMobilePlayerController::HandleMaterialFocusRequested);
  }
  HideHeroScreen();
  if(!ActiveBagScreen->IsInViewport())ActiveBagScreen->AddToViewport(70);
  ActiveBagScreen->SetWaitingForServer();
+ ActiveBagScreen->SetMaterialsWaiting();
  SetInputMode(FInputModeGameAndUI());
  bShowMouseCursor=true;
  // Owned items, levels and resources only come from sfb_starfort_progress.
  // If a freshly authenticated snapshot exists, a new GET will reconcile it.
- if(Online)Online->LoadProgress();
+ if(Online)
+ {
+  Online->LoadProgress();
+  Online->LoadCraftingMaterials(); // optional server, no gear lock
+ }
 }
 void AStarfortMobilePlayerController::HideBagScreen()
 {
@@ -154,6 +165,23 @@ void AStarfortMobilePlayerController::HandleBagMutation(
  else if(Action==TEXT("forge"))Online->ForgeGear(Target);
  else if(Action==TEXT("enhance"))Online->EnhanceGear(Target);
  else if(Action==TEXT("ascend"))Online->AscendGear(Target);
+}
+void AStarfortMobilePlayerController::HandleMaterialFocusRequested(FString FocusSlot)
+{
+ if(Online && Online->IsSignedIn() && ActiveBagScreen &&
+    ActiveBagScreen->IsInViewport())
+  Online->SetCraftingFocus(FocusSlot);
+}
+void AStarfortMobilePlayerController::HandleMaterialsReady(
+ const FStarfortMaterialSnapshot& Snapshot)
+{
+ if(ActiveBagScreen && ActiveBagScreen->IsInViewport())
+  ActiveBagScreen->ApplyVerifiedMaterials(Snapshot);
+}
+void AStarfortMobilePlayerController::HandleMaterialsUnavailable(FString SafeReason)
+{
+ if(ActiveBagScreen && ActiveBagScreen->IsInViewport())
+  ActiveBagScreen->ShowMaterialsUnavailable(SafeReason);
 }
 void AStarfortMobilePlayerController::HandleFirePreview()
 {
@@ -226,7 +254,11 @@ void AStarfortMobilePlayerController::HandleSignedOut()
  bHasVerifiedProgress=false;
  CachedHeroLevels.Empty();
  if(ActiveHeroScreen) ActiveHeroScreen->SetWaitingForServer();
- if(ActiveBagScreen) ActiveBagScreen->SetWaitingForServer();
+ if(ActiveBagScreen)
+ {
+  ActiveBagScreen->SetWaitingForServer();
+  ActiveBagScreen->SetMaterialsWaiting();
+ }
  HideBagScreen();
  HideHeroScreen();
  if(GetWorld()) UGameplayStatics::OpenLevel(GetWorld(),TEXT("/Engine/Maps/Entry"));

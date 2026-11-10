@@ -23,6 +23,21 @@ struct FStarfortBagLoadout
  }
 };
 
+/** Seven material counts in an authenticated, owner-scoped server wallet.
+ * The optional v256 SQL migration MUST be deployed before this can be valid.
+ */
+USTRUCT(BlueprintType)
+struct FStarfortMaterialSnapshot
+{
+ GENERATED_BODY()
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Materials")
+ TMap<FString,int32> Counts;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Materials")
+ FString FocusSlot;
+ UPROPERTY(BlueprintReadOnly, Category="STARFORT|Materials")
+ bool bServerVerified=false;
+};
+
 /** A minimal read-only account projection of sfb_starfort_progress.
  * The backend does not provide all hero stats in that RPC, so NO invented
  * attack/defense or equipment scores are filled in here.
@@ -76,6 +91,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStarfortSignedIn, FString, UserId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStarfortServiceFailure, FString, SafeReason);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStarfortVillageSnapshotReady, const FStarfortVerifiedVillage&, Snapshot);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStarfortProgressReady, const FStarfortProgressSummary&, Snapshot);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStarfortMaterialsReady, const FStarfortMaterialSnapshot&, Snapshot);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStarfortMaterialsUnavailable, FString, SafeReason);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStarfortSignedOut);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStarfortBattleReady, const FStarfortVerifiedBattleTurn&, Snapshot);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FStarfortMissionResult, bool, bWon, int32, Stars);
@@ -102,6 +119,13 @@ public:
  void RequestVillageUpgrade(FName BuildingId);
  UFUNCTION(BlueprintCallable, Category="STARFORT|Online")
  void LoadProgress();
+ /** Separate authenticated v256 read. Missing migration is NON-FATAL:
+     the normal game and existing bag economy stay usable. */
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Materials")
+ void LoadCraftingMaterials();
+ /** Saves player-chosen daily material class. Never awards anything. */
+ UFUNCTION(BlueprintCallable, Category="STARFORT|Materials")
+ void SetCraftingFocus(const FString& Slot);
  /** Real server mission start: 1..8; progression and resource costs remain server-owned. */
  UFUNCTION(BlueprintCallable, Category="STARFORT|Battle") void StartStoryStage(int32 Stage);
  /** Strictly allowlisted server combat commands. Never submit HP or damage. */
@@ -133,6 +157,8 @@ public:
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Online") FStarfortServiceFailure OnFailure;
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Online") FStarfortVillageSnapshotReady OnVillageReady;
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Online") FStarfortProgressReady OnProgressReady;
+ UPROPERTY(BlueprintAssignable, Category="STARFORT|Materials") FStarfortMaterialsReady OnMaterialsReady;
+ UPROPERTY(BlueprintAssignable, Category="STARFORT|Materials") FStarfortMaterialsUnavailable OnMaterialsUnavailable;
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Online") FStarfortBattleReady OnBattleReady;
  UPROPERTY(BlueprintAssignable, Category="STARFORT|Online") FStarfortMissionResult OnMissionResult;
 
@@ -148,6 +174,7 @@ private:
  bool bRefreshPending = false;
  bool bVillagePending = false;
  bool bProgressPending = false;
+ bool bMaterialsPending = false;
  bool bLastProgressValid = false;
  FString LastMissionId;
  int32 LastMissionTurn = -1;
@@ -164,6 +191,8 @@ private:
  static bool ParseVillage(const TSharedPtr<class FJsonObject>& Root,
   const FString& AuthenticatedUserId, FStarfortVerifiedVillage& Out);
  static bool ParseProgress(const TSharedPtr<class FJsonObject>& Root, FStarfortProgressSummary& Out);
+ static bool ParseMaterials(const TSharedPtr<class FJsonObject>& Root, FStarfortMaterialSnapshot& Out);
+ void RequestMaterials(const FString& Focus);
  void SubmitProgressAction(const FString& Action, const FString& Target,
   const FString& Aux);
  void AcceptProgressPayload(bool bOk, const TSharedPtr<class FJsonObject>& Root,
