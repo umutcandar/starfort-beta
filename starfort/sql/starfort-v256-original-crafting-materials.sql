@@ -212,7 +212,7 @@ begin
  if v_user is null or coalesce((auth.jwt()->>'is_anonymous')::boolean,false) then
   raise exception 'Malzeme çantası için doğrulanmış hesap gerekir.';
  end if;
- if p_action not in ('get','focus') then
+ if p_action is null or p_action not in ('get','focus') then
   raise exception 'Geçersiz malzeme işlemi.';
  end if;
  -- Do not provision fictitious player accounts or manipulate any other users.
@@ -221,7 +221,8 @@ begin
   raise exception 'Önce STARFORT oyun hesabını oluştur.';
  end if;
  if p_action='focus' then
-  if p_request_id is null or p_focus not in ('weapon','armor','relic') then
+  if p_request_id is null or p_focus is null or
+     p_focus not in ('weapon','armor','relic') then
    raise exception 'Geçerli seçim ve işlem kimliği zorunludur.';
   end if;
   insert into public.starfort_crafting_material_wallet(user_id)
