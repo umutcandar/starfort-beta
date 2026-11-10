@@ -1,5 +1,6 @@
 #include "StarfortBagScreen.h"
 #include "StarfortBagCatalog.h"
+#include "StarfortCraftingMaterials.h"
 #include "StarfortGearEconomy.h"
 #include "StarfortBagTile.h"
 #include "StarfortVisualTheme.h"
@@ -78,6 +79,9 @@ void UStarfortBagScreen::NativeOnInitialized()
 void UStarfortBagScreen::NativeDestruct()
 {
  Verified=FStarfortProgressSummary();
+ RealMaterials=FStarfortMaterialSnapshot();
+ bMaterialsVerified=false;
+ bMaterialFocusPending=false;
  bHasVerifiedInventory=false;
  bMutationPending=false;
  Super::NativeDestruct();
@@ -298,6 +302,48 @@ void UStarfortBagScreen::ShowHeroArt()
    TEXT("3D kahraman/portre Unreal'a aktarılınca burada görünecek")));
 }
 
+void UStarfortBagScreen::SetMaterialsWaiting()
+{
+ RealMaterials=FStarfortMaterialSnapshot();
+ bMaterialsVerified=false;
+ bMaterialFocusPending=false;
+ MaterialsStatus=TEXT("Malzemeler için sunucu yanıtı bekleniyor");
+ Refresh();
+}
+void UStarfortBagScreen::ApplyVerifiedMaterials(
+ const FStarfortMaterialSnapshot& Snapshot)
+{
+ if(!Snapshot.bServerVerified ||
+    !FStarfortCraftingMaterialCatalog::IsFocus(Snapshot.FocusSlot) ||
+    Snapshot.Counts.Num()!=FStarfortCraftingMaterialCatalog::All().Num())
+ {
+  ShowMaterialsUnavailable(TEXT("Malzeme yanıtı doğrulanamadı"));
+  return;
+ }
+ for(const auto& Entry:FStarfortCraftingMaterialCatalog::All())
+ {
+  const int32* Count=Snapshot.Counts.Find(Entry.Id);
+  if(!Count || *Count<0 || *Count>100000)
+  {
+   ShowMaterialsUnavailable(TEXT("Malzeme adedi doğrulanamadı"));
+   return;
+  }
+ }
+ RealMaterials=Snapshot;
+ bMaterialsVerified=true;
+ bMaterialFocusPending=false;
+ MaterialsStatus=TEXT("Parça adetleri ve hedef türü gerçek hesap sunucusundan geldi");
+ Refresh();
+}
+void UStarfortBagScreen::ShowMaterialsUnavailable(const FString& SafeReason)
+{
+ // Missing optional migration must not break existing verified equipment.
+ RealMaterials=FStarfortMaterialSnapshot();
+ bMaterialsVerified=false;
+ bMaterialFocusPending=false;
+ MaterialsStatus=SafeReason;
+ Refresh();
+}
 void UStarfortBagScreen::SetWaitingForServer()
 {
  Verified=FStarfortProgressSummary();
@@ -411,7 +457,8 @@ void UStarfortBagScreen::Refresh()
  const TPair<FString,FString> Filters[]={
   {TEXT("all"),TEXT("Tümü")},{TEXT("weapon"),TEXT("Silah")},
   {TEXT("armor"),TEXT("Zırh")},{TEXT("relic"),TEXT("Tılsım")},
-  {TEXT("set"),TEXT("Set")},{TEXT("owned"),TEXT("Sahip")}};
+  {TEXT("set"),TEXT("Set")},{TEXT("owned"),TEXT("Sahip")},
+   {TEXT("materials"),TEXT("Malzemeler")}};
  for(const auto& Filter:Filters)
  {
   UStarfortBagTile* Tile=MakeTile(TEXT("filter:")+Filter.Key,
@@ -566,7 +613,8 @@ void UStarfortBagScreen::HandleTile(const FString& Token)
  {
   const FString F=Token.RightChop(7);
   if(F==TEXT("all")||F==TEXT("weapon")||F==TEXT("armor")||
-     F==TEXT("relic")||F==TEXT("set")||F==TEXT("owned"))
+     F==TEXT("relic")||F==TEXT("set")||F==TEXT("owned")||
+     F==TEXT("materials"))
   {ActiveFilter=F;Refresh();}
   return;
  }
