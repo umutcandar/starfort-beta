@@ -7,6 +7,7 @@ class UStarfortHeroScreen;
 class UStarfortBagScreen;
 class UStarfortOnlineSubsystem;
 struct FStarfortProgressSummary;
+struct FStarfortMaterialSnapshot;
 
 /**
  * Native iOS/Android UI host. Designer supplies WBP_HeroScreen derived from
@@ -42,6 +43,9 @@ protected:
  UFUNCTION() void HandleBagBack();
  UFUNCTION() void HandleBagNavigation(FString Destination);
  UFUNCTION() void HandleBagMutation(FString Action,FString Target,FString Aux);
+ UFUNCTION() void HandleMaterialFocusRequested(FString FocusSlot);
+ UFUNCTION() void HandleMaterialsReady(const FStarfortMaterialSnapshot& Snapshot);
+ UFUNCTION() void HandleMaterialsUnavailable(FString SafeReason);
  UFUNCTION() void HandleFirePreview();
  UFUNCTION() void HandleInspectPreview();
  UFUNCTION() void HandleCloseScreen();
