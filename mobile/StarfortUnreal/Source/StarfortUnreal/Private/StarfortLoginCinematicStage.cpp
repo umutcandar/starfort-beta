@@ -97,10 +97,10 @@ void AStarfortLoginCinematicStage::BeginPlay()
   // Normalize the imported mesh width to the intended ~34 metre mobile stage
   // while remaining robust to older files authored with centimetre coordinates.
   const FVector BoundsSize=ImportedCitadelMesh->GetBoundingBox().GetSize();
-  const float LongestAxis=FMath::Max3(BoundsSize.X,BoundsSize.Y,BoundsSize.Z);
-  if(LongestAxis>1.f)
+  const double LongestAxis=FMath::Max3(BoundsSize.X,BoundsSize.Y,BoundsSize.Z);
+  if(LongestAxis>1.0)
   {
-   const float ArtScale=FMath::Clamp(3446.f/LongestAxis,0.001f,100.f);
+   const double ArtScale=FMath::Clamp(3446.0/LongestAxis,0.001,100.0);
    ImportedCitadel->SetRelativeScale3D(FVector(ArtScale));
   }
   if(ImportedCitadelMaterial)
