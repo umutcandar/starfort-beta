@@ -195,7 +195,7 @@ class EquipmentEconomyV87(unittest.TestCase):
                        "Out.bAscensionVerified=true",
                        "SubmitProgressAction(TEXT(\"ascend\"),ItemId,TEXT(\"\"))",
                        'Action!=TEXT("ascend")',
-                       'Out.Inventory.Contains(Pair.Key)'):
+                       'Out.Inventory.Contains(FString(*Pair.Key))'):
             self.assertIn(needle,api)
         self.assertIn('Online->AscendGear(Target)',ctrl)
         self.assertNotIn('Inventory.Add(TEXT("starbreaker"),1)',api)

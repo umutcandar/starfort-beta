@@ -118,7 +118,7 @@ class NativeBagInventoryV86(unittest.TestCase):
         for phrase in ("IsIntegerField(Inv,*Pair.Key,1,20,Count)",
                        "IsIntegerField(Upgrades,*Pair.Key,0,5,Level)",
                        "NewCount>Out.Inventory.FindRef(ItemId)",
-                       "Out.HeroLevels.Contains(HeroPair.Key)",
+                       "Out.HeroLevels.Contains(FString(*HeroPair.Key))",
                        "Out.bInventoryVerified=true",
                        'Action!=TEXT("equip")', 'Action!=TEXT("unequip")'):
             self.assertIn(phrase,native)
