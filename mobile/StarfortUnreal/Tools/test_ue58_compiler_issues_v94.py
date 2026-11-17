@@ -30,7 +30,7 @@ class UE58MacErrors(unittest.TestCase):
   self.assertIn("OutButton.Get()",source)
  def test_struct_forward_declaration_matches_unreal(self):
   source=(SRC/"Public/StarfortHeroScreen.h").read_text(encoding="utf-8")
-  self.assertIn("struct FStreamableHandle;",source)
+  self.assertIn('#include "Engine/StreamableManager.h"',source)
   self.assertNotIn("class FStreamableHandle;",source)
 if __name__=="__main__":
  unittest.main()

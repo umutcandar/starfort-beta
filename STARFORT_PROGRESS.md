@@ -63,3 +63,10 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - Fixed NativeWidgetFactory ButtonColumn raw UButton*& against UPROPERTY TObjectPtr<UButton>; changed to TObjectPtr<UButton>&.
 - Fixed FStreamableHandle class versus UE5.8 struct declaration in StarfortHeroScreen.h.
 - Added source tests; THIS DOES NOT prove UE engine compile passes. A fresh full Mac build is still required; original pasted log is only last 150 lines.
+
+## UE5.8 Apple real build #3 errors (2026-11-17)
+- Native Mac UBT log identified two incorrect headers: Engine/SkeletalMeshActor.h. Changed both to Animation/SkeletalMeshActor.h as Epic UE5.8 API documents.
+- Bag dynamic multicast declares FString by value, but screen handler took const FString&. Changed handler declaration and implementation to by-value FString (signature match) while preserving the verified inventory checks.
+- BagScreen.cpp now includes Components/UniformGridSlot.h so AddChildToUniformGrid(...)->SetPadding has a complete slot class.
+- StarfortHeroScreen.h now includes Engine/StreamableManager.h instead of forward-declaring FStreamableHandle, eliminating stale class/struct ambiguity at that header.
+- Tests: added test_ue58_real_build_v95.py, source-only CI checks; true UE build must be retried on Mac.

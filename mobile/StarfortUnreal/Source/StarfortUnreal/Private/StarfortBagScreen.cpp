@@ -15,6 +15,7 @@
 #include "Components/SizeBox.h"
 #include "Components/ScrollBox.h"
 #include "Components/UniformGridPanel.h"
+#include "Components/UniformGridSlot.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Engine/Texture2D.h"
@@ -552,7 +553,7 @@ void UStarfortBagScreen::Refresh()
    14,FLinearColor(.92f,.49f,.42f,1.f));
 }
 
-void UStarfortBagScreen::HandleTile(const FString& Token)
+void UStarfortBagScreen::HandleTile(FString Token)
 {
  if(Token.StartsWith(TEXT("nav:")))
  {

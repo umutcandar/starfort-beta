@@ -6,7 +6,7 @@
 #include "Camera/CameraActor.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
-#include "Engine/SkeletalMeshActor.h"
+#include "Animation/SkeletalMeshActor.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
 #include "Containers/Set.h"

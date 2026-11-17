@@ -38,7 +38,7 @@ public:
  UFUNCTION(BlueprintPure,Category="STARFORT|Bag") bool HasRealInventory() const {
   return bHasVerifiedInventory;
  }
- UFUNCTION() void HandleTile(const FString& ActionToken);
+ UFUNCTION() void HandleTile(FString ActionToken);
 
 protected:
  virtual void NativeOnInitialized() override;

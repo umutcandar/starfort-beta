@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Engine/StreamableManager.h"
 #include "StarfortHeroScreen.generated.h"
 
 class UButton;
@@ -8,7 +9,6 @@ class UTextBlock;
 class UProgressBar;
 class UImage;
 class UTexture2D;
-struct FStreamableHandle;
 
 /**
  * Read-only display snapshot from the authenticated STARFORT backend.
