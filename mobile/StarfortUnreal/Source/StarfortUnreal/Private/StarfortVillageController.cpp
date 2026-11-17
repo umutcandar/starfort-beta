@@ -6,6 +6,7 @@
 #include "StarfortSceneRouter.h"
 #include "StarfortLoginCinematicStage.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
 #include "Engine/GameInstance.h"
@@ -92,13 +93,23 @@ void AStarfortVillageController::BeginCinematicLogin()
  const FString MapName=GetWorld()->GetMapName();
  if(!MapName.Contains(TEXT("Entry")) &&
     !MapName.Contains(TEXT("L_StarfortLogin"))) return;
- TSubclassOf<AStarfortLoginCinematicStage> StageType=LoginStageClass;
- if(!StageType) StageType=AStarfortLoginCinematicStage::StaticClass();
- FActorSpawnParameters Params;
- Params.Owner=this;
- Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
- ActiveLoginStage=GetWorld()->SpawnActor<AStarfortLoginCinematicStage>(
-  StageType,FVector::ZeroVector,FRotator::ZeroRotator,Params);
+ // Prefer an authored actor placed in a real /Game/.../L_StarfortLogin map.
+ // Otherwise the Entry-map bootstrap spawns exactly one runtime stage.
+ for(TActorIterator<AStarfortLoginCinematicStage> It(GetWorld());It;++It)
+ {
+  ActiveLoginStage=*It;
+  break;
+ }
+ if(!ActiveLoginStage)
+ {
+  TSubclassOf<AStarfortLoginCinematicStage> StageType=LoginStageClass;
+  if(!StageType) StageType=AStarfortLoginCinematicStage::StaticClass();
+  FActorSpawnParameters Params;
+  Params.Owner=this;
+  Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+  ActiveLoginStage=GetWorld()->SpawnActor<AStarfortLoginCinematicStage>(
+   StageType,FVector::ZeroVector,FRotator::ZeroRotator,Params);
+ }
  if(ActiveLoginStage)
  {
   // Use the actual Unreal UCameraComponent as the view target.
