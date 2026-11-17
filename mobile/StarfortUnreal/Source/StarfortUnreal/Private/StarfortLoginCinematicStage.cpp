@@ -29,6 +29,11 @@ AStarfortLoginCinematicStage::AStarfortLoginCinematicStage()
  CinematicCamera->SetRelativeRotation(CameraRotation);
  CinematicCamera->SetFieldOfView(51.f);
 
+ ImportedCitadel=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OriginalCitadel"));
+ ImportedCitadel->SetupAttachment(StageRoot);
+ ImportedCitadel->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+ ImportedCitadel->SetCastShadow(false);
+ ImportedCitadel->SetVisibility(false);
  FeaturedHero=CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FeaturedHero"));
  FeaturedHero->SetupAttachment(StageRoot);
  FeaturedHero->SetRelativeLocation(FVector(-660.f,470.f,50.f));
@@ -83,7 +88,14 @@ bool AStarfortLoginCinematicStage::HasApprovedHero() const
 void AStarfortLoginCinematicStage::BeginPlay()
 {
  Super::BeginPlay();
- if(bEnableGreyboxFortress) BuildFortress();
+ if(ImportedCitadelMesh)
+ {
+  // Original imported static mesh replaces temporary primitive architecture.
+  ImportedCitadel->SetStaticMesh(ImportedCitadelMesh);
+  ImportedCitadel->SetVisibility(true);
+ }
+ else if(bEnableGreyboxFortress)
+  BuildFortress();
  if(HasApprovedHero())
  {
   FeaturedHero->SetSkeletalMesh(ApprovedFeaturedHero->HeroMesh);

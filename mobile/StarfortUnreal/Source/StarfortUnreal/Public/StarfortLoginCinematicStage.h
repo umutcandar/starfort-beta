@@ -42,6 +42,9 @@ public:
  /** Optional licensed/original looping audio; never auto-fetch remote media. */
  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="STARFORT|Login|Audio")
  TObjectPtr<USoundBase> OpeningAmbience;
+ /** Optional original game-owned static environment, replacing greybox blocks. */
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Art")
+ TObjectPtr<UStaticMesh> ImportedCitadelMesh;
 
  /** Procedural stage surfaces can use original materials created in Editor. */
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Materials")
@@ -62,6 +65,8 @@ private:
  TObjectPtr<USceneComponent> StageRoot;
  UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
  TObjectPtr<USkeletalMeshComponent> FeaturedHero;
+ UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
+ TObjectPtr<UStaticMeshComponent> ImportedCitadel;
  UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
  TObjectPtr<UStaticMeshComponent> FeaturedWeapon;
  UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
