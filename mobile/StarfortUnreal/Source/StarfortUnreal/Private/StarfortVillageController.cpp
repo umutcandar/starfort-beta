@@ -95,11 +95,11 @@ void AStarfortVillageController::BeginCinematicLogin()
     !MapName.Contains(TEXT("L_StarfortLogin"))) return;
  // Prefer an authored actor placed in a real /Game/.../L_StarfortLogin map.
  // Otherwise the Entry-map bootstrap spawns exactly one runtime stage.
- for(TActorIterator<AStarfortLoginCinematicStage> It(GetWorld());It;++It)
- {
-  ActiveLoginStage=*It;
-  break;
- }
+ // Reuse a stage placed by the level author, without a for-loop whose
+ // increment is provably unreachable under UE 5.8's -Werror settings.
+ TActorIterator<AStarfortLoginCinematicStage> ExistingStage(GetWorld());
+ if(ExistingStage)
+  ActiveLoginStage=*ExistingStage;
  if(!ActiveLoginStage)
  {
   TSubclassOf<AStarfortLoginCinematicStage> StageType=LoginStageClass;

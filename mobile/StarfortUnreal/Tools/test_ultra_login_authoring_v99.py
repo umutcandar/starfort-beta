@@ -50,7 +50,10 @@ class AuthorUltraLoginV99(unittest.TestCase):
   self.assertIn("HasProductionReadyGeometryAndMotion()",c)
  def test_no_duplicate_stage_when_real_login_level_exists(self):
   s=(SRC/"Private/StarfortVillageController.cpp").read_text(encoding="utf-8")
-  self.assertIn("TActorIterator<AStarfortLoginCinematicStage>",s)
+  self.assertIn("TActorIterator<AStarfortLoginCinematicStage> ExistingStage(GetWorld());",s)
+  self.assertIn("if(ExistingStage)",s)
+  self.assertIn("ActiveLoginStage=*ExistingStage;",s)
+  self.assertNotIn("for(TActorIterator<AStarfortLoginCinematicStage>",s)
   self.assertIn("if(!ActiveLoginStage)",s)
   self.assertIn("SetViewTargetWithBlend(ActiveLoginStage",s)
 

@@ -103,3 +103,8 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - test_ultra_login_authoring_v99.py checks Python AST and source safety contracts in GitHub CI. Mac Engine Editor Python execution remains UNVERIFIED.
 
 - Created and structurally checked original downloadable Starfort Citadel GLB (single consolidated mesh, vertex-colored) in current conversation. GitHub C++ stage now accepts imported citadel mesh/material, and Editor Python auto-imports the downloaded GLB if found locally. The actual imported UE .uasset and in-editor visual QA are NOT confirmed.
+
+## UE 5.8 Apple real build fix — 2026-11-17
+- User's real Mac UBT log at StarfortVillageController.cpp:98 reports -Werror,-Wunreachable-code-loop-increment: one-iteration TActorIterator loop breaks before increment.
+- Replaced the loop with a one-shot TActorIterator instance plus if(ExistingStage), preserving existing artist-authored cinematic stage selection, while still spawning a stage only if none was placed.
+- Updated v99 static regression check to reject the old loop. Real Mac UBT must be rerun by user. The missing GLB in Downloads is a separate file-transfer issue and does not cause this C++ compiler diagnostic.
