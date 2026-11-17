@@ -179,34 +179,199 @@ static bool BeginBattleOverlay(UUserWidget* Screen,
 bool FStarfortNativeWidgetFactory::BuildLogin(UStarfortLoginScreen* Screen)
 {
  UWidgetTree* Tree=NativeUI::GetTree(Screen);
- if(!Tree) return false; // Art-authored widget takes precedence.
- UVerticalBox* Column=NativeUI::BeginPanel(Screen,560.f,410.f);
- if (!Column) return false;
- NativeUI::AddTextLine(Tree,Column,TEXT("STARFORT"),40,
-  UStarfortVisualTheme::Gold());
- NativeUI::AddTextLine(Tree,Column,
-  TEXT("KRALLIĞINA GİRİŞ YAP"),20,FLinearColor::White);
- NativeUI::AddTextLine(Tree,Column,
-  TEXT("Unreal Engine · iOS / Android · gerçek hesap"),15,
-  UStarfortVisualTheme::EnergyBlue());
+ if(!Tree) return false; // A designer-authored widget can still override this fallback.
 
- Screen->InputEmail=Tree->ConstructWidget<UEditableTextBox>();
- Screen->InputEmail->SetHintText(FText::FromString(TEXT("E-posta adresin")));
- Column->AddChildToVerticalBox(Screen->InputEmail)->SetPadding(FMargin(2.f,12.f));
+ // Starfort's default login is a FULL LANDSCAPE screen, not a tiny 560x410
+ // form stretched beyond its intended typography. No imported art is assumed.
+ const FLinearColor Night(0.012f,0.021f,0.045f,1.f);
+ const FLinearColor Slate(0.024f,0.039f,0.073f,1.f);
+ const FLinearColor Card(0.035f,0.054f,0.091f,1.f);
+ const FLinearColor Gold(0.98f,0.76f,0.42f,1.f);
+ const FLinearColor Pearl(0.95f,0.94f,0.90f,1.f);
+ const FLinearColor Muted(0.62f,0.69f,0.77f,1.f);
+ const FLinearColor Accent(0.36f,0.65f,0.76f,1.f);
 
- Screen->InputPassword=Tree->ConstructWidget<UEditableTextBox>();
- Screen->InputPassword->SetHintText(FText::FromString(TEXT("Şifre")));
- Screen->InputPassword->SetIsPassword(true);
- Column->AddChildToVerticalBox(Screen->InputPassword)->SetPadding(FMargin(2.f,10.f));
+ auto Solid=[Tree](const FLinearColor& Color)
+ {
+  UBorder* Border=Tree->ConstructWidget<UBorder>();
+  Border->SetBrushColor(Color);
+  return Border;
+ };
+ auto Space=[Tree](UVerticalBox* Column,float Height)
+ {
+  USpacer* S=Tree->ConstructWidget<USpacer>();
+  S->SetSize(FVector2D(1.f,Height));
+  Column->AddChildToVerticalBox(S);
+ };
+ auto Caption=[Tree](UVerticalBox* Column,const FString& Value,int32 FontSize,
+                     const FLinearColor& Color,float Bottom=0.f)
+ {
+  UTextBlock* Text=NativeUI::MakeText(Tree,Value,FontSize,Color);
+  Text->SetAutoWrapText(true);
+  Column->AddChildToVerticalBox(Text)->SetPadding(FMargin(0.f,0.f,0.f,Bottom));
+  return Text;
+ };
+ auto Rule=[Tree,&Solid](UVerticalBox* Column,
+                       const FLinearColor& Tint,float Width,float Top,float Bottom)
+ {
+  USizeBox* Line=Tree->ConstructWidget<USizeBox>();
+  Line->SetWidthOverride(Width);
+  Line->SetHeightOverride(2.f);
+  Line->SetContent(Solid(Tint));
+  Column->AddChildToVerticalBox(Line)->SetPadding(FMargin(0.f,Top,0.f,Bottom));
+ };
 
- NativeUI::ButtonColumn(Tree,Column,Screen->BtnSignIn,TEXT("HESABIMA GİR"));
- Screen->TxtAuthStatus=Tree->ConstructWidget<UTextBlock>();
- Screen->TxtAuthStatus->SetColorAndOpacity(
-  FSlateColor(FLinearColor::White));
- Column->AddChildToVerticalBox(Screen->TxtAuthStatus)->SetPadding(FMargin(2.f,12.f));
- NativeUI::AddTextLine(Tree,Column,
-  TEXT("Misafir modu yok · ilerleme sunucuda korunur"),13,
-  FLinearColor(0.70f,0.74f,0.80f,1.f));
+ UBorder* Root=Solid(Night);
+ Root->SetPadding(FMargin(0.f));
+ Root->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+ USafeZone* Safe=Tree->ConstructWidget<USafeZone>();
+ Root->SetContent(Safe);
+ UScaleBox* Fit=Tree->ConstructWidget<UScaleBox>();
+ Fit->SetStretch(EStretch::ScaleToFit);
+ Safe->SetContent(Fit);
+ USizeBox* Design=Tree->ConstructWidget<USizeBox>();
+ Design->SetWidthOverride(1600.f);
+ Design->SetHeightOverride(900.f);
+ Fit->SetContent(Design);
+ UOverlay* Layers=Tree->ConstructWidget<UOverlay>();
+ Design->SetContent(Layers);
+
+ // Underpainting: midnight gradients will eventually come from original art,
+ // but this native art-free layout already works without downloading images.
+ UBorder* Back=Solid(Night);
+ UOverlaySlot* BackSlot=Layers->AddChildToOverlay(Back);
+ BackSlot->SetHorizontalAlignment(HAlign_Fill);
+ BackSlot->SetVerticalAlignment(VAlign_Fill);
+ USizeBox* LeftGlow=Tree->ConstructWidget<USizeBox>();
+ LeftGlow->SetWidthOverride(890.f);
+ LeftGlow->SetContent(Solid(Slate));
+ UOverlaySlot* GlowSlot=Layers->AddChildToOverlay(LeftGlow);
+ GlowSlot->SetHorizontalAlignment(HAlign_Left);
+ GlowSlot->SetVerticalAlignment(VAlign_Fill);
+
+ USizeBox* Rail=Tree->ConstructWidget<USizeBox>();
+ Rail->SetWidthOverride(5.f);
+ Rail->SetContent(Solid(Gold));
+ UOverlaySlot* RailSlot=Layers->AddChildToOverlay(Rail);
+ RailSlot->SetHorizontalAlignment(HAlign_Left);
+ RailSlot->SetVerticalAlignment(VAlign_Fill);
+
+ UHorizontalBox* Main=Tree->ConstructWidget<UHorizontalBox>();
+ UOverlaySlot* MainSlot=Layers->AddChildToOverlay(Main);
+ MainSlot->SetHorizontalAlignment(HAlign_Fill);
+ MainSlot->SetVerticalAlignment(VAlign_Fill);
+
+ UVerticalBox* Left=Tree->ConstructWidget<UVerticalBox>();
+ UHorizontalBoxSlot* LeftSlot=Main->AddChildToHorizontalBox(Left);
+ LeftSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+ LeftSlot->SetPadding(FMargin(104.f,88.f,55.f,64.f));
+
+ Caption(Left,TEXT("S T A R F O R T"),29,Gold);
+ Caption(Left,TEXT("FANTASTİK STRATEJİ  /  KAHRAMANLARIN ÇAĞI"),16,Muted);
+ Space(Left,82.f);
+
+ // Original typographic crest; no fake 3D hero silhouette or licensed artwork.
+ USizeBox* Crest=Tree->ConstructWidget<USizeBox>();
+ Crest->SetWidthOverride(150.f);
+ Crest->SetHeightOverride(150.f);
+ UBorder* CrestRim=Solid(FLinearColor(.38f,.31f,.23f,1.f));
+ CrestRim->SetPadding(FMargin(2.f));
+ UBorder* CrestCore=Solid(FLinearColor(.063f,.076f,.113f,1.f));
+ CrestCore->SetPadding(FMargin(12.f));
+ UTextBlock* CrestGlyph=NativeUI::MakeText(Tree,TEXT("✦"),89,Gold);
+ CrestGlyph->SetJustification(ETextJustify::Center);
+ CrestCore->SetContent(CrestGlyph);
+ CrestRim->SetContent(CrestCore);
+ Crest->SetContent(CrestRim);
+ Left->AddChildToVerticalBox(Crest);
+ Space(Left,48.f);
+ Caption(Left,TEXT("TAHT SENİ"),80,Pearl);
+ Caption(Left,TEXT("BEKLİYOR."),80,Gold);
+ Rule(Left,Gold,170.f,30.f,28.f);
+ Caption(Left,TEXT("Bir krallık. Üç kahraman. Sonsuz bir mücadele."),22,Pearl,12.f);
+ Caption(Left,TEXT("Ordunu yönet, efsaneni yaz ve kaldığın yerden devam et."),
+         18,Muted);
+ USpacer* LeftFlex=Tree->ConstructWidget<USpacer>();
+ Left->AddChildToVerticalBox(LeftFlex)->SetSize(
+  FSlateChildSize(ESlateSizeRule::Fill));
+ Caption(Left,TEXT("✦  KRALLIK  /  KAHRAMAN  /  SEFER"),16,Gold);
+
+ USizeBox* FormWidth=Tree->ConstructWidget<USizeBox>();
+ FormWidth->SetWidthOverride(575.f);
+ FormWidth->SetHeightOverride(725.f);
+ UHorizontalBoxSlot* FormSlot=Main->AddChildToHorizontalBox(FormWidth);
+ FormSlot->SetHorizontalAlignment(HAlign_Right);
+ FormSlot->SetVerticalAlignment(VAlign_Center);
+ FormSlot->SetPadding(FMargin(0.f,0.f,78.f,0.f));
+
+ // Double-frame sign-in card with minimum 64px text-entry touch targets.
+ UBorder* CardEdge=Solid(FLinearColor(.35f,.33f,.28f,1.f));
+ CardEdge->SetPadding(FMargin(2.f));
+ UBorder* CardBody=Solid(Card);
+ CardBody->SetPadding(FMargin(42.f,38.f));
+ CardEdge->SetContent(CardBody);
+ FormWidth->SetContent(CardEdge);
+ UVerticalBox* Form=Tree->ConstructWidget<UVerticalBox>();
+ CardBody->SetContent(Form);
+
+ Caption(Form,TEXT("KOMUTAN PORTALI     ✦     GÜVENLİ GİRİŞ"),16,Gold,18.f);
+ Caption(Form,TEXT("Krallığına dön."),45,Pearl,10.f);
+ Caption(Form,TEXT("Hesabınla kaldığın yerden devam et."),19,Muted);
+ Rule(Form,FLinearColor(.20f,.24f,.29f,1.f),490.f,26.f,26.f);
+
+ auto MakeField=[Tree,&Caption,&Form](TObjectPtr<UEditableTextBox>& Target,
+   const FString& Label,const FString& Hint,bool bPassword,
+   const FLinearColor& Tint,const FLinearColor& Focus,
+   const FLinearColor& TextColor)
+ {
+  Caption(Form,Label,17,TextColor,12.f);
+  USizeBox* Height=Tree->ConstructWidget<USizeBox>();
+  Height->SetHeightOverride(67.f);
+  Target=Tree->ConstructWidget<UEditableTextBox>();
+  Target->SetHintText(FText::FromString(Hint));
+  Target->SetIsPassword(bPassword);
+  Target->SetMinDesiredWidth(390.f);
+  FEditableTextBoxStyle Style=Target->GetWidgetStyle();
+  Style.Padding=FMargin(19.f,12.f);
+  Style.TextStyle.Font.Size=22;
+  Style.TextStyle.ColorAndOpacity=FSlateColor(TextColor);
+  Style.ForegroundColor=FSlateColor(TextColor);
+  Style.FocusedForegroundColor=FSlateColor(TextColor);
+  Style.BackgroundColor=FSlateColor(FLinearColor::White);
+  Style.BackgroundImageNormal.TintColor=FSlateColor(Tint);
+  Style.BackgroundImageHovered.TintColor=FSlateColor(Focus);
+  Style.BackgroundImageFocused.TintColor=FSlateColor(Focus);
+  Style.BackgroundImageReadOnly.TintColor=FSlateColor(Tint);
+  Target->SetWidgetStyle(Style);
+  Height->SetContent(Target.Get());
+  Form->AddChildToVerticalBox(Height)->SetPadding(FMargin(0.f,0.f,0.f,20.f));
+ };
+ MakeField(Screen->InputEmail,TEXT("E-POSTA"),TEXT("E-posta adresin"),
+           false,FLinearColor(.18f,.23f,.31f,1.f),
+           FLinearColor(.27f,.35f,.44f,1.f),Pearl);
+ MakeField(Screen->InputPassword,TEXT("ŞİFRE"),TEXT("Şifren"),
+           true,FLinearColor(.18f,.23f,.31f,1.f),
+           FLinearColor(.27f,.35f,.44f,1.f),Pearl);
+
+ USizeBox* ButtonHeight=Tree->ConstructWidget<USizeBox>();
+ ButtonHeight->SetHeightOverride(76.f);
+ Screen->BtnSignIn=Tree->ConstructWidget<UButton>();
+ Screen->BtnSignIn->SetBackgroundColor(Gold);
+ UTextBlock* ButtonLabel=NativeUI::MakeText(Tree,
+  TEXT("KRALLIĞIMA GİR   →"),23,Night);
+ ButtonLabel->SetJustification(ETextJustify::Center);
+ Screen->BtnSignIn->AddChild(ButtonLabel);
+ ButtonHeight->SetContent(Screen->BtnSignIn.Get());
+ Form->AddChildToVerticalBox(ButtonHeight)->SetPadding(FMargin(0.f,7.f,0.f,19.f));
+
+ Screen->TxtAuthStatus=NativeUI::MakeText(Tree,TEXT(""),17,Accent);
+ Screen->TxtAuthStatus->SetAutoWrapText(true);
+ Form->AddChildToVerticalBox(Screen->TxtAuthStatus)->SetPadding(FMargin(0.f,0.f,0.f,17.f));
+ Rule(Form,FLinearColor(.17f,.22f,.28f,1.f),490.f,0.f,17.f);
+ Caption(Form,TEXT("MİSAFİR GİRİŞİ YOK   •   İLERLEMEN HESABINDA KORUNUR"),
+         14,Muted);
+
+ Tree->RootWidget=Root;
  return true;
 }
 

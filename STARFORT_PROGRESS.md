@@ -83,3 +83,8 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - IMPORTANT: Editor GUI startup, PIE login, village UI, real 3D stage and mobile packaging/device test have NOT been verified yet.
 - Current DefaultEngine.ini uses `/Engine/Maps/Entry` for both EditorStartupMap and GameDefaultMap; the git tree has NO native .umap/.uasset content. Blank geometry in the Editor is therefore expected; do not claim original 3D heroes are loaded.
 - Next milestone: launch local UE Editor GUI, press Play (PIE), check whether login widget appears and authenticated flow works. Capture screenshot and `Saved/Logs/StarfortUnreal.log` if not.
+## Cinematic login redesign (v97) — 2026-11-17
+- User shared an actual PIE screenshot of the old login; visually unacceptable: 560×410 basic form scaled to viewport, oversized fields, no game identity.
+- Implemented a new code-driven native Unreal UMG login in StarfortNativeWidgetFactory::BuildLogin, 1600×900, SafeZone+ScaleToFit, left typographic fantasy identity and right dark themed sign-in card.
+- Preserved authenticated email/password behavior and existing login widget pointers; no guest auth and no backend edits.
+- New source tests and setup instructions; Unreal macOS C++ compilation and actual PIE screenshot for v97 remain UNVERIFIED. Previous v96 Mac compilation was successful.
