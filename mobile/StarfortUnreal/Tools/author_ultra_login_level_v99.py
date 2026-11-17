@@ -52,6 +52,41 @@ def make_material(name: str, tint: tuple[float, float, float, float],
     return material, True
 
 
+def ensure_original_citadel_mesh():
+    """Optional GLB import, idempotent; no download and no licensed content reuse."""
+    asset_path = "/Game/STARFORT/Login/Meshes/STARFORT_OriginalCitadel_Combined_v1"
+    if unreal.EditorAssetLibrary.does_asset_exist(asset_path):
+        existing = unreal.EditorAssetLibrary.load_asset(asset_path)
+        if not isinstance(existing, unreal.StaticMesh):
+            raise RuntimeError("Castle asset path collides with non-StaticMesh")
+        return existing, False
+
+    filename = "STARFORT_OriginalCitadel_Combined_v1.glb"
+    candidates = (
+        Path(unreal.Paths.project_dir()) / "ContentPipeline/Incoming" / filename,
+        Path.home() / "Downloads" / filename,
+    )
+    asset_file = next((f for f in candidates if f.is_file()), None)
+    if asset_file is None:
+        unreal.log_warning("No original Starfort citadel GLB found: keeping procedural 3D fallback")
+        return None, False
+
+    task = unreal.AssetImportTask()
+    task.set_editor_property("filename", str(asset_file))
+    task.set_editor_property("destination_path", "/Game/STARFORT/Login/Meshes")
+    task.set_editor_property("automated", True)
+    task.set_editor_property("replace_existing", False)
+    task.set_editor_property("save", True)
+    unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+    for object_path in task.get_editor_property("imported_object_paths"):
+        imported = unreal.EditorAssetLibrary.load_asset(str(object_path))
+        if isinstance(imported, unreal.StaticMesh):
+            unreal.log("STARFORT: Imported original static citadel: " + str(object_path))
+            return imported, True
+    unreal.log_warning("GLB importer unavailable or did not return StaticMesh; using fallback")
+    return None, False
+
+
 def ensure_map() -> tuple[object, bool]:
     editor = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     if not editor:
@@ -121,10 +156,13 @@ def main():
         (.27, .035, .055, 1), .64)
     ember, ember_new = make_material("M_StarfortEmbers",
         (1.0, .25, .03, 1), .38, True)
+    imported_citadel, imported_now = ensure_original_citadel_mesh()
     editor, created = ensure_map()
     actor, spawned = ensure_stage({
         "stone": stone, "banner": banner, "ember": ember
     })
+    if imported_citadel and not actor.get_editor_property("imported_citadel_mesh"):
+        actor.set_editor_property("imported_citadel_mesh", imported_citadel)
     if not editor.save_current_level():
         raise RuntimeError("Map was not saved; startup ini intentionally untouched")
 
@@ -133,6 +171,8 @@ def main():
         "map": MAP,
         "new_map_created": created,
         "native_stage_added": spawned,
+        "original_citadel_imported_now": imported_now,
+        "original_citadel_bound": bool(imported_citadel),
         "material_created": {
             "stone": stone_new, "banner": banner_new, "ember": ember_new
         },
