@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   mac-unreal:
-    if: github.repository == 'umutcandar/starfort-beta' && github.ref == 'refs/heads/feat/native-v91-verified-combat-gear'
+    if: github.event.repository.private == true && github.repository == 'umutcandar/starfort-beta' && github.ref == 'refs/heads/feat/native-v91-verified-combat-gear'
     runs-on: [self-hosted, macOS, ARM64, starfort-unreal]
     timeout-minutes: 120
     steps:

@@ -44,3 +44,7 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - Workflow cannot be invoked from GitHub UI until approved on default branch. Do not auto-push to main or run unattended on a Mac.
 - Local Mac diagnostic and actual Development Editor build supported via mobile/StarfortUnreal/Tools/mac_ue_bridge.py.
 - See mobile/StarfortUnreal/Docs/MacUE58Bridge_TR.md.
+
+## Runner security hold
+- Repository visibility verified PUBLIC. The Mac self-hosted runner workflow is additionally gated on github.event.repository.private == true.
+- Do not register a personal Mac as a runner for this public repo until visibility and untrusted workflow risks are addressed by the owner.

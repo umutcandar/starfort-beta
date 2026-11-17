@@ -28,6 +28,12 @@ python3 mobile/StarfortUnreal/Tools/mac_ue_bridge.py build
 
 Yalnız `StarfortUnrealEditor Mac Development` hedefini derler. Paket, APK/IPA veya yayın oluşturmaz. Derleme logu yalnız Mac'te `Saved/QA/starfort_mac_unreal_build.log` konumunda tutulur.
 
+## Güvenlik ön şartı: depo şu anda PUBLIC
+
+GitHub'da repository visibility `public` olarak doğrulandı. Kişisel MacBook'a bağlanan bir self-hosted runner için bu önerilmez. Bu nedenle hazırlanan iş akışı `github.event.repository.private == true` olmadan **çalışmayacak** şekilde kilitlendi.
+
+Runner kurmadan önce depoyu GitHub `Settings → General → Danger Zone → Change repository visibility` üzerinden `Private` yapın veya ayrı bir private repo + yalnız güvenilen iş akışları kullanın. Görünürlük değişikliği mevcut erişim/yayın düzenini etkileyebilir; bu işlem kullanıcı onayı olmadan yapılmadı.
+
 ## 2. GitHub'dan Mac'e güvenli bağlantı kurmak
 
 1. GitHub'da `umutcandar/starfort-beta` deposunu aç.
