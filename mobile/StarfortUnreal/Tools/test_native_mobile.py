@@ -377,8 +377,8 @@ class NativeSmoke(unittest.TestCase):
                 "Unique.Contains(HeroId)","FindApprovedHero(HeroId)",
                 "HasProductionReadyGeometryAndMotion()",
                 "Rigs[I]->SetSkeletalMesh(Art->HeroMesh)",
-                "Weapons[I]->SetStaticMesh(Art->WeaponMesh)",
-                "DoesSocketExist(Art->WeaponSocket)","DoesSocketExist(Art->ImpactSocket)",
+                "Weapons[I]->SetStaticMesh(ActualWeapon)",
+                "DoesSocketExist(ActualSocket)","DoesSocketExist(Art->ImpactSocket)",
                 "Art->SpecialMontage","ActiveTeamIds[I]!=SkilledHero",
                 "VerifiedDamage>0","ConfirmedImpactFX->Activate(true)",
                 "LastConfirmedTurn=Snapshot.Turn","OnTeamAssetsLoaded(uint64 Generation)"]:
@@ -429,7 +429,8 @@ class NativeSmoke(unittest.TestCase):
                 "ClearBattlePresentation()","ActiveHeroArt.Reset()",
                 "SetSkeletalMesh(nullptr)","SetStaticMesh(nullptr)"]:
    self.assertIn(token,stage_cpp)
-  self.assertGreaterEqual(controller.count("Stage->ClearBattlePresentation()"),3)
+  self.assertGreaterEqual(controller.count("Stage->ClearBattlePresentation()")+controller.count("Stage->ClearVerifiedEquipment()"),3)
+  self.assertIn("Stage->CacheVerifiedEquipment(Progress)",controller)
  def test_mobile_art_loading_is_async_not_a_game_thread_freeze(self):
   src=R/"Source/StarfortUnreal"
   h=(src/"Public/StarfortBattleStage.h").read_text()
