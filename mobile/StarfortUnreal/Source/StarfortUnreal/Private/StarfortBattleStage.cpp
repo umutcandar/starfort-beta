@@ -332,6 +332,7 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
 
  USkeletalMeshComponent* Rigs[]={HeroRig.Get(),HeroRig2.Get(),HeroRig3.Get()};
  UStaticMeshComponent* Weapons[]={HeroWeapon.Get(),HeroWeapon2.Get(),HeroWeapon3.Get()};
+ USkeletalMeshComponent* Armors[]={HeroArmor.Get(),HeroArmor2.Get(),HeroArmor3.Get()};
  UNiagaraComponent* SpecialFX[]={
   HeroSpecialFX1.Get(),HeroSpecialFX2.Get(),HeroSpecialFX3.Get()
  };
@@ -358,16 +359,39 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
   // primitive cubes, UI images or browser screenshots in this path.
   Rigs[I]->SetSkeletalMesh(Art->HeroMesh);
   Rigs[I]->SetAnimInstanceClass(Art->AnimInstanceClass.Get());
-  Weapons[I]->SetStaticMesh(Art->WeaponMesh);
-  if (!Rigs[I]->DoesSocketExist(Art->WeaponSocket) ||
-      !Weapons[I]->DoesSocketExist(Art->ImpactSocket))
+  UStaticMesh* ActualWeapon=Art->WeaponMesh.Get();
+  FName ActualSocket=Art->WeaponSocket;
+  const FString WornWeapon=VerifiedWeaponByHero.FindRef(HeroId);
+  if(!WornWeapon.IsEmpty())
   {
-   UE_LOG(LogTemp,Error,TEXT("STARFORT: approved rig/weapon socket missing"));
+   const FStarfortShowcaseGearArt* Entry=GearManifest ?
+    GearManifest->FindGearArt(WornWeapon,TEXT("weapon")):nullptr;
+   if(!Entry || !Entry->WeaponMesh.Get()) return false;
+   ActualWeapon=Entry->WeaponMesh.Get();
+   ActualSocket=Entry->AttachmentSocket;
+  }
+  Weapons[I]->SetStaticMesh(ActualWeapon);
+  if(!ActualWeapon || !Rigs[I]->DoesSocketExist(ActualSocket) ||
+     !Weapons[I]->DoesSocketExist(Art->ImpactSocket))
+  {
+   UE_LOG(LogTemp,Error,TEXT("STARFORT: real weapon/socket not found"));
    return false;
   }
   Weapons[I]->AttachToComponent(Rigs[I],
-   FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-   Art->WeaponSocket);
+   FAttachmentTransformRules::SnapToTargetNotIncludingScale,ActualSocket);
+  Armors[I]->SetLeaderPoseComponent(nullptr);
+  Armors[I]->SetSkeletalMesh(nullptr);
+  const FString WornArmor=VerifiedArmorByHero.FindRef(HeroId);
+  if(!WornArmor.IsEmpty())
+  {
+   const FStarfortShowcaseGearArt* Entry=GearManifest ?
+    GearManifest->FindGearArt(WornArmor,TEXT("armor")):nullptr;
+   USkeletalMesh* ArmorMesh=Entry ? Entry->ArmorMesh.Get():nullptr;
+   if(!ArmorMesh || !Art->HeroMesh->GetSkeleton() ||
+      ArmorMesh->GetSkeleton()!=Art->HeroMesh->GetSkeleton()) return false;
+   Armors[I]->SetSkeletalMesh(ArmorMesh);
+   Armors[I]->SetLeaderPoseComponent(Rigs[I]);
+  }
   SpecialFX[I]->AttachToComponent(Weapons[I],
    FAttachmentTransformRules::SnapToTargetNotIncludingScale,
    Art->ImpactSocket);
@@ -466,6 +490,8 @@ void AStarfortBattleStage::ClearBattlePresentation()
  for (UStaticMeshComponent* Weapon:
       {HeroWeapon.Get(),HeroWeapon2.Get(),HeroWeapon3.Get()})
   if (Weapon) Weapon->SetStaticMesh(nullptr);
+ for(USkeletalMeshComponent* Armor:{HeroArmor.Get(),HeroArmor2.Get(),HeroArmor3.Get()})
+  if(Armor){Armor->SetLeaderPoseComponent(nullptr);Armor->SetSkeletalMesh(nullptr);}
  for (UNiagaraComponent* FX:
       {HeroSpecialFX1.Get(),HeroSpecialFX2.Get(),HeroSpecialFX3.Get(),
        HeroAuraFX1.Get(),HeroAuraFX2.Get(),HeroAuraFX3.Get()})
@@ -839,6 +865,7 @@ void AStarfortBattleStage::PresentVerifiedTurn(
  const FStarfortVerifiedBattleTurn& Snapshot)
 {
  if (!Snapshot.bServerVerified || Snapshot.RoomId.IsEmpty() ||
+     !bVerifiedGearState || VerifiedGearRoomId!=Snapshot.RoomId ||
      Snapshot.Turn<0 || Snapshot.VerifiedDamageDealt<0 ||
      Snapshot.VerifiedDamageReceived<0 ||
      Snapshot.TeamHeroes.Num()!=3 || Snapshot.Wave<1 ||
