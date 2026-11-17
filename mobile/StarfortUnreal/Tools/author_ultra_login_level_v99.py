@@ -90,6 +90,17 @@ def ensure_original_citadel_mesh():
             raise RuntimeError("Castle asset path collides with non-StaticMesh")
         return existing, False
 
+    # UE Interchange may import the mesh under an engine-assigned asset name.
+    # Search existing imported meshes before starting a duplicate GLB import.
+    for path in unreal.EditorAssetLibrary.list_assets(
+        "/Game/STARFORT/Login/Meshes", recursive=False, include_folder=False
+    ):
+        if "STARFORT_OriginalCitadel" not in str(path):
+            continue
+        existing = unreal.EditorAssetLibrary.load_asset(str(path))
+        if isinstance(existing, unreal.StaticMesh):
+            return existing, False
+
     filename = "STARFORT_OriginalCitadel_Combined_v1.glb"
     candidates = (
         Path(unreal.Paths.project_dir()) / "ContentPipeline/Incoming" / filename,

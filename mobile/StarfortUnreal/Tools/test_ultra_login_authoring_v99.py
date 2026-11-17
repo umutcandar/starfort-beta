@@ -27,6 +27,8 @@ class AuthorUltraLoginV99(unittest.TestCase):
    "unreal.MaterialEditingLibrary.recompile_material(",
    "unreal.EditorActorSubsystem",
    "unreal.EditorAssetLibrary.does_asset_exist(",
+   "unreal.EditorAssetLibrary.list_assets(",
+   "for path in unreal.EditorAssetLibrary.list_assets(",
    "spawn_actor_from_class(",
    'actor.set_editor_property("fortress_material"',
    'actor.set_editor_property("banner_material"',
