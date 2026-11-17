@@ -236,16 +236,32 @@ bool AStarfortBattleStage::GatherUniqueTeamArtPaths(
    Match=&Entry;
   }
   if (!Match || Match->Art.IsNull()) return false;
-  OutPaths.AddUnique(Match->Art.ToSoftObjectPath());
+  const FSoftObjectPath HeroPath=Match->Art.ToSoftObjectPath();
+  if(!HeroPath.IsValid() || OutPaths.Contains(HeroPath)) return false;
+  OutPaths.Add(HeroPath);
+  for(const FString& Slot:{FString(TEXT("weapon")),FString(TEXT("armor"))})
+  {
+   const FString ItemId=Slot==TEXT("weapon") ?
+    VerifiedWeaponByHero.FindRef(Id):VerifiedArmorByHero.FindRef(Id);
+   if(ItemId.IsEmpty()) continue;
+   const FStarfortShowcaseGearArt* Entry=GearManifest ?
+    GearManifest->FindGearArt(ItemId,Slot):nullptr;
+   if(!Entry) return false;
+   const FSoftObjectPath Path=Slot==TEXT("weapon") ?
+    Entry->WeaponMesh.ToSoftObjectPath():Entry->ArmorMesh.ToSoftObjectPath();
+   if(!Path.IsValid()) return false;
+   OutPaths.AddUnique(Path);
+  }
  }
- return OutPaths.Num()==3;
+ return OutPaths.Num()>=3;
 }
 
 void AStarfortBattleStage::BeginTeamAssetLoad(
  const FStarfortVerifiedBattleTurn& Snapshot)
 {
  TArray<FSoftObjectPath> ToLoad;
- if (!GatherUniqueTeamArtPaths(Snapshot.TeamHeroes, ToLoad))
+ if(!bVerifiedGearState || VerifiedGearRoomId!=Snapshot.RoomId ||
+    !GatherUniqueTeamArtPaths(Snapshot.TeamHeroes, ToLoad))
  {
   // Never keep a previous player's team selected after a failed art lookup.
   ClearBattlePresentation();
