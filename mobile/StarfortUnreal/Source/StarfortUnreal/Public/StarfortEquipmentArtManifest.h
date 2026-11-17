@@ -22,6 +22,9 @@ struct STARFORTUNREAL_API FStarfortShowcaseGearArt
  TSoftObjectPtr<USkeletalMesh> ArmorMesh;
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Equipment")
  FName AttachmentSocket=TEXT("weapon_r");
+ /** Socket on this exact weapon mesh used by authored projectile / impact VFX. */
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Equipment")
+ FName ImpactSocket=TEXT("muzzle");
 };
 
 /** One art catalog can be shared by Hero Hall and the native battle stage.

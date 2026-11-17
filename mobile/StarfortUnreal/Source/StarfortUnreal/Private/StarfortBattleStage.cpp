@@ -147,6 +147,7 @@ void AStarfortBattleStage::CacheVerifiedEquipment(const FStarfortProgressSummary
   ClearVerifiedEquipment();return;
  }
  TMap<FString,FString> Weapons,Armors;
+ TMap<FString,int32> EquippedCopies;
  for(const FString& HeroId:Snapshot.Team)
  {
   if(!FStarfortBagCatalog::IsHero(HeroId) || !Snapshot.HeroLevels.Contains(HeroId))
@@ -160,10 +161,12 @@ void AStarfortBattleStage::CacheVerifiedEquipment(const FStarfortProgressSummary
    const FString ItemId=Loadout->ForSlot(Slot);
    if(ItemId.IsEmpty()) continue;
    const FStarfortBagItemInfo* Item=FStarfortBagCatalog::Find(ItemId);
-   if(!Item || Slot!=Item->Slot || Snapshot.Inventory.FindRef(ItemId)<1)
+   const int32 Used=EquippedCopies.FindRef(ItemId)+1;
+   if(!Item || Slot!=Item->Slot || Used>Snapshot.Inventory.FindRef(ItemId))
    {
     ClearVerifiedEquipment();return;
    }
+   EquippedCopies.Add(ItemId,Used);
    if(Slot==TEXT("weapon")) Weapons.Add(HeroId,ItemId);
    else Armors.Add(HeroId,ItemId);
   }
@@ -361,6 +364,7 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
   Rigs[I]->SetAnimInstanceClass(Art->AnimInstanceClass.Get());
   UStaticMesh* ActualWeapon=Art->WeaponMesh.Get();
   FName ActualSocket=Art->WeaponSocket;
+  FName ActualImpactSocket=Art->ImpactSocket;
   const FString WornWeapon=VerifiedWeaponByHero.FindRef(HeroId);
   if(!WornWeapon.IsEmpty())
   {
@@ -369,10 +373,11 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
    if(!Entry || !Entry->WeaponMesh.Get()) return false;
    ActualWeapon=Entry->WeaponMesh.Get();
    ActualSocket=Entry->AttachmentSocket;
+   ActualImpactSocket=Entry->ImpactSocket;
   }
   Weapons[I]->SetStaticMesh(ActualWeapon);
   if(!ActualWeapon || !Rigs[I]->DoesSocketExist(ActualSocket) ||
-     !Weapons[I]->DoesSocketExist(Art->ImpactSocket))
+     !Weapons[I]->DoesSocketExist(ActualImpactSocket))
   {
    UE_LOG(LogTemp,Error,TEXT("STARFORT: real weapon/socket not found"));
    return false;
@@ -394,7 +399,7 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
   }
   SpecialFX[I]->AttachToComponent(Weapons[I],
    FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-   Art->ImpactSocket);
+   ActualImpactSocket);
   SpecialFX[I]->SetAsset(Art->SpecialEffect, true);
 
   ActiveHeroArt.Add(Art);
@@ -442,8 +447,20 @@ bool AStarfortBattleStage::HasApprovedStage() const
    return false;
   const USkeletalMesh* Body=Rigs[I]->GetSkeletalMeshAsset();
   const UStaticMesh* Weapon=Weapons[I]->GetStaticMesh();
-  if (SeenBodies.Contains(Body) || SeenWeapons.Contains(Weapon))
-   return false;
+  if (SeenBodies.Contains(Body)) return false;
+  if (SeenWeapons.Contains(Weapon))
+  {
+   // Duplicate final visual is allowed ONLY for actual server-owned copies
+   // of one equipped item, never as a fallback for duplicated hero art.
+   const FString ItemId=VerifiedWeaponByHero.FindRef(ActiveTeamIds[I]);
+   if(ItemId.IsEmpty()) return false;
+   bool bSameItem=true;
+   for(int32 Earlier=0;Earlier<I;++Earlier)
+    if(Weapons[Earlier]->GetStaticMesh()==Weapon &&
+       VerifiedWeaponByHero.FindRef(ActiveTeamIds[Earlier])!=ItemId)
+     bSameItem=false;
+   if(!bSameItem) return false;
+  }
   SeenBodies.Add(Body);
   SeenWeapons.Add(Weapon);
  }
