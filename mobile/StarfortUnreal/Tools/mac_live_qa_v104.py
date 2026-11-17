@@ -106,8 +106,10 @@ def publish_preview():
     if not IMAGE.is_file() or not REPORT.is_file():
         raise RuntimeError("No completed safe Editor capture to publish")
     state = json.loads(REPORT.read_text(encoding="utf-8"))
-    if state.get("play_in_editor") or not state.get("editor_only", False):
-        raise RuntimeError("Publication refused: capture wasn't Editor-only")
+    if (state.get("play_in_editor") or not state.get("editor_only", False)
+            or not state.get("capture_requested")
+            or not state.get("public_preview_safe")):
+        raise RuntimeError("Publication refused: no fresh art-only Editor screenshot")
     if "L_StarfortLogin" not in state.get("map_name", ""):
         raise RuntimeError("Publication refused: not the approved login map")
     ensure_preview_worktree()
@@ -132,23 +134,32 @@ def publish_preview():
 
 def capture_once(mode, args):
     QA.mkdir(parents=True, exist_ok=True)
-    previous = IMAGE.stat().st_mtime_ns if IMAGE.is_file() else -1
+    start_ns = time.time_ns()
     editor_call(mode, args.ue_root)
-    # Editor screenshots are scheduled on the next engine frame.
-    deadline = time.monotonic() + 17
+    # Editor screenshots are asynchronous. UE may output to Saved/Screenshots.
+    deadline = time.monotonic() + 20
     if mode == "inspect":
         if not REPORT.is_file():
             raise RuntimeError("Editor didn't create its QA JSON report")
     else:
+        saved = PROJECT / "Saved" / "Screenshots"
         while time.monotonic() < deadline:
-            if (IMAGE.is_file() and IMAGE.stat().st_mtime_ns > previous
-                    and IMAGE.stat().st_size > 10_000):
+            candidates = [IMAGE]
+            if saved.is_dir():
+                candidates.extend(saved.rglob("starfort_editor_scene*.png"))
+            recent = [p for p in candidates if p.is_file()
+                      and p.stat().st_mtime_ns >= start_ns
+                      and p.stat().st_size > 10_000]
+            if recent:
+                freshest = max(recent, key=lambda p: p.stat().st_mtime_ns)
+                if freshest != IMAGE:
+                    shutil.copy2(freshest, IMAGE)
                 break
             time.sleep(.35)
         else:
             raise RuntimeError(
-                "Unreal accepted the command but no completed PNG arrived; "
-                "see Unreal Output Log and Saved/QA")
+                "Unreal accepted the screenshot but no PNG arrived; "
+                "check Output Log and Saved/Screenshots")
     state = json.loads(REPORT.read_text(encoding="utf-8"))
     if state.get("error"):
         raise RuntimeError("Unreal reported: " + state["error"])
@@ -177,7 +188,7 @@ def main(argv=None):
         print("PUBLIC PREVIEW ENABLED: Unreal EDITOR art only; never PIE/account UI.",
               flush=True)
     try:
-        if args.mode != "watch":
+        if args.mode not in ("watch", "studio"):
             output = capture_once(args.mode, args)
             if args.public_preview:
                 output["github"] = publish_preview()
