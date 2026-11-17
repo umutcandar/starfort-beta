@@ -71,8 +71,9 @@ void AStarfortVillageController::EndPlay(const EEndPlayReason::Type EndPlayReaso
  }
  if(ActiveLoginStage)
  {
-  ActiveLoginStage->Destroy();
+  if(bSpawnedLoginStage) ActiveLoginStage->Destroy();
   ActiveLoginStage=nullptr;
+  bSpawnedLoginStage=false;
  }
  Online=nullptr;
  Super::EndPlay(EndPlayReason);
@@ -99,7 +100,10 @@ void AStarfortVillageController::BeginCinematicLogin()
  // increment is provably unreachable under UE 5.8's -Werror settings.
  TActorIterator<AStarfortLoginCinematicStage> ExistingStage(GetWorld());
  if(ExistingStage)
+ {
   ActiveLoginStage=*ExistingStage;
+  bSpawnedLoginStage=false; // Never destroy an authored persistent level actor.
+ }
  if(!ActiveLoginStage)
  {
   TSubclassOf<AStarfortLoginCinematicStage> StageType=LoginStageClass;
@@ -109,6 +113,7 @@ void AStarfortVillageController::BeginCinematicLogin()
   Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
   ActiveLoginStage=GetWorld()->SpawnActor<AStarfortLoginCinematicStage>(
    StageType,FVector::ZeroVector,FRotator::ZeroRotator,Params);
+  bSpawnedLoginStage=ActiveLoginStage!=nullptr;
  }
  if(ActiveLoginStage)
  {
@@ -123,9 +128,12 @@ void AStarfortVillageController::LeaveCinematicLogin()
  if(!ActiveLoginStage) return;
  if(APawn* Pawn=GetPawn())
   SetViewTargetWithBlend(Pawn,0.7f,VTBlend_Cubic,0.f,true);
- // Keep the outgoing scene alive until the camera blend has finished.
- ActiveLoginStage->SetLifeSpan(1.2f);
+ // Only the temporary Entry-stage is discarded after blending away.
+ // An authored L_StarfortLogin level actor must remain for sign-out.
+ if(bSpawnedLoginStage)
+  ActiveLoginStage->SetLifeSpan(1.2f);
  ActiveLoginStage=nullptr;
+ bSpawnedLoginStage=false;
 }
 
 void AStarfortVillageController::OpenLoginScreen()

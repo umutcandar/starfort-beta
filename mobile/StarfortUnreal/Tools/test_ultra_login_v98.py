@@ -37,6 +37,7 @@ class UltraLoginV98(unittest.TestCase):
   for token in ("BeginCinematicLogin()","LeaveCinematicLogin()",
    "SetViewTargetWithBlend(ActiveLoginStage",
    "SetViewTargetWithBlend(Pawn",
+   "if(bSpawnedLoginStage)",
    "ActiveLoginStage->SetLifeSpan(1.2f)",
    "ActiveLoginStage->Destroy()"):
    self.assertIn(token,ctrl,token)

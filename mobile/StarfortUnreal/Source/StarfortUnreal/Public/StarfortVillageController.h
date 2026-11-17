@@ -39,6 +39,8 @@ private:
  UPROPERTY(Transient) TObjectPtr<UStarfortVillageScreen> ActiveVillageScreen;
  UPROPERTY(Transient) TObjectPtr<UStarfortLoginScreen> ActiveLoginScreen;
  UPROPERTY(Transient) TObjectPtr<AStarfortLoginCinematicStage> ActiveLoginStage;
+ // Only temporary Entry-map stages belong to this controller. Level actors must survive login.
+ bool bSpawnedLoginStage=false;
  void BeginCinematicLogin();
  void LeaveCinematicLogin();
  UPROPERTY(Transient) TObjectPtr<UStarfortOnlineSubsystem> Online;

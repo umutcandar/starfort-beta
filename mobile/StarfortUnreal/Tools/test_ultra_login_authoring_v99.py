@@ -56,6 +56,8 @@ class AuthorUltraLoginV99(unittest.TestCase):
   self.assertNotIn("for(TActorIterator<AStarfortLoginCinematicStage>",s)
   self.assertIn("if(!ActiveLoginStage)",s)
   self.assertIn("SetViewTargetWithBlend(ActiveLoginStage",s)
+  self.assertIn("bSpawnedLoginStage=false; // Never destroy an authored persistent level actor.",s)
+  self.assertIn("if(bSpawnedLoginStage)",s)
 
 if __name__=="__main__":
  unittest.main()

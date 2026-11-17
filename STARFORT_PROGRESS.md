@@ -121,3 +121,7 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - Changed native UMG login labels to no auto-wrap by default, explicit brand and teaser widths, removed arrow from CTA/sign-in labels, increased form height/width and allowed explicit width-limited wrapping only for longer status/subtitle. Existing account-only auth untouched.
 - Widened cinematic camera position and FOV to show the fortress silhouette instead of extreme close-up of walls/towers. New UE5.8 Mac UBT/PIE validation required for THIS code.
 - Original GLB still not verified as installed in local Unreal Editor. 3D blockout is NOT a premium art asset; production-quality output depends on actual authored materials, geometry and character rigs.
+
+## Authored login stage lifecycle safeguard (2026-11-17)
+- Before this change successful login called SetLifeSpan on either temporary runtime stage OR genuine user-authored /Game/STARFORT/Login stage, losing imported 3D art across signout/relogin in same world.
+- Controller now tracks bSpawnedLoginStage; only runtime Entry-map stages are destroyed, authored level actors persist across account screen transitions. No server auth changes. Source tests updated; Mac UBT/PIE verification pending.
