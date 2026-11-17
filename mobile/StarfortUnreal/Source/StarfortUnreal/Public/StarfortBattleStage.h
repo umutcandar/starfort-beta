@@ -15,6 +15,8 @@ class UNiagaraSystem;
 class UAnimMontage;
 class USoundBase;
 class UStarfortHeroCombatAsset;
+class UStarfortEquipmentArtManifest;
+struct FStarfortProgressSummary;
 class FStreamableHandle;
 struct FStarfortVerifiedBattleTurn;
 
@@ -51,6 +53,10 @@ public:
  UFUNCTION(BlueprintCallable, Category="STARFORT|Combat")
  void PresentVerifiedTurn(const FStarfortVerifiedBattleTurn& Snapshot);
 
+ /** Verified server inventory + mission cache. Visual only. */
+ void CacheVerifiedEquipment(const FStarfortProgressSummary& Snapshot);
+ void ClearVerifiedEquipment();
+
  UFUNCTION(BlueprintPure, Category="STARFORT|Combat")
  bool HasApprovedStage() const;
 
@@ -80,6 +86,12 @@ public:
  TObjectPtr<UStaticMeshComponent> HeroWeapon2;
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
  TObjectPtr<UStaticMeshComponent> HeroWeapon3;
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
+ TObjectPtr<USkeletalMeshComponent> HeroArmor;
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
+ TObjectPtr<USkeletalMeshComponent> HeroArmor2;
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
+ TObjectPtr<USkeletalMeshComponent> HeroArmor3;
 
  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Stage")
  TObjectPtr<UNiagaraComponent> HeroSpecialFX1;
@@ -110,6 +122,9 @@ public:
  /** Assign real licensed UStarfortHeroCombatAsset assets in a BP-derived stage. */
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Hero Assets")
  TArray<FStarfortHeroArtEntry> HeroArtCatalog;
+
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Hero Assets")
+ TObjectPtr<UStarfortEquipmentArtManifest> GearManifest;
 
  /** Must follow human visual signoff and physical mobile-device review. */
  UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="STARFORT|Quality")
@@ -154,6 +169,10 @@ private:
   TArray<FSoftObjectPath>& OutPaths) const;
  UStarfortHeroCombatAsset* FindApprovedHero(const FString& HeroId) const;
 
+ FString VerifiedGearRoomId;
+ TMap<FString,FString> VerifiedWeaponByHero;
+ TMap<FString,FString> VerifiedArmorByHero;
+ bool bVerifiedGearState=false;
  FString ActiveRoomId;
  TArray<FString> ActiveTeamIds;
  UPROPERTY(Transient)
