@@ -78,3 +78,6 @@ kurulur; geliştirme dalına ekran görüntüsü commit edilmez.
 
 Bu ürün, yetkisiz uzaktan ekran okuma veya sınırsız komut çalıştırma
 servisi değildir. Bağlantı **yalnız aynı Mac'te** çalışır.
+
+## v104.1 Atmosfer geçişi
+`premium` komutu artık yalnız taşı aydınlatmıyor: mevcut 3D kaleye `STARFORT • PREMIUM SKY` ve `FILL` atmosfer aktörleri, uzakta büyük koyu arazi düzlemi ve kapı girişinin iki tarafına ek gölgesiz sıcak tonlu ışıklar ekliyor. Bunlar Unreal Editor'da native Actor/Material varlıkları olarak yerleştirilir; aynı komut tekrar çalıştırılırsa isimleri eşleşenleri yeniden eklemez. Performans için dinamik gölgeler kapalı tutulur; gerçek PBR taş dokusu ve sinematik kahraman üretimi ise ayrı sanat işi olarak açık kalıyor.

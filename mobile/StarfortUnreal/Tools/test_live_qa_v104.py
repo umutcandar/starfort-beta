@@ -37,10 +37,16 @@ class LiveQAV104(unittest.TestCase):
    "unreal.MaterialExpressionMultiply",
    'color.set_editor_property("const_b", 1.95)',
    "MP_EMISSIVE_COLOR", "STARFORT • PREMIUM SKY",
+   "STARFORT • PREMIUM TERRAIN",
+   "STARFORT • GATE BRAZIER LEFT",
+   "STARFORT • GATE BRAZIER RIGHT",
    "STARFORT • PREMIUM FILL", "L_StarfortLogin_before_v104.umap",
    "if not backup.exists()", "levels.save_current_level()"):
    self.assertIn(text,EDITOR,text)
   self.assertNotIn("delete_asset(",EDITOR)
+  self.assertIn("if ground_name not in known:",EDITOR)
+  self.assertIn("if name in known:",EDITOR)
+  self.assertIn("_ensure_environment(report)",EDITOR)
 
 if __name__=="__main__":
  unittest.main()

@@ -102,6 +102,88 @@ def _ensure_atmosphere(report):
             report["warnings"].append("Atmosphere " + cls_name + ": " + str(exc))
 
 
+def _premium_terrain_material():
+    target = ART_ROOT + "/M_StarfortDuskGround_v104"
+    if unreal.EditorAssetLibrary.does_asset_exist(target):
+        return unreal.EditorAssetLibrary.load_asset(target)
+    material = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        "M_StarfortDuskGround_v104", ART_ROOT,
+        unreal.Material, unreal.MaterialFactoryNew())
+    if not material:
+        raise RuntimeError("Could not author dusk ground material")
+    lib = unreal.MaterialEditingLibrary
+    color = lib.create_material_expression(
+        material, unreal.MaterialExpressionConstant3Vector, -260, -70)
+    color.set_editor_property("constant", unreal.LinearColor(
+        .029, .044, .057, 1))
+    lib.connect_material_property(
+        color, "", unreal.MaterialProperty.MP_BASE_COLOR)
+    rough = lib.create_material_expression(
+        material, unreal.MaterialExpressionConstant, -260, 130)
+    rough.set_editor_property("r", .97)
+    lib.connect_material_property(
+        rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+    lib.recompile_material(material)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(material):
+        raise RuntimeError("Unable to save ground material")
+    return material
+
+
+def _ensure_environment(report):
+    """Art environment around the authored castle, idempotent, low-cost lights."""
+    actors = _subsystem(unreal.EditorActorSubsystem)
+    known = {a.get_actor_label() for a in actors.get_all_level_actors()}
+
+    ground_name = "STARFORT • PREMIUM TERRAIN"
+    if ground_name not in known:
+        try:
+            plane = unreal.EditorAssetLibrary.load_asset(
+                "/Engine/BasicShapes/Plane.Plane")
+            if not plane:
+                raise RuntimeError("Engine plane mesh missing")
+            ground = actors.spawn_actor_from_class(
+                unreal.StaticMeshActor, unreal.Vector(0, 0, -35),
+                unreal.Rotator(0, 0, 0))
+            if not ground:
+                raise RuntimeError("Could not spawn terrain actor")
+            ground.set_actor_label(ground_name)
+            ground.set_actor_scale3d(unreal.Vector(240, 240, 1))
+            mesh_components = ground.get_components_by_class(
+                unreal.StaticMeshComponent)
+            if mesh_components:
+                mesh_components[0].set_static_mesh(plane)
+                mesh_components[0].set_material(0, _premium_terrain_material())
+                mesh_components[0].set_editor_property("cast_shadow", False)
+            report["atmosphere"].append({
+                "actor": ground_name, "created": True})
+        except Exception as exc:
+            report["warnings"].append("Terrain: " + str(exc))
+
+    # Warm accents distinguish doorway and the night palette from an
+    # unlit dark default material. Each is a single no-shadow point light.
+    for name, y in (("STARFORT • GATE BRAZIER LEFT", -690),
+                    ("STARFORT • GATE BRAZIER RIGHT", 690)):
+        if name in known:
+            continue
+        try:
+            light = actors.spawn_actor_from_class(
+                unreal.PointLight, unreal.Vector(1300, y, 420),
+                unreal.Rotator(0, 0, 0))
+            if not light:
+                raise RuntimeError("Could not spawn point light")
+            light.set_actor_label(name)
+            comp = light.get_components_by_class(unreal.PointLightComponent)
+            if comp:
+                comp[0].set_editor_property("intensity", 4500.0)
+                comp[0].set_editor_property("attenuation_radius", 1800.0)
+                comp[0].set_editor_property("cast_shadows", False)
+                comp[0].set_light_color(unreal.LinearColor(
+                    1.0, .43, .16, 1.0), False)
+            report["atmosphere"].append({"actor": name, "created": True})
+        except Exception as exc:
+            report["warnings"].append(name + ": " + str(exc))
+
+
 def _backup_level():
     src = (Path(unreal.Paths.project_content_dir()) / "STARFORT" /
            "Login" / "L_StarfortLogin.umap")
@@ -146,6 +228,7 @@ def main(mode="capture"):
             actor.set_editor_property("imported_citadel_material", material)
             report["material_created"] = created
             _ensure_atmosphere(report)
+            _ensure_environment(report)
             if not levels.save_current_level():
                 raise RuntimeError("Could not save polished level")
         current_material = actor.get_editor_property("imported_citadel_material")
