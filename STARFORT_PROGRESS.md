@@ -142,3 +142,10 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - SyncImportedCitadelMesh now computes the imported UStaticMesh local FBox, fits longest axis to 3446 cm, recenters XY on origin, grounds minimum Z, and frames cinematic camera dynamically using actual horizontal span; runs in both OnConstruction and BeginPlay. This is grounded by inspecting original GLB center (-1.18 m,0 m,10.865 m), height from -1.82 to 23.55 m, and user's real editor screenshot.
 - Boosted moonlight from 2.0 to 4.0 and made moonlight color less saturated for greybox readability; does not replace high-quality materials.
 - Added source-level contract; Mac Editor C++ build, opening the authored map and actual visual results for this commit still need user-device verification.
+
+## Unreal GLB axis error diagnosed from PIE and binary file — v102 (2026-11-17)
+- Real Mac PIE screenshot showed castle main wall vertical and towers projecting sideways, despite correct ImportedCitadelMesh and camera view targeting.
+- Inspected supplied STARFORT_OriginalCitadel_Combined_v1.glb GLB scene graph: geometry is authored with Z-up vertices and only 0.01 root scaling; glTF 2.0 specifies Y-up, so UE Interchange Y-up-to-Z-up conversion imports the castle on its side. Original GLB scene has 3,880 vertices / 6,376 triangles; correct facade faces original +X.
+- Added an editable per-actor FRotator ImportedCitadelRotation default Roll=+90 deg to restore vertical axis without asking the user to reimport the existing GLB. Rotated FBox bounds now drive normalization, recentering, grounding and camera rather than the pre-rotation bounding box.
+- Camera now approaches original +X entrance from an oblique angle; existing key directional light follows the camera and a single no-shadows point fill improves readability of dark imported materials on mobile.
+- IMPORTANT: actual UE5.8 Mac UBT and PIE on this commit remain unverified; model still low-poly and cannot be called AAA cinematic production art.

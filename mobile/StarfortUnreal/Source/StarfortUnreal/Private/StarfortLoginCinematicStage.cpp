@@ -68,6 +68,15 @@ AStarfortLoginCinematicStage::AStarfortLoginCinematicStage()
  TorchLightB->SetLightColor(FLinearColor(1.f,0.42f,0.15f,1.f));
  TorchLightB->SetCastShadows(false);
 
+ // One broad non-shadowing fill, not another realtime shadow pass on mobile.
+ FortressFillLight=CreateDefaultSubobject<UPointLightComponent>(TEXT("CitadelFacadeFill"));
+ FortressFillLight->SetupAttachment(StageRoot);
+ FortressFillLight->SetRelativeLocation(FVector(2800.f,-1250.f,2200.f));
+ FortressFillLight->SetIntensity(95000.f);
+ FortressFillLight->SetAttenuationRadius(8000.f);
+ FortressFillLight->SetLightColor(FLinearColor(0.77f,0.84f,1.f,1.f));
+ FortressFillLight->SetCastShadows(false);
+
  GroundFog=CreateDefaultSubobject<UExponentialHeightFogComponent>(TEXT("GroundMist"));
  GroundFog->SetupAttachment(StageRoot);
  GroundFog->SetFogDensity(0.011f);
@@ -99,28 +108,36 @@ void AStarfortLoginCinematicStage::SyncImportedCitadelMesh()
 
  // Editor construction MUST render the real imported asset, not only BeginPlay.
  ImportedCitadel->SetStaticMesh(ImportedCitadelMesh);
- // Imported GLB pivot can be away from the building; size normalization alone
- // leaves the stage/cinematic camera pointed into empty space. Normalize its
- // size, CENTER its X/Y bounds and ground the base at local Z=0 in one pass.
+ // The first STARFORT GLB has Z-up vertex geometry but glTF specifies
+ // Y-up. Interchange converted glTF Z into a sideways Unreal axis: this
+ // explains the sideways towers observed in the real Mac PIE screenshot.
+ // Correct orientation BEFORE measuring the footprint or aiming the camera.
+ ImportedCitadel->SetRelativeRotation(ImportedCitadelRotation);
  const FBox LocalBounds=ImportedCitadelMesh->GetBoundingBox();
- const FVector BoundsSize=LocalBounds.GetSize();
- const FVector LocalCenter=LocalBounds.GetCenter();
- const double LongestAxis=FMath::Max3(BoundsSize.X,BoundsSize.Y,BoundsSize.Z);
+ const FBox UprightBounds=LocalBounds.TransformBy(FTransform(ImportedCitadelRotation));
+ const FVector UprightSize=UprightBounds.GetSize();
+ const FVector UprightCenter=UprightBounds.GetCenter();
+ const double LongestAxis=FMath::Max3(UprightSize.X,UprightSize.Y,UprightSize.Z);
  const double ArtScale=LongestAxis>1.0
   ? FMath::Clamp(3446.0/LongestAxis,0.001,100.0) : 1.0;
  ImportedCitadel->SetRelativeScale3D(FVector(ArtScale));
  ImportedCitadel->SetRelativeLocation(FVector(
-  -LocalCenter.X*ArtScale,-LocalCenter.Y*ArtScale,-LocalBounds.Min.Z*ArtScale));
- // Reframe the actual imported asset, not the camera position of the old
- // fallback cube fortress. This works in OnConstruction and in Play.
- const double Span=FMath::Max(BoundsSize.X,BoundsSize.Y)*ArtScale;
+  -UprightCenter.X*ArtScale,-UprightCenter.Y*ArtScale,-UprightBounds.Min.Z*ArtScale));
+ // The gate is on the original model's +X face. Approach from that side,
+ // slightly oblique, to show the entrance and towers instead of the blank rear.
+ const double Span=FMath::Max(UprightSize.X,UprightSize.Y)*ArtScale;
+ const double Height=UprightSize.Z*ArtScale;
  if(Span>100.0)
  {
-  const FVector Target(0.0,0.0,BoundsSize.Z*ArtScale*0.46);
-  CameraOrigin=FVector(-Span*1.70,-Span*1.28,Span*0.78);
+  const FVector Target(0.0,0.0,Height*0.44);
+  CameraOrigin=FVector(Span*1.82,-Span*0.67,Height*1.04);
   CameraRotation=(Target-CameraOrigin).Rotation();
   CinematicCamera->SetRelativeLocation(CameraOrigin);
   CinematicCamera->SetRelativeRotation(CameraRotation);
+  // Direct the single existing shadowless moon key onto the visible facade.
+  MoonLight->SetRelativeRotation(CameraRotation);
+  // A broad, non-shadowcasting camera-side fill keeps dark PBR stone legible.
+  FortressFillLight->SetRelativeLocation(FVector(Span*0.75,-Span*0.35,Height*0.72));
  }
  if(ImportedCitadelMaterial)
   ImportedCitadel->SetMaterial(0,ImportedCitadelMaterial);

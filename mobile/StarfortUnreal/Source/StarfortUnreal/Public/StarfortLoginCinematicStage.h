@@ -46,6 +46,13 @@ public:
  /** Optional original game-owned static environment, replacing greybox blocks. */
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Art")
  TObjectPtr<UStaticMesh> ImportedCitadelMesh;
+
+ /** The original first-generation GLB was authored Z-up, not glTF Y-up.
+  * Correct its Unreal Interchange import by rolling the mesh upright.
+  * Future correctly authored GLB assets may set this to zero in the Editor. */
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Art")
+ FRotator ImportedCitadelRotation=FRotator(0.f,0.f,90.f);
+
  /** Material must use VertexColor to preserve original fortress facade palette. */
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Art")
  TObjectPtr<UMaterialInterface> ImportedCitadelMaterial;
@@ -79,6 +86,8 @@ private:
  TObjectPtr<UPointLightComponent> TorchLightA;
  UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
  TObjectPtr<UPointLightComponent> TorchLightB;
+ UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
+ TObjectPtr<UPointLightComponent> FortressFillLight;
  UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
  TObjectPtr<UExponentialHeightFogComponent> GroundFog;
  UPROPERTY(Transient)
