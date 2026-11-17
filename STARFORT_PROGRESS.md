@@ -149,3 +149,9 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - Added an editable per-actor FRotator ImportedCitadelRotation default Roll=+90 deg to restore vertical axis without asking the user to reimport the existing GLB. Rotated FBox bounds now drive normalization, recentering, grounding and camera rather than the pre-rotation bounding box.
 - Camera now approaches original +X entrance from an oblique angle; existing key directional light follows the camera and a single no-shadows point fill improves readability of dark imported materials on mobile.
 - IMPORTANT: actual UE5.8 Mac UBT and PIE on this commit remain unverified; model still low-poly and cannot be called AAA cinematic production art.
+
+## UE original GLB was upside down after v102 roll: corrected default to -90 (2026-11-17)
+- User's subsequent real PIE screenshot at 22:52 conclusively shows the fortress spires pointing DOWN, whereas after the 90-degree correction the towers must point UP. The v102 +90 roll was the wrong sign; changing camera framing again will not correct upside-down imported geometry.
+- v103 fixes ImportedCitadelRotation default from +90 to -90 in C++; added screenshot-derived static regression assertion against +90.
+- A previously saved L_StarfortLogin map can retain a per-instance +90 property override. Fastest reliable test is Stop PIE -> select the authored cinematic stage actor -> Details search Imported Citadel Rotation -> Roll -90 (Pitch/Yaw 0) -> Play. Save All if corrected. No reimport, no full download or rebuild is required to change this exposed instance property.
+- Source CI is NOT macOS Unreal runtime verification; do not claim towers are corrected until a real PIE screenshot confirms it.

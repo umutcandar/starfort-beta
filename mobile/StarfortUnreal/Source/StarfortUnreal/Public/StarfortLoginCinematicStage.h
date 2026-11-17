@@ -47,11 +47,12 @@ public:
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Art")
  TObjectPtr<UStaticMesh> ImportedCitadelMesh;
 
- /** The original first-generation GLB was authored Z-up, not glTF Y-up.
-  * Correct its Unreal Interchange import by rolling the mesh upright.
-  * Future correctly authored GLB assets may set this to zero in the Editor. */
+ /** The v1 GLB was authored Z-up despite glTF's Y-up convention.
+  * Unreal imported the original tower axis sideways. Actual PIE screenshots
+  * prove that +90 degrees rolled the towers downward. -90 is the correction
+  * for this *specific* v1 asset; properly oriented future GLBs should use 0. */
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Art")
- FRotator ImportedCitadelRotation=FRotator(0.f,0.f,90.f);
+ FRotator ImportedCitadelRotation=FRotator(0.f,0.f,-90.f);
 
  /** Material must use VertexColor to preserve original fortress facade palette. */
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Art")

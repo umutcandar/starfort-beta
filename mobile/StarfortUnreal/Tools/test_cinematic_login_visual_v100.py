@@ -57,6 +57,12 @@ class NativeLoginVisualV100(unittest.TestCase):
   self.assertIn("MoonLight->SetRelativeRotation(CameraRotation);",STAGE)
   self.assertIn("FortressFillLight->SetCastShadows(false);",STAGE)
   self.assertIn("FLinearColor(0.77f,0.84f,1.f,1.f)",STAGE)
+ def test_v1_citadel_roll_direction_matches_real_pie_screenshot(self):
+  header=(SRC/"Public/StarfortLoginCinematicStage.h").read_text(encoding="utf-8")
+  self.assertIn("FRotator ImportedCitadelRotation=FRotator(0.f,0.f,-90.f);",header)
+  self.assertNotIn("FRotator ImportedCitadelRotation=FRotator(0.f,0.f,90.f);",header)
+  self.assertIn("ImportedCitadel->SetRelativeRotation(ImportedCitadelRotation);",STAGE)
+
  def test_real_authenticated_ui_integrity_remains(self):
   for item in ('Screen->InputEmail','Screen->InputPassword',
    'Screen->BtnOpenLogin','Screen->BtnSignIn','Screen->TxtAuthStatus',
