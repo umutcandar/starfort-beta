@@ -251,6 +251,7 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
  };
  TSet<FString> Unique;
  TSet<const USkeletalMesh*> UniqueBodyMeshes;
+ TSet<const UStaticMesh*> UniqueWeaponMeshes;
  for (int32 I=0;I<3;++I)
  {
   const FString& HeroId=VerifiedTeam[I];
@@ -259,9 +260,13 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
 
   UStarfortHeroCombatAsset* Art=FindApprovedHero(HeroId);
   if (!Art || !Rigs[I] || !Weapons[I] || !SpecialFX[I]) return false;
-  // Each hero must have its own body, but two real heroes may use a matching weapon mesh.
-  if (UniqueBodyMeshes.Contains(Art->HeroMesh.Get())) return false;
+  // Production art quality: different roles require distinct authored body and innate weapon meshes.
+  // Shared owned equipment visuals need a future verified inventory renderer, not this base art slot.
+  if (UniqueBodyMeshes.Contains(Art->HeroMesh.Get()) ||
+      UniqueWeaponMeshes.Contains(Art->WeaponMesh.Get()))
+   return false;
   UniqueBodyMeshes.Add(Art->HeroMesh.Get());
+  UniqueWeaponMeshes.Add(Art->WeaponMesh.Get());
 
   // Actual rig and weapon are authored Unreal assets; nothing generated from
   // primitive cubes, UI images or browser screenshots in this path.
@@ -316,6 +321,7 @@ bool AStarfortBattleStage::HasApprovedStage() const
   HeroWeapon.Get(),HeroWeapon2.Get(),HeroWeapon3.Get()
  };
  TSet<const USkeletalMesh*> SeenBodies;
+ TSet<const UStaticMesh*> SeenWeapons;
  for (int32 I=0;I<3;++I)
  {
   if (!ActiveHeroArt[I] ||
@@ -326,8 +332,10 @@ bool AStarfortBattleStage::HasApprovedStage() const
    return false;
   const USkeletalMesh* Body=Rigs[I]->GetSkeletalMeshAsset();
   const UStaticMesh* Weapon=Weapons[I]->GetStaticMesh();
-  if (SeenBodies.Contains(Body)) return false;
+  if (SeenBodies.Contains(Body) || SeenWeapons.Contains(Weapon))
+   return false;
   SeenBodies.Add(Body);
+  SeenWeapons.Add(Weapon);
  }
  return true;
 }

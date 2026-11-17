@@ -5,7 +5,7 @@ Source: umutcandar/starfort-beta, main commit 2ea74c5b341e312eba8369870c72dfdb54
 Development branch: feat/native-v91-verified-combat-gear
 
 ## Implemented in this branch
-- Corrected false duplicate-weapon rejection in native three-hero battle art quality gate. Different characters still require unique approved body meshes; identical authored weapon meshes are allowed for distinct heroes.
+- Preserved the existing release art-quality check that distinct roles must have distinct authored body and innate weapon meshes. Shared equipment requires a future server-verified inventory renderer.
 - Actual montage play duration now controls cosmetic verified-impact timing (0.18–0.65 seconds), before the existing verified enemy counterattack (0.76 seconds).
 - New source-contract test: mobile/StarfortUnreal/Tools/test_verified_montage_v91.py
 - No backend resource, mission, reward or account mutation changed.

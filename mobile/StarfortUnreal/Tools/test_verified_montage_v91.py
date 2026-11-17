@@ -7,12 +7,11 @@ CPP=(Path(__file__).resolve().parents[1]/
  "Source/StarfortUnreal/Private/StarfortBattleStage.cpp")
 
 class CombatMontageV91(unittest.TestCase):
- def test_no_duplicate_weapon_identity_gate(self):
+ def test_distinct_cinematic_body_and_innate_weapon_gate_stays_unchanged(self):
   s=CPP.read_text(encoding="utf-8")
-  self.assertIn("UniqueBodyMeshes.Contains",s)
-  self.assertIn("SeenBodies.Contains",s)
-  self.assertNotIn("UniqueWeaponMeshes",s)
-  self.assertNotIn("SeenWeapons",s)
+  for token in ("UniqueBodyMeshes.Contains","SeenBodies.Contains",
+   "UniqueWeaponMeshes.Contains","SeenWeapons.Contains"):
+   self.assertIn(token,s)
 
  def test_impact_follows_played_montage_but_damage_is_server_authoritative(self):
   s=CPP.read_text(encoding="utf-8")
