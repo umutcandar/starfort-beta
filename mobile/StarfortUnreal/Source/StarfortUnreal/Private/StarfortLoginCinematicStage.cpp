@@ -13,6 +13,7 @@
 #include "Animation/AnimInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
+#include "Materials/MaterialInterface.h"
 #include "UObject/ConstructorHelpers.h"
 
 AStarfortLoginCinematicStage::AStarfortLoginCinematicStage()
@@ -112,6 +113,12 @@ UStaticMeshComponent* AStarfortLoginCinematicStage::Part(
  if(!Component) return nullptr;
  Component->SetupAttachment(StageRoot);
  Component->SetStaticMesh(Mesh);
+ if(Label && FCString::Strstr(Label,TEXT("Banner")) && BannerMaterial)
+  Component->SetMaterial(0,BannerMaterial);
+ else if(Label && FCString::Strstr(Label,TEXT("TorchFlame")) && EmberMaterial)
+  Component->SetMaterial(0,EmberMaterial);
+ else if(FortressMaterial)
+  Component->SetMaterial(0,FortressMaterial);
  Component->SetRelativeLocation(Pos);
  Component->SetRelativeScale3D(Scale);
  Component->SetMobility(EComponentMobility::Movable);

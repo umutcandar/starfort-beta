@@ -14,6 +14,7 @@ class UDirectionalLightComponent;
 class UPointLightComponent;
 class UExponentialHeightFogComponent;
 class UStarfortHeroCombatAsset;
+class UMaterialInterface;
 
 /**
  * Art-independent FIRST-PASS 3D environment behind the native login HUD.
@@ -41,6 +42,14 @@ public:
  /** Optional licensed/original looping audio; never auto-fetch remote media. */
  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="STARFORT|Login|Audio")
  TObjectPtr<USoundBase> OpeningAmbience;
+
+ /** Procedural stage surfaces can use original materials created in Editor. */
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Materials")
+ TObjectPtr<UMaterialInterface> FortressMaterial;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Materials")
+ TObjectPtr<UMaterialInterface> BannerMaterial;
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Materials")
+ TObjectPtr<UMaterialInterface> EmberMaterial;
 
  UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="STARFORT|Login|Quality")
  bool bEnableGreyboxFortress=true;
