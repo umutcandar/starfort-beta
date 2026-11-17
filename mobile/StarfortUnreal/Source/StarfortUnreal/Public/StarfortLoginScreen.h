@@ -6,6 +6,7 @@
 class UEditableTextBox;
 class UTextBlock;
 class UButton;
+class UWidget;
 class UStarfortOnlineSubsystem;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStarfortLoginSucceeded);
@@ -28,6 +29,13 @@ public:
  TObjectPtr<UTextBlock> TxtAuthStatus;
  UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly)
  TObjectPtr<UButton> BtnSignIn;
+ /** Initial minimal action; reveals email/password without obscuring 3D world. */
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly)
+ TObjectPtr<UButton> BtnOpenLogin;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly)
+ TObjectPtr<UButton> BtnCloseLogin;
+ UPROPERTY(meta=(BindWidgetOptional), BlueprintReadOnly)
+ TObjectPtr<UWidget> LoginFormPanel;
 
 protected:
  virtual void NativeOnInitialized() override;
@@ -35,6 +43,8 @@ protected:
 private:
  UPROPERTY(Transient) TObjectPtr<UStarfortOnlineSubsystem> Online;
  UFUNCTION() void SignInClicked();
+ UFUNCTION() void OpenLoginFormClicked();
+ UFUNCTION() void CloseLoginFormClicked();
  UFUNCTION() void HandleSignedIn(FString UserId);
  UFUNCTION() void HandleSignedOut();
  UFUNCTION() void HandleError(FString SafeReason);

@@ -4,6 +4,7 @@
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
 #include "Components/TextBlock.h"
+#include "Components/Widget.h"
 #include "Engine/GameInstance.h"
 
 void UStarfortLoginScreen::NativeOnInitialized()
@@ -12,6 +13,8 @@ void UStarfortLoginScreen::NativeOnInitialized()
  FStarfortNativeWidgetFactory::BuildLogin(this);
  if (InputPassword) InputPassword->SetIsPassword(true);
  if (BtnSignIn) BtnSignIn->OnClicked.AddUniqueDynamic(this,&UStarfortLoginScreen::SignInClicked);
+ if (BtnOpenLogin) BtnOpenLogin->OnClicked.AddUniqueDynamic(this,&UStarfortLoginScreen::OpenLoginFormClicked);
+ if (BtnCloseLogin) BtnCloseLogin->OnClicked.AddUniqueDynamic(this,&UStarfortLoginScreen::CloseLoginFormClicked);
  if (UGameInstance* Instance=GetGameInstance())
   Online=Instance->GetSubsystem<UStarfortOnlineSubsystem>();
  if (Online)
@@ -33,6 +36,19 @@ void UStarfortLoginScreen::NativeDestruct()
  }
  Super::NativeDestruct();
 }
+void UStarfortLoginScreen::OpenLoginFormClicked()
+{
+ if (LoginFormPanel) LoginFormPanel->SetVisibility(ESlateVisibility::Visible);
+ if (BtnOpenLogin) BtnOpenLogin->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UStarfortLoginScreen::CloseLoginFormClicked()
+{
+ if (LoginFormPanel) LoginFormPanel->SetVisibility(ESlateVisibility::Collapsed);
+ if (BtnOpenLogin) BtnOpenLogin->SetVisibility(ESlateVisibility::Visible);
+ if (InputPassword) InputPassword->SetText(FText::GetEmpty());
+}
+
 void UStarfortLoginScreen::SignInClicked()
 {
  if (!Online || !InputEmail || !InputPassword) return;
