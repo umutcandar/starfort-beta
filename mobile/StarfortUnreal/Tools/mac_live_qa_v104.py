@@ -164,7 +164,7 @@ def capture_once(mode, args):
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Connect to running UE5.8 Editor; polish/capture its ART viewport")
-    ap.add_argument("mode", choices=("inspect", "capture", "premium", "watch"))
+    ap.add_argument("mode", choices=("inspect", "capture", "premium", "watch", "studio"))
     ap.add_argument("--ue-root")
     ap.add_argument("--public-preview", action="store_true",
                     help="EXPLICIT CONSENT: publish art-only screenshot to PUBLIC GitHub QA branch")
@@ -183,6 +183,12 @@ def main(argv=None):
                 output["github"] = publish_preview()
             print(json.dumps(output, ensure_ascii=False, indent=2))
             return 0
+        if args.mode == "studio":
+            # Apply an Editor-only material/lighting pass once, then watch ART.
+            result = capture_once("premium", args)
+            if args.public_preview:
+                result["github"] = publish_preview()
+            print(json.dumps(result, ensure_ascii=False), flush=True)
         print("STARFORT Live QA watching while this Terminal remains open. "
               "Ctrl+C stops it.", flush=True)
         last_hash = ""
