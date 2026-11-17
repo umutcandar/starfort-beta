@@ -1,6 +1,9 @@
 #include "StarfortBattleStage.h"
 #include "StarfortBattleScreen.h"
 #include "StarfortHeroCombatAsset.h"
+#include "StarfortEquipmentArtManifest.h"
+#include "StarfortOnlineSubsystem.h"
+#include "StarfortBagCatalog.h"
 
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -53,6 +56,12 @@ AStarfortBattleStage::AStarfortBattleStage()
  HeroWeapon2->SetupAttachment(HeroRig2);
  HeroWeapon3=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeroWeapon_Flank"));
  HeroWeapon3->SetupAttachment(HeroRig3);
+ HeroArmor=CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Armor_Leader"));
+ HeroArmor->SetupAttachment(HeroRig);
+ HeroArmor2=CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Armor_Middle"));
+ HeroArmor2->SetupAttachment(HeroRig2);
+ HeroArmor3=CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Armor_Flank"));
+ HeroArmor3->SetupAttachment(HeroRig3);
 
  HeroSpecialFX1=CreateDefaultSubobject<UNiagaraComponent>(TEXT("HeroSpecialFX_Leader"));
  HeroSpecialFX1->SetupAttachment(HeroWeapon);
@@ -80,6 +89,11 @@ AStarfortBattleStage::AStarfortBattleStage()
  {
   Rig->SetCollisionEnabled(ECollisionEnabled::NoCollision);
   Rig->SetCastShadow(true);
+ }
+ for(USkeletalMeshComponent* Armor:{HeroArmor.Get(),HeroArmor2.Get(),HeroArmor3.Get()})
+ {
+  Armor->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+  Armor->SetCastShadow(true);
  }
  for (UStaticMeshComponent* Weapon:
       {HeroWeapon.Get(),HeroWeapon2.Get(),HeroWeapon3.Get()})
@@ -109,6 +123,8 @@ void AStarfortBattleStage::SetAllVisible(bool bVisible)
  for (USkeletalMeshComponent* Rig:
       {HeroRig.Get(),HeroRig2.Get(),HeroRig3.Get(),EnemyRig.Get()})
   if (Rig) Rig->SetVisibility(bVisible);
+ for(USkeletalMeshComponent* Armor:{HeroArmor.Get(),HeroArmor2.Get(),HeroArmor3.Get()})
+  if(Armor) Armor->SetVisibility(bVisible);
  for (UStaticMeshComponent* Weapon:
       {HeroWeapon.Get(),HeroWeapon2.Get(),HeroWeapon3.Get()})
   if (Weapon) Weapon->SetVisibility(bVisible);
@@ -121,6 +137,60 @@ void AStarfortBattleStage::SetAllVisible(bool bVisible)
   if (!bVisible) Effect->DeactivateImmediate();
   Effect->SetVisibility(bVisible);
  }
+}
+
+void AStarfortBattleStage::CacheVerifiedEquipment(const FStarfortProgressSummary& Snapshot)
+{
+ if(!Snapshot.bServerVerified || !Snapshot.bInventoryVerified ||
+    !Snapshot.bInMission || Snapshot.MissionId.IsEmpty() || Snapshot.Team.Num()!=3)
+ {
+  ClearVerifiedEquipment();return;
+ }
+ TMap<FString,FString> Weapons,Armors;
+ for(const FString& HeroId:Snapshot.Team)
+ {
+  if(!FStarfortBagCatalog::IsHero(HeroId) || !Snapshot.HeroLevels.Contains(HeroId))
+  {
+   ClearVerifiedEquipment();return;
+  }
+  const FStarfortBagLoadout* Loadout=Snapshot.Loadouts.Find(HeroId);
+  if(!Loadout) continue;
+  for(const FString& Slot:{FString(TEXT("weapon")),FString(TEXT("armor"))})
+  {
+   const FString ItemId=Loadout->ForSlot(Slot);
+   if(ItemId.IsEmpty()) continue;
+   const FStarfortBagItemInfo* Item=FStarfortBagCatalog::Find(ItemId);
+   if(!Item || Slot!=Item->Slot || Snapshot.Inventory.FindRef(ItemId)<1)
+   {
+    ClearVerifiedEquipment();return;
+   }
+   if(Slot==TEXT("weapon")) Weapons.Add(HeroId,ItemId);
+   else Armors.Add(HeroId,ItemId);
+  }
+ }
+ bool bChanged=!bVerifiedGearState || VerifiedGearRoomId!=Snapshot.MissionId ||
+    VerifiedWeaponByHero.Num()!=Weapons.Num() ||
+    VerifiedArmorByHero.Num()!=Armors.Num();
+ if(!bChanged)
+  for(const auto& Pair:Weapons)
+   if(VerifiedWeaponByHero.FindRef(Pair.Key)!=Pair.Value){bChanged=true;break;}
+ if(!bChanged)
+  for(const auto& Pair:Armors)
+   if(VerifiedArmorByHero.FindRef(Pair.Key)!=Pair.Value){bChanged=true;break;}
+ if(bChanged && (bThreeHeroTeamReady || bTeamLoadPending)) ClearBattlePresentation();
+ VerifiedGearRoomId=Snapshot.MissionId;
+ VerifiedWeaponByHero=MoveTemp(Weapons);
+ VerifiedArmorByHero=MoveTemp(Armors);
+ bVerifiedGearState=true;
+}
+
+void AStarfortBattleStage::ClearVerifiedEquipment()
+{
+ if(bVerifiedGearState || !VerifiedGearRoomId.IsEmpty()) ClearBattlePresentation();
+ bVerifiedGearState=false;
+ VerifiedGearRoomId.Empty();
+ VerifiedWeaponByHero.Empty();
+ VerifiedArmorByHero.Empty();
 }
 
 UStarfortHeroCombatAsset* AStarfortBattleStage::FindApprovedHero(
