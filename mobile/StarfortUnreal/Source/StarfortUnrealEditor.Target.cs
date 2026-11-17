@@ -1,7 +1,8 @@
 using UnrealBuildTool;
 public class StarfortUnrealEditorTarget : TargetRules {
  public StarfortUnrealEditorTarget(TargetInfo Target) : base(Target) {
-  Type = TargetType.Editor; DefaultBuildSettings = BuildSettingsVersion.V5;
+  Type = TargetType.Editor; DefaultBuildSettings = BuildSettingsVersion.V7;
+  IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
   ExtraModuleNames.Add("StarfortUnreal");
  }
 }

@@ -48,3 +48,10 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 ## Runner security hold
 - Repository visibility verified PUBLIC. The Mac self-hosted runner workflow is additionally gated on github.event.repository.private == true.
 - Do not register a personal Mac as a runner for this public repo until visibility and untrusted workflow risks are addressed by the owner.
+
+## UE 5.8 first real Mac Build.sh result — 2026-11-17
+- M1 / Xcode 26.0 / native Unreal 5.8 engine found locally at /Users/macbook/Documents/UE_5.8 (user-supplied machine path only).
+- First actual UBT invocation stopped with exit code 6 (OtherCompilationError) BEFORE C++ compilation because both targets used BuildSettingsVersion.V5.
+- UBT explicitly recommended BuildSettingsVersion.V7; upgraded both Editor and Game targets and pinned EngineIncludeOrderVersion.Unreal5_8.
+- No BuildEnvironment.Unique or bOverrideBuildEnvironment workaround, no deployment or main merge.
+- Added test_ue58_target_rules_v93.py, run in native QA. UE5.8 C++ still must be compiled on local Mac to verify.
