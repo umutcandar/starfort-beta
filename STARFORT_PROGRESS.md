@@ -136,3 +136,9 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - Identified Unreal C++ construction/runtime bug: ImportedCitadel visibility and SetStaticMesh happened only in BeginPlay, with constructor SetVisibility(false). Added OnConstruction + shared SyncImportedCitadelMesh to preview the configured static mesh in Editor and maintain same runtime semantics.
 - Fixed Python importer existing-static-mesh lookup to scan recursively, matching UE Interchange's nested .../StaticMeshes folders shown in screenshot. Preserve existing asset, avoid repeat import.
 - On Mac: Save All before closing unsaved L_StarfortLogin*, pull/compile/reopen, verify actor ImportedCitadelMesh is populated, camera preview and PIE. Source CI is NOT Mac UBT or visual verification.
+
+## Imported 3D citadel camera framing correction (2026-11-17, v101)
+- Screenshot of real L_StarfortLogin Editor map confirms ImportedCitadelMesh is assigned and rendered (black giant silhouette), but the perspective is far too close and camera preview shows mostly empty sky, indicating imported mesh pivot/origin framing mismatch plus dim lighting.
+- SyncImportedCitadelMesh now computes the imported UStaticMesh local FBox, fits longest axis to 3446 cm, recenters XY on origin, grounds minimum Z, and frames cinematic camera dynamically using actual horizontal span; runs in both OnConstruction and BeginPlay. This is grounded by inspecting original GLB center (-1.18 m,0 m,10.865 m), height from -1.82 to 23.55 m, and user's real editor screenshot.
+- Boosted moonlight from 2.0 to 4.0 and made moonlight color less saturated for greybox readability; does not replace high-quality materials.
+- Added source-level contract; Mac Editor C++ build, opening the authored map and actual visual results for this commit still need user-device verification.

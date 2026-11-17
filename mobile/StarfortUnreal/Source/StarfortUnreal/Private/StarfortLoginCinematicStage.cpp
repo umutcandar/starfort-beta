@@ -49,8 +49,8 @@ AStarfortLoginCinematicStage::AStarfortLoginCinematicStage()
  MoonLight=CreateDefaultSubobject<UDirectionalLightComponent>(TEXT("Moonlight"));
  MoonLight->SetupAttachment(StageRoot);
  MoonLight->SetRelativeRotation(FRotator(-45.f,-50.f,0.f));
- MoonLight->SetIntensity(2.0f);
- MoonLight->SetLightColor(FLinearColor(0.39f,0.53f,0.86f,1.f));
+ MoonLight->SetIntensity(4.0f);
+ MoonLight->SetLightColor(FLinearColor(0.66f,0.73f,0.88f,1.f));
  MoonLight->SetCastShadows(false); // intentional mobile budget
 
  TorchLightA=CreateDefaultSubobject<UPointLightComponent>(TEXT("WestFlame"));
@@ -99,16 +99,29 @@ void AStarfortLoginCinematicStage::SyncImportedCitadelMesh()
 
  // Editor construction MUST render the real imported asset, not only BeginPlay.
  ImportedCitadel->SetStaticMesh(ImportedCitadelMesh);
- // GLB units may import at 100x; fit the model's longest axis to 3446 cm.
- const FVector BoundsSize=ImportedCitadelMesh->GetBoundingBox().GetSize();
+ // Imported GLB pivot can be away from the building; size normalization alone
+ // leaves the stage/cinematic camera pointed into empty space. Normalize its
+ // size, CENTER its X/Y bounds and ground the base at local Z=0 in one pass.
+ const FBox LocalBounds=ImportedCitadelMesh->GetBoundingBox();
+ const FVector BoundsSize=LocalBounds.GetSize();
+ const FVector LocalCenter=LocalBounds.GetCenter();
  const double LongestAxis=FMath::Max3(BoundsSize.X,BoundsSize.Y,BoundsSize.Z);
- if(LongestAxis>1.0)
+ const double ArtScale=LongestAxis>1.0
+  ? FMath::Clamp(3446.0/LongestAxis,0.001,100.0) : 1.0;
+ ImportedCitadel->SetRelativeScale3D(FVector(ArtScale));
+ ImportedCitadel->SetRelativeLocation(FVector(
+  -LocalCenter.X*ArtScale,-LocalCenter.Y*ArtScale,-LocalBounds.Min.Z*ArtScale));
+ // Reframe the actual imported asset, not the camera position of the old
+ // fallback cube fortress. This works in OnConstruction and in Play.
+ const double Span=FMath::Max(BoundsSize.X,BoundsSize.Y)*ArtScale;
+ if(Span>100.0)
  {
-  const double ArtScale=FMath::Clamp(3446.0/LongestAxis,0.001,100.0);
-  ImportedCitadel->SetRelativeScale3D(FVector(ArtScale));
+  const FVector Target(0.0,0.0,BoundsSize.Z*ArtScale*0.46);
+  CameraOrigin=FVector(-Span*1.70,-Span*1.28,Span*0.78);
+  CameraRotation=(Target-CameraOrigin).Rotation();
+  CinematicCamera->SetRelativeLocation(CameraOrigin);
+  CinematicCamera->SetRelativeRotation(CameraRotation);
  }
- else
-  ImportedCitadel->SetRelativeScale3D(FVector::OneVector);
  if(ImportedCitadelMaterial)
   ImportedCitadel->SetMaterial(0,ImportedCitadelMaterial);
  ImportedCitadel->SetVisibility(true);

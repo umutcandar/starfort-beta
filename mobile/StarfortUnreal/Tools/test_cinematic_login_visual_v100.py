@@ -43,6 +43,13 @@ class NativeLoginVisualV100(unittest.TestCase):
   self.assertIn("ImportedCitadelMesh->GetBoundingBox().GetSize()",STAGE)
   self.assertIn("FMath::Clamp(3446.0/LongestAxis,0.001,100.0)",STAGE)
   self.assertIn("ImportedCitadel->SetRelativeScale3D(FVector(ArtScale));",STAGE)
+  self.assertIn("const FBox LocalBounds=ImportedCitadelMesh->GetBoundingBox();",STAGE)
+  self.assertIn("const FVector LocalCenter=LocalBounds.GetCenter();",STAGE)
+  self.assertIn("ImportedCitadel->SetRelativeLocation(FVector(",STAGE)
+  self.assertIn("-LocalCenter.X*ArtScale,-LocalCenter.Y*ArtScale,-LocalBounds.Min.Z*ArtScale",STAGE)
+  self.assertIn("CameraRotation=(Target-CameraOrigin).Rotation();",STAGE)
+  self.assertIn("CinematicCamera->SetRelativeLocation(CameraOrigin);",STAGE)
+  self.assertIn("MoonLight->SetIntensity(4.0f);",STAGE)
  def test_real_authenticated_ui_integrity_remains(self):
   for item in ('Screen->InputEmail','Screen->InputPassword',
    'Screen->BtnOpenLogin','Screen->BtnSignIn','Screen->TxtAuthStatus',
