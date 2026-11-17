@@ -45,6 +45,9 @@ public:
  /** Optional original game-owned static environment, replacing greybox blocks. */
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Art")
  TObjectPtr<UStaticMesh> ImportedCitadelMesh;
+ /** Material must use VertexColor to preserve original fortress facade palette. */
+ UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Art")
+ TObjectPtr<UMaterialInterface> ImportedCitadelMaterial;
 
  /** Procedural stage surfaces can use original materials created in Editor. */
  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="STARFORT|Login|Materials")

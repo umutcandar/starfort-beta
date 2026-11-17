@@ -92,6 +92,8 @@ void AStarfortLoginCinematicStage::BeginPlay()
  {
   // Original imported static mesh replaces temporary primitive architecture.
   ImportedCitadel->SetStaticMesh(ImportedCitadelMesh);
+  if(ImportedCitadelMaterial)
+   ImportedCitadel->SetMaterial(0,ImportedCitadelMaterial);
   ImportedCitadel->SetVisibility(true);
  }
  else if(bEnableGreyboxFortress)
