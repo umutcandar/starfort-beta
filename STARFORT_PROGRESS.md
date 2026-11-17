@@ -88,3 +88,9 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - Implemented a new code-driven native Unreal UMG login in StarfortNativeWidgetFactory::BuildLogin, 1600×900, SafeZone+ScaleToFit, left typographic fantasy identity and right dark themed sign-in card.
 - Preserved authenticated email/password behavior and existing login widget pointers; no guest auth and no backend edits.
 - New source tests and setup instructions; Unreal macOS C++ compilation and actual PIE screenshot for v97 remain UNVERIFIED. Previous v96 Mac compilation was successful.
+
+## Ultra Login 3D vertical slice v98 (2026-11-17)
+- Added a real Unreal 3D login background actor with greybox fortress, camera, fog, mobile-budget torches, and optional approved hero/audio hooks.
+- Integrated login-only camera takeover with village controller and cleanup on sign-in/sign-out.
+- Login UI changed from opaque two-column to transparent native UMG overlay; email/password appear only after clicking KRALLIĞA GİR. Existing Supabase auth unchanged.
+- Updated v97 source tests, added new v98 source contract and docs. Does NOT prove Unreal editor compile or visual quality for this revision. UE packaged original art and umap not yet present.

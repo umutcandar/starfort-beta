@@ -11,16 +11,17 @@ LOGIN=SRC/"Private/StarfortLoginScreen.cpp"
 HDR=SRC/"Public/StarfortLoginScreen.h"
 
 class PremiumLoginV97(unittest.TestCase):
- def test_login_is_full_landscape_with_two_columns_and_safe_mobile_scaling(self):
+ def test_login_is_transparent_landscape_with_staged_sign_in_and_safe_scaling(self):
   source=FACTORY.read_text(encoding="utf-8")
   start=source.index("bool FStarfortNativeWidgetFactory::BuildLogin(")
   end=source.index("bool FStarfortNativeWidgetFactory::BuildVillage(",start)
   body=source[start:end]
   for text in ('SetWidthOverride(1600.f)','SetHeightOverride(900.f)',
-   'SetStretch(EStretch::ScaleToFit)','USafeZone','UHorizontalBox',
-   'LeftSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill))',
-   'SetHeightOverride(67.f)','SetHeightOverride(76.f)',
-   'TAHT SENİ','BEKLİYOR.','KOMUTAN PORTALI','KRALLIĞIMA GİR'):
+   'SetStretch(EStretch::ScaleToFit)','USafeZone','UOverlay',
+   'SetVisibility(ESlateVisibility::Collapsed)',
+   'Screen->LoginFormPanel=FormSize',
+   'SetHeightOverride(65.f)','SetHeightOverride(76.f)',
+   'TAHT SENİ BEKLİYOR','KRALLIĞA GİR','KOMUTAN GİRİŞİ'):
    self.assertIn(text,body,text)
   self.assertNotIn('BeginPanel(Screen,560.f,410.f)',body)
   self.assertEqual(body.count("{"),body.count("}"))
@@ -31,8 +32,9 @@ class PremiumLoginV97(unittest.TestCase):
   end=source.index("bool FStarfortNativeWidgetFactory::BuildVillage(",start)
   body=source[start:end]
   for marker in ('Screen->InputEmail','Screen->InputPassword',
-   'Target->SetIsPassword(bPassword)', 'Style.BackgroundImageNormal.TintColor',
-   'Target->SetWidgetStyle(Style)','Screen->BtnSignIn',
+   'Input->SetIsPassword(bPassword)', 'Style.BackgroundImageNormal.TintColor',
+   'Input->SetWidgetStyle(Style)','Screen->BtnSignIn',
+   'Screen->BtnOpenLogin','Screen->BtnCloseLogin','Screen->LoginFormPanel',
    'Screen->TxtAuthStatus', 'Tree->RootWidget=Root'):
    self.assertIn(marker,body,marker)
   for forbidden in ('Misafir olarak','DEMO GİRİŞ','localhost:3000','WidgetBlueprint'):
