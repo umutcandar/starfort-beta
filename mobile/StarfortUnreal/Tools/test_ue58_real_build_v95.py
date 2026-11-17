@@ -24,14 +24,19 @@ class UE58ActualMacCompilerIssuesV95(unittest.TestCase):
   self.assertIn("void UStarfortBagScreen::HandleTile(FString Token)",code)
   self.assertIn("OnActivated.AddUniqueDynamic(this,&UStarfortBagScreen::HandleTile)",code)
   self.assertNotIn("HandleTile(const FString&",header+code)
- def test_uniform_grid_slot_is_a_complete_type(self):
+ def test_grid_spacing_uses_uniform_grid_panel_api(self):
   code=self.src("Private/StarfortBagScreen.cpp")
-  self.assertIn('#include "Components/UniformGridSlot.h"',code)
-  self.assertIn("->SetPadding(FMargin(3.f,3.f))",code)
+  self.assertIn('ItemGrid->SetSlotPadding(FMargin(3.f,3.f));',code)
+  self.assertIn('ItemGrid->AddChildToUniformGrid(Tile,VisibleIndex/4,VisibleIndex%4);',code)
+  self.assertNotIn("->SetPadding(FMargin(3.f,3.f))",code)
+  self.assertNotIn("UniformGridSlot.h",code)
  def test_streamable_header_is_included_not_misdeclared(self):
   code=self.src("Public/StarfortHeroScreen.h")
   self.assertIn('#include "Engine/StreamableManager.h"',code)
   self.assertNotIn("class FStreamableHandle;",code)
   self.assertNotIn("struct FStreamableHandle;",code)
+  stage=self.src("Public/StarfortBattleStage.h")
+  self.assertIn("struct FStreamableHandle;",stage)
+  self.assertNotIn("class FStreamableHandle;",stage)
 
 if __name__=="__main__":unittest.main()

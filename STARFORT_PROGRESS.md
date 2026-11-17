@@ -70,3 +70,8 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - BagScreen.cpp now includes Components/UniformGridSlot.h so AddChildToUniformGrid(...)->SetPadding has a complete slot class.
 - StarfortHeroScreen.h now includes Engine/StreamableManager.h instead of forward-declaring FStreamableHandle, eliminating stale class/struct ambiguity at that header.
 - Tests: added test_ue58_real_build_v95.py, source-only CI checks; true UE build must be retried on Mac.
+
+## UE 5.8 real Mac compiler issues v96 (2026-11-17)
+- After v95, confirmed UUniformGridSlot has no SetPadding method in UE5.8; previous fix only added the slot header and was insufficient. Changed BagScreen to set UUniformGridPanel::SetSlotPadding(FMargin(3.f,3.f)) and AddChildToUniformGrid without the invalid call. Four-column item grid and authenticated inventory remain unchanged.
+- Scanned all 32 native headers and found a remaining incorrect class FStreamableHandle declaration in StarfortBattleStage.h; changed to struct FStreamableHandle to match the Unreal StreamableManager type. HeroScreen.h already includes the full engine declaration.
+- Added v96 regressions and corrected v95 assertions. No real Unreal UBT/UHT build done here; only user can run the Mac build and provide new compiler diagnostics.

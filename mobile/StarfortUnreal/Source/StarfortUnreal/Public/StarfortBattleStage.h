@@ -17,7 +17,7 @@ class USoundBase;
 class UStarfortHeroCombatAsset;
 class UStarfortEquipmentArtManifest;
 struct FStarfortProgressSummary;
-class FStreamableHandle;
+struct FStreamableHandle;
 struct FStarfortVerifiedBattleTurn;
 
 /** Server ID -> softly referenced authored hero art.

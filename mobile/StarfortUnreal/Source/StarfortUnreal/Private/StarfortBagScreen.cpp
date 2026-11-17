@@ -15,7 +15,6 @@
 #include "Components/SizeBox.h"
 #include "Components/ScrollBox.h"
 #include "Components/UniformGridPanel.h"
-#include "Components/UniformGridSlot.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Engine/Texture2D.h"
@@ -199,6 +198,8 @@ void UStarfortBagScreen::BuildNativeLayout()
  Equipment->AddChildToVerticalBox(ItemsScroll)->SetSize(
   FSlateChildSize(ESlateSizeRule::Fill));
  ItemGrid=T->ConstructWidget<UUniformGridPanel>();
+ // UE 5.8 UUniformGridSlot has no SetPadding; spacing belongs to its panel.
+ ItemGrid->SetSlotPadding(FMargin(3.f,3.f));
  ItemsScroll->AddChild(ItemGrid);
 
  // 4/4: selected gear details and server-backed actions.
@@ -440,8 +441,7 @@ void UStarfortBagScreen::Refresh()
    Entry.Label,CountLabel,FStarfortBagCatalog::RarityColor(Entry.Rarity),
    true,SelectedItemId==Id);
   if(Tile)
-   ItemGrid->AddChildToUniformGrid(Tile,VisibleIndex/4,VisibleIndex%4)
-    ->SetPadding(FMargin(3.f,3.f));
+   ItemGrid->AddChildToUniformGrid(Tile,VisibleIndex/4,VisibleIndex%4);
   ++VisibleIndex;
  }
  DetailColumn->ClearChildren();
