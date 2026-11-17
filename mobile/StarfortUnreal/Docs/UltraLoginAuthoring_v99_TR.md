@@ -42,3 +42,13 @@ Mac Unreal Editor Python çalıştırma testi bu sohbette yapılmadı.
 ## Özgün 3D kale GLB aktarımı
 
 ChatGPT tarafından üretilen STARFORT_OriginalCitadel_Combined_v1.glb dosyasını Downloads klasörüne veya mobile/StarfortUnreal/ContentPipeline/Incoming klasörüne koy. Bu dosya tek bir static mesh ve 3D vertex renkleri içerir. Sonra Unreal Editor içinde yazar aracı çalıştırıldığında GLB, /Game/STARFORT/Login/Meshes altına alınır; M_StarfortCitadelVertexColors materyali ile aktörün ImportedCitadelMesh ve ImportedCitadelMaterial alanlarına bağlanır. Bu dosya yoksa veya UE importer yoksa 3D greybox devrede kalır; sahte model yaratılmaz. Import sonrası Unreal'da farklı ölçek gerekiyorsa aktör ImportedCitadel bileşeni üzerinden ölçülmelidir. Bu süreç Mac'te hâlâ test bekliyor.
+
+## Doğrulanan başarı (17 Kasım 2026)
+Gerçek Apple ARM64 Unreal 5.8 Mac Editor C++ derlemesi kullanıcı tarafından doğrulandı: `built: true`, `exit_code: 0`, `Result: Succeeded`. İlgili GitHub commit: `bc232f84d5b484448945dc8d4f73080c010dd6c8`. Bu doğrulama 3D sahnenin görsel kalite onayı veya Editor Python harita oluşturma testinin geçtiği anlamına gelmez.
+
+### Sıradaki güvenli sıra
+1. Editor tamamen kapalıyken Mac terminalden `open -a "/Users/macbook/Documents/UE_5.8/Engine/Binaries/Mac/UnrealEditor.app" --args "$PWD/mobile/StarfortUnreal/StarfortUnreal.uproject"` ile uygulamayı açın (öncesinde `cd ~/Downloads/starfort-beta`).
+2. `Play` ile kodun kendi oluşturduğu runtime 3D kale/krallığa giriş ekranını kontrol edin, kamera görüntüsünü kaydedin.
+3. Kaleyi GLB olarak kullanacaksanız `STARFORT_OriginalCitadel_Combined_v1.glb` dosyasını Mac'in `~/Downloads/` klasörüne indirin; henüz orada olduğu doğrulanmadı.
+4. PIE'yi durdurun ve Tools → Execute Python Script ile `mobile/StarfortUnreal/Tools/author_ultra_login_level_v99.py` komut dosyasını çalıştırın. Unreal PythonScriptPlugin gerekebilir. Yeni map ve materyal varlıklarının gerçek sonucu ancak Editor log ve Content Browser ile doğrulanabilir.
+5. Otomatik harita scripti başarısız olursa hata mesajını gönderin; Python API sürümüne göre düzeltilebilir. Script önceki map ayarını otomatik yedeklemeye çalışır, fakat yine de Editor'da açık işleri kaydedin.

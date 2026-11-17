@@ -108,3 +108,10 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - User's real Mac UBT log at StarfortVillageController.cpp:98 reports -Werror,-Wunreachable-code-loop-increment: one-iteration TActorIterator loop breaks before increment.
 - Replaced the loop with a one-shot TActorIterator instance plus if(ExistingStage), preserving existing artist-authored cinematic stage selection, while still spawning a stage only if none was placed.
 - Updated v99 static regression check to reject the old loop. Real Mac UBT must be rerun by user. The missing GLB in Downloads is a separate file-transfer issue and does not cause this C++ compiler diagnostic.
+
+## REAL Unreal Engine 5.8 Mac C++ compilation — SUCCESS (2026-11-17)
+- The user ran branch commit bc232f84d5b484448945dc8d4f73080c010dd6c8 through /Users/macbook/Documents/UE_5.8/Engine/Build/BatchFiles/Mac/Build.sh using mac_ue_bridge.py.
+- Verified by user's terminal output: `built: true`, `exit_code: 0`, and native UnrealBuildTool log line 33 `Result: Succeeded`. Host: MacBook M1/arm64; Xcode 26.0.
+- GitHub Starfort QA and Native Mobile Source QA also passed for that commit. This attests to the **UE Editor C++ target** compilation; does not establish a launch-ready mobile build or a polished 3D production asset.
+- Next user-device checks: fully close/relaunch UnrealEditor, Play on Entry for transparent login CTA/camera and runtime greybox fortress; then run Tools/author_ultra_login_level_v99.py in the real Unreal Editor to create /Game/STARFORT/Login/L_StarfortLogin and optional GLB import. Do not confuse downloaded GLB with GitHub checkout: download must be saved to Mac Downloads manually.
+- NOT YET VERIFIED: Editor Python runtime execution, saved .umap/.uasset creation, actual GLB import, visual result, login backend flow and physical iOS/Android gameplay.
