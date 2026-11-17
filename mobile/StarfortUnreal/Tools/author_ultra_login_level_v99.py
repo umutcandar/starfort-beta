@@ -113,7 +113,7 @@ def set_local_boot_map():
 
 
 def main():
-    if not unreal.SystemLibrary.is_editor():
+    if not unreal.is_editor():
         raise RuntimeError("Only safe to run in the Unreal Editor")
     stone, stone_new = make_material("M_StarfortMoonstone",
         (.055, .072, .12, 1), .88)
