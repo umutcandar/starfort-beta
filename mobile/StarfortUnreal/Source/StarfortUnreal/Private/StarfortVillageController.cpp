@@ -101,7 +101,7 @@ void AStarfortVillageController::BeginCinematicLogin()
   StageType,FVector::ZeroVector,FRotator::ZeroRotator,Params);
  if(ActiveLoginStage)
  {
-  // View target switches to the real Unreal camera, with no WebView/image UI.
+  // Use the actual Unreal UCameraComponent as the view target.
   SetViewTargetWithBlend(ActiveLoginStage,0.80f,VTBlend_Cubic);
   UE_LOG(LogTemp,Log,TEXT("STARFORT: cinematic Unreal login world active"));
  }
