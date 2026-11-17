@@ -51,3 +51,26 @@ Runner kurmadan önce depoyu GitHub `Settings → General → Danger Zone → Ch
 - UE5.8 proje kodu ve Mac Build.sh teşhisi hazırlanmış.
 - Yalnız statik/bağımsız kaynak testleri çalıştı; gerçek Mac C++ derlemesi henüz çalıştırılmadı.
 - Hiçbir otomatik dağıtım, APK/IPA veya üretim yayını yapılmadı.
+
+## GERÇEK DERLEME BAŞARILI — 17 Kasım 2026
+
+Kullanıcının MacBook M1 / Xcode 26.0 / UE5.8 üzerinde aldığı son gerçek çıktı: `built: true`, `exit_code: 0`, UBT `Result: Succeeded`. Bu GitHub CI simülasyonu değil, yerel gerçek Unreal C++ Editor target derlemesidir.
+
+### İlk Editor açılış testi
+
+Terminal'de:
+
+```bash
+cd ~/Downloads/starfort-beta
+open -a "/Users/macbook/Documents/UE_5.8/Engine/Binaries/Mac/UnrealEditor.app" --args "$PWD/mobile/StarfortUnreal/StarfortUnreal.uproject" -log
+```
+
+Editor açıldığında `Content Browser` içerisinde varlık bulunmaması şaşırtıcı değil: projenin Git deposunda henüz gerçek `.uasset` veya `.umap` varlıklar yok. `DefaultEngine.ini` her iki harita için `/Engine/Maps/Entry` kullanıyor. `Play` (PIE) sonrası giriş widget'ı, C++ `StarfortVillageGameMode` ve `StarfortVillageController` tarafından açılmalıdır. Mevcut kod, misafir akışına geçmiyor. Giriş olursa server-backed village UI'ı kontrol edin. Gerçek kahraman/harita modelleri henüz entegre edilmedi.
+
+Eğer Editor veya PIE hata verirse ekran görüntüsü ve en son Editor logunun son 100 satırı gerekebilir:
+
+```bash
+find "$HOME/Downloads/starfort-beta/mobile/StarfortUnreal/Saved/Logs" -maxdepth 1 -name '*.log' -print
+```
+
+Unreal C++ Editor hedefinin başarılı derlenmesi, bir mobil APK/IPA, gerçek cihaz oynanışı veya orijinal 3D görsel tamamlanması değildir.

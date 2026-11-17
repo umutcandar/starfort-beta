@@ -75,3 +75,11 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - After v95, confirmed UUniformGridSlot has no SetPadding method in UE5.8; previous fix only added the slot header and was insufficient. Changed BagScreen to set UUniformGridPanel::SetSlotPadding(FMargin(3.f,3.f)) and AddChildToUniformGrid without the invalid call. Four-column item grid and authenticated inventory remain unchanged.
 - Scanned all 32 native headers and found a remaining incorrect class FStreamableHandle declaration in StarfortBattleStage.h; changed to struct FStreamableHandle to match the Unreal StreamableManager type. HeroScreen.h already includes the full engine declaration.
 - Added v96 regressions and corrected v95 assertions. No real Unreal UBT/UHT build done here; only user can run the Mac build and provide new compiler diagnostics.
+
+## Real Mac UE 5.8 Editor target build — CONFIRMED by user log (2026-11-17)
+- MacBook Air M1 (ARM64), Xcode 26.0, local UE5.8 installed at /Users/macbook/Documents/UE_5.8.
+- Exact user-local Build.sh runner: `python3 mobile/StarfortUnreal/Tools/mac_ue_bridge.py build --ue-root "/Users/macbook/Documents/UE_5.8"`.
+- The user pasted the actual tool output: `built: true`, `exit_code: 0`; Unreal build log contains `Result: Succeeded` at line 39. This attests to native StarfortUnrealEditor Mac Development target compilation at branch commit ba35a35bf3805ef75a20da6d38db6c2511f03ebc.
+- IMPORTANT: Editor GUI startup, PIE login, village UI, real 3D stage and mobile packaging/device test have NOT been verified yet.
+- Current DefaultEngine.ini uses `/Engine/Maps/Entry` for both EditorStartupMap and GameDefaultMap; the git tree has NO native .umap/.uasset content. Blank geometry in the Editor is therefore expected; do not claim original 3D heroes are loaded.
+- Next milestone: launch local UE Editor GUI, press Play (PIE), check whether login widget appears and authenticated flow works. Capture screenshot and `Saved/Logs/StarfortUnreal.log` if not.
