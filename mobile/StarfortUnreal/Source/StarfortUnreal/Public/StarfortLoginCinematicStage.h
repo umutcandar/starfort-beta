@@ -1,0 +1,85 @@
+#pragma once
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "StarfortLoginCinematicStage.generated.h"
+
+class USceneComponent;
+class UCameraComponent;
+class USkeletalMeshComponent;
+class UStaticMeshComponent;
+class UStaticMesh;
+class USoundBase;
+class UAudioComponent;
+class UDirectionalLightComponent;
+class UPointLightComponent;
+class UExponentialHeightFogComponent;
+class UStarfortHeroCombatAsset;
+
+/**
+ * Art-independent FIRST-PASS 3D environment behind the native login HUD.
+ * Replaces a blank Entry world. Its modular cube fortress is a greybox,
+ * NOT approved production art. Original asset-driven meshes can replace it.
+ * No client session, inventory, currency or quest logic lives here.
+ */
+UCLASS(Blueprintable)
+class STARFORTUNREAL_API AStarfortLoginCinematicStage : public AActor
+{
+ GENERATED_BODY()
+public:
+ AStarfortLoginCinematicStage();
+ virtual void BeginPlay() override;
+ virtual void Tick(float DeltaSeconds) override;
+ virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+ UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="STARFORT|Login|Camera")
+ TObjectPtr<UCameraComponent> CinematicCamera;
+
+ /** Assign only an original reviewed hero asset from the Unreal Editor. */
+ UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="STARFORT|Login|Art")
+ TObjectPtr<UStarfortHeroCombatAsset> ApprovedFeaturedHero;
+
+ /** Optional licensed/original looping audio; never auto-fetch remote media. */
+ UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="STARFORT|Login|Audio")
+ TObjectPtr<USoundBase> OpeningAmbience;
+
+ UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="STARFORT|Login|Quality")
+ bool bEnableGreyboxFortress=true;
+
+ UFUNCTION(BlueprintPure, Category="STARFORT|Login|Art")
+ bool HasApprovedHero() const;
+
+private:
+ UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
+ TObjectPtr<USceneComponent> StageRoot;
+ UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
+ TObjectPtr<USkeletalMeshComponent> FeaturedHero;
+ UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
+ TObjectPtr<UStaticMeshComponent> FeaturedWeapon;
+ UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
+ TObjectPtr<UDirectionalLightComponent> MoonLight;
+ UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
+ TObjectPtr<UPointLightComponent> TorchLightA;
+ UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
+ TObjectPtr<UPointLightComponent> TorchLightB;
+ UPROPERTY(VisibleAnywhere, Category="STARFORT|Login")
+ TObjectPtr<UExponentialHeightFogComponent> GroundFog;
+ UPROPERTY(Transient)
+ TObjectPtr<UAudioComponent> PlayingAmbience;
+ UPROPERTY(Transient)
+ TArray<TObjectPtr<UStaticMeshComponent>> BuiltArchitecture;
+ UPROPERTY(Transient)
+ TObjectPtr<UStaticMeshComponent> BannerA;
+ UPROPERTY(Transient)
+ TObjectPtr<UStaticMeshComponent> BannerB;
+ UPROPERTY(Transient)
+ TObjectPtr<UStaticMesh> CubePrimitive;
+ UPROPERTY(Transient)
+ TObjectPtr<UStaticMesh> CylinderPrimitive;
+
+ float Elapsed=0.f;
+ FVector CameraOrigin=FVector::ZeroVector;
+ FRotator CameraRotation=FRotator::ZeroRotator;
+ void BuildFortress();
+ UStaticMeshComponent* Part(const TCHAR* Label,const FVector& Pos,
+  const FVector& Scale,bool bCylinder=false);
+};
