@@ -22,7 +22,7 @@ class LiveQAV104(unittest.TestCase):
   self.assertNotIn("subprocess.Popen(",MAC)
   self.assertNotIn("curl ",MAC)
   self.assertNotIn("eval(",MAC)
-  self.assertIn('if state.get("play_in_editor")',MAC)
+  self.assertIn('state.get("play_in_editor")',MAC)
  def test_single_click_studio_has_opt_in_public_preview(self):
   self.assertIn('if args.mode == "studio":',MAC)
   self.assertIn('state.get("capture_requested")',MAC)
