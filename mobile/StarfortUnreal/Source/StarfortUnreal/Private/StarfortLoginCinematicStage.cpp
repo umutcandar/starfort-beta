@@ -86,28 +86,45 @@ bool AStarfortLoginCinematicStage::HasApprovedHero() const
  return ApprovedFeaturedHero && ApprovedFeaturedHero->HasProductionReadyGeometryAndMotion();
 }
 
+void AStarfortLoginCinematicStage::SyncImportedCitadelMesh()
+{
+ if(!ImportedCitadel) return;
+
+ if(!ImportedCitadelMesh)
+ {
+  ImportedCitadel->SetStaticMesh(nullptr);
+  ImportedCitadel->SetVisibility(false);
+  return; // No authored model yet: runtime can use the greybox fortress.
+ }
+
+ // Editor construction MUST render the real imported asset, not only BeginPlay.
+ ImportedCitadel->SetStaticMesh(ImportedCitadelMesh);
+ // GLB units may import at 100x; fit the model's longest axis to 3446 cm.
+ const FVector BoundsSize=ImportedCitadelMesh->GetBoundingBox().GetSize();
+ const double LongestAxis=FMath::Max3(BoundsSize.X,BoundsSize.Y,BoundsSize.Z);
+ if(LongestAxis>1.0)
+ {
+  const double ArtScale=FMath::Clamp(3446.0/LongestAxis,0.001,100.0);
+  ImportedCitadel->SetRelativeScale3D(FVector(ArtScale));
+ }
+ else
+  ImportedCitadel->SetRelativeScale3D(FVector::OneVector);
+ if(ImportedCitadelMaterial)
+  ImportedCitadel->SetMaterial(0,ImportedCitadelMaterial);
+ ImportedCitadel->SetVisibility(true);
+}
+
+void AStarfortLoginCinematicStage::OnConstruction(const FTransform& Transform)
+{
+ Super::OnConstruction(Transform);
+ SyncImportedCitadelMesh();
+}
+
 void AStarfortLoginCinematicStage::BeginPlay()
 {
  Super::BeginPlay();
- if(ImportedCitadelMesh)
- {
-  // Original imported static mesh replaces temporary primitive architecture.
-  ImportedCitadel->SetStaticMesh(ImportedCitadelMesh);
-  // glTF/GLB commonly imports at 100x source units (metres -> centimetres).
-  // Normalize the imported mesh width to the intended ~34 metre mobile stage
-  // while remaining robust to older files authored with centimetre coordinates.
-  const FVector BoundsSize=ImportedCitadelMesh->GetBoundingBox().GetSize();
-  const double LongestAxis=FMath::Max3(BoundsSize.X,BoundsSize.Y,BoundsSize.Z);
-  if(LongestAxis>1.0)
-  {
-   const double ArtScale=FMath::Clamp(3446.0/LongestAxis,0.001,100.0);
-   ImportedCitadel->SetRelativeScale3D(FVector(ArtScale));
-  }
-  if(ImportedCitadelMaterial)
-   ImportedCitadel->SetMaterial(0,ImportedCitadelMaterial);
-  ImportedCitadel->SetVisibility(true);
- }
- else if(bEnableGreyboxFortress)
+ SyncImportedCitadelMesh();
+ if(!ImportedCitadelMesh && bEnableGreyboxFortress)
   BuildFortress();
  if(HasApprovedHero())
  {

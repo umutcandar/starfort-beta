@@ -130,3 +130,9 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - Inspected original GLB geometry in the runtime: 1 combined mesh, 3,880 vertices, 6,376 triangles; source extents 3446×2943×2537 in original authoring coordinates (too large if interpreted as glTF metres).
 - Created a corrected, vertex-colored GLB with glTF metre-space extents 34.46×29.43×25.37 m; model is still an original low-poly castle, NOT a finished premium UE environment.
 - C++ now normalizes imported mesh longest axis to ~3446 cm using UStaticMesh::GetBoundingBox/GetSize and bounded component scale. Source contract test added. Only Mac UE compiler/PIE can validate new source; no successful physical import claimed.
+
+## UE Editor castle preview fix (2026-11-17)
+- User screenshot shows L_StarfortLogin map loaded and native stage actor present, but editor camera preview is empty; not evidence of a failed compiler or absent 3D asset.
+- Identified Unreal C++ construction/runtime bug: ImportedCitadel visibility and SetStaticMesh happened only in BeginPlay, with constructor SetVisibility(false). Added OnConstruction + shared SyncImportedCitadelMesh to preview the configured static mesh in Editor and maintain same runtime semantics.
+- Fixed Python importer existing-static-mesh lookup to scan recursively, matching UE Interchange's nested .../StaticMeshes folders shown in screenshot. Preserve existing asset, avoid repeat import.
+- On Mac: Save All before closing unsaved L_StarfortLogin*, pull/compile/reopen, verify actor ImportedCitadelMesh is populated, camera preview and PIE. Source CI is NOT Mac UBT or visual verification.

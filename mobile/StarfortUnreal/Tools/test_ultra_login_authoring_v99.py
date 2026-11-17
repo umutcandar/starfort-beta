@@ -28,6 +28,7 @@ class AuthorUltraLoginV99(unittest.TestCase):
    "unreal.EditorActorSubsystem",
    "unreal.EditorAssetLibrary.does_asset_exist(",
    "unreal.EditorAssetLibrary.list_assets(",
+   "recursive=True, include_folder=False",
    "for path in unreal.EditorAssetLibrary.list_assets(",
    "spawn_actor_from_class(",
    'actor.set_editor_property("fortress_material"',
@@ -50,6 +51,11 @@ class AuthorUltraLoginV99(unittest.TestCase):
    self.assertIn(marker,h)
    self.assertIn(marker,c)
   self.assertIn("HasProductionReadyGeometryAndMotion()",c)
+  self.assertIn("void AStarfortLoginCinematicStage::OnConstruction(",c)
+  self.assertIn("SyncImportedCitadelMesh();",c)
+  self.assertIn("ImportedCitadel->SetVisibility(true);",c)
+  self.assertIn("ImportedCitadel->SetVisibility(false);",c)
+  self.assertIn("virtual void OnConstruction(const FTransform& Transform) override;",h)
  def test_no_duplicate_stage_when_real_login_level_exists(self):
   s=(SRC/"Private/StarfortVillageController.cpp").read_text(encoding="utf-8")
   self.assertIn("TActorIterator<AStarfortLoginCinematicStage> ExistingStage(GetWorld());",s)

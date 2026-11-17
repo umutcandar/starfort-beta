@@ -92,8 +92,10 @@ def ensure_original_citadel_mesh():
 
     # UE Interchange may import the mesh under an engine-assigned asset name.
     # Search existing imported meshes before starting a duplicate GLB import.
+    # UE Interchange stores glTF StaticMeshes in nested folders such as
+    # .../Meshes/STARFORT_OriginalCitadel_Combined_v1/StaticMeshes.
     for path in unreal.EditorAssetLibrary.list_assets(
-        "/Game/STARFORT/Login/Meshes", recursive=False, include_folder=False
+        "/Game/STARFORT/Login/Meshes", recursive=True, include_folder=False
     ):
         if "STARFORT_OriginalCitadel" not in str(path):
             continue

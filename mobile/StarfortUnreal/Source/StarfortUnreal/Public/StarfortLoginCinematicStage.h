@@ -28,6 +28,7 @@ class STARFORTUNREAL_API AStarfortLoginCinematicStage : public AActor
  GENERATED_BODY()
 public:
  AStarfortLoginCinematicStage();
+ virtual void OnConstruction(const FTransform& Transform) override;
  virtual void BeginPlay() override;
  virtual void Tick(float DeltaSeconds) override;
  virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -96,6 +97,7 @@ private:
  float Elapsed=0.f;
  FVector CameraOrigin=FVector::ZeroVector;
  FRotator CameraRotation=FRotator::ZeroRotator;
+ void SyncImportedCitadelMesh();
  void BuildFortress();
  UStaticMeshComponent* Part(const TCHAR* Label,const FVector& Pos,
   const FVector& Scale,bool bCylinder=false);
