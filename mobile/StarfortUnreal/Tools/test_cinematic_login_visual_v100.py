@@ -40,7 +40,8 @@ class NativeLoginVisualV100(unittest.TestCase):
   self.assertIn('CinematicCamera->SetFieldOfView(58.f)',STAGE)
   self.assertNotIn('CameraOrigin=FVector(-2340.f,-1510.f,1060.f)',STAGE)
  def test_glb_import_is_scale_normalized_for_ue_centimeters(self):
-  self.assertIn("ImportedCitadelMesh->GetBoundingBox().GetSize()",STAGE)
+  self.assertIn("const FBox LocalBounds=ImportedCitadelMesh->GetBoundingBox();",STAGE)
+  self.assertIn("const FVector BoundsSize=LocalBounds.GetSize();",STAGE)
   self.assertIn("FMath::Clamp(3446.0/LongestAxis,0.001,100.0)",STAGE)
   self.assertIn("ImportedCitadel->SetRelativeScale3D(FVector(ArtScale));",STAGE)
   self.assertIn("const FBox LocalBounds=ImportedCitadelMesh->GetBoundingBox();",STAGE)
