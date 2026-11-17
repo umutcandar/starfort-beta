@@ -701,9 +701,11 @@ class NativeSmoke(unittest.TestCase):
                  "ActiveRoomId!=PlaybackRoom",
                  "LastConfirmedTurn!=PlaybackTurn",
                  "FTimerDelegate::CreateUObject(this",
-                 "VerifiedDamage>0","0.28f,false",
+                 "VerifiedDamage>0","ImpactDelaySeconds,false",
                  "ConfirmedImpactFX->Activate(true)"]:
    self.assertIn(marker,stage)
+  self.assertIn("LongestPlayedAttackSeconds*0.42f",stage)
+  self.assertNotIn("VerifiedImpactTimer,HitDelegate,0.28f,false",stage)
   # The hit must be scheduled, not fired immediately on the input command.
   start=stage.index("void AStarfortBattleStage::PlayVerifiedPartyAction(")
   end=stage.index("void AStarfortBattleStage::PresentVerifiedTurn(",start)
