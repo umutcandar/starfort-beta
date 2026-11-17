@@ -188,7 +188,8 @@ bool FStarfortNativeWidgetFactory::BuildLogin(UStarfortLoginScreen* Screen)
  auto Text=[Tree](const FString& S,int32 Pt,FLinearColor Color)
  {
   UTextBlock* Out=NativeUI::MakeText(Tree,S,Pt,Color);
-  Out->SetAutoWrapText(true);
+  // Short display text must NOT auto-wrap inside a canvas overlay.
+  Out->SetAutoWrapText(false);
   return Out;
  };
  auto Border=[Tree](FLinearColor Color)
@@ -212,18 +213,25 @@ bool FStarfortNativeWidgetFactory::BuildLogin(UStarfortLoginScreen* Screen)
  Design->SetContent(Layers);
 
  // Readable cinematic typography, never a huge opaque fullscreen menu.
+ USizeBox* BrandWidth=Tree->ConstructWidget<USizeBox>();
+ BrandWidth->SetWidthOverride(675.f);
+ UOverlaySlot* BrandSlot=Layers->AddChildToOverlay(BrandWidth);
  UVerticalBox* Brand=Tree->ConstructWidget<UVerticalBox>();
- UOverlaySlot* BrandSlot=Layers->AddChildToOverlay(Brand);
+ BrandWidth->SetContent(Brand);
  BrandSlot->SetHorizontalAlignment(HAlign_Left);
  BrandSlot->SetVerticalAlignment(VAlign_Top);
  BrandSlot->SetPadding(FMargin(92.f,70.f,0.f,0.f));
- Brand->AddChildToVerticalBox(Text(TEXT("S T A R F O R T"),39,Gold));
+ // No manual letter spacing: auto-wrap previously split the final T.
+ Brand->AddChildToVerticalBox(Text(TEXT("STARFORT"),46,Gold));
  Brand->AddChildToVerticalBox(Text(TEXT("KRALLIKLARIN ÇAĞI"),18,White))
   ->SetPadding(FMargin(2.f,2.f,0.f,0.f));
 
- UBorder* Teaser=Border(FLinearColor(.012f,.023f,.047f,.72f));
+ USizeBox* TeaserWidth=Tree->ConstructWidget<USizeBox>();
+ TeaserWidth->SetWidthOverride(615.f);
+ UOverlaySlot* TeaserSlot=Layers->AddChildToOverlay(TeaserWidth);
+ UBorder* Teaser=Border(FLinearColor(.012f,.023f,.047f,.74f));
  Teaser->SetPadding(FMargin(25.f,19.f));
- UOverlaySlot* TeaserSlot=Layers->AddChildToOverlay(Teaser);
+ TeaserWidth->SetContent(Teaser);
  TeaserSlot->SetHorizontalAlignment(HAlign_Left);
  TeaserSlot->SetVerticalAlignment(VAlign_Bottom);
  TeaserSlot->SetPadding(FMargin(75.f,0.f,0.f,74.f));
@@ -231,7 +239,7 @@ bool FStarfortNativeWidgetFactory::BuildLogin(UStarfortLoginScreen* Screen)
  Teaser->SetContent(TeaserContent);
  TeaserContent->AddChildToVerticalBox(Text(TEXT("TAHT SENİ BEKLİYOR"),41,White));
  TeaserContent->AddChildToVerticalBox(Text(
-  TEXT("Ordunu kur. Kahramanlarını yönet. Krallığını koru."),18,Muted))
+  TEXT("Ordunu kur. Kahramanlarını yönet. Tahtını koru."),18,Muted))
   ->SetPadding(FMargin(0.f,7.f,0.f,0.f));
 
  // One invitation to enter. Native login fields are hidden until the player
@@ -245,15 +253,15 @@ bool FStarfortNativeWidgetFactory::BuildLogin(UStarfortLoginScreen* Screen)
  EnterSlot->SetPadding(FMargin(0.f,0.f,92.f,87.f));
  Screen->BtnOpenLogin=Tree->ConstructWidget<UButton>();
  Screen->BtnOpenLogin->SetBackgroundColor(Gold);
- UTextBlock* EnterText=Text(TEXT("KRALLIĞA GİR      →"),25,Midnight);
+ UTextBlock* EnterText=Text(TEXT("KRALLIĞA GİR"),25,Midnight);
  EnterText->SetJustification(ETextJustify::Center);
  Screen->BtnOpenLogin->AddChild(EnterText);
  EnterSize->SetContent(Screen->BtnOpenLogin.Get());
 
  // Compact login panel is right aligned and overlays only a portion of 3D.
  USizeBox* FormSize=Tree->ConstructWidget<USizeBox>();
- FormSize->SetWidthOverride(490.f);
- FormSize->SetHeightOverride(615.f);
+ FormSize->SetWidthOverride(515.f);
+ FormSize->SetHeightOverride(700.f);
  FormSize->SetVisibility(ESlateVisibility::Collapsed);
  Screen->LoginFormPanel=FormSize;
  UOverlaySlot* FormSlot=Layers->AddChildToOverlay(FormSize);
@@ -285,9 +293,12 @@ bool FStarfortNativeWidgetFactory::BuildLogin(UStarfortLoginScreen* Screen)
  Heading->AddChildToHorizontalBox(CloseSize);
  Form->AddChildToVerticalBox(Text(TEXT("Krallığına dön."),36,White))
   ->SetPadding(FMargin(0.f,18.f,0.f,8.f));
- Form->AddChildToVerticalBox(Text(
-  TEXT("Hesabınla giriş yaparak kaldığın yerden devam et."),17,Muted))
-  ->SetPadding(FMargin(0.f,0.f,0.f,27.f));
+ UTextBlock* Subtitle=Text(
+  TEXT("Hesabınla giriş yap ve kaldığın yerden devam et."),17,Muted);
+ Subtitle->SetAutoWrapText(true);
+ Subtitle->SetWrapTextAt(420.f);
+ Form->AddChildToVerticalBox(Subtitle)
+  ->SetPadding(FMargin(0.f,0.f,0.f,22.f));
 
  auto Field=[Tree,Form,&Text](TObjectPtr<UEditableTextBox>& Input,
   const FString& Label,const FString& Hint,bool bPassword)
@@ -319,16 +330,18 @@ bool FStarfortNativeWidgetFactory::BuildLogin(UStarfortLoginScreen* Screen)
  ActionSize->SetHeightOverride(68.f);
  Screen->BtnSignIn=Tree->ConstructWidget<UButton>();
  Screen->BtnSignIn->SetBackgroundColor(Gold);
- UTextBlock* ActionText=Text(TEXT("HESABIMA GİR     →"),22,Midnight);
+ UTextBlock* ActionText=Text(TEXT("HESABIMA GİR"),22,Midnight);
  ActionText->SetJustification(ETextJustify::Center);
  Screen->BtnSignIn->AddChild(ActionText);
  ActionSize->SetContent(Screen->BtnSignIn.Get());
  Form->AddChildToVerticalBox(ActionSize)->SetPadding(FMargin(0.f,4.f,0.f,17.f));
 
  Screen->TxtAuthStatus=Text(TEXT(""),16,FLinearColor(.61f,.82f,.88f,1.f));
+ Screen->TxtAuthStatus->SetAutoWrapText(true);
+ Screen->TxtAuthStatus->SetWrapTextAt(430.f);
  Form->AddChildToVerticalBox(Screen->TxtAuthStatus);
- Form->AddChildToVerticalBox(Text(TEXT("MİSAFİR MODU YOK  •  VERİLERİN SUNUCUDA"),13,Muted))
-  ->SetPadding(FMargin(0.f,20.f,0.f,0.f));
+ Form->AddChildToVerticalBox(Text(TEXT("İLERLEMEN GÜVENLİ HESABINDA SAKLANIR"),13,Muted))
+  ->SetPadding(FMargin(0.f,16.f,0.f,0.f));
 
  Tree->RootWidget=Root;
  return true;

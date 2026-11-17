@@ -115,3 +115,9 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - GitHub Starfort QA and Native Mobile Source QA also passed for that commit. This attests to the **UE Editor C++ target** compilation; does not establish a launch-ready mobile build or a polished 3D production asset.
 - Next user-device checks: fully close/relaunch UnrealEditor, Play on Entry for transparent login CTA/camera and runtime greybox fortress; then run Tools/author_ultra_login_level_v99.py in the real Unreal Editor to create /Game/STARFORT/Login/L_StarfortLogin and optional GLB import. Do not confuse downloaded GLB with GitHub checkout: download must be saved to Mac Downloads manually.
 - NOT YET VERIFIED: Editor Python runtime execution, saved .umap/.uasset creation, actual GLB import, visual result, login backend flow and physical iOS/Android gameplay.
+
+## v100 visual screenshot corrections (2026-11-17)
+- User's real PIE screenshots show 3D blockout working and login reveal works, but STARFORT title wraps its final T, CTA arrow wraps, footer is cropped, and architecture is visually nonproduction geometric primitives.
+- Changed native UMG login labels to no auto-wrap by default, explicit brand and teaser widths, removed arrow from CTA/sign-in labels, increased form height/width and allowed explicit width-limited wrapping only for longer status/subtitle. Existing account-only auth untouched.
+- Widened cinematic camera position and FOV to show the fortress silhouette instead of extreme close-up of walls/towers. New UE5.8 Mac UBT/PIE validation required for THIS code.
+- Original GLB still not verified as installed in local Unreal Editor. 3D blockout is NOT a premium art asset; production-quality output depends on actual authored materials, geometry and character rigs.

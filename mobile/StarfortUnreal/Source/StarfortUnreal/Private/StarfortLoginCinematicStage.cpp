@@ -23,11 +23,12 @@ AStarfortLoginCinematicStage::AStarfortLoginCinematicStage()
  RootComponent=StageRoot;
  CinematicCamera=CreateDefaultSubobject<UCameraComponent>(TEXT("LoginCinematicCamera"));
  CinematicCamera->SetupAttachment(StageRoot);
- CameraOrigin=FVector(-2340.f,-1510.f,1060.f);
- CameraRotation=(FVector(250.f,0.f,410.f)-CameraOrigin).Rotation();
+ // Establish the whole citadel silhouette rather than cropping battlements.
+ CameraOrigin=FVector(-4200.f,-2950.f,1850.f);
+ CameraRotation=(FVector(220.f,0.f,800.f)-CameraOrigin).Rotation();
  CinematicCamera->SetRelativeLocation(CameraOrigin);
  CinematicCamera->SetRelativeRotation(CameraRotation);
- CinematicCamera->SetFieldOfView(51.f);
+ CinematicCamera->SetFieldOfView(58.f);
 
  ImportedCitadel=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OriginalCitadel"));
  ImportedCitadel->SetupAttachment(StageRoot);
