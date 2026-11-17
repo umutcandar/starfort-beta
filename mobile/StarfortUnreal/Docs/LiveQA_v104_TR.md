@@ -81,3 +81,7 @@ servisi değildir. Bağlantı **yalnız aynı Mac'te** çalışır.
 
 ## v104.1 Atmosfer geçişi
 `premium` komutu artık yalnız taşı aydınlatmıyor: mevcut 3D kaleye `STARFORT • PREMIUM SKY` ve `FILL` atmosfer aktörleri, uzakta büyük koyu arazi düzlemi ve kapı girişinin iki tarafına ek gölgesiz sıcak tonlu ışıklar ekliyor. Bunlar Unreal Editor'da native Actor/Material varlıkları olarak yerleştirilir; aynı komut tekrar çalıştırılırsa isimleri eşleşenleri yeniden eklemez. Performans için dinamik gölgeler kapalı tutulur; gerçek PBR taş dokusu ve sinematik kahraman üretimi ise ayrı sanat işi olarak açık kalıyor.
+
+
+## Tek tiklama — STARFORT_LIVE_STUDIO.command
+MacBook'ta `mobile/StarfortUnreal/Tools/STARFORT_LIVE_STUDIO.command` dosyasina cift tikla. Bu baslatici yerel degisiklikleri silmeden `git pull --ff-only` dener, bir defalik premium materyal/atmosfer uyarlamasini Unreal Editor acikken uygular ve araliklarla art-only preview alir. Baslangicta kamuya acik GitHub QA dalinda 3D sanat goruntusu paylasmak isteyip istemedigini sorar. Hayir dersen fotograf yalniz Mac'te kalir; evet dersen Ben GitHub connector ile bu onizlemeleri sen tekrar screenshot yapistirmadan gorebilirim. Ilk kullanimda Project Settings > Python > Enable Remote Execution etkin olmali. Terminal acik kaldigi surece izleme devam eder, Ctrl+C ile durdurulur. Urun kendiliginden Mac'in masaustunu kontrol etmez veya oyuncu giris formlarini paylasmaz.

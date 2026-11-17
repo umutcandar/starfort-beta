@@ -170,3 +170,5 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - Local screenshot upload is OFF by default. Explicit --public-preview publishes only EDITOR ART snapshot into separate GitHub QA branch; watch mode can periodically refresh while user keeps local Terminal running. Repo is public; warn prior to use. No user screenshots automatically available in this chat until user runs it.
 - Static Python AST and privacy/idempotency tests added to CI; actual Mac UE5.8 remote connection, Editor Python scene operations and screenshot export are NOT yet verified.
 - v104 live premium Editor pass expanded to create a dusk-terrain plane and two non-shadowcasting warm entrance braziers, alongside material and SkyAtmosphere/SkyLight, without recompilation or reimport. All actor placements are idempotent. Still not physically tested in a real Mac Editor.
+
+- Added executable Mac STARFORT_LIVE_STUDIO.command with one-time opt-in for public art-only QA branch, studio mode polished scene once then watched Editor for screenshots without C++ restart. No Mac runtime proof yet.

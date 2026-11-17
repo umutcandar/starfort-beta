@@ -5,6 +5,7 @@ import pathlib
 import unittest
 
 TOOLS=pathlib.Path(__file__).resolve().parent
+STUDIO=(TOOLS/'STARFORT_LIVE_STUDIO.command').read_text(encoding='utf-8')
 MAC=(TOOLS/"mac_live_qa_v104.py").read_text(encoding="utf-8")
 EDITOR=(TOOLS/"starfort_editor_live_v104.py").read_text(encoding="utf-8")
 
@@ -22,6 +23,15 @@ class LiveQAV104(unittest.TestCase):
   self.assertNotIn("curl ",MAC)
   self.assertNotIn("eval(",MAC)
   self.assertIn('if state.get("play_in_editor")',MAC)
+ def test_single_click_studio_has_opt_in_public_preview(self):
+  self.assertIn('if args.mode == "studio":',MAC)
+  self.assertIn('capture_once("premium", args)',MAC)
+  self.assertIn('read -r -p',STUDIO)
+  self.assertIn('ARGS+=("--public-preview")',STUDIO)
+  self.assertIn('git pull --ff-only',STUDIO)
+  self.assertNotIn('git reset --hard',STUDIO)
+  self.assertNotIn('git push --force',STUDIO)
+
  def test_screenshots_refuse_pie_and_other_levels(self):
   for text in ("is_in_play_in_editor()",
    "if report[\"play_in_editor\"]",
