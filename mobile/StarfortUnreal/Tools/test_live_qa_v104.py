@@ -15,7 +15,7 @@ class LiveQAV104(unittest.TestCase):
  def test_local_epic_client_only_and_explicit_publication(self):
   for text in ("remote_execution.RemoteExecution()",
    "open_command_connection", "starfortunreal", "exec_mode=\"ExecuteFile\"",
-   'mode="inspect"', "mode == \"watch\"", "--public-preview",
+   '"inspect", "capture", "premium", "watch"', 'args.mode != "watch"', "--public-preview",
    "QA_BRANCH = \"qa/starfort-editor-preview\""):
    self.assertIn(text,MAC,text)
   self.assertNotIn("subprocess.Popen(",MAC)
