@@ -32,3 +32,9 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - Added equipped item copy-count guard against inventory before any 3D mesh is streamed.
 - Allowed visually identical weapons only when both heroes have the SAME authenticated equipped item ID; distinct hero body/innate art quality gates remain enforced.
 - See mobile/StarfortUnreal/Docs/Native3DGearSetup_v91_TR.md for editor-only art gates.
+
+## Mac bridge (2026-11-17)
+- Added mac_ue_bridge.py to diagnose installed UE 5.8 + Xcode or to compile real StarfortUnrealEditor Mac Development locally.
+- Safety: never automatically packages or publishes; `diagnose` never runs Unreal.
+- A user-registered GitHub self-hosted runner or a local Mac Terminal invocation is still required for the real compile.
+- Do not claim a successful UE Editor build from source-only CI.
