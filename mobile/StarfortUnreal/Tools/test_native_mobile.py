@@ -286,7 +286,7 @@ class NativeSmoke(unittest.TestCase):
   for value in ['TEXT("wave")','TEXT("waves")','TEXT("waveTurn")',
                 'TEXT("enemyIntent")','TEXT("cooldowns")','TEXT("lastRallyTurn")']:
    self.assertIn(value,online_cpp)
-  for safety in ["Out.Team.Contains(Entry.Key)","ReadyTurn>Turn+4",
+  for safety in ["Out.Team.Contains(FString(*Entry.Key))","ReadyTurn>Turn+4",
                  "LastTurnAt<StartedAt","Out.SkillCooldownTurns.Add",
                  "Battle.LastTurnAtUnixMs=Snapshot.MissionLastTurnAt"]:
    self.assertIn(safety,online_cpp)
