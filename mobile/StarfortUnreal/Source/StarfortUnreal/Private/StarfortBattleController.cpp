@@ -126,6 +126,7 @@ void AStarfortBattleController::EndPlay(const EEndPlayReason::Type EndPlayReason
  }
  if (Stage)
  {
+  Stage->ClearVerifiedEquipment();
   Stage->ClearBattlePresentation();
   Stage=nullptr;
  }
@@ -163,6 +164,8 @@ void AStarfortBattleController::ActionRequested(FString ActionId)
 void AStarfortBattleController::ProgressReady(const FStarfortProgressSummary& Progress)
 {
  if(CampaignScreen) CampaignScreen->ApplyVerifiedProgress(Progress);
+ // OnlineSubsystem has verified this progress BEFORE emitting the battle turn.
+ if(Stage) Stage->CacheVerifiedEquipment(Progress);
  if(Progress.bInMission) ShowBattle();
  else
  {
@@ -192,7 +195,7 @@ void AStarfortBattleController::TurnReady(const FStarfortVerifiedBattleTurn& Tur
 void AStarfortBattleController::MissionFinished(bool bWon,int32 Stars)
 {
  if(DevFabBridge) DevFabBridge->ClearReview();
- if(Stage) Stage->ClearBattlePresentation();
+ if(Stage) Stage->ClearVerifiedEquipment();
  if(Stage) SetViewTarget(Stage);
  OpenCampaign();
  if(CampaignScreen) CampaignScreen->ShowResult(bWon,Stars);
@@ -209,11 +212,12 @@ void AStarfortBattleController::OnlineFailed(FString SafeReason)
    BattleScreen->TxtBattleStatus->SetText(FText::FromString(SafeReason));
  }
  if(CampaignScreen) CampaignScreen->SetWaitingForServer();
+ if(Stage) Stage->ClearVerifiedEquipment();
 }
 void AStarfortBattleController::SignedOut()
 {
  if(DevFabBridge) DevFabBridge->ClearReview();
- if(Stage) Stage->ClearBattlePresentation();
+ if(Stage) Stage->ClearVerifiedEquipment();
  if(BattleScreen) {BattleScreen->SetWaitingForServer();BattleScreen->RemoveFromParent();}
  if(CampaignScreen) {CampaignScreen->SetWaitingForServer();CampaignScreen->RemoveFromParent();}
  // On token expiration the player must see login rather than a dead arena.
