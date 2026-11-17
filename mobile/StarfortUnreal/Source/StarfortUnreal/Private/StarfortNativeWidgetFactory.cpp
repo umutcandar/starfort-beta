@@ -235,7 +235,7 @@ bool FStarfortNativeWidgetFactory::BuildLogin(UStarfortLoginScreen* Screen)
   ->SetPadding(FMargin(0.f,7.f,0.f,0.f));
 
  // One invitation to enter. Native login fields are hidden until the player
- // chooses to sign in; no guest, fake progress or offline reward branch.
+ // chooses the authenticated account flow. No offline rewards are produced.
  USizeBox* EnterSize=Tree->ConstructWidget<USizeBox>();
  EnterSize->SetWidthOverride(395.f);
  EnterSize->SetHeightOverride(76.f);
