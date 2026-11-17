@@ -38,3 +38,7 @@ içerik üretimi gerektirir.
 
 Kaynak testi: Tools/test_ultra_login_authoring_v99.py
 Mac Unreal Editor Python çalıştırma testi bu sohbette yapılmadı.
+
+## Özgün 3D kale GLB aktarımı
+
+ChatGPT tarafından üretilen STARFORT_OriginalCitadel_Combined_v1.glb dosyasını Downloads klasörüne veya mobile/StarfortUnreal/ContentPipeline/Incoming klasörüne koy. Bu dosya tek bir static mesh ve 3D vertex renkleri içerir. Sonra Unreal Editor içinde yazar aracı çalıştırıldığında GLB, /Game/STARFORT/Login/Meshes altına alınır; M_StarfortCitadelVertexColors materyali ile aktörün ImportedCitadelMesh ve ImportedCitadelMaterial alanlarına bağlanır. Bu dosya yoksa veya UE importer yoksa 3D greybox devrede kalır; sahte model yaratılmaz. Import sonrası Unreal'da farklı ölçek gerekiyorsa aktör ImportedCitadel bileşeni üzerinden ölçülmelidir. Bu süreç Mac'te hâlâ test bekliyor.

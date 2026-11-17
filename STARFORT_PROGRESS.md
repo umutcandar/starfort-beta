@@ -101,3 +101,5 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - Runtime 3D stage supports original material overrides for stone, banner and ember pieces; mobile shadows disabled and authentic hero/audio remain optional.
 - Script checks for existing level and materials, saves a diagnostic JSON, and backs up DefaultEngine.ini before locally switching the startup map only after saved map success.
 - test_ultra_login_authoring_v99.py checks Python AST and source safety contracts in GitHub CI. Mac Engine Editor Python execution remains UNVERIFIED.
+
+- Created and structurally checked original downloadable Starfort Citadel GLB (single consolidated mesh, vertex-colored) in current conversation. GitHub C++ stage now accepts imported citadel mesh/material, and Editor Python auto-imports the downloaded GLB if found locally. The actual imported UE .uasset and in-editor visual QA are NOT confirmed.

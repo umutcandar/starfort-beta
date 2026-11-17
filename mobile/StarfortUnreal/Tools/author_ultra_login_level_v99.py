@@ -52,6 +52,35 @@ def make_material(name: str, tint: tuple[float, float, float, float],
     return material, True
 
 
+def make_citadel_vertex_material():
+    """Respect imported GLB vertex colors: a proper UE native material graph."""
+    target = MATERIAL_ROOT + "/M_StarfortCitadelVertexColors"
+    if unreal.EditorAssetLibrary.does_asset_exist(target):
+        material = unreal.EditorAssetLibrary.load_asset(target)
+        if not isinstance(material, unreal.Material):
+            raise RuntimeError("Wrong asset at " + target)
+        return material, False
+
+    material = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        "M_StarfortCitadelVertexColors", MATERIAL_ROOT,
+        unreal.Material, unreal.MaterialFactoryNew())
+    if not material:
+        raise RuntimeError("Could not create vertex-color material")
+    color = unreal.MaterialEditingLibrary.create_material_expression(
+        material, unreal.MaterialExpressionVertexColor, -320, 0)
+    unreal.MaterialEditingLibrary.connect_material_property(
+        color, "RGB", unreal.MaterialProperty.MP_BASE_COLOR)
+    rough = unreal.MaterialEditingLibrary.create_material_expression(
+        material, unreal.MaterialExpressionConstant, -320, 210)
+    rough.set_editor_property("r", .82)
+    unreal.MaterialEditingLibrary.connect_material_property(
+        rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+    unreal.MaterialEditingLibrary.recompile_material(material)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(material):
+        raise RuntimeError("Could not save vertex-color material")
+    return material, True
+
+
 def ensure_original_citadel_mesh():
     """Optional GLB import, idempotent; no download and no licensed content reuse."""
     asset_path = "/Game/STARFORT/Login/Meshes/STARFORT_OriginalCitadel_Combined_v1"
@@ -156,6 +185,7 @@ def main():
         (.27, .035, .055, 1), .64)
     ember, ember_new = make_material("M_StarfortEmbers",
         (1.0, .25, .03, 1), .38, True)
+    vertex_material, vertex_created = make_citadel_vertex_material()
     imported_citadel, imported_now = ensure_original_citadel_mesh()
     editor, created = ensure_map()
     actor, spawned = ensure_stage({
@@ -163,6 +193,8 @@ def main():
     })
     if imported_citadel and not actor.get_editor_property("imported_citadel_mesh"):
         actor.set_editor_property("imported_citadel_mesh", imported_citadel)
+    if imported_citadel and not actor.get_editor_property("imported_citadel_material"):
+        actor.set_editor_property("imported_citadel_material", vertex_material)
     if not editor.save_current_level():
         raise RuntimeError("Map was not saved; startup ini intentionally untouched")
 
@@ -173,6 +205,7 @@ def main():
         "native_stage_added": spawned,
         "original_citadel_imported_now": imported_now,
         "original_citadel_bound": bool(imported_citadel),
+        "citadel_vertex_material_created": vertex_created,
         "material_created": {
             "stone": stone_new, "banner": banner_new, "ember": ember_new
         },

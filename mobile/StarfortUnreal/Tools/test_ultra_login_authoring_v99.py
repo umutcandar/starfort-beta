@@ -32,6 +32,10 @@ class AuthorUltraLoginV99(unittest.TestCase):
    'actor.set_editor_property("banner_material"',
    'actor.set_editor_property("ember_material"',
    "DefaultEngine_before_ultra_login.ini",
+   "unreal.MaterialExpressionVertexColor",
+   "M_StarfortCitadelVertexColors",
+   'actor.set_editor_property("imported_citadel_mesh"',
+   'actor.set_editor_property("imported_citadel_material"',
   ):
    self.assertIn(marker,s,marker)
   for forbidden in ("requests.", "http://", "https://", "os.system(", "subprocess.run("):
@@ -39,7 +43,8 @@ class AuthorUltraLoginV99(unittest.TestCase):
  def test_real_3d_scene_materials_are_opt_in_and_no_fake_hero(self):
   h=(SRC/"Public/StarfortLoginCinematicStage.h").read_text(encoding="utf-8")
   c=(SRC/"Private/StarfortLoginCinematicStage.cpp").read_text(encoding="utf-8")
-  for marker in ("FortressMaterial", "BannerMaterial", "EmberMaterial"):
+  for marker in ("FortressMaterial", "BannerMaterial", "EmberMaterial",
+                 "ImportedCitadelMesh", "ImportedCitadelMaterial"):
    self.assertIn(marker,h)
    self.assertIn(marker,c)
   self.assertIn("HasProductionReadyGeometryAndMotion()",c)
