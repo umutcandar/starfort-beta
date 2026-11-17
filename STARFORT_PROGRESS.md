@@ -26,3 +26,9 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 2. Import one original, commercially licensed skeletal hero + socket-compatible weapon/armor, animation, enemy, authored Niagara and 3 mobile LODs.
 3. Assign asset manifests to authored Stage BP and test real authenticated equipment changes and one mission on physical Android/iOS.
 4. Bind same DataAsset into a live 3D Hero Hall portrait and production mobile navigation.
+
+## v91 final polish
+- Added per-equipped-weapon visual impact socket (do not use the prior weapon's muzzle socket).
+- Added equipped item copy-count guard against inventory before any 3D mesh is streamed.
+- Allowed visually identical weapons only when both heroes have the SAME authenticated equipped item ID; distinct hero body/innate art quality gates remain enforced.
+- See mobile/StarfortUnreal/Docs/Native3DGearSetup_v91_TR.md for editor-only art gates.

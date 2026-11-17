@@ -11,7 +11,7 @@ class NativeVerifiedGear(unittest.TestCase):
   self.assertIn("Stage->CacheVerifiedEquipment(Progress)",controller)
   self.assertLess(controller.index("Stage->CacheVerifiedEquipment(Progress)"),controller.index("if(Progress.bInMission)"))
   for v in ("Snapshot.bServerVerified","Snapshot.bInventoryVerified",
-    "Snapshot.Loadouts.Find(HeroId)","Snapshot.Inventory.FindRef(ItemId)<1",
+    "Snapshot.Loadouts.Find(HeroId)","Used>Snapshot.Inventory.FindRef(ItemId)",
     "VerifiedGearRoomId!=Snapshot.RoomId"):
    self.assertIn(v,stage,v)
   self.assertNotIn("SubmitProgressAction(",stage)
@@ -22,7 +22,7 @@ class NativeVerifiedGear(unittest.TestCase):
    "Weapons[I]->SetStaticMesh(ActualWeapon)",
    "ArmorMesh->GetSkeleton()!=Art->HeroMesh->GetSkeleton()",
    "Armors[I]->SetLeaderPoseComponent(Rigs[I])",
-   "VerifiedWeaponByHero.Empty()","VerifiedArmorByHero.Empty()"):
+   "VerifiedWeaponByHero.Empty()","VerifiedArmorByHero.Empty()","ActualImpactSocket","EquippedCopies.Add(ItemId,Used)"):
    self.assertIn(v,stage,v)
  def test_mapping_is_fail_closed(self):
   m=self.read("Private/StarfortEquipmentArtManifest.cpp")
