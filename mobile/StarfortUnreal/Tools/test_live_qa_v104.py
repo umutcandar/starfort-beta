@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+"""Native Unreal Live QA source/test contract, no engine simulation."""
+import ast
+import pathlib
+import unittest
+
+TOOLS=pathlib.Path(__file__).resolve().parent
+MAC=(TOOLS/"mac_live_qa_v104.py").read_text(encoding="utf-8")
+EDITOR=(TOOLS/"starfort_editor_live_v104.py").read_text(encoding="utf-8")
+
+class LiveQAV104(unittest.TestCase):
+ def test_both_editor_scripts_parse_under_plain_python(self):
+  ast.parse(MAC)
+  ast.parse(EDITOR)
+ def test_local_epic_client_only_and_explicit_publication(self):
+  for text in ("remote_execution.RemoteExecution()",
+   "open_command_connection", "starfortunreal", "exec_mode=\"ExecuteFile\"",
+   'mode="inspect"', "mode == \"watch\"", "--public-preview",
+   "QA_BRANCH = \"qa/starfort-editor-preview\""):
+   self.assertIn(text,MAC,text)
+  self.assertNotIn("subprocess.Popen(",MAC)
+  self.assertNotIn("curl ",MAC)
+  self.assertNotIn("eval(",MAC)
+  self.assertIn('if state.get("play_in_editor")',MAC)
+ def test_screenshots_refuse_pie_and_other_levels(self):
+  for text in ("is_in_play_in_editor()",
+   "if report[\"play_in_editor\"]",
+   "ALLOWED_LEVEL not in report[\"map_name\"]",
+   "take_high_res_screenshot(", "force_game_view=True",
+   "starfort_editor_scene.png", "starfort_editor_scene.json"):
+   self.assertIn(text,EDITOR,text)
+  self.assertNotIn("get_password",EDITOR)
+  self.assertNotIn("http",EDITOR.lower())
+ def test_premium_pass_is_idempotent_and_preserves_original_material(self):
+  for text in ("M_StarfortCinematicStone_v104", 
+   "unreal.MaterialExpressionVertexColor",
+   "unreal.MaterialExpressionMultiply",
+   'color.set_editor_property("const_b", 1.95)',
+   "MP_EMISSIVE_COLOR", "STARFORT • PREMIUM SKY",
+   "STARFORT • PREMIUM FILL", "L_StarfortLogin_before_v104.umap",
+   "if not backup.exists()", "levels.save_current_level()"):
+   self.assertIn(text,EDITOR,text)
+  self.assertNotIn("delete_asset(",EDITOR)
+
+if __name__=="__main__":
+ unittest.main()
