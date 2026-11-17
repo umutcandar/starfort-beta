@@ -6,6 +6,7 @@
 
 class UStarfortLoginScreen;
 class UStarfortOnlineSubsystem;
+class AStarfortLoginCinematicStage;
 
 /** Native local camera/HUD coordination connected to the real account-only
  * Supabase RPC adapter. No guest/local rewards or web-player rendering.
@@ -27,6 +28,9 @@ public:
  TSubclassOf<UStarfortVillageScreen> VillageScreenClass;
  UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="STARFORT|UI")
  TSubclassOf<UStarfortLoginScreen> LoginScreenClass;
+ /** Artist-authored subclass may supply approved character and looping sound. */
+ UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="STARFORT|Login")
+ TSubclassOf<AStarfortLoginCinematicStage> LoginStageClass;
 
  UFUNCTION(BlueprintPure, Category="STARFORT|Village")
  UStarfortVillageScreen* GetVillageScreen() const { return ActiveVillageScreen; }
@@ -34,6 +38,9 @@ public:
 private:
  UPROPERTY(Transient) TObjectPtr<UStarfortVillageScreen> ActiveVillageScreen;
  UPROPERTY(Transient) TObjectPtr<UStarfortLoginScreen> ActiveLoginScreen;
+ UPROPERTY(Transient) TObjectPtr<AStarfortLoginCinematicStage> ActiveLoginStage;
+ void BeginCinematicLogin();
+ void LeaveCinematicLogin();
  UPROPERTY(Transient) TObjectPtr<UStarfortOnlineSubsystem> Online;
 
  UFUNCTION() void HandleBuildingTapped(FName BuildingId);

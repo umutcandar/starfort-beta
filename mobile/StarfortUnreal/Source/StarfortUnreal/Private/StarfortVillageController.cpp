@@ -4,6 +4,8 @@
 #include "StarfortLoginScreen.h"
 #include "StarfortOnlineSubsystem.h"
 #include "StarfortSceneRouter.h"
+#include "StarfortLoginCinematicStage.h"
+#include "Engine/World.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
 #include "Engine/GameInstance.h"
@@ -66,6 +68,11 @@ void AStarfortVillageController::EndPlay(const EEndPlayReason::Type EndPlayReaso
   ActiveLoginScreen->RemoveFromParent();
   ActiveLoginScreen=nullptr;
  }
+ if(ActiveLoginStage)
+ {
+  ActiveLoginStage->Destroy();
+  ActiveLoginStage=nullptr;
+ }
  Online=nullptr;
  Super::EndPlay(EndPlayReason);
 }
@@ -76,6 +83,40 @@ void AStarfortVillageController::OnPossess(APawn* InPawn)
  if (AStarfortVillageCameraPawn* VillagePawn=Cast<AStarfortVillageCameraPawn>(InPawn))
   VillagePawn->OnBuildingSelected.AddUniqueDynamic(this,&AStarfortVillageController::HandleBuildingTapped);
 }
+void AStarfortVillageController::BeginCinematicLogin()
+{
+ if(!IsLocalController() || !GetWorld() || ActiveLoginStage)
+  return;
+ // A newly authored login map can use this same actor. Never spawn a 3D
+ // login fortress in an already installed, authenticated village world.
+ const FString MapName=GetWorld()->GetMapName();
+ if(!MapName.Contains(TEXT("Entry")) &&
+    !MapName.Contains(TEXT("L_StarfortLogin"))) return;
+ TSubclassOf<AStarfortLoginCinematicStage> StageType=LoginStageClass;
+ if(!StageType) StageType=AStarfortLoginCinematicStage::StaticClass();
+ FActorSpawnParameters Params;
+ Params.Owner=this;
+ Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+ ActiveLoginStage=GetWorld()->SpawnActor<AStarfortLoginCinematicStage>(
+  StageType,FVector::ZeroVector,FRotator::ZeroRotator,Params);
+ if(ActiveLoginStage)
+ {
+  // View target switches to the real Unreal camera, with no WebView/image UI.
+  SetViewTargetWithBlend(ActiveLoginStage,0.80f,VTBlend_Cubic);
+  UE_LOG(LogTemp,Log,TEXT("STARFORT: cinematic Unreal login world active"));
+ }
+}
+
+void AStarfortVillageController::LeaveCinematicLogin()
+{
+ if(!ActiveLoginStage) return;
+ if(APawn* Pawn=GetPawn())
+  SetViewTargetWithBlend(Pawn,0.7f,VTBlend_Cubic,0.f,true);
+ // Keep the outgoing scene alive until the camera blend has finished.
+ ActiveLoginStage->SetLifeSpan(1.2f);
+ ActiveLoginStage=nullptr;
+}
+
 void AStarfortVillageController::OpenLoginScreen()
 {
  if (!IsLocalController()) return;
@@ -87,6 +128,7 @@ void AStarfortVillageController::OpenLoginScreen()
  }
  if (ActiveLoginScreen && !ActiveLoginScreen->IsInViewport())
  {
+  BeginCinematicLogin();
   ActiveLoginScreen->AddToViewport(90);
   SetInputMode(FInputModeUIOnly());
   bShowMouseCursor=true;
@@ -130,6 +172,7 @@ void AStarfortVillageController::RefreshVillage()
 }
 void AStarfortVillageController::HandleSignedIn(FString UserId)
 {
+ LeaveCinematicLogin();
  if (ActiveLoginScreen && ActiveLoginScreen->IsInViewport())
   ActiveLoginScreen->RemoveFromParent();
  OpenVillageScreen();
