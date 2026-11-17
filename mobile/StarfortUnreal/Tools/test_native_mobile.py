@@ -378,7 +378,7 @@ class NativeSmoke(unittest.TestCase):
                 "HasProductionReadyGeometryAndMotion()",
                 "Rigs[I]->SetSkeletalMesh(Art->HeroMesh)",
                 "Weapons[I]->SetStaticMesh(ActualWeapon)",
-                "DoesSocketExist(ActualSocket)","DoesSocketExist(Art->ImpactSocket)",
+                "DoesSocketExist(ActualSocket)","DoesSocketExist(ActualImpactSocket)",
                 "Art->SpecialMontage","ActiveTeamIds[I]!=SkilledHero",
                 "VerifiedDamage>0","ConfirmedImpactFX->Activate(true)",
                 "LastConfirmedTurn=Snapshot.Turn","OnTeamAssetsLoaded(uint64 Generation)"]:
