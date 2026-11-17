@@ -16,7 +16,7 @@ class LiveQAV104(unittest.TestCase):
  def test_local_epic_client_only_and_explicit_publication(self):
   for text in ("remote_execution.RemoteExecution()",
    "open_command_connection", "starfortunreal", "exec_mode=\"ExecuteFile\"",
-   '"inspect", "capture", "premium", "watch"', 'args.mode != "watch"', "--public-preview",
+   '"inspect", "capture", "premium", "watch"', 'args.mode not in ("watch", "studio")', "--public-preview",
    "QA_BRANCH = \"qa/starfort-editor-preview\""):
    self.assertIn(text,MAC,text)
   self.assertNotIn("subprocess.Popen(",MAC)
@@ -25,6 +25,9 @@ class LiveQAV104(unittest.TestCase):
   self.assertIn('if state.get("play_in_editor")',MAC)
  def test_single_click_studio_has_opt_in_public_preview(self):
   self.assertIn('if args.mode == "studio":',MAC)
+  self.assertIn('state.get("capture_requested")',MAC)
+  self.assertIn('state.get("public_preview_safe")',MAC)
+  self.assertIn('saved.rglob("starfort_editor_scene*.png")',MAC)
   self.assertIn('capture_once("premium", args)',MAC)
   self.assertIn('read -r -p',STUDIO)
   self.assertIn('ARGS+=("--public-preview")',STUDIO)
