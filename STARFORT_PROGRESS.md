@@ -155,3 +155,10 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - v103 fixes ImportedCitadelRotation default from +90 to -90 in C++; added screenshot-derived static regression assertion against +90.
 - A previously saved L_StarfortLogin map can retain a per-instance +90 property override. Fastest reliable test is Stop PIE -> select the authored cinematic stage actor -> Details search Imported Citadel Rotation -> Roll -90 (Pitch/Yaw 0) -> Play. Save All if corrected. No reimport, no full download or rebuild is required to change this exposed instance property.
 - Source CI is NOT macOS Unreal runtime verification; do not claim towers are corrected until a real PIE screenshot confirms it.
+
+
+## Real PIE screenshot confirms imported citadel is upright (2026-11-17 22:57 TRT)
+- User's Mac Unreal Engine 5.8 screenshot shows `L_StarfortLogin` running PIE: gate towers now point UP; the old +90 degree roll issue is resolved by -90 degree instance adjustment. Imported 3D citadel geometry is actually visible in the game viewport; cinematic view target is active.
+- Screenshot also confirms STARFORT heading and login panel render, with an email/password UI visible. This does NOT establish success of authenticated backend sign-in or mobile packaging.
+- Do NOT waste user effort on another GLB download, reimport, or camera roll adjustment unless a future visual regression is observed. The next gating issue is original game-quality environment art: current source GLB is a simplified, dark low-poly castle with no production texture set, sky/environment context, authored hero animation or validated audio mix.
+- Prioritize original PBR stone/metal/wood materials and UVs, surrounding terrain, sky/fog/color grading, compelling camera composition and hero art with clean licenses, along with mobile performance budgets. Require actual UE PIE screenshots, not only static GitHub source tests, before claiming visual completion.
