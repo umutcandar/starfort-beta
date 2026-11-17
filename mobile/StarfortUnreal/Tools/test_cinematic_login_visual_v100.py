@@ -39,6 +39,10 @@ class NativeLoginVisualV100(unittest.TestCase):
   self.assertIn('CameraOrigin=FVector(-4200.f,-2950.f,1850.f)',STAGE)
   self.assertIn('CinematicCamera->SetFieldOfView(58.f)',STAGE)
   self.assertNotIn('CameraOrigin=FVector(-2340.f,-1510.f,1060.f)',STAGE)
+ def test_glb_import_is_scale_normalized_for_ue_centimeters(self):
+  self.assertIn("ImportedCitadelMesh->GetBoundingBox().GetSize()",STAGE)
+  self.assertIn("FMath::Clamp(3446.f/LongestAxis,0.001f,100.f)",STAGE)
+  self.assertIn("ImportedCitadel->SetRelativeScale3D(FVector(ArtScale));",STAGE)
  def test_real_authenticated_ui_integrity_remains(self):
   for item in ('Screen->InputEmail','Screen->InputPassword',
    'Screen->BtnOpenLogin','Screen->BtnSignIn','Screen->TxtAuthStatus',

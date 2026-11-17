@@ -125,3 +125,8 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 ## Authored login stage lifecycle safeguard (2026-11-17)
 - Before this change successful login called SetLifeSpan on either temporary runtime stage OR genuine user-authored /Game/STARFORT/Login stage, losing imported 3D art across signout/relogin in same world.
 - Controller now tracks bSpawnedLoginStage; only runtime Entry-map stages are destroyed, authored level actors persist across account screen transitions. No server auth changes. Source tests updated; Mac UBT/PIE verification pending.
+
+## v100 GLB import units (2026-11-17)
+- Inspected original GLB geometry in the runtime: 1 combined mesh, 3,880 vertices, 6,376 triangles; source extents 3446×2943×2537 in original authoring coordinates (too large if interpreted as glTF metres).
+- Created a corrected, vertex-colored GLB with glTF metre-space extents 34.46×29.43×25.37 m; model is still an original low-poly castle, NOT a finished premium UE environment.
+- C++ now normalizes imported mesh longest axis to ~3446 cm using UStaticMesh::GetBoundingBox/GetSize and bounded component scale. Source contract test added. Only Mac UE compiler/PIE can validate new source; no successful physical import claimed.

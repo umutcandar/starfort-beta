@@ -93,6 +93,16 @@ void AStarfortLoginCinematicStage::BeginPlay()
  {
   // Original imported static mesh replaces temporary primitive architecture.
   ImportedCitadel->SetStaticMesh(ImportedCitadelMesh);
+  // glTF/GLB commonly imports at 100x source units (metres -> centimetres).
+  // Normalize the imported mesh width to the intended ~34 metre mobile stage
+  // while remaining robust to older files authored with centimetre coordinates.
+  const FVector BoundsSize=ImportedCitadelMesh->GetBoundingBox().GetSize();
+  const float LongestAxis=FMath::Max3(BoundsSize.X,BoundsSize.Y,BoundsSize.Z);
+  if(LongestAxis>1.f)
+  {
+   const float ArtScale=FMath::Clamp(3446.f/LongestAxis,0.001f,100.f);
+   ImportedCitadel->SetRelativeScale3D(FVector(ArtScale));
+  }
   if(ImportedCitadelMaterial)
    ImportedCitadel->SetMaterial(0,ImportedCitadelMaterial);
   ImportedCitadel->SetVisibility(true);
