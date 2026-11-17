@@ -38,3 +38,9 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - Safety: never automatically packages or publishes; `diagnose` never runs Unreal.
 - A user-registered GitHub self-hosted runner or a local Mac Terminal invocation is still required for the real compile.
 - Do not claim a successful UE Editor build from source-only CI.
+
+## Manual GitHub/Mac runner review
+- .github/workflows/starfort-mac-unreal-bridge.yml staged only on feature branch; uses workflow_dispatch and dedicated Mac M1 runner label starfort-unreal.
+- Workflow cannot be invoked from GitHub UI until approved on default branch. Do not auto-push to main or run unattended on a Mac.
+- Local Mac diagnostic and actual Development Editor build supported via mobile/StarfortUnreal/Tools/mac_ue_bridge.py.
+- See mobile/StarfortUnreal/Docs/MacUE58Bridge_TR.md.

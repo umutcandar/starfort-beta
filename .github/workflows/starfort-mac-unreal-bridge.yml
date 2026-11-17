@@ -1,0 +1,47 @@
+name: STARFORT Mac Unreal 5.8 Bridge (manual)
+
+# Manual and trusted branch ONLY. Never run code from untrusted pull requests.
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "diagnose is read-only; build compiles the Unreal Editor target"
+        required: true
+        type: choice
+        default: diagnose
+        options:
+          - diagnose
+          - build
+
+permissions:
+  contents: read
+
+concurrency:
+  group: starfort-local-unreal
+  cancel-in-progress: false
+
+jobs:
+  mac-unreal:
+    if: github.repository == 'umutcandar/starfort-beta' && github.ref == 'refs/heads/feat/native-v91-verified-combat-gear'
+    runs-on: [self-hosted, macOS, ARM64, starfort-unreal]
+    timeout-minutes: 120
+    steps:
+      - name: Checkout trusted feature branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: true
+      - name: Diagnose or compile local Unreal Editor project
+        env:
+          UE_ROOT: ${{ vars.STARFORT_UE_ROOT }}
+          STARFORT_OPERATION: ${{ inputs.operation }}
+        run: |
+          python3 mobile/StarfortUnreal/Tools/mac_ue_bridge.py "$STARFORT_OPERATION"
+      - name: Upload diagnostic JSON only (build logs remain on the Mac)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: starfort-local-unreal-diagnostics
+          path: mobile/StarfortUnreal/Saved/QA/starfort_mac_unreal_bridge.json
+          if-no-files-found: warn
+          retention-days: 7
