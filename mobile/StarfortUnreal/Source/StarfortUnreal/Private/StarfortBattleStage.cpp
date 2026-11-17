@@ -251,7 +251,6 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
  };
  TSet<FString> Unique;
  TSet<const USkeletalMesh*> UniqueBodyMeshes;
- TSet<const UStaticMesh*> UniqueWeaponMeshes;
  for (int32 I=0;I<3;++I)
  {
   const FString& HeroId=VerifiedTeam[I];
@@ -260,12 +259,9 @@ bool AStarfortBattleStage::ConfigureTeam(const TArray<FString>& VerifiedTeam)
 
   UStarfortHeroCombatAsset* Art=FindApprovedHero(HeroId);
   if (!Art || !Rigs[I] || !Weapons[I] || !SpecialFX[I]) return false;
-  // Two roster IDs must never hide a duplicated generic character model or weapon.
-  if (UniqueBodyMeshes.Contains(Art->HeroMesh.Get()) ||
-      UniqueWeaponMeshes.Contains(Art->WeaponMesh.Get()))
-   return false;
+  // Each hero must have its own body, but two real heroes may use a matching weapon mesh.
+  if (UniqueBodyMeshes.Contains(Art->HeroMesh.Get())) return false;
   UniqueBodyMeshes.Add(Art->HeroMesh.Get());
-  UniqueWeaponMeshes.Add(Art->WeaponMesh.Get());
 
   // Actual rig and weapon are authored Unreal assets; nothing generated from
   // primitive cubes, UI images or browser screenshots in this path.
@@ -320,7 +316,6 @@ bool AStarfortBattleStage::HasApprovedStage() const
   HeroWeapon.Get(),HeroWeapon2.Get(),HeroWeapon3.Get()
  };
  TSet<const USkeletalMesh*> SeenBodies;
- TSet<const UStaticMesh*> SeenWeapons;
  for (int32 I=0;I<3;++I)
  {
   if (!ActiveHeroArt[I] ||
@@ -331,10 +326,8 @@ bool AStarfortBattleStage::HasApprovedStage() const
    return false;
   const USkeletalMesh* Body=Rigs[I]->GetSkeletalMeshAsset();
   const UStaticMesh* Weapon=Weapons[I]->GetStaticMesh();
-  if (SeenBodies.Contains(Body) || SeenWeapons.Contains(Weapon))
-   return false;
+  if (SeenBodies.Contains(Body)) return false;
   SeenBodies.Add(Body);
-  SeenWeapons.Add(Weapon);
  }
  return true;
 }
@@ -659,6 +652,7 @@ void AStarfortBattleStage::PlayVerifiedPartyAction(
  UNiagaraComponent* AuraFX[]={
   HeroAuraFX1.Get(),HeroAuraFX2.Get(),HeroAuraFX3.Get()
  };
+ float LongestPlayedAttackSeconds=0.f;
  for (int32 I=0;I<3;++I)
  {
   if (bSkill && ActiveTeamIds[I]!=SkilledHero) continue;
@@ -698,7 +692,8 @@ void AStarfortBattleStage::PlayVerifiedPartyAction(
   // animation or use 2D concept art as world geometry.
   if(Montage)
    if(UAnimInstance* Anim=Rigs[I]->GetAnimInstance())
-    Anim->Montage_Play(Montage);
+    LongestPlayedAttackSeconds=FMath::Max(
+     LongestPlayedAttackSeconds,Anim->Montage_Play(Montage));
 
   if(WeaponFX[I])
   {
@@ -730,6 +725,11 @@ void AStarfortBattleStage::PlayVerifiedPartyAction(
  // verified RPC, and late callbacks are invalidated on turn/room changes.
  if(bAttack && VerifiedDamage>0 && GetWorld())
  {
+  // Verified HP delta authorizes the hit; real montage duration controls only its visuals.
+  // Keep the hit before the existing 0.76s authenticated counterattack beat.
+  const float ImpactDelaySeconds=FMath::Clamp(
+   LongestPlayedAttackSeconds>0.f ? LongestPlayedAttackSeconds*0.42f : 0.28f,
+   0.18f,0.65f);
   const uint64 PlaybackGeneration=TeamLoadGeneration;
   const FString PlaybackRoom=ActiveRoomId;
   const int32 PlaybackTurn=LastConfirmedTurn;
@@ -737,7 +737,7 @@ void AStarfortBattleStage::PlayVerifiedPartyAction(
    &AStarfortBattleStage::PlayDelayedVerifiedImpact,
    PlaybackGeneration,PlaybackRoom,PlaybackTurn);
   GetWorldTimerManager().SetTimer(
-   VerifiedImpactTimer,HitDelegate,0.28f,false);
+   VerifiedImpactTimer,HitDelegate,ImpactDelaySeconds,false);
  }
 }
 
