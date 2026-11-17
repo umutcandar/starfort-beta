@@ -125,7 +125,7 @@ static void ButtonRow(UWidgetTree* Tree,UHorizontalBox* Row,
  Slot->SetPadding(FMargin(4.f,4.f));
 }
 static void ButtonColumn(UWidgetTree* Tree,UVerticalBox* Parent,
- UButton*& OutButton,const FString& Label)
+ TObjectPtr<UButton>& OutButton,const FString& Label)
 {
  OutButton=MakeButton(Tree,Label);
  Parent->AddChildToVerticalBox(OutButton.Get())->SetPadding(FMargin(2.f,8.f));

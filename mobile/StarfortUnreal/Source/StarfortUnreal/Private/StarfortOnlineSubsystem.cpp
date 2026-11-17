@@ -401,9 +401,9 @@ bool UStarfortOnlineSubsystem::ParseProgress(const TSharedPtr<FJsonObject>& Root
  for (const auto& Field:Heroes->Values)
  {
   int64 Level=0;
-  if (!Known.Contains(Field.Key) || !IsIntegerField(Heroes,*Field.Key,1,20,Level))
+  if (!Known.Contains(FString(*Field.Key)) || !IsIntegerField(Heroes,*Field.Key,1,20,Level))
    return false;
-  Out.HeroLevels.Add(Field.Key,static_cast<int32>(Level));
+  Out.HeroLevels.Add(FString(*Field.Key),static_cast<int32>(Level));
  }
  const TArray<TSharedPtr<FJsonValue>>& Team=Root->GetArrayField(TEXT("team"));
  if (Team.Num()!=3) return false;
@@ -431,7 +431,7 @@ bool UStarfortOnlineSubsystem::ParseProgress(const TSharedPtr<FJsonObject>& Root
  {
   int32 Stage=0;
   int64 Rating=0;
-  if (!FDefaultValueHelper::ParseInt(Entry.Key,Stage) ||
+  if (!FDefaultValueHelper::ParseInt(FString(*Entry.Key),Stage) ||
       !Out.ClearedStages.Contains(Stage) ||
       !IsIntegerField(Stars,*Entry.Key,1,3,Rating)) return false;
   Out.StoryStars.Add(Stage,static_cast<int32>(Rating));
@@ -517,10 +517,10 @@ bool UStarfortOnlineSubsystem::ParseProgress(const TSharedPtr<FJsonObject>& Root
    for (const auto& Entry:Cooldowns->Values)
    {
     int64 ReadyTurn=0;
-    if (!Out.Team.Contains(Entry.Key) ||
+    if (!Out.Team.Contains(FString(*Entry.Key)) ||
         !IsIntegerField(Cooldowns,*Entry.Key,1,40,ReadyTurn) ||
         ReadyTurn>Turn+4) return false;
-    Out.SkillCooldownTurns.Add(Entry.Key,static_cast<int32>(ReadyTurn));
+    Out.SkillCooldownTurns.Add(FString(*Entry.Key),static_cast<int32>(ReadyTurn));
    }
   }
  }
@@ -587,21 +587,21 @@ bool UStarfortOnlineSubsystem::ParseProgress(const TSharedPtr<FJsonObject>& Root
   for(const auto& Pair:Inv->Values)
   {
    int64 Count=0;
-   if(!FStarfortBagCatalog::Find(Pair.Key) ||
+   if(!FStarfortBagCatalog::Find(FString(*Pair.Key)) ||
       !IsIntegerField(Inv,*Pair.Key,1,20,Count)) return false;
-   Out.Inventory.Add(Pair.Key,static_cast<int32>(Count));
+   Out.Inventory.Add(FString(*Pair.Key),static_cast<int32>(Count));
   }
   for(const auto& Pair:Upgrades->Values)
   {
    int64 Level=0;
-   if(!FStarfortBagCatalog::Find(Pair.Key) ||
+   if(!FStarfortBagCatalog::Find(FString(*Pair.Key)) ||
       !IsIntegerField(Upgrades,*Pair.Key,0,5,Level)) return false;
-   Out.ItemUpgrades.Add(Pair.Key,static_cast<int32>(Level));
+   Out.ItemUpgrades.Add(FString(*Pair.Key),static_cast<int32>(Level));
   }
   TMap<FString,int32> InUse;
   for(const auto& HeroPair:Wear->Values)
   {
-   if(!Out.HeroLevels.Contains(HeroPair.Key) ||
+   if(!Out.HeroLevels.Contains(FString(*HeroPair.Key)) ||
       !HeroPair.Value.IsValid() ||
       HeroPair.Value->Type!=EJson::Object) return false;
    const TSharedPtr<FJsonObject> Slots=HeroPair.Value->AsObject();
@@ -610,20 +610,20 @@ bool UStarfortOnlineSubsystem::ParseProgress(const TSharedPtr<FJsonObject>& Root
    for(const auto& SlotPair:Slots->Values)
    {
     FString ItemId;
-    if(!FStarfortBagCatalog::IsSlot(SlotPair.Key) ||
+    if(!FStarfortBagCatalog::IsSlot(FString(*SlotPair.Key)) ||
        !SlotPair.Value.IsValid() ||
        !SlotPair.Value->TryGetString(ItemId)) return false;
     const FStarfortBagItemInfo* Entry=FStarfortBagCatalog::Find(ItemId);
-    if(!Entry || SlotPair.Key!=Entry->Slot ||
+    if(!Entry || FString(*SlotPair.Key)!=Entry->Slot ||
        !Out.Inventory.Contains(ItemId)) return false;
-    if(SlotPair.Key==TEXT("weapon"))Set.Weapon=ItemId;
-    else if(SlotPair.Key==TEXT("armor"))Set.Armor=ItemId;
+    if(FString(*SlotPair.Key)==TEXT("weapon"))Set.Weapon=ItemId;
+    else if(FString(*SlotPair.Key)==TEXT("armor"))Set.Armor=ItemId;
     else Set.Relic=ItemId;
     const int32 NewCount=InUse.FindRef(ItemId)+1;
     if(NewCount>Out.Inventory.FindRef(ItemId)) return false;
     InUse.Add(ItemId,NewCount);
    }
-   Out.Loadouts.Add(HeroPair.Key,Set);
+   Out.Loadouts.Add(FString(*HeroPair.Key),Set);
   }
   Out.bInventoryVerified=true;
   // The current official RPC returns these real late-game fields.
@@ -641,14 +641,14 @@ bool UStarfortOnlineSubsystem::ParseProgress(const TSharedPtr<FJsonObject>& Root
    for(const auto& Pair:Asc->Values)
    {
     int64 Rank=0;
-    if((Pair.Key!=TEXT("ember_guard") &&
-        Pair.Key!=TEXT("star_spear") &&
-        Pair.Key!=TEXT("guardian_seal") &&
-        Pair.Key!=TEXT("starbreaker")) ||
+    if((FString(*Pair.Key)!=TEXT("ember_guard") &&
+        FString(*Pair.Key)!=TEXT("star_spear") &&
+        FString(*Pair.Key)!=TEXT("guardian_seal") &&
+        FString(*Pair.Key)!=TEXT("starbreaker")) ||
        !IsIntegerField(Asc,*Pair.Key,0,4,Rank) ||
-       !Out.Inventory.Contains(Pair.Key) ||
-       Out.ItemUpgrades.FindRef(Pair.Key)<5) return false;
-    Out.RelicAscensions.Add(Pair.Key,static_cast<int32>(Rank));
+       !Out.Inventory.Contains(FString(*Pair.Key)) ||
+       Out.ItemUpgrades.FindRef(FString(*Pair.Key))<5) return false;
+    Out.RelicAscensions.Add(FString(*Pair.Key),static_cast<int32>(Rank));
    }
    Out.BossSeals=static_cast<int32>(BossWeeks);
    Out.bAscensionVerified=true;

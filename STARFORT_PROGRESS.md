@@ -55,3 +55,11 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - UBT explicitly recommended BuildSettingsVersion.V7; upgraded both Editor and Game targets and pinned EngineIncludeOrderVersion.Unreal5_8.
 - No BuildEnvironment.Unique or bOverrideBuildEnvironment workaround, no deployment or main merge.
 - Added test_ue58_target_rules_v93.py, run in native QA. UE5.8 C++ still must be compiled on local Mac to verify.
+
+## UE 5.8 real Mac C++ diagnostics 2026-11-17
+- After V7 target defaults, compiler reached native source code (25/35 was visible).
+- User-provided log tail identifies UE::TSharedString<TCHAR> / FString mismatch at StarfortOnlineSubsystem.cpp:520 and multiple other JSON map key uses.
+- Converted JSON object keys explicitly with FString(*Key) before TSet/TMap/FDefaultValueHelper lookups. Maintained server ownership and item validation.
+- Fixed NativeWidgetFactory ButtonColumn raw UButton*& against UPROPERTY TObjectPtr<UButton>; changed to TObjectPtr<UButton>&.
+- Fixed FStreamableHandle class versus UE5.8 struct declaration in StarfortHeroScreen.h.
+- Added source tests; THIS DOES NOT prove UE engine compile passes. A fresh full Mac build is still required; original pasted log is only last 150 lines.

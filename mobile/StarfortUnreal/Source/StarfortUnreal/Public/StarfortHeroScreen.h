@@ -8,7 +8,7 @@ class UTextBlock;
 class UProgressBar;
 class UImage;
 class UTexture2D;
-class FStreamableHandle;
+struct FStreamableHandle;
 
 /**
  * Read-only display snapshot from the authenticated STARFORT backend.
