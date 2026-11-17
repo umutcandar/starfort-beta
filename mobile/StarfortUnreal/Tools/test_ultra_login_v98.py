@@ -41,6 +41,7 @@ class UltraLoginV98(unittest.TestCase):
    "ActiveLoginStage->Destroy()"):
    self.assertIn(token,ctrl,token)
   self.assertIn('MapName.Contains(TEXT("Entry"))',ctrl)
+  self.assertIn("TActorIterator<AStarfortLoginCinematicStage>",ctrl)
   self.assertIn("TSubclassOf<AStarfortLoginCinematicStage> LoginStageClass",header)
  def test_minimal_overlay_reveals_account_form_only_on_click(self):
   ui=read("Private/StarfortNativeWidgetFactory.cpp")

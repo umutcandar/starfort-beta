@@ -94,3 +94,10 @@ Base main commit: 2ea74c5b341e312eba8369870c72dfdb54678bee
 - Integrated login-only camera takeover with village controller and cleanup on sign-in/sign-out.
 - Login UI changed from opaque two-column to transparent native UMG overlay; email/password appear only after clicking KRALLIĞA GİR. Existing Supabase auth unchanged.
 - Updated v97 source tests, added new v98 source contract and docs. Does NOT prove Unreal editor compile or visual quality for this revision. UE packaged original art and umap not yet present.
+
+## Ultra Login Editor-authored native asset pipeline (v99)
+- Unreal Python Editor-only tool now creates L_StarfortLogin.umap and original three native material assets on the user's Mac, idempotently, after successful C++ Editor compile. No .uasset/.umap binary was remotely created in this chat.
+- Controller now reuses an authored AStarfortLoginCinematicStage placed in that map rather than duplicating it.
+- Runtime 3D stage supports original material overrides for stone, banner and ember pieces; mobile shadows disabled and authentic hero/audio remain optional.
+- Script checks for existing level and materials, saves a diagnostic JSON, and backs up DefaultEngine.ini before locally switching the startup map only after saved map success.
+- test_ultra_login_authoring_v99.py checks Python AST and source safety contracts in GitHub CI. Mac Engine Editor Python execution remains UNVERIFIED.
